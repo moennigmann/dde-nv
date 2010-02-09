@@ -1,0 +1,56 @@
+###############################################################################
+#
+# @path AugSys2/ConstraintInitializer/NLP/setCostFunctionForClosestCP.txt
+#
+# @brief Setts the cost function for finding the closest critical point
+#
+# @notes Defining the distance between given point and critical boundaries 
+#        and putting it as a cost function
+#
+# @param Point from which the minimal distance is looking for ([ParName=Value,..])
+#
+# @revision
+#  2008-03-13 written by dka
+#
+###############################################################################
+setCostFunctionForClosestCP:= proc(
+  pointForFindingDistance::list(name= EvalsToFloat)
+)
+  local costFunction, i, newParsNames, Missing, Obsolete;
+
+  # make sure that augemented system is already defined
+
+  if (isAugSysCreatedInModule <> true)
+  then error("first define augmented system with the procedure createAugSys");
+  end if;
+
+  # make sure values for all parameters are given in input argument
+  
+    newParsNames:= map(lhs, pointForFindingDistance); 
+
+    Missing, Obsolete:= Aux:-ListOperations:-getMissingAndObsoleteNames(
+      newParsNames,
+      listOfNVParamsInModule
+    );
+    if (not Missing= {}) or 
+       (not Obsolete={}) or 
+       (not nops(pointForFindingDistance)=nops(listOfNVParamsInModule))
+    then
+      error("point for which we loking the minimal distance to the critical boundary must be given in the form [name1=...,name2=..., and so on] where names are equal", listOfNVParamsInModule);
+    end if;
+  
+ 
+  # defining the distance and putting it as a cost function
+
+  costFunction:=0;
+  for i from 1 to nops(pointForFindingDistance) do
+  costFunction:= (lhs(pointForFindingDistance[i])-rhs(pointForFindingDistance[i]))^2+costFunction;
+  end do;
+
+  NLPinModule["CostFunction"]:=[eval(costFunction)];
+
+    return();
+
+end proc; 
+
+ 

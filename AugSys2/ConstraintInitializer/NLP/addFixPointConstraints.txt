@@ -1,0 +1,30 @@
+###############################################################################
+#
+# @path AugSys2/ConstraintInitializer/NLP/addFixPointConstraints.txt
+#
+# @brief Adds fixed points constraints to NLP
+#
+# @notes If in CriticalPoint Constraints is defined 
+#        then the procedure copies them to NLP
+#
+# @param None
+#
+# @revision
+# 2008-03-14 written by dka
+#
+###############################################################################
+addFixPointConstraints:= proc()
+
+  local FixPointConstraints;
+ 
+  FixPointConstraints:=AugSys2:-ConstraintInitializer:-FixPoint:-getConstraints(); 
+
+  addConstraints(FixPointConstraints);
+
+  return();
+
+end proc; 
+
+ 
+ 
+ 

@@ -1,0 +1,10 @@
+#------------------------------------------------------------
+#
+# @path AugSys2/ConstraintInitializer/NLP/getExplicitAEs.txt
+#
+# @brief Returns explicit algebraic equations of NLP
+#
+#------------------------------------------------------------
+ getExplicitAEs:= proc()
+    return(eval(NLPinModule["ExplicitAEs"])); 
+  end proc; # getExplicitAEs  

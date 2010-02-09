@@ -1,0 +1,11 @@
+#------------------------------------------------------------
+#
+# @path AugSys2/ConstraintInitializer/CriticalPoint/getStartingCriticalPoint.txt
+#
+# @brief returns starting critical point for an augmented system
+#
+#------------------------------------------------------------
+    getStartingCriticalPoint:= proc()
+        return(eval(startingCriticalPointInModule)); 
+    end proc; # getStartingCriticalPoint 
+ 

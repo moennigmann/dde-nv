@@ -1,0 +1,10 @@
+#------------------------------------------------------------
+#
+# @path AugSys2/ConstraintInitializer/FixPoint/getParameters.txt
+#
+# @brief Returns parameters of augmented system
+#
+#------------------------------------------------------------
+    getParameters:= proc()
+        return(eval(fixPointParametersInModule)); 
+    end proc; # getParameters 

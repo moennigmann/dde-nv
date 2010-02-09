@@ -1,0 +1,35 @@
+###############################################################################
+#
+# @path AugSys2/ConstraintInitializer/NLP/addVariable.txt
+#
+# @brief add a single variable to NLP
+#
+# @revision
+#  2008-03-18 written by dka
+#
+###############################################################################
+addVariable:= proc(
+  NewVar:: name=EvalsToFloat..EvalsToFloat
+)
+
+  local OldVars;
+ 
+  OldVars:=NLPinModule["Variables"];
+   
+  # make sure that Variables for NLP is already defined
+     
+     if not
+       type(OldVars, {[], list(name=EvalsToFloat..EvalsToFloat)})
+     then
+       error("\"Variables\" does not exist (before adding any Variable, \"Variables\" must exist even if it is empty) or it was defining wrong");
+     end if;
+
+   NLPinModule["Variables"]:=[op(OldVars),NewVar];
+ 
+   return();
+
+end proc; 
+
+ 
+ 
+ 

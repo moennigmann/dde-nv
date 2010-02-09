@@ -1,0 +1,30 @@
+#------------------------------------------------------------
+#
+# @path AugSys2/ConstraintInitializer/CriticalPoint/setCalcClosestCPOptPoint.txt
+#
+# @brief Sets closest point on the critical boundary
+#
+# @notes Used during running AugSys2/ConstraintInitializer/calcClosestCriticalPoint.txt
+#
+#------------------------------------------------------------
+          setCalcClosestCPOptPoint:= proc(ValueOptPoint::{list(EvalsToFloat),list(name= EvalsToFloat)})
+            
+            local i, NewOptPoint, NamesOfVars, NLPVars;
+            
+            if (type(ValueOptPoint)=list(name= EvalsToFloat))
+            then 
+                 calcClosestCPOptPointInModule:=ValueOptPoint;
+            else 
+                NLPVars:=AugSys2:-ConstraintInitializer:-NLP:-getVariables();
+                NamesOfVars:=map(lhs,NLPVars);
+                if nops(ValueOptPoint)<>nops(NamesOfVars)
+                	then error("Optimal Point has not the same order as \"Variables\" in NLP");
+                end if;
+                NewOptPoint:=[];
+                for i from 1 to nops(ValueOptPoint) do
+			NewOptPoint:=[op(NewOptPoint),NamesOfVars[i]=ValueOptPoint[i]]
+                end do;
+                calcClosestCPOptPointInModule:=eval(NewOptPoint);
+            end if;
+            return(); 
+          end proc; # setCalcClosestCPOptPoint

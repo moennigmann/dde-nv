@@ -1,0 +1,49 @@
+#------------------------------------------------------------
+#
+# @path AugSys2/ConstraintInitializer/CriticalPoint/getConstraints.txt
+#
+# @brief Returns equations for defining a critical boundaries
+#
+# @revision
+#    2008-03-12 Written by dka
+#
+#------------------------------------------------------------
+getConstraints:= proc()
+
+local numOfFixSystemEqns, augSysEqns, newEquations;
+
+# check if augmented system defined
+
+ if (isAugSysCreatedInModule <> true)
+  then error("first define augmented system with the procedure createAugSys");
+ end if;
+
+# number of equations n in FixPoint system
+
+numOfFixSystemEqns:=nops(listOfDynVarsInModule);
+
+# take the equations which defines critical boundaries of the system
+
+augSysEqns:=augSysInModule["Equations"];
+
+if (isNSType=true)
+then newEquations:=[seq(augSysEqns[i1],i1=numOfFixSystemEqns+1..3*numOfFixSystemEqns+2)];
+end if;
+
+if (isFlipOrFoldType=true)
+then newEquations:=[seq(augSysEqns[i1],i1=numOfFixSystemEqns+1..2*numOfFixSystemEqns+1)];
+end if;
+
+if (isSaddleNodeType=true)
+then newEquations:=[seq(augSysEqns[i1],i1=numOfFixSystemEqns+1..2*numOfFixSystemEqns+1)];
+end if;
+
+if (isHopfType=true)
+then newEquations:=[seq(augSysEqns[i1],i1=numOfFixSystemEqns+1..3*numOfFixSystemEqns+2)];
+end if;
+
+
+return(eval(newEquations)); 
+
+end proc; # getConstraints 
+ 

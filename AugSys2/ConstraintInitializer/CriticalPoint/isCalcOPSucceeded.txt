@@ -1,0 +1,10 @@
+#------------------------------------------------------------
+#
+# @path AugSys2/ConstraintInitializer/CriticalPoint/isCalcOPSucceeded.txt
+#
+# @brief returns true if optimization for NLP succeded
+#
+#------------------------------------------------------------
+    isCalcOPSucceeded:= proc()
+        return(eval(isCalcOPSucceededInModule)); 
+    end proc; # isCalcOPSucceeded 

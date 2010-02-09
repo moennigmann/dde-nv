@@ -1,0 +1,10 @@
+#------------------------------------------------------------
+#
+# @path AugSys2/ConstraintInitializer/CriticalPoint/getCalcOPObjf.txt
+#
+# @brief Returns the value of the objective function of the optimal point
+#
+#------------------------------------------------------------
+   getCalcOPObjf:= proc(V)
+      return(eval(calcOPObjfInModule)); 
+   end proc; # getCalcOPObjf 

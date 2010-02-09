@@ -1,0 +1,48 @@
+###############################################################################
+#
+# @path AugSys2/ConstraintInitializer/CriticalPoint/setVariables.txt
+#
+# @brief Sets variables values
+#
+# @param List of names of the variables with its values [VarName=Value,..]
+#
+# @revision
+# 2008-03-13 written by dka
+#
+###############################################################################
+setVariables:= proc(
+  NewVars::list(name= EvalsToFloat)
+)
+
+  local NewVarsNames, Missing, Obsolete; 
+
+  # make sure that augemented system is already defined
+
+  if (isAugSysCreatedInModule <> true)
+  then error("first define augmented system with the procedure createAugSys");
+  end if;
+
+  # make sure values for all parameters are given in input argument
+  
+    NewVarsNames:= map(lhs, NewVars); 
+ 
+    Missing, Obsolete:= Aux:-ListOperations:-getMissingAndObsoleteNames(
+      NewVarsNames,
+      listOfDynVarsInModule
+    );
+    if not
+      Missing= {}
+    then
+      error("assignments are missing for %1", Missing);
+    end if;
+
+  # set parameters
+
+   criticalPointVariablesInModule:= NewVars;
+
+    return();
+
+
+end proc; 
+
+ 
