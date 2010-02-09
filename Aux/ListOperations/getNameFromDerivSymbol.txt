@@ -1,0 +1,40 @@
+#######################################################################
+#
+# @path Aux/ListOperations/getNameFromDerivSymbol
+#
+# @brief strips "'" from lhs of ODEs, e.g. y' -> y
+#
+# @param name which ends in "'"
+#
+# @return name without "'"
+#
+# @authors mmo
+#
+# @revision
+# 2008-05-15 copied from ModelPack by dka
+# 020801 written by mmo
+#
+#######################################################################
+getNameFromDerivSymbol:= proc(
+  d::symbol
+)
+
+  local dString, NewName; 
+
+  dString:= convert(d, string);
+
+  #
+  # make sure d is a derivative
+  #
+    if not
+      dString[-1]= "'"
+    then
+      error("expecting first argument to end with character '"); 
+    end if;
+
+  NewName:= convert(dString[1..-2], name);
+
+  return(NewName);
+
+end proc; # getNameFromDerivSymbol
+

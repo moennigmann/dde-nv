@@ -1,0 +1,43 @@
+#############################################################
+#
+# @path Aux/FileOperations/fileExists.txt
+#
+# @brief Check if file exists
+#
+# @param  aString, contains name of file the existence
+#    of which is to be checked
+#
+# @return true if file named as name in aString exists
+#    in current dir and is not a directory
+#
+# @authors mmo
+#
+# @revision
+# 2008-02-28 copied by dka from ModelPack
+# 050927 rewritten by mho
+# 030731 written by jge
+#
+#############################################################
+
+fileExists:=proc(aString::string)
+  
+local OldDir, IsDirect:
+ 
+  OldDir:=currentdir();
+  IsDirect:=true;
+
+  try
+     currentdir(aString)
+  catch:
+     IsDirect:=false;
+  end try;
+
+  currentdir(OldDir);   
+
+   if FileTools[Exists](aString) and not IsDirect then
+     RETURN(true);
+   else
+     RETURN(false);
+   end if;
+
+ end proc;

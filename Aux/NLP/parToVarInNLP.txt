@@ -1,0 +1,100 @@
+###############################################################################
+#
+# @path Aux/NLP/ParToVarInNLP.txt
+#
+# @brief turn parameter into variable, check whether some
+# of LinearConstraints no longer are linear
+#
+# @notes
+# (i) some tests are in 020911/NPSOL/Check*.mws
+#
+# @authors mmo
+#
+# @revision
+# 021125 written by mmo
+#
+###############################################################################
+parToVarInNLP:= proc(
+  ReqPars::list(name= EvalsToFloat..EvalsToFloat), 
+  Sys::NLP
+)
+
+  local NewNLP, item, NewVarNames, NewConstr, nNewConstr, 
+    NewLinConstr, nNewLinConstr, LinConstrForLinearityCheck, i1;
+
+  NewNLP:= copy(Sys);
+  
+  #
+  # move parameters to list of variables
+  #
+    for item in ReqPars do
+      NewNLP["Parameters"]:= Aux:-ListOperations:-removeItemFromList(
+        lhs(item),
+        NewNLP["Parameters"]
+      );
+    end do;
+    NewNLP["Variables"]:= [
+      op(NewNLP["Variables"]),
+      op(ReqPars)
+    ];
+    NewVarNames:= map(lhs, NewNLP["Variables"]); 
+
+  #
+  # check linearity of LinearConstraints in new, extended
+  # list of variables, move entry to Constraints if
+  # necessary
+  #
+    #
+    # at most all LinearConstraints can become Constraints
+    # at most all LinearConstraints can remain LinearConstraints
+    #
+      NewConstr:= array(
+        1..nops(Sys["LinearConstraints"])+ nops(Sys["Constraints"])
+      ); 
+      nNewConstr:= 0;
+      NewLinConstr:= array(1..nops(Sys["LinearConstraints"]));
+      nNewLinConstr:= 0; 
+     
+    #
+    # loop over linear constraints of input system
+    # decide whether still linear or not
+    #
+      LinConstrForLinearityCheck:= Aux:-ListOperations:-subsEqnListIntoEqn(
+        Sys["ExplicitAEs"],
+        Sys["LinearConstraints"]
+      ); 
+      for i1 from 1 to nops(Sys["LinearConstraints"]) do 
+        item:= Sys["LinearConstraints"][i1]; 
+        if
+          Aux:-LinearEqns:-checkLinearityOfIn(
+            LinConstrForLinearityCheck[i1], NewVarNames
+          )
+        then
+          nNewLinConstr:= nNewLinConstr+ 1;
+          NewLinConstr[nNewLinConstr]:= item;
+        else
+          nNewConstr:= nNewConstr+ 1;
+          NewConstr[nNewConstr]:= item;
+        end if;
+      end do;
+     
+      NewNLP["LinearConstraints"]:= convert(
+        NewLinConstr,
+        list
+      );
+      NewNLP["LinearConstraints"]:=
+        NewNLP["LinearConstraints"][1..nNewLinConstr];
+
+      NewConstr:= convert(  
+        NewConstr,
+        list
+      );
+      NewNLP["Constraints"]:= [
+        op(Sys["Constraints"]),
+        op(NewConstr[1..nNewConstr])
+      ]; 
+
+  return(eval(NewNLP)); 
+
+end proc: # parToVarInNLP 
+

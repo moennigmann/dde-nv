@@ -1,0 +1,58 @@
+#############################################################
+#
+# @path Aux/ListOperations/getRHSofIn.txt
+#
+# @param aname, alist compl. with list(list), alist
+#        must comprise LHS aname
+#
+# @return RHS of LHS aname in alist
+#  (typically equation or list of equations, but
+#  no restriction imposed on type of output)
+#
+# @authors mmo, dka
+#
+# @revision
+# 2008-02-28 copied by dka from ModelPack and renamed from GetRHSofIn to getRHSofIn
+# xxxxxx written by mmo
+#
+#############################################################
+getRHSofIn:=proc(
+  aname::name,
+  alist::{list(equation), table}
+)
+
+  local i1, rightHandSide, currentEqn;
+
+  #
+  # refuse to operate on table of equations
+  #
+
+  if type(alist, table) then
+    error(`, do not use GetRHSofIn on tables, use indexed table instead`);
+  end if; 
+
+  #
+  # check whether aname is LHS in alist
+  #
+
+  if not(isLHSin(aname, alist)) then
+    error(`, 1st argument does not occur in 2nd argument`);
+  end if; 
+
+  #
+  # get RHS of aname in alist
+  #
+
+  for i1 from 1 to nops(alist) do
+    currentEqn:= op(i1, alist);
+
+    if op(1, currentEqn)= aname then
+      rightHandSide:= op(2, currentEqn);
+      break;
+    end if; 
+
+  end do; 
+
+  return(rightHandSide);
+
+end proc; # getRHSofIn

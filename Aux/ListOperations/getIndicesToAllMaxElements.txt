@@ -1,0 +1,34 @@
+#------------------------------------------------------------
+#
+# @path Aux/ListOperations/getIndicesToAllMaxElements.txt
+#
+# @brief Returns the index of the maximum object in a list with
+# entries of type numeric. If more than one object has 
+# the maximum value, indices to all these objects are returned. 
+#
+# @authors mmo
+#
+# @revision
+# 2008-02-25 Written by Martin Moennigmann. 
+#
+#------------------------------------------------------------
+getIndicesToAllMaxElements:= proc(
+  l::list(numeric)
+)
+
+  local maxValue, i, indicesToMaximumElements, newIndex; 
+
+  maxValue:= max(op(l));
+  indicesToMaximumElements:= {};
+  for i from 1 to nops(l) do
+    if
+      l[i]= maxValue
+    then
+      newIndex:= i; 
+      indicesToMaximumElements:= indicesToMaximumElements union {newIndex};
+    end if;
+  end do;
+
+  return indicesToMaximumElements; 
+
+end proc: 

@@ -1,0 +1,62 @@
+#############################################################
+#
+# @path Aux/TranferNlpToGams/creatFileWithTextForGams.txt
+#
+# @brief Generates file which contains text for a given NLP that can be solved by GAMS
+#
+# @param aNLP of type NLP, filepath of type string, modelName of type string (optional)
+#
+# @return 
+#
+# @notes uses procedure createTextForGams
+#
+# @authors dka
+#
+# @revision
+# 2009-12-17 written by dka
+#
+#############################################################
+createFileWithTextForGams:= proc(aNLP::NLP,
+                         filePathGAMS::string
+                          # optional modelName
+                         )
+
+ local fd, textForGAMS, fileName, modelName;   
+  
+      #
+      # extract optional arguments
+      #
+        if 
+          nargs>2
+        then 
+          modelName:= convert(args[3],string);
+        else
+          #
+          # set model name for Gams the same as the given file name 
+          # without file format
+          #
+          fileName:= FileTools[Filename](filePathGAMS);
+          modelName:=StringTools[Split](fileName,".")[1]; 
+        end if; 
+       
+    textForGAMS:=Aux:-TransferNlpToGams:-createTextForGams(aNLP, modelName);
+       
+    fd := fopen(
+      filePathGAMS,
+      WRITE,
+      TEXT
+    );
+
+    fprintf(
+      fd,
+      textForGAMS
+    );
+
+    fclose(fd);
+    
+    return("file was created");
+  
+
+   end proc;
+
+

@@ -1,0 +1,40 @@
+#------------------------------------------------------------
+#
+# @path Aux/BoxOperations/getIndexToLongestAxis.txt
+#
+# @brief Returns index of coordinate axis along which box has 
+# interval with largest width. If more than such axis
+# exists, lowest index is returned.  
+#
+# @authors mmo
+#
+# @revision
+# 2008-02-26 Written by Martin Moennigmann.
+#
+#------------------------------------------------------------
+getIndexToLongestAxis:= proc(
+  box::list([numeric, numeric])
+)
+  
+  local i, width, spaceDimension, indexToMax, maxWidth; 
+
+  spaceDimension:= nops(box);
+
+  #
+  # loop over all intervals and find widest one
+  #
+  maxWidth:= box[1][2]- box[1][1];
+  indexToMax:= 1; 
+  for i from 2 to spaceDimension do
+    width:= box[i][2]- box[i][1];
+    if
+      width> maxWidth
+    then
+      maxWidth:= width;
+      indexToMax:= i;
+    end if;
+  end do; 
+
+  return indexToMax; 
+
+end proc; 

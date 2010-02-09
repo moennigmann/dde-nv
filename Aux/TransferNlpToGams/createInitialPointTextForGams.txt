@@ -1,0 +1,39 @@
+#############################################################
+#
+# @path Aux/TranferNlpToGams/createInitialPointTextForGams.txt
+#
+# @brief Generates text for copying to Gams file 
+#        which sets the inital point values
+#
+# @param List of the initial variables values [var1=val1,var2=val2,..]
+#
+# @return Text for Gams
+#  
+# @notes Uses procedure renameIndexedNameForGams 
+#
+# @authors dka
+#
+# @revision
+# 2009-01-08 written by dka
+#
+#############################################################
+createInitialPointTextForGams:= proc(initPoint::{list(name= EvalsToFloat)})
+
+ local counter1, varForGams, initPointGamsText;   
+  
+ initPointGamsText:="":
+ for counter1 from 1 to nops(initPoint) do
+   varForGams:=renameIndexedNameForGams(lhs(initPoint[counter1]));
+   initPointGamsText:=StringTools[Join]([initPointGamsText,
+                                         convert(varForGams,string),
+                                         ".l=",
+                                         convert(rhs(initPoint[counter1]),string),
+                                         ";\n"],"");
+ end do:
+
+    
+ return(initPointGamsText);
+  
+end proc;
+
+

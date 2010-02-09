@@ -1,0 +1,11 @@
+#----------------------------------------
+# 
+# @path Aux/CreateCurve/TemplateModule/getData.txt
+#
+# @brief Return points data
+#
+#----------------------------------------
+    getData:= proc()
+      return(eval(PointLikeData));
+    end proc; # getData
+

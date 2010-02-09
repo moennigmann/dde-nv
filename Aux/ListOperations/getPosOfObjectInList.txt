@@ -1,0 +1,58 @@
+#--------------------------------------------------
+#
+# @path Aux/ListOperations/getPosOfObjectInList.txt
+#
+# @brief Returns the position of object in a list. Object
+# and list are expected in first and second parameter,
+# respectively. 
+#
+# @authors mmo
+#
+# @revision
+# 2007-10-16 Added recursion to getPosOfObjectInList
+#   if a list of items is passed in first parameter. 
+# 2007-10-16 Written by M. Moennigmann on the train
+#   to the ProcessNet conference.
+#
+#------------------------------------------------------------
+getPosOfObjectInList:= proc(
+  item::{
+    symbol, 
+    indexed, 
+    list({symbol, indexed})
+  },
+  l::list({symbol, indexed})
+)
+
+  local i, numListItems, itemInString, currentItemInString,
+    res; 
+
+  #
+  # if first parameter is a list, 
+  # dispatch each element in this list to self
+  #
+  if
+    type(item, list)
+  then
+    res:= [seq(
+      getPosOfObjectInList(item[i], l),
+      i= 1..nops(item)
+    )];
+    return(res); 
+  end if; 
+ 
+  numListItems:= nops(l);
+  itemInString:= convert(item, string); 
+
+  for i from 1 to numListItems do
+    currentItemInString:= convert(l[i], string);
+    if
+      currentItemInString= itemInString
+    then
+      return(i);
+    end if;
+  end do;
+
+  error("unable to find requested item in list");
+
+end proc: 

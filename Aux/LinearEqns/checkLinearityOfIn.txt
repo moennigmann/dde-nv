@@ -1,0 +1,94 @@
+###############################################################################
+#
+# @path Aux/LinearEqns/CheckLinearityOfIn.txt;
+#
+# @param  (i) One of: {RHS,
+#                   RHS=RHS,
+#                   [RHS, RHS, ..., RHS]
+#                   [RHS=RHS, RHS=RHS, ..., RHS=RHS]
+#                  },
+#          where RHS is an expression containing arithmetic operations,
+#                     functions, constants, and variables.
+#         (ii) List of Vars in which linearity shall be tested.
+#         (iii) Optioanl A, b
+#
+# @return Returns true if input expression is linear, false else.
+#
+# @notes  If optional arguments A, b are given, to them the matrix
+#         form of the given expression is assigned.
+#
+# @authors mmo
+#
+# @revision
+# 021217 edited text of WARNING, added some comments
+# 010414 for first arg added types 'term<term', list(term<term)
+#   changed type of second arg to list(name) - mmo
+# 010408 written by mho and mmo
+#
+###############################################################################
+checkLinearityOfIn:=proc(
+    Eq::{
+      term, 
+      list(term), 
+      equation(term),
+      term<term, 
+      list({equation(term), term<term})
+    },
+    Vars::list(name), 
+    A::name, #optional 
+    b::name  #optional
+    )
+
+    local ListOfRHS;
+
+    #
+    # convert input argument into standard type list(term)
+    #
+      if                       # case 1 : list of equations or inequalities
+        type(Eq, list( {equation, term<term} ))    
+      then
+        ListOfRHS := [seq(
+          rhs(Eq[i1]) - lhs(Eq[i1]),
+          i1 = 1..nops(Eq)
+        )];
+      elif
+        type(Eq, list(term))   # case 2 : list of terms
+      then
+        ListOfRHS := Eq;
+      elif                     # case 3 : single equation or single inequality 
+        type(Eq, {equation(term), term<term})          
+      then
+        ListOfRHS := [rhs(Eq) - lhs(Eq)];
+      else
+        ListOfRHS := [Eq];     # case 4 : single RHS
+      end if;
+  
+    #
+    # run actual test for linearity
+    # calculate A, b in Ax= b if requested
+    #
+      if
+        isLinearIn(ListOfRHS, Vars)
+      then
+        #
+        # extract matrix and vector to write linear eqns as Ax=b
+        #
+          if
+            nargs > 3
+          then
+            A, b := convertLinSysToStandardForm(ListOfRHS, Vars);
+          elif
+            nargs > 2
+          then
+            WARNING("expecting two optional arguments"); 
+          end if;
+  
+        # 
+        # regardless of calculation of A, b, expressions were linear
+        #
+          return(true);
+      else
+        return(false);
+      end if;
+
+  end proc; #checkLinearityOfIn

@@ -1,0 +1,100 @@
+###############################################################################
+#
+# @path Aux/CreateCurve.txt
+#
+# @brief Collects procedures that simplify visualization and collection 
+#        points into a curve
+#
+# @param (i) table of data, indices must be names of data, 
+#     to each index a list(EvalsToFloat) is assigned; all of these 
+#     must have same length
+#   (ii) 2nd argument provides all data which is not point-like, i.e.
+#     pitcon's IERROR, or number of points in each list in 1st argument
+#     mandatory entries in 2nd argument are
+#     Parameters= list(name= EvalsToFloat),
+#     NumPoints= posint
+#   
+# @return  module which provides procedures for plotting data
+#
+# @todo
+#   note that checks at entry are type check for type 'datacurve' 
+#   which should be implemented separately in the future
+#
+# @authors mmo, dka
+#
+# @revision
+# 2008-01-22 copied from ModelPack by dka
+# 030108 added local var decl for SubsListParsInConstr, TemplateModule
+# 020921 changed structure, CreateCurve now accepts table of point-like
+#   data, and other data in 2nd argumtent
+# 020829 added GetNumPoints, GetPoint, added some local
+#   variables: NumPoints, IndicesInConstr; 
+# 0208xx written by mmo
+#
+###############################################################################
+CreateCurve:= proc(
+  PointLikeData::table,
+  OtherData::list(name= anything)
+)
+
+  local item, MandatoryEntries, ExistingEntries,
+    NumDataPointsInConstr, VarNamesInConstr, SubsListParsInConstr,
+    TemplateModule; 
+
+  #------------------------------------------------------------
+  # 
+  # check 2nd argument and extract NumPoints
+  #
+  #------------------------------------------------------------
+    MandatoryEntries:= [
+      Parameters, 
+      NumPoints
+    ];
+    ExistingEntries:= map(lhs, OtherData); 
+    for item in MandatoryEntries do
+      if not
+        member(item, ExistingEntries)
+      then
+        error("second argument must have entry %1", item);
+      end if;
+    end do; 
+
+    #
+    # check type of entry 'Parameters' in second argument
+    #
+      SubsListParsInConstr:= Aux:-ListOperations:-getRHSofIn(
+        Parameters,
+        OtherData
+      ); 
+
+      if not 
+        type(SubsListParsInConstr, {[], list(name= EvalsToFloat)})
+      then
+        error("entry Parameters in second argument is expected to be of type {[], list(name= EvalsToFloat)}");
+      end if; 
+  
+      NumDataPointsInConstr:= Aux:-ListOperations:-getRHSofIn(
+        'NumPoints',
+        OtherData
+      ); 
+
+  #------------------------------------------------------------
+  #
+  # check first argument
+  #
+  #------------------------------------------------------------
+    VarNamesInConstr:= map(op, [indices(PointLikeData)]);      
+    for item in VarNamesInConstr do
+      if not
+        type(PointLikeData[item], array)
+      then
+        error("all entries in 1st argument except Parameters and NumPoints must be arrays, check failed for %1", item);
+      end if; 
+    end do;
+
+$include<CreateCurve/TemplateModule.txt>
+
+  return(eval(TemplateModule)); 
+
+end proc; # CreateCurve 
+

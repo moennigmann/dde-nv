@@ -1,0 +1,221 @@
+#############################################################
+#
+# @path Aux/SystemClasses/listOfErrorsInDAESys.txt
+#
+# @brief Generate list of structure errors in DAESys 
+#
+# @param table of type DAESys
+#
+# @return list of errors found in aDAESys
+#
+# @notes (i) ListOfErrorsInDAESys is used in init to
+#           define type/DAESys
+#       (ii) uses GetObsolExprInDAESys
+#
+# @authors mmo, dka
+#
+# @revision
+#   2008-05-15  instead of aSys[...] using aSys["..."] 
+#   2008-05-15 copied from ModelPack by dka
+#   030109 avoid type check DAESys::table on entry, this avoids errors
+#     in uses like a:= 1; type(a, {posint, DAESys}); introduced
+#     shortcut to return(false) if input argument is not of type table
+#     instead; 
+#   020808 (i) split procedure into simple and fast first check
+#     and slow and thorough second step; second step is 
+#     local procedure to ModelPack and can only be accessed
+#     by calling present procedur with optional argument
+#     'long', 'all', 'strict'; (ii) added type check ::table
+#   020801 replaced check: formerly checked whether lhs of ODEs
+#     (after stripping of "'") are same set as DynVars converted
+#     to set; now checking for equality of lists, i.e. order
+#     must be the same, too; 
+#   020613 Removed type check aDAESys::table on entry and added
+#     explicit check for type(aDAESys, table) right after 
+#     declaration of local variables. Procedure now returns
+#     'false' rather than throwing an error if called with
+#     an object which is not a table. 
+#   020306 entry parameters must be a list of name= EvalsToFloat
+#   011128 removed 'use ModelPack in' directive, since
+#     proc is now part of ModelPack
+#   010810 written by mkl and mmo
+#
+#############################################################
+listOfErrorsInDAESys:= proc(
+  aDAESys # avoid check for type table here, see revision history 030109
+)
+
+  local i1, i,ParsAndIndependents, SetOfValidExpr,
+    NumberOfExplicitAEs, ListOfErrors, SetOfIndices,
+    ListOfUndefExpr, LHSidesOfODEs, ObsolExpr,
+    ParAndVar, DerivativesOfDynVars,
+    ParAndExplAE, Integrators, item;
+
+  #
+  # shortcut to false if aDAESys is not of type table
+  #
+    if not
+      type(aDAESys, table)
+    then
+      return(false);
+    end if; 
+
+  ListOfErrors:= [];
+
+  #------------------------------------------------------------
+  #
+  # check whether lists ExplicitAEs, ODEs,
+  #   Parameters, DynVars, AEs, AlgVars exist
+  #
+  #------------------------------------------------------------
+   SetOfIndices:= {
+     indices(aDAESys)
+   };
+
+   #
+   # check existence and type of aDAESys["ExplicitAEs"]
+   #
+     if not(
+       member(["ExplicitAEs"], SetOfIndices))
+     then
+       ListOfErrors:= [op(ListOfErrors),
+         "entry ExplicitAEs missing"
+       ];
+       RETURN(ListOfErrors);
+     elif not(
+       type(aDAESys["ExplicitAEs"], list(equation)))
+     then
+       ListOfErrors:=[op(ListOfErrors),
+       "entry ExplicitAEs must be a list of equations"
+       ];
+       RETURN(ListOfErrors);
+     end if;
+
+   #
+   # check existence and type of aDAESys["ODEs"]
+   #
+     if not(
+       member(["ODEs"], SetOfIndices))
+     then
+       ListOfErrors:= [op(ListOfErrors),
+         "entry ODEs missing"
+       ];
+       RETURN(ListOfErrors);
+     elif not(
+       type(aDAESys["ODEs"], list(equation)))
+     then
+       ListOfErrors:=[op(ListOfErrors),
+       "entry ODEs must be a list of equations"
+       ];
+       RETURN(ListOfErrors);
+     end if;
+
+   #
+   # check existence and type of aDAESys["Parameters"]
+   #
+     if not(
+       member(["Parameters"], SetOfIndices))
+     then
+       ListOfErrors:= [op(ListOfErrors),
+         "entry Parameters missing"
+       ];
+       RETURN(ListOfErrors);
+     elif not(
+       type(aDAESys["Parameters"], list(name= EvalsToFloat)))
+     then
+       ListOfErrors:= [op(ListOfErrors),
+         "entry Parameters must be a list of name= EvalsToFloat"
+       ];
+       RETURN(ListOfErrors);
+     end if;
+
+   #
+   # check existence and type of aDAESys["DynVars"]
+   #
+     if not(
+       member(["DynVars"], SetOfIndices))
+     then
+       ListOfErrors:= [op(ListOfErrors),
+         "entry DynVars missing"
+       ];
+       RETURN(ListOfErrors);
+     elif not(
+       type(aDAESys["DynVars"], list))
+     then
+       ListOfErrors:= [op(ListOfErrors),
+         "entry DynVars must be a list"
+       ];
+       RETURN(ListOfErrors);
+     end if;
+
+   #
+   # check existence and type of aDAESys["AEs"]
+   #
+     if not(
+       member(["AEs"], SetOfIndices))
+     then
+       ListOfErrors:= [op(ListOfErrors),
+         "entry AEs missing"
+       ];
+       RETURN(ListOfErrors);
+     elif not(
+       type(aDAESys["AEs"], list))
+     then
+       ListOfErrors:= [op(ListOfErrors),
+         "entry AEs must be a list"
+       ];
+       RETURN(ListOfErrors);
+     end if;
+
+   #
+   # check existence and type of aDAESys["AlgVars"]
+   #
+     if not(
+       member(["AlgVars"], SetOfIndices))
+     then
+       ListOfErrors:= [op(ListOfErrors),
+         "entry AlgVars missing"
+       ];
+       RETURN(ListOfErrors);
+     elif not(
+       type(aDAESys["AlgVars"], list))
+     then
+       ListOfErrors:= [op(ListOfErrors),
+         "entry AlgVars must be a list"
+       ];
+       RETURN(ListOfErrors);
+     end if;
+
+  #------------------------------------------------------------  
+  #
+  # if errors were found, return them even if 
+  # listOfErrorsInAESysPart2 was requested
+  #
+  #------------------------------------------------------------
+    if not
+      ListOfErrors= []
+    then
+      return(ListOfErrors);
+    end if; 
+
+  #------------------------------------------------------------
+  #
+  # if optional argument 'long', 'all', 'strict' was given,
+  # call listOfErrorsInAESysPart2
+  #
+  #------------------------------------------------------------
+    if 
+      nargs>1
+    then
+      if 
+        args[2]= 'long' or
+        args[2]= 'all' or
+        args[2]= 'strict'
+      then
+        ListOfErrors:= listOfErrorsInDAESysPart2(aDAESys); 
+      end if;
+    end if; 
+
+  return(ListOfErrors);
+
+end proc; # listOfErrorsInDAESys

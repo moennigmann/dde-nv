@@ -1,0 +1,35 @@
+#------------------------------------------------------------
+#
+# @path Aux/ListOperations/getIndexToMaxElement.txt
+#
+# @brief Returns the index of the maximum object in a list with
+# entries of type numeric.
+#
+# @authors mmo
+#
+# @revision
+# 2008-02-25 Written by Martin Moennigmann. 
+#
+#------------------------------------------------------------
+getIndexToMaxElement:= proc(
+  l::list(numeric)
+)
+
+  local i, indexToMax;
+
+  #
+  # loop over elements in list and remember where the
+  # largest one was found
+  #
+  indexToMax:= 1;
+  for i from 1 to nops(l) do
+    if
+      l[i]> l[indexToMax]
+    then
+      indexToMax:= i;
+    end if;
+  end do;
+
+  return indexToMax; 
+
+end proc: 

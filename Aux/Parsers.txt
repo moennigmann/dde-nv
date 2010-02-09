@@ -1,0 +1,19 @@
+#------------------------------------------------------------
+#
+# @path  Aux/Parsers.txt
+#
+# @brief Collects pocedure for reading datas
+#
+# @authors mmo, dka
+#
+# @revision
+# 2008-02-28 by dka rename ReadContentDataFromFile to readContentDataFromFile
+# 2007-11-23 Created by dka. 
+#------------------------------------------------------------
+Parsers:= module()
+  export
+    readContentDataFromFile; 
+
+$include <Parsers/readContentDataFromFile.txt>
+
+end module; 

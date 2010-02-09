@@ -1,0 +1,63 @@
+#############################################################
+#
+# @path Aux/ListOperations/getListOfUndefExprIn.txt
+#
+# @param  anEqn,
+#  aModelOrList= table which comprises lists ExplicitAEs and
+#    IndependetVars, Parameters
+#  OR aModelOrList= list of equations (e.g. ExplicitAEs of a
+#    model)
+#  OR aModelOrList= list (e.g. IndependentVars of a model)#
+#
+# @return list of indets in anEqn which cannot be resolved
+#  by substitution of aModelOrList, functions or powers
+#  which are maple indets are replaced by the indets of
+#  their arguments by procedure GetListOfIndetsIn
+#
+# @authors mmo, dka
+#
+# @revision
+# 2008-02-28 renamed from GetListOfUndefExprIn to getListOfUndefExprIn
+# xxx - writen by Mmo
+#
+#############################################################
+
+getListOfUndefExprIn:=proc(
+  anEqn::{equation, anything},
+  aModelOrList::{list(equation), list}
+)
+
+  local listOfIndets, AllowedExpressions, UndefExpr, i1;
+
+  #
+  # get list of indets in equation anEqn,
+  # procedure GetListOfIndetsIn replaces
+  # functions that occur in anEqn by their
+  # arguments
+  # procedure GetListOfIndetsIn will also execute
+  # if anEqn is not an equation
+  #
+
+  listOfIndets:= getListOfIndetsIn(anEqn);
+
+  #
+  # check whether all items in list of indets are
+  # either IndependetVars or Parameters of aModelOrList
+  # or if they occur in left hand sides of ExplicitAEs
+  #
+
+  AllowedExpressions:= getSetOfValidExprIn(aModelOrList);
+
+  UndefExpr:=[];
+  for i1 from 1 to nops(listOfIndets) do
+
+    if not(member(listOfIndets[i1], AllowedExpressions)) then
+ UndefExpr:=[op(UndefExpr), listOfIndets[i1]];
+    end if; 
+
+  end do; 
+
+  RETURN(UndefExpr);
+
+end proc; # getListOfUndefExprIn
+

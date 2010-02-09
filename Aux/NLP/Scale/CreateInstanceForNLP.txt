@@ -1,0 +1,127 @@
+#------------------------------------------------------------
+#
+# @path Aux/NLP/Scale/CreateInstanceForNLP.txt
+#
+# @notes
+# (i) instance of NLP has ranges for variables in list
+#   Variables, note that these +/-infinity as bounds
+# (ii) this procedure will use ranges from list Variables 
+#   which do not contain +/-infinity for scaling, discard
+#   all others without scaling the corresponding variables
+# (iii) if optional argument for ranges of variables is to be 
+#   introduced later, make sure these ranges will also become
+#   ranges of NLP, i.e. bounds for variables in NLP
+# (iv) transformation used is:
+#   z= g(x, p)
+#   diff(x, t)= f(x, z, p)
+#     becomes
+#   z= g(x(y), p(q))
+#   diff(y, t)= D f(x(y), z, p(q))
+#     where 
+#     y= Dx- c,          x= InvD (y+ c),
+#     q= D_par p- c_par, p= InvD_par (q+ c_par) 
+#     (D_par is called ScaledParsD, c_par is called ScaledParsc 
+#     in the code)
+#   notation sloppy, as it ignores that z_i may depend on
+#     z_1,...,z_(i-1), i.e., z_i= g_i(x, z_1, ..., z_(i-1), p)
+# (v) transformation y= Dx- c is saved in SubsListPhysToScaled,
+#   trf. x= InvD (y+ c) is saved in SubsListScaledToPhys,
+#   D, and c in the code correspond to D, c above, 
+#   trf. q= D_par p- c_par is saved in 
+#   SubsListScaledParsPhysToScaled
+#
+# @todo
+# (i) add optional input argument for ranges of parameter to be scaled
+# (ii) add output of brief information on number of scaled vs. unscaled
+#   variables and parameters; 
+# (0) ranges must be given for all variables,
+#   may be given for all or some parameters
+#
+# @authors mmo, dka
+#
+# @revision
+# 2008-03-06  instead of aSys[...] using aSys["..."] by dka
+# 2008-03-05 by dka moved from ModelPack
+# 021210 input argument may be of type list 
+# 021209 written by mmo, reusing CreateInstanceForExtAESys
+#------------------------------------------------------------
+CreateInstanceForNLP:= proc(
+    Sys::{NLP, list(name= range)}
+  ) 
+
+    local ReqRanges, Replaced, Ranges, VarNames, D, c, SubsLists, 
+      SubsListPhysToScaled, SubsListScaledToPhys, InvD, i1, 
+      SubsListScaledParsPhysToScaled, 
+      SubsListScaledParsScaledToPhys, ScaledParNames; 
+
+    #
+    # extract ranges from input argument
+    #
+      if 
+        type(Sys, list)
+      then
+        ReqRanges:= Sys;
+      else
+        ReqRanges:= Sys["Variables"]; 
+      end if; 
+    
+    #------------------------------------------------------------
+    #
+    # check completeness of ranges, find non-mandatory ranges,
+    # find obsoletet ranges, replace ranges which contain 
+    # +/- infinity by -1..1 to avoid scaling
+    #
+    #------------------------------------------------------------
+      #
+      # replace ranges which contain +/-infinity by -1..1
+      #
+        Replaced, Ranges:= replaceInfiniteRangesByTrivialRanges(
+          ReqRanges
+        ); 
+        if not
+          Replaced= []
+        then
+          printf(
+            "replaced %d ranges which contained +/-infinity by trivial ranges -1..1\n",
+            nops(Replaced)
+          );
+        end if; 
+
+    #------------------------------------------------------------
+    #
+    # extract ranges for Sys["Variables"] and create transformation
+    # matrix/vector and substitution lists
+    #
+    #------------------------------------------------------------
+      VarNames:= map(lhs, ReqRanges); 
+      D:= calcD(Ranges);
+      c:= calcc(Ranges);
+      SubsLists:= createSubsLists(
+        VarNames,
+        D, c
+      );
+      SubsListPhysToScaled:= SubsLists[1];
+      SubsListScaledToPhys:= SubsLists[2];
+  
+      InvD:= array(1..nops(VarNames));
+      for i1 from 1 to nops(VarNames) do
+        InvD[i1]:= 1/D[i1];
+      end do;
+
+  #
+  # see TemplateModule.txt for comment on which vars are 
+  # passed from constructor to instance
+  #
+
+  #
+  # variables which are empty but are expected to be assigned
+  # by TemplateModule
+  #
+    SubsListScaledParsPhysToScaled:= [];
+    SubsListScaledParsScaledToPhys:= [];
+    ScaledParNames:= {}; 
+
+$include <NLP/Scale/CreateInstance/TemplateModule.txt>
+
+  end proc; # CreateInstanceForNLP
+

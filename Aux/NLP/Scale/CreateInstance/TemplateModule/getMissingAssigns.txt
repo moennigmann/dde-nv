@@ -1,0 +1,19 @@
+#------------------------------------------------------------------------------
+#
+# @path Aux/NLP/Scale/CreateInstance/TemplateModule/GetMissingAssigns.txt
+#
+# @brief checks whether substitution list provides assignments for
+# all variables and all scaled parameters
+#
+#------------------------------------------------------------------------------
+getMissingAssigns:= proc(
+  SubsList::list(name= EvalsToFloat)
+)
+  local Missing; 
+
+  Missing:= convert(NamesScaledParsAndVars, set) minus
+    convert(map(lhs, SubsList), set); 
+
+  return(Missing); 
+
+end proc; 

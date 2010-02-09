@@ -1,0 +1,33 @@
+###############################################################################
+#
+# @path Aux/LinearEqns.txt
+#
+# @brief 
+# exported:
+#   checkLinearityOfIn
+# local:
+#   isLinearIn
+#   convertLinSysToStandardForm
+#
+# @authors mmo
+#
+# @revision
+# 010414 renamed exported procedure LinearEqSys to CheckLinearityOfIn 
+#   renamed BuildMatrixProductFromLinearEquationArray to 
+#   ConvertLinSysToStandardForm, renamed LinearEqSys to LinearEqns - mmo
+# 010408 written by mho and mmo
+#
+###############################################################################
+LinearEqns:= module()
+
+  export checkLinearityOfIn;
+
+  local isLinearIn, convertLinSysToStandardForm;
+
+$include <LinearEqns/checkLinearityOfIn.txt>
+$include <LinearEqns/convertLinSysToStandardForm.txt>
+$include <LinearEqns/isLinearIn.txt>
+ 
+
+end module; #LinearEqns
+

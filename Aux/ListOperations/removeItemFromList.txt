@@ -1,0 +1,98 @@
+###############################################################################
+#
+# @path Aux/ListOperations/removeItemFromList
+#
+# @param
+#   aName, name of item in 2nd arg to be removed, or list of such names
+#   aList, list in which 1st arg is to be removed
+#
+# @return
+#   new list which contains items of aList apart from items given in 1st arg
+#
+# @authors mmo, dka
+#
+# @revision
+#   2008-02-28 renamed by dka from RemoveItemFromList to removeItemFromList
+#   020415 allowed rhs in 2nd arg to by anything
+#   010822 first arg may now also be of type list(name)
+#   first proc by tsa and mmo
+#
+###############################################################################
+removeItemFromList:= proc(
+  ReqItems::{name, list(name), string, list(string)},
+  aList::list({{name, symbol}, {symbol, name}= anything,{string}}) #EvalsToFloat, name= range})
+)
+
+  local aName, ListOfNames, item, item2, NewList, ItemsToBeRemoved; 
+
+  #
+  # convert 2nd argument to standard type list(name)
+  #
+    ListOfNames:= [];
+    for item in aList do
+      if 
+        type(item, equation) 
+      then
+        ListOfNames:= [
+          op(ListOfNames),
+          lhs(item)
+        ];
+      else
+        ListOfNames:= [
+          op(ListOfNames),
+          item
+        ];
+       end if;       
+     end do;
+
+  #
+  # convert 1st arg to standard type list
+  #
+    if 
+      type(ReqItems, name)
+    then
+      ItemsToBeRemoved:= [ReqItems];
+    else
+      ItemsToBeRemoved:= ReqItems;
+    end if; 
+
+  #
+  # make sure items in first arg occur in 2nd arg
+  #
+    for aName in ItemsToBeRemoved do
+      if not
+        member(aName, ListOfNames)
+      then
+        error(
+          "item %1 specified in first argument does not occur in"
+          " second argument", aName
+        );
+      end if;
+    end do; 
+
+  #
+  # build new list, skip item specified in aName
+  #
+    NewList:= [];
+    for item2 in aList do
+      if 
+        type(item2, equation) 
+      then
+        if not
+          member(lhs(item2), ItemsToBeRemoved)
+        then
+          NewList:= [op(NewList), item2];
+        end if;
+      else
+        if not
+          member(item2, ItemsToBeRemoved)
+        then
+          NewList:= [op(NewList), item2];
+        end if; 
+      end if; 
+    end do;
+
+  return(NewList); 
+
+end proc; #removeItemFromList
+

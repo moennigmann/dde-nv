@@ -1,0 +1,95 @@
+#------------------------------------------------------------
+#
+# @path Aux/NLP/Scale/CreateInstance/TemplateModule/MapPhysToScaled.txt
+#
+# @authors mmo
+#
+# @revision
+# 021002 introduced new procedures for several tasks
+#   added transformation of scaled parameters; 
+# 020930 (i) changed return argument type to named list, 
+#   (ii) warns about variables in first argument which are
+#   out of bounds [-1, 1]; 
+# 0209xx written by mmo
+#
+#------------------------------------------------------------
+      mapPhysToScaled:= proc(
+        SubsList::list(name= EvalsToFloat)
+      )
+        local NewVars, i1, NamedListVars, x, p, Missing, 
+	  OutOfBounds, ValuesUnknowns, result,
+	  NewPars, NamedListPars;  
+
+        #
+        # check for missing assignments
+        #
+          Missing:= getMissingAssigns(SubsList); 
+          if not
+            Missing= {}
+          then
+            error("assignments are missing for %1", Missing); 
+          end if;
+
+        #
+        # collect obsolete values, these are passed back to the 
+        # user together with scaled variables and parameters
+        #
+	  ValuesUnknowns:= getUnknownAssigns(SubsList); 
+
+        #
+        # extract values of variables (but not scaled parameters)
+        # from first argument
+        #
+  	  x:= subs(
+            SubsList,
+            VarNames
+          );
+ 
+        #
+        # extract values of scaled parameters
+        # from first argument
+        #
+          p:= subs(
+            SubsList,
+            ScaledParNames
+          ); 
+
+        #
+        # run actual transformation on variables
+        #
+          NewVars:= array(1..NumVarRanges); 
+  
+          for i1 from 1 to NumVarRanges do
+            NewVars[i1]:= D[i1]* x[i1]- c[i1]; 
+          end do;
+  
+          NamedListVars:= [seq(
+            VarNames[i1]= NewVars[i1],
+       	    i1= 1..NumVarRanges
+          )]; 
+
+        #
+        # run actual transformation on parameters
+        #
+          NewPars:= array(1..NumScaledParRanges); 
+  
+          for i1 from 1 to NumScaledParRanges do
+            NewPars[i1]:= ScaledParsD[i1]* p[i1]- ScaledParsc[i1];
+          end do;
+  
+          NamedListPars:= [seq(
+            ScaledParNames[i1]= NewPars[i1],
+       	    i1= 1..NumScaledParRanges
+          )]; 
+
+        result:= [
+          op(NamedListVars), 
+          op(NamedListPars), 
+          op(ValuesUnknowns)
+        ]; 
+
+        return(result); 
+
+      end proc; # mapPhysToScaled
+
+

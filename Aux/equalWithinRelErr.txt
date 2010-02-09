@@ -1,0 +1,28 @@
+#############################################################
+#
+# @path Aux/equalWithinRelErr.txt
+#
+# @brief Returns true if abs(x1- x2)/mean(x1, x2)<= relErr.
+#
+# @authors mmo
+#
+# @revision
+# 2006-05-01 Wrapped abs() around entire expression in
+#   if argument.
+#
+#############################################################
+equalWithinRelErr:= proc(
+  x1::numeric,
+  x2::numeric,
+  relErr::numeric
+)
+
+  if
+    abs((x2- x1)*2/(x1+ x2))<= relErr
+  then
+    return(true);
+  else
+    return(false);
+  end if;
+
+end proc: 

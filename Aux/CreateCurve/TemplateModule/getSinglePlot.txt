@@ -1,0 +1,75 @@
+#----------------------------------------
+# 
+# @path Aux/CreateCurve/TemplateModule/getSinglePlot.txt
+#
+# @brief Returns plot of the curve
+#
+# @param (i) name of x-axes
+#        (ii) name of y-axes
+#        (iii) additional options arguments - optional
+#
+# @notes called by exported procedure getPlot
+#
+# @authors mmo
+#
+# @revision
+# revision history:
+# 2008-05-08 Starting plot with 0 instead of 1
+# 030313 xName may now by '#', plots yName vs. number of point in curve
+# xxxxxx written by mmo
+#
+#----------------------------------------
+    getSinglePlot:= proc(
+      xName::name,
+      yName::name
+      # note that additional arguments are passed
+      # to plot[pointplot]
+    )
+    
+      local points, ListOfPoints, ListOfPlots, PlotObj;
+     
+      #
+      # make sure requested names are names in PointLikeData
+      #
+        if not
+          member(xName, {op(VarNames), `#`})
+        then
+          error("%1 must be a variable or #", xName);
+        end if; 
+    
+        if not
+          member(yName, VarNames)
+        then
+          error("%1 is not a variable", yName);
+        end if;
+    
+      #
+      # create list of points
+      #
+        if not
+          xName= `#`
+        then
+          points:= [seq(
+            [PointLikeData[xName][i1], PointLikeData[yName][i1]], 
+            i1= 0..NumDataPoints
+          )];
+        else
+          points:= [seq(
+            [i1, PointLikeData[yName][i1]], 
+            i1= 0..NumDataPoints
+          )];
+        end if; 
+ 
+      #
+      # create plot object,
+      # pass all aditional arguments to pointplot
+      #
+        PlotObj:= plots[pointplot](
+          points,
+          args[3..-1]
+        );
+       return(PlotObj);
+    
+    end proc; # getSinglePlot  
+    
+

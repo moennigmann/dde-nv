@@ -1,0 +1,148 @@
+#----------------------------------------
+# 
+# @path Aux/CreateCurve/TemplateModule/splitCurve.txt
+#
+# @param procedure with arguments NumPoint::posint,
+#   Point::list(name= EvalsToFloat) which contain the number
+#   of the point of the curve and the corresponding parameter
+#   values 
+#
+# @brief procedure must return true for points to be 
+#   returned in curve1, false for those returned in curve2
+#
+# @authors mmo
+#
+# @revision
+# 030109 added local var decl for ListCurve1, ListCurve2
+# 020923 written by mmo
+#
+#----------------------------------------
+splitCurve:= proc(
+  DecisionMaker::procedure
+)
+
+  local i1, IndicesFutureCurve1, IndicesFutureCurve2, NewCurve1,
+    NewCurve2, NumPointsCurve1, NumPointsCurve2, DataCurve1, DataCurve2,
+    item, ListCurve1, ListCurve2; 
+
+  IndicesFutureCurve1:= [];
+  IndicesFutureCurve2:= [];
+  #
+  # loop over data points of self, decide whether to put
+  # each point in new curve 1 or 2
+  #
+    for i1 from 1 to NumDataPoints do
+      if 
+        DecisionMaker(i1, getPoint(i1))= true
+      then
+        IndicesFutureCurve1:= [
+          op(IndicesFutureCurve1),
+          i1
+        ];
+      else
+        IndicesFutureCurve2:= [
+          op(IndicesFutureCurve2),
+          i1
+        ];
+      end if;
+    end do; 
+
+  #
+  # end early if one of the future curves is empty
+  #
+    if 
+      IndicesFutureCurve1= []
+    then
+      #
+      # return first curve= copy of self and second curve= name
+      #
+        NewCurve1:= Aux:-CreateCurve(
+          data,
+          ExtraData
+        );
+        return([
+          eval(NewCurve1), 
+          'NewCurve2'
+        ]); 
+    elif
+      IndicesFutureCurve2= []
+    then
+      #
+      # return first curve= name and second curve= copy of self 
+      #
+        NewCurve2:= Aux:-CreateCurve(
+          data,
+          ExtraData
+        );
+        return([
+          'NewCurve1', 
+          eval(NewCurve2)
+        ]); 
+    end if; 
+
+  #
+  # create new curves
+  #
+    #
+    # determine number of points
+    #
+      NumPointsCurve1:= nops(IndicesFutureCurve1);
+      NumPointsCurve2:= nops(IndicesFutureCurve2); 
+
+    #
+    # create data for new curve 1
+    #
+      DataCurve1:= table():
+      for item in VarNames do
+        DataCurve1[item]:= array(1..NumPointsCurve1); 
+        for i1 from 1 to NumPointsCurve1 do
+          DataCurve1[item][i1]:= data[item][IndicesFutureCurve1[i1]];
+        end do; 
+      end do; 
+      ListCurve1:= ExtraData; # copy directly from self
+      ListCurve1:= Aux:-ListOperations:-setRHSofInTo(
+        NumPoints,
+        ListCurve1,
+        NumPointsCurve1
+      ); 
+
+    #
+    # create data for new curve 2
+    #
+      DataCurve2:= table():
+      for item in VarNames do
+        DataCurve2[item]:= array(1..NumPointsCurve2); 
+        for i1 from 1 to NumPointsCurve2 do
+          DataCurve2[item][i1]:= data[item][IndicesFutureCurve2[i1]];
+        end do; 
+      end do; 
+      ListCurve2:= ExtraData; # copy directly from self
+      ListCurve2:= Aux:-ListOperations:-setRHSofInTo(
+        NumPoints,
+        ListCurve2,
+        NumPointsCurve2
+      ); 
+  
+    #
+    # call constructor
+    #          
+      NewCurve1:= Aux:-CreateCurve(
+        DataCurve1,
+        ListCurve1
+      );
+      NewCurve2:= Aux:-CreateCurve(
+        DataCurve2,
+        ListCurve2
+      ); 
+  
+
+  return([
+    NewCurve1,
+    NewCurve2
+  ]); 
+
+end proc; # SplitCurve
+
+
+
+

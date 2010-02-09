@@ -1,0 +1,139 @@
+###############################################################################
+#
+# @path Aux/CreateCurve/TemplateModule/extendCurveByEAEs.txt
+#
+# @brief evaluate equations along data of curve and extend data by values
+# of equations
+#
+# @authors mmo
+#
+# @revision
+# 030106 written by mmo
+#
+###############################################################################
+extendCurveByEAEs:= proc(
+  Sys::{DAESys, ExtAESys, NLP}, # Eqns::list(name= term),
+  WorkingDir::string
+)
+
+  local ListOfErrs, LhsEqns, NumEAEs, ErrPars, ErrVars, EAEsNamesInEAEs, 
+    NumEAEsNamesInEAEs, NumVarNames, item, ValsPars, i1, ValsVars, 
+    AllVals, ValsEAEs, NewData, NewCurve, Eqns; 
+
+  #------------------------------------------------------------
+  #
+  # check equations for errors
+  #
+  #------------------------------------------------------------
+    Eqns:= Sys[ExplicitAEs]; 
+    #
+    # lhs of Eqns must not be variables or parameters of curve self
+    #
+      LhsEqns:= convert(
+        map(lhs, Eqns),
+        set
+      );
+      ErrPars:= LhsEqns intersect convert(ParNames, set);
+      if not
+        ErrPars= {}
+      then
+        error(
+          "equations given contain lhs %1 which is parameter of curve",
+          ErrPars
+        );
+      end if;
+      ErrVars:= LhsEqns intersect convert(ParNames, set);
+      if not
+        ErrVars= {}
+      then
+        error(
+          "equations given contain lhs %1 which is variable of curve",
+          ErrVars
+        );
+      end if;
+
+  #------------------------------------------------------------
+  #
+  # create instance of NumSys
+  #
+  #------------------------------------------------------------
+    #
+    # make sure NumSys is available 
+    #
+      if not
+        type(NumSys, `module`)
+      then
+        error("module NumSys is not available "); 
+      end if;
+
+    NumEAEs:= NumSys:-EAE:-CreateInstance(
+      Sys,
+      WorkingDir,
+      'new',
+      'BuildInterface'
+    ); 
+
+  #------------------------------------------------------------
+  #
+  # calculate values of EAEs
+  #
+  #------------------------------------------------------------
+    EAEsNamesInEAEs:= NumEAEs:-GetEAEsNames():
+    NumEAEsNamesInEAEs:= nops(EAEsNamesInEAEs):
+    
+    NumVarNames:= nops(VarNames):
+    
+    #
+    # prepare arrays for variables and explicit AEs
+    #
+    # remember data is array which contains data of self
+    #
+      NewData:= copy(data); 
+      #
+      # extend by arrays for EAE variables
+      #
+        for item in EAEsNamesInEAEs do
+          NewData[item]:= array(1..NumDataPoints):
+        end do:
+    
+    ValsPars:= GetParameters():
+ 
+    for i1 from 1 to NumDataPoints do
+      ValsVars:= GetVariables(i1):
+      AllVals:= [
+        op(ValsVars),
+        op(ValsPars)
+      ]:
+
+      NumEAEs:-SetVariables(
+        AllVals
+      ):
+      #
+      # do not forget to reset parameters, as some of 
+      # the parameters of the NumSys may be variables
+      # of the curve and thus must be assigned new
+      # values going from one point to another on the
+      # curve
+      #
+        NumEAEs:-SetParameters(
+          AllVals
+        );
+      
+      ValsEAEs:= NumEAEs:-GetExplicitAEs():
+    
+      for item in EAEsNamesInEAEs do 
+        NewData[item][i1]:= subs(ValsEAEs, item); 
+      end do;
+    end do:
+
+  #
+  # create new curve
+  #
+    NewCurve:= Aux:-CreateCurve(
+      NewData,
+      GetNonTableData()
+    ); 
+
+  return(NewCurve); 
+
+end proc; 

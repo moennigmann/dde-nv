@@ -1,0 +1,35 @@
+################################################################################
+# @path Aux/Deriv/f_x.txt
+#
+# @brief Calculates Jacobian f_x
+#
+# @authors mmo, dka
+#
+###############################################################################
+  f_x:= proc(
+    functions::{Vector, list},
+    x::{Vector, list}
+  )
+
+    local nx, nf, Result;
+
+    #
+    # Functions and Vars must have same number of entries
+    #
+      nx:= nops(x);
+      nf:= nops(functions);
+
+      if not
+        nf= nx
+      then
+        error("dimensions of f and x are not the same");
+      fi;
+
+    #
+    # calculate derivatives
+    #
+      Result:= Derivs:-f_p(functions, x); 
+
+    return(eval(Result));
+  
+  end; # proc Derivs:-f_x

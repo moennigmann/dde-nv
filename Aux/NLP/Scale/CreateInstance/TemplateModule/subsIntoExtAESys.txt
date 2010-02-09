@@ -1,0 +1,79 @@
+#------------------------------------------------------------
+#
+# @path Aux/NLP/Scale/CreateInstance/TemplateModule/SubsIntoExtAESys.txt
+#
+# @authors mmo, dka
+#
+# @revision
+# 2008-03-06  instead of aSys[...] using aSys["..."] by dka
+# 020929 written by mmo, starting from SubsIntoDAESys
+#
+#------------------------------------------------------------
+subsIntoExtAESys:= proc(
+  anExtAESys::ExtAESys
+)
+
+  local NewSys, FormerODE, NewRhs, i1;
+
+  #
+  # refuse to work on AEs
+  #
+    if not
+      anExtAESys["AEs"]= []
+    then
+      error("use on algebraic equations currently not implemented");
+    end if; 
+  
+  #
+  # Variables in ExtAESys must be the same variables as ranges 
+  # passed to CreateInstance (and same order required)
+  #
+    if not
+      anExtAESys["Variables"]= VarNames
+    then
+      error("instance of NLP:-Scale can only be applied to \"ExtAESys\" which has same \"Variables\" as CreateInstances has received variables");
+    end if; 
+
+  NewSys:= copy(anExtAESys); 
+
+  #
+  # substitute into rhs of EAEs
+  #
+    NewSys["ExplicitAEs"]:= array(1..nops(anExtAESys["ExplicitAEs"]));
+    for i1 from 1 to nops(anExtAESys["ExplicitAEs"]) do
+      NewSys["ExplicitAEs"][i1]:= subs(
+        SubsListScaledToPhys,
+        SubsListScaledParsScaledToPhys, 
+	anExtAESys["ExplicitAEs"][i1]
+      ); 
+    end do;
+    NewSys["ExplicitAEs"]:= convert(
+      NewSys["ExplicitAEs"],
+      list
+    ); 
+
+  #
+  # transform Equations
+  #
+    NewSys["Equations"]:= array(1..nops(anExtAESys["Equations"]));
+    for i1 from 1 to nops(anExtAESys["Equations"]) do
+      FormerODE:= anExtAESys["Equations"][i1];
+      NewRhs:= subs(
+        SubsListScaledToPhys,
+        SubsListScaledParsScaledToPhys, 
+        rhs(FormerODE)
+      ); 
+      NewRhs:= D[i1]* NewRhs; 
+
+      NewSys["Equations"][i1]:= 
+        lhs(FormerODE)= NewRhs; 
+    end do; 
+    NewSys["Equations"]:= convert(
+      NewSys["Equations"],
+      list
+    ); 
+
+  return(eval(NewSys)); 
+
+end proc; 
+

@@ -1,0 +1,107 @@
+#############################################################
+#
+# @path Aux/init.txt
+#
+# @brief local procedure init
+# defines
+#   type/DAESys based listOfErrorsInDAESys
+#   type/NLP based on listOfErrorsInNLP
+#   type/DTASys based listOfErrorsInDTASys
+#   type/EvalsToFloat
+#   type/BCNLP based on type/NLP
+#   type/term
+# when package is invoked
+#
+# @authors mmo, dka
+#
+# @revision
+# 2008-05-15 add type DAESys from ModelPack
+# 2008-03-05 Renamed procedure to listOfErrorsInDTASys
+#   with a lower case l. 
+# 2007-11-21 written by dka
+#
+#############################################################
+init:= proc()
+
+
+  `type/DTASys`:= proc(
+    aDTASys
+  )
+  
+    if 
+      Aux:-SystemClasses:-listOfErrorsInDTASys(aDTASys)= []
+    then
+      return(true);
+    else
+      return(false);
+    end if; 
+  end proc; # type/DTASys
+
+ `type/DAESys`:= proc(
+    aDAESys
+  )
+  
+    if 
+      Aux:-SystemClasses:-listOfErrorsInDAESys(aDAESys)= []
+    then
+      return(true);
+    else
+      return(false);
+    end if; 
+  end proc; # type/DAESys
+
+
+  `type/EvalsToFloat` := proc(
+    a::anything
+  )
+    return type(evalf(a), 'float')
+  end proc;
+
+#  `type/EvalsToComplexFloat` := proc(
+#    a::anything
+#  )
+#    return type(evalf(a), 'complex(float)')
+#  end proc;
+
+
+  `type/NLP` := proc(
+    aSys
+  )
+    local ListOfErrors;
+
+    ListOfErrors := Aux:-SystemClasses:-listOfErrorsInNLP(aSys);
+
+    if
+      ListOfErrors = []
+    then
+      return(true);
+    else
+      return(false);
+    end if;
+
+  end proc; #type/NLP
+
+  `type/BCNLP` := proc(
+    aNLP::table
+  )
+
+    if
+      type(eval(aNLP), NLP)
+    and
+      aNLP[Constraints]=[]
+    and
+      aNLP[LinearConstraints]=[]
+    then
+      return(true);
+    else
+      return(false);
+    end if;
+
+  end proc; #type/NLP
+
+
+  `type/term` := {`+`, `*`, `^`, EvalsToFloat, function, symbol, indexed};
+
+end proc; # init
+
+

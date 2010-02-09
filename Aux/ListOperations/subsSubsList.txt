@@ -1,0 +1,38 @@
+#------------------------------------------------------------
+#
+# @path Aux/ListOperations/subsSubsList.txt
+#
+# @brief Substitute a list of equations that is well defined if
+# passed through in forward directions into the second 
+# parameter. List of equations is given in first parameter.
+#
+# @authors mmo
+#
+# @revision
+# 2007-10-16 Written by M. Moennigmann on the train to the
+#   ProcessNet 2007 conference.
+#
+#------------------------------------------------------------
+subsSubsList:= proc(
+  subsList::list(equation),
+  target
+)
+
+  local res, numEntries, i; 
+
+  #
+  # substitute entries of subsList in reverse
+  # direction
+  #
+  res:= target;
+  numEntries:= nops(subsList); 
+  for i from numEntries to 1 by -1 do
+    res:= subs(
+      subsList[i],
+      res
+    );
+  end do;
+
+  return(res); 
+
+end proc; 

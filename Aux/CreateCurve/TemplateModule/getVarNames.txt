@@ -1,0 +1,11 @@
+#----------------------------------------
+# 
+# @path Aux/CreateCurve/TemplateModule/getVarNames.txt
+#
+# @brief Returns list of names of variables
+#
+#----------------------------------------
+getVarNames:= proc()
+  return(VarNames); 
+end proc; 
+

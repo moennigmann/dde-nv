@@ -1,0 +1,69 @@
+#############################################################
+#
+# @path Aux/SystemClasses/subsExplicitAEsIntoDAESys.txt
+#
+# @brief substitute ExplicitAEs into ODEs and AEs
+#
+# @param aModel
+#
+# @return aModel, equations from list ExplictAEs in aModel
+#   have been substituted into list ODEs and AEs in
+#   aModel
+#
+# @authors mmo, dka
+#
+# @revision
+#   2008-05-15  instead of aSys[...] using aSys["..."] 
+#   2008-05-15 copied from ModelPack by dka
+#   020306 (1) removed check for ODEs and AEs since this
+#     check is done by type check at entry of proc;
+#     (2) speed up proc by not copying aDAESys, copy entries
+#     only which are not changed;
+#   021101 written by mkl and mmo
+#
+#############################################################
+subsExplicitAEsIntoDAESys:= proc(
+  aDAESys::DAESys
+)
+
+  local i1, item, ListOfUnaffectedEntries, 
+    FormerODEs, FormerExplicitAEs, FormerAEs,
+    PositionODEs, PositionExplicitAEs,
+    NewODEs, NewExplicitAEs, NewDAESys, LHSNewDAESys;
+
+  #
+  # substitute ExplicitAEs into ODEs and AEs
+  #
+    NewDAESys:= table();
+
+    #
+    # copy entries of aDAESys which are not changed by 
+    # substitution
+    #
+      ListOfUnaffectedEntries:= map(op, [indices(aDAESys)]);
+      ListOfUnaffectedEntries:= Aux:-ListOperations:-removeItemFromList(
+        ["ExplicitAEs", "ODEs", "AEs"],
+         ListOfUnaffectedEntries
+      ); 
+      for item in ListOfUnaffectedEntries do
+        NewDAESys[item]:= aDAESys[item];
+      end do;
+
+    #
+    # treat entries which are affected by substitution
+    #          
+      NewDAESys["ExplicitAEs"]:=[];
+    
+      NewDAESys["ODEs"]:= Aux:-ListOperations:-subsEqnListIntoEqn(
+        aDAESys["ExplicitAEs"],
+        aDAESys["ODEs"]
+      );
+
+      NewDAESys["AEs"]:= Aux:-ListOperations:-subsEqnListIntoEqn(
+        aDAESys["ExplicitAEs"],
+        aDAESys["AEs"]
+      );
+  
+  RETURN(eval(NewDAESys));
+
+end proc; # SubsExplicitAEsInDAESys

@@ -1,0 +1,42 @@
+#############################################################
+#
+# @path Aux/TranferNlpToGams/renameIndexedNameForGams.txt
+#
+# @brief Renames indexed variable according to the name convention in Gams 
+#
+# @param Name of the parameter that suppose to be renamed
+#
+# @return Renamed parameter according to the name convention in Gams 
+#
+# @notes Remanes as e.g. v[1] to v_1
+#
+# @authors dka
+#
+# @revision
+# 20010-01-08 written by dka
+#
+#############################################################
+renameIndexedNameForGams:= proc(varToRename::name)
+
+   local varToRenameAsString, newVarName;
+
+   #
+   # renames indexed names 
+   # (e.g. [v[1]=v_1, v[1,1]=v_11, v[1][1]=v_1_1, ...)
+   #
+   
+   varToRenameAsString:=convert(varToRename,string);
+   varToRenameAsString:=StringTools[SubstituteAll](varToRenameAsString,"[","_");
+   varToRenameAsString:=StringTools[SubstituteAll](varToRenameAsString,"]","");
+   varToRenameAsString:=StringTools[SubstituteAll](varToRenameAsString,",","");
+   newVarName:= convert(varToRenameAsString,symbol);
+   
+   #
+   # returns the new renamed indexed variable name
+   #    
+
+   RETURN(newVarName);
+
+end proc;
+
+

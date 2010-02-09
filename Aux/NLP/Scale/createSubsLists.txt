@@ -1,0 +1,59 @@
+#------------------------------------------------------------
+#
+# @path Aux/NLP/Scale/CreateSubsLists.txt
+#
+# @brief returns two substitution lists, first 'SubsListPhysToScaled'
+# contains transformation y= Dx- c, second list 
+# 'SubsListScaledToPhys' contains transformation 
+# x= InvD (y+ c)
+#
+# @notes (i) no check is run on whether first arg and 2nd and
+#   3rd arg are compatible, must be ensured by calling proc; 
+#
+# @authors mmo
+#
+# @revision
+# 2008-03-05 moved from ModelPack by dka
+# 021002 written by mmo
+#------------------------------------------------------------
+  createSubsLists:= proc(
+    VarNames, 
+    D::vector,
+    c::vector
+  )
+
+    local SubsListPhysToScaled, SubsListScaledToPhys, i1, NewItem,
+      NumRanges; 
+
+    #
+    # calculate substitution lists
+    #
+    # SubsListPhysToScaled refers to y= Dx- c
+    # SubsListScaledToPhys refers to x= InvD* (y+ c)
+    #
+      NumRanges:= nops(VarNames); 
+
+      SubsListPhysToScaled:= []:
+      for i1 from 1 to NumRanges do
+        NewItem:= VarNames[i1]= D[i1]* VarNames[i1]- c[i1];
+        SubsListPhysToScaled:= [
+	  op(SubsListPhysToScaled),
+	  NewItem
+	];
+      end do; 
+
+      SubsListScaledToPhys:= []:
+      for i1 from 1 to NumRanges do
+        NewItem:= VarNames[i1]= 1/D[i1]* (VarNames[i1]+ c[i1]);
+        SubsListScaledToPhys:= [
+	  op(SubsListScaledToPhys),
+	  NewItem
+	];
+      end do; 
+
+    return(
+      [SubsListPhysToScaled, SubsListScaledToPhys]
+    ); 
+
+  end proc; # createSubsLists
+

@@ -1,0 +1,73 @@
+###################################################################################
+# @path Aux/Deriv/f_xx.txt
+#
+# @brief Calculates second order derivative f_xx
+#
+# @authors mmo, dka
+#
+# @notes
+#   if first argument is of type equation, rhs of equations are processed 
+#
+##################################################################################
+  f_xx:= proc(
+    Functions::{
+      Vector,
+      list({term, equation})
+    },
+    Vars::{Vector, list}
+  )
+
+    local i1, i2, i3, f, x, fxx, nx, nf, SetOfLHSs;
+
+    #
+    # convert Functions, Vars to standard type list
+    #
+      if
+        type(Functions, Vector)
+      then
+        f:= convert(Functions, list);
+      elif
+        type(Functions, list(equation))
+      then
+        f:= map(rhs, Functions);
+      else
+        f:= Functions;
+      end if;
+
+      if
+        type(Vars, Vector)
+      then
+        x:= convert(Vars, list);
+      else
+        x:= Vars;
+      end if;
+
+    #
+    # Functions and Vars must have same number of entries
+    #
+      nx:= nops(x);
+      nf:= nops(f);
+
+      if not
+        nops(f)= nops(x)
+      then
+        error("dimensions of f and x are not the same");
+      fi;
+
+    #
+    # calculate derivatives
+    #
+      fxx:= array(1..nx, 1..nx, 1..nx); 
+  
+      for i1 from 1 to nx do
+        for i2 from 1 to nx do
+          for i3 from 1 to nx do
+            fxx[i1, i2, i3]:= diff(f[i1], x[i2], x[i3])
+          end do; 
+        end do; 
+      end do; 
+  
+    return(eval(fxx));
+  
+  end; # proc Derivs:-f_xx
+  

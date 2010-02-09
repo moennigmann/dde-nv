@@ -1,0 +1,23 @@
+#------------------------------------------------------------
+#
+# @path Aux/Programming.txt
+#
+# @brief Module collects silly auxiliary procedures used repeatedly
+# when programming in maple.
+#
+# @authors mmo
+#
+# @revision
+# 2008-01-04 Written by mmo.
+#
+#------------------------------------------------------------
+Programming:= module()
+
+  export
+    createHeader,
+    printCompileOptions; 
+
+$include<Programming/createHeader.txt>
+$include<Programming/printCompileOptions.txt>
+
+end module; 

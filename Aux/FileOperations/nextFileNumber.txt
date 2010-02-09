@@ -1,0 +1,42 @@
+#############################################################
+#
+# @path Aux/FileOperations/NextFileNumber.txt
+#
+# @param aString
+#
+# @brief existence of file aString.<number> is tested
+#    where number runs through integers >= 1
+#
+# @return above integer number
+#
+# @notes  aString may contain a path; if the path does not
+#    exist number= 1 is returned; make sure
+#    existence is checked separately using
+#    procedure DirExists
+#
+# @authors mmo
+#
+# @revision
+# xxxxxx written by mmo
+#
+#############################################################
+nextFileNumber:= proc(
+   aString::string
+ )
+
+  local i1, testForDir;
+
+  i1:= 1;
+
+  while
+    fileExists(
+      cat(aString, ".", i1
+      )
+    )
+  do
+    i1:= i1+ 1;
+  end do;
+
+  RETURN(i1);
+
+end proc; #nextFileNumber

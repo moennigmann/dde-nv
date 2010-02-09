@@ -1,0 +1,28 @@
+#------------------------------------------------------------
+#
+# @path Aux/NLP.txt
+#
+# @brief Collects procedures and modules that related to NLP 
+#
+# @authors mmo, dka
+#
+# @revision
+# 2008-03-05 created from ModelPack by dka
+# 
+#------------------------------------------------------------
+NLP:= module()
+
+  export
+    newNLP,
+    parToVarInNLP,
+    Scale,
+    subsStandardNotationIntoNLP; 
+
+$include <NLP/newNLP.txt>
+$include <NLP/parToVarInNLP.txt>
+$include <NLP/Scale.txt>
+$include <NLP/subsStandardNotationIntoNLP.txt>
+
+
+end module; 
+ 

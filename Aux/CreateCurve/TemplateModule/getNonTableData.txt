@@ -1,0 +1,20 @@
+#----------------------------------------
+# 
+# @path Aux/CreateCurve/TemplateModule/getNonTableData.txt
+#
+# @brief returns data that was passed to constructor in 2nd argument
+#
+# @authors mmo
+#
+# @revision
+# 021018 written by mmo
+#
+#----------------------------------------
+  getNonTableData:= proc(
+  )
+
+    return(ExtraData); 
+
+  end proc; # getNonTableData
+  
+

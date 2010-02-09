@@ -1,0 +1,21 @@
+#------------------------------------------------------------
+#
+# @path Aux/NLP/Scale/CreateInstance/TemplateModule/GetSubsListScaledToPhys
+#
+# @revision
+# 021002 added substitutions for scaled parameters
+#
+#------------------------------------------------------------
+      getSubsListScaledToPhys:= proc()
+        local tmp;
+
+        tmp:= [
+          op(SubsListScaledToPhys),
+          op(SubsListScaledParsScaledToPhys)
+        ]; 
+
+        return(tmp); 
+
+      end proc; # getSubsList
+
+

@@ -1,0 +1,60 @@
+###############################################################################
+#
+# @path Aux/FileOperations/FindObjectFile.txt
+#
+# @brief For file list with entries without file extension, returns two lists,
+#   first contains those for which <file>.o exists, second all others;
+#   In second list there are no file extensions
+#
+# @authors mmo
+#
+# @revision
+# 2008-03-05 by dka moved from ModelPack
+# 040527 for windows systems Object files may end with ".obj"
+# 030318 written by mmo
+#
+###############################################################################
+findObjectFile:= proc(
+  Filelist::list(string)
+)
+
+  local OtherFiles, ObjectFiles, OldDir, item, Path, File;
+
+  OtherFiles:= []:
+  ObjectFiles:= []:
+
+  OldDir:= currentdir();
+  #
+  # loop over names in file list, check whether object
+  #   file exists
+  #
+    for item in Filelist do
+      Path, File:= splitPathAndFile(item);
+      try
+        currentdir(Path);
+        if
+          fileExists(
+            cat(File, ".o")
+          )
+        then
+          ObjectFiles:= [op(ObjectFiles), cat(Path, File, ".o")]:
+        elif
+          fileExists(
+            cat(File, ".obj")
+          )
+        then
+          ObjectFiles:= [op(ObjectFiles), cat(Path, File, ".obj")]:
+	else  
+          OtherFiles:= [op(OtherFiles), item]:
+        end if; 
+      catch:
+        error;
+      finally
+        currentdir(OldDir);
+      end try; 
+
+    end do;
+
+  return(ObjectFiles, OtherFiles);
+
+end proc: 

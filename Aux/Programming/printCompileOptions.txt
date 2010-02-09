@@ -1,0 +1,50 @@
+#------------------------------------------------------------
+#
+# @path Aux/Programming/printCompileOptions.txt
+#
+# @brief Prints compiler and linker options of the define_external
+# interface to the screen.
+#
+# @authors mmo
+#
+# @revision
+# 2007-12-29 Written by M. Moennigmann
+#
+#------------------------------------------------------------
+printCompileOptions:= proc()
+  local compileOptions;
+
+  #
+  # extract compiler and linker options
+  #
+  compileOptions:= define_external('COMPILE_OPTIONS');
+
+  #
+  # print options to screen
+  #
+  printf("compileOptions:-COMPILER:=          %q\n", compileOptions:-COMPILER);
+  printf("compileOptions:-CFLAGS:=            %q\n", compileOptions:-CFLAGS);
+  printf("compileOptions:-COMPILE_ONLY_FLAG:= %q\n", compileOptions:-COMPILE_ONLY_FLAG);
+  printf("compileOptions:-INC_FLAG:=          %q\n", compileOptions:-INC_FLAG);
+  printf("compileOptions:-COBJ_FLAG:=         %q\n", compileOptions:-COBJ_FLAG);
+  printf("compileOptions:-FILE:=              %q\n", compileOptions:-FILE);
+  printf("compileOptions:-FILE_EXT:=          %q\n", compileOptions:-FILE_EXT);
+  printf("compileOptions:-INC_PATH:=          %q\n", compileOptions:-INC_PATH);
+  printf("compileOptions:-OBJ_EXT:=           %q\n", compileOptions:-OBJ_EXT);
+  printf("compileOptions:-COMPILE_COMMAND:=   %q\n", compileOptions:-COMPILE_COMMAND);
+  printf("compileOptions:-LINKER:=            %q\n", compileOptions:-LINKER);
+  printf("compileOptions:-LINK_FLAGS:=        %q\n", compileOptions:-LINK_FLAGS);
+  printf("compileOptions:-LIB_PATH:=          %q\n", compileOptions:-LIB_PATH);
+  printf("compileOptions:-DLL_EXT:=           %q\n", compileOptions:-DLL_EXT);
+  printf("compileOptions:-SYS_LIBS:=          %q\n", compileOptions:-SYS_LIBS);
+  printf("compileOptions:-LIB:=               %q\n", compileOptions:-LIB);
+  printf("compileOptions:-LIBS:=              %q\n", compileOptions:-LIBS); 
+  printf("compileOptions:-LIB_FLAG:=          %q\n", compileOptions:-LIB_FLAG);
+  printf("compileOptions:-LOBJ_FLAG:=         %q\n", compileOptions:-LOBJ_FLAG);
+  printf("compileOptions:-EXPORT_FLAG:=       %q\n", compileOptions:-EXPORT_FLAG);
+  printf("compileOptions:-FUNCTION:=          %q\n", compileOptions:-FUNCTION);
+  printf("compileOptions:-LINK_COMMAND:=      %q\n", compileOptions:-LINK_COMMAND);
+
+  return();
+
+end proc; 

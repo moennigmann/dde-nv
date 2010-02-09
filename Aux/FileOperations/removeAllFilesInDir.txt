@@ -1,0 +1,42 @@
+#############################################################
+#
+# @path Aux/FileOperations/RemoveAllFilesInDir.txt
+#
+# @param aString, contains name of directory to be
+#   deleted
+#
+# @return none, side-effect: dir of name aString is removed,
+#   so are all files in it
+#
+# @notes system dependent, solaris only
+#
+# @authors mmo
+#
+# @revision
+# 021122 added "/.[a-zA-Z0-9]*"
+# xxxxxx written by mmo
+#
+#############################################################
+removeAllFilesInDir:= proc(
+   aString::string
+)
+
+  local SystemCommand, SystemCommandOk;
+
+  #
+  # create unix command
+  #
+    SystemCommand:= cat(
+      "rm -fr ", aString, "/* ", aString, "/.[a-zA-Z0-9]*"
+    );
+
+  SystemCommandOk:= system(SystemCommand);
+
+  if not
+    SystemCommandOk= 0 
+  then
+    error("removing all files in %1 was not successful", aString);
+  end if; 
+  
+end proc; #removeAllFilesInDir
+

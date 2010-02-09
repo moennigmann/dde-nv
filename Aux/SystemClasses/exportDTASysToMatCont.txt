@@ -1,0 +1,54 @@
+#############################################################
+#
+# @path Aux/SystemClasses/exportDTASysToMatCont.txt
+#
+# @brief Generate C code for MatCont of given DTASys 
+#
+# @param DTASys
+#
+# @return system translated to C code, list of parameters\
+#  and independent vars of model
+#
+# @notes (i) uses subsExplicitAlgEqnsIntoDTASys
+#        (ii) output system can be substituted to MatCont software
+#
+# @authors dka
+#
+# @revision
+# 2008-03-06  instead of aSys[...] using aSys["..."] 
+# 2008-02-28 rename by dka from ExportDTASysToMatCont to exportDTASysToMatCont
+# 2007-12-14 written by dka
+#
+#############################################################
+exportDTASysToMatCont:= proc(aSys::table)
+
+   local EqnsToBeExported, DESys, eqns, i;
+
+   #
+   # substitute equations from list ExplictAlgEqns into list DynEqns
+   #
+    
+   DESys := Aux:-SystemClasses:-subsExplicitAlgEqnsIntoDTASys(aSys);   
+
+   #
+   # add to lhs of DynEqns apostrophe of derivatives
+   #     
+   
+   eqns := DESys["DynEqns"];
+   EqnsToBeExported := eqns; 
+   for i from 1 to nops(eqns) do 
+     EqnsToBeExported[i] := convert(StringTools[Join]([convert(lhs(eqns[i]), string), "'"], ""), name) = rhs(eqns[i]);
+   end do;
+
+   #
+   # return DynEqns of model translated
+   # to C code and list of parameters and independents
+   # of model
+   #
+   RETURN([codegen[C](EqnsToBeExported), 
+           cat("Coordinates=", DESys["DynVars"]), 
+           cat("Parameters=", map(lhs, DESys["Parameters"]))]);
+
+ end proc; # exportDTASysToMatCont
+
+

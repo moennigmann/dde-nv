@@ -1,0 +1,53 @@
+#----------------------------------------
+# 
+# @path Aux/CreateCurve/TemplateModule/CreatePS.txt
+#
+# @brief creates postscript for requested plot and writes to file
+#
+# @authors mmo
+#
+# @revision
+# xxxxxx written by mmo
+#
+#----------------------------------------
+      createPS:= proc(
+        xName::name,
+        yName::{name, list(name)},
+        FileName::string
+        # note that additional arguments are
+        # passed to plots[pointplot]
+      )
+
+        local p; 
+
+        #
+        # requested output file must not exist
+        #
+          if
+            Aux:-FileOperations:-fileExists(FileName)
+          then
+            error("file %1 already exists", FileName); 
+          end if; 
+
+        #
+        # create plot
+        #
+          p:= getPlot(
+            args[1..2],
+            args[4..nargs]
+          ); 
+
+        #
+        # send plot to postscript file
+        #
+          plotsetup(
+            ps,
+            plotoutput= FileName
+          );
+          print(p); 
+          plotsetup(default); 
+
+        return();
+
+    end proc; # createPS
+

@@ -1,0 +1,45 @@
+###############################################################################
+#
+# @path Aux/TensProd.txt
+#
+# @brief Collects procedures for tensor calculating
+#
+# @notes
+#   (1) procs which return 2 or higher dimensional objects return objects
+#   of type array; one-dim objects are returned as lists 
+#
+# @authors mmo, dka
+#
+# @revision
+# 2008-11-19 splited procedures into separate files by dka
+# 2008-02-28 changed by dka, NumRows, NumCols calculating without using LinearAlgebra
+# 2007-12-20 changed by dka, using instead of linalg LinearAlgebra
+# xxxxxx written by mmo
+#
+###############################################################################
+TensProd:= module()
+
+   export
+     Tijk_xj,
+     Tijk_Akl,
+     Trans_Tijk_Tikj,
+     Sij_Tjk, 
+     Tij_xj, 
+     Aij_xj, 
+     xi_Tij, 
+     xi_Aij, 
+     xi_Tij_yj, 
+     xi_Aij_yj;
+
+$include <TensProd/Tijk_xj.txt>
+$include <TensProd/Tijk_Akl.txt>
+$include <TensProd/Trans_Tijk_Tikj.txt>
+$include <TensProd/Sij_Tjk.txt>
+$include <TensProd/Tij_xj.txt>
+$include <TensProd/Aij_xj.txt>
+$include <TensProd/xi_Tij.txt>
+$include <TensProd/xi_Aij.txt>
+$include <TensProd/xi_Tij_yj.txt>
+$include <TensProd/xi_Aij_yj.txt>
+
+  end module;#TenProd

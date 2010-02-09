@@ -1,0 +1,253 @@
+##############################################################################
+#
+# @path Aux/SystemClasses/ListOfErrorsInNLP.txt
+#
+# @brief Generate list of errors in definition of NLP
+#
+# @param table
+#
+# @return list of errors in table with respect to NLP definition
+#
+# @notes
+#   NLP is defined as follows:
+#   table must contain entries
+#     ExplicitAEs::list(name= term) (new as of 021124)
+#     Constraints:: list({0 < term,0 = term})
+#     LinearConstraints:: list({0 < term, 0 = term})
+#     Parameters:: list(name=EvalsToFloat)
+#     Variables:: list(name=EvalsToFloat..EvalsToFloat)
+#     CostFunction:: [term]
+#   empty lists generally allowed, but
+#     Constraints, LinearConstraints and CostFunction must not be empty
+#     at the same time.
+#     Variables must not be empty.
+#   entries in Constraints and LinearConstraints must not be of form
+#     0 > term, term > 0, or term < 0
+#   entries in Constraints, LinearConstraints and CostFunction
+#     must be well defined: no indets apart from Parameters, Variables must
+#     occur in expressions
+#   warning printed to screen if obsolete expressions exist
+#   symbols which occur must not be Parameter and Variable
+#     at the same time
+#   entries in LinearConstraints really have to be linear
+#   warning printed to screen if there are linear entries in Constraints
+#
+# @authors mmo, dka
+#
+# @revision
+#   2008-03-06  instead of aSys[...] using aSys["..."]  by dka
+#   030318 LinearConstraints may now be of type []
+#   021210 do no type check on entry, this avoids error throwing in
+#     a:=1; type(a, NLP);, for example; added shortcut which tests
+#     for type table;
+#   021124 )i) split procedure in two parts, part one is used for type
+#     definition, part two runs expensive checks, some of which are
+#     recursive, part two is run by ListOfErrorsInNlpPart2 which is
+#     local to ModelPack and can only be accessed by calling present
+#     procedure with optional argument long, all, or strict;
+#     (ii) added entry ExplicitAEs, added checks for this entry to
+#     both ListOfErrorsInNLP and ListOfErrorsInNlpPart2;  
+#   010504 LinearConstraints, Constraints, CostFunction, Parameters,
+#     Variables now are mandadoty indices of anNLP which may, however,
+#     be empty; 
+#   010424 added one more rule
+#   010423 updated type NLP with new convention, see description above
+#   010417 added some comments,
+#     changed required form of entry CostFunction from
+#     name= term into [term],
+#     moved creation of SetOfVariables and SetOfValidExpr
+#     to point at which existence of needed entries of first argument 
+#     has already been checked,
+#     corrected bug in determination of obsolete expressions,
+#     changed required type of entry Variables form list(name) to
+#     list(name= EvalsToFloat..EvalsToFloat) - mmo
+#   010411 written by mho and mmo
+#
+##############################################################################
+listOfErrorsInNLP:= proc(
+  Sys # do no check here, see rev his 021210
+)
+
+   local ListOfErrors, SetOfMissingIndices; 
+
+   #
+   # shortcut if Sys is not of type table
+   #
+     if not
+       type(Sys, table)
+     then
+       ListOfErrors:= ["instance of NLP is expected to be of type table"]; 
+       return(ListOfErrors);
+     end if; 
+
+   ListOfErrors:= [];
+
+  #------------------------------------------------------------
+  #
+  # check whether lists LinearConstraints, Constraints,
+  # Variables, Parameters and CostFunction exist and have
+  # correct type
+  #
+  #------------------------------------------------------------
+   #
+   # check existence of mandatory indices
+   #
+     SetOfMissingIndices := {
+       ["ExplicitAEs"], 
+       ["LinearConstraints"],
+       ["Constraints"],
+       ["CostFunction"],
+       ["Parameters"],
+       ["Variables"]}
+       minus {indices(Sys)};
+
+     if not
+       SetOfMissingIndices = {}
+     then
+       ListOfErrors:= [
+         op(ListOfErrors), 
+         cat(
+           "entries", op(SetOfMissingIndices), "missing in NLP"
+         )
+       ];
+       RETURN(ListOfErrors);
+     end if;
+
+   #
+   # at least one of
+   # ["LinearConstraints"], ["Constraints"], ["CostFunction"] must be non-emtpy 
+   #
+     if(
+       (Sys["LinearConstraints"] = []) and
+       (Sys["Constraints"] = []) and
+       (Sys["CostFunction"] = []))
+     then
+       ListOfErrors:=[
+         op(ListOfErrors),
+         cat(
+           "at least one \"LinearConstraint\" or one \"Constraint\" or the ",
+           "\"CostFunction\" must be given"
+         )
+       ];
+       RETURN(ListOfErrors);
+     end if;
+
+   #
+   # entry ["Variables"] must not be empty
+   #
+     if
+       Sys["Variables"] = []
+     then
+       ListOfErrors:=[
+         op(ListOfErrors),
+         "List of variables must not be empty"
+       ];
+       RETURN(ListOfErrors);
+     end if;
+
+   #------------------------------------------------------------
+   #
+   # check type of entries in NLP 
+   #
+   #------------------------------------------------------------
+     if not
+       type(Sys["ExplicitAEs"], list(name= term))
+     then
+       ListOfErrors:=[
+         op(ListOfErrors),
+         cat(
+           "entry \"ExplicitAEs\" must be a list with expressions ",
+           "of form 0<term or 0=term; it may be empty"
+         )
+       ];
+       RETURN(ListOfErrors);
+     end if;
+
+     if not
+       type(Sys["LinearConstraints"], {[], list({0 < term, 0 = term})})
+     then
+       ListOfErrors:=[
+         op(ListOfErrors),
+         cat(
+           "entry \"LinearConstraints\" must be a list with expressions ",
+           "of form 0<term or 0=term; it may be empty"
+         )
+       ];
+       RETURN(ListOfErrors);
+     end if;
+
+     if not
+       type(Sys["Constraints"], list({0 < term, 0 = term}))
+     then
+       ListOfErrors:=[
+         op(ListOfErrors),
+         cat(
+           "entry \"Constraints\" must be a list with expressions of form ", 
+           "0<term or 0=term; it may be empty"
+         )
+       ];
+       RETURN(ListOfErrors);
+     end if;
+
+     if not
+       type(Sys["Variables"], list(name= EvalsToFloat..EvalsToFloat))
+     then
+       ListOfErrors:= [op(ListOfErrors),
+       "entry \"Variables\" must be a list with expressions of type name= EvalsToFloat..EvalsToFloat"
+       ];
+       RETURN(ListOfErrors);
+     end if;
+
+     if not (
+       type(Sys["Parameters"], list(name=EvalsToFloat)))
+     then
+       ListOfErrors:= [
+       op(ListOfErrors),
+       "entry \"Parameters\" must be a list of expressions of form name= EvalsToFloat"
+       ]
+     end if;
+
+     if not
+       type(Sys["CostFunction"], {[], [term]})
+     then
+       ListOfErrors:= [
+       op(ListOfErrors),
+       "entry \"CostFunction\" must be a list with one entry of the form [term]"
+       ]
+     end if;
+
+  #------------------------------------------------------------
+  #
+  # if errors were found, even if ListOfErrorsInNlpPart2 
+  # was requested
+  #
+  #------------------------------------------------------------
+    if not
+      ListOfErrors= []
+    then
+      return(ListOfErrors);
+    end if; 
+
+  #------------------------------------------------------------
+  #
+  # if optional argument 'long', 'all', 'strict' was
+  # specified, call ListOfErrorsInNlpPart2
+  #
+  #------------------------------------------------------------
+    if 
+      nargs>1
+    then
+      if 
+        args[2]= 'long' or
+        args[2]= 'all' or
+        args[2]= 'strict' 
+      then
+        ListOfErrors:= listOfErrorsInNlpPart2(
+          Sys
+        );
+      end if;
+    end if; 
+
+  return(ListOfErrors); 
+
+end proc; # listOfErrorsInNLP

@@ -1,0 +1,80 @@
+###############################################################################
+#
+# @path Aux/TensProd/Sij_Tjk.txt
+#
+# @brief return product Sij_Tjk of Matrix
+#
+# @param
+#   Amat, Matrix or array;
+#   Bmat,Matrix or array  
+#     passed in first argument
+#
+# @return
+#   returned result is of type array
+#
+# @authors mmo, dka
+#
+# @revision
+#   010811 changed type check for 2-dim arrays from "array" to
+#     "{'array'(2), 'array'(1)}"
+#   010517 written by mmo, using code from makefile-based nld software
+#
+###############################################################################
+     Sij_Tjk:= proc(
+       Amat::{Matrix, 'array'(2)}, 
+       Bmat::{Matrix, 'array'(2), 'array'(1)}
+     )
+
+       local i,j,k, A, B, NumRowsA, NumColsA, NumRowsB, NumColsB,
+         Sij_tjkInstance;
+
+        #
+        # convert to standard types
+        #
+         if not
+           type(Amat, Matrix)
+         then
+           A:= convert(Amat, Matrix);
+         else
+           A:= Amat;
+         end if;
+
+         if not
+           type(Bmat, Matrix)
+         then
+           B:= convert(Bmat, Matrix);
+         else
+           B:= Bmat;
+         end if;
+
+       #
+       # rowdim of B must be equal to coldim of A
+       #
+         NumRowsA:= nops(convert(A,listlist));
+         NumColsA:= nops(convert(A,listlist)[1]);
+         NumRowsB:= nops(convert(B,listlist));
+         NumColsB:=nops(convert(B,listlist)[1]);;
+
+         if not
+           NumColsA= NumRowsB
+         then
+           error("incompatible dimensions of 1st and 2nd argument"); 
+         end if; 
+
+       #
+       # calculate sum
+       #
+          Sij_tjkInstance:= array(1..NumRowsA,1..NumColsB);
+
+         for i from 1 to NumRowsA do
+           for j from 1 to NumColsB do
+             Sij_tjkInstance[i,j]:= add(
+               A[i, k]* B[k,j],
+               k= 1..NumColsA
+             );
+           end do;
+         end do;
+  
+       return(eval(Sij_tjkInstance)); 
+  
+     end proc; # TensProd:-Sij_Tjk

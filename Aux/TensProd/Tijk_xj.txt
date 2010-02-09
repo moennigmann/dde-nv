@@ -1,0 +1,57 @@
+########################################################################
+#
+# @path Aux/TensProd/Tijk_xj.txt
+#
+# @brief Calculates tensor Tijk_xj
+#
+########################################################################
+    Tijk_xj:= proc(
+      Amat::'array'(3), 
+      xVec::{list, Vector}
+    )
+
+      local x, ListOfArrayRanges, LengthOfVec, Result, i1, i2, i3; 
+
+      #
+      # convert to standard types
+      #
+        if not
+          type(xVec, Vector)
+        then
+          x:= convert(xVec, Vector);
+        else
+          x:= xVec;
+        end if;
+
+      #
+      # length of x must be in accordance with dim of T
+      #
+
+        ListOfArrayRanges:= op(2, eval(Amat));
+        LengthOfVec:= nops(convert(x,list));
+
+        if not
+          op(2, ListOfArrayRanges[2])= LengthOfVec
+        then
+          error("incompatible dimensions of 1st and 2nd argument"); 
+        end if; 
+
+      #
+      # calculate sum
+      #
+        Result:= array(
+          ListOfArrayRanges[1], ListOfArrayRanges[3]
+        );
+
+        for i1 from 1 to op(2, ListOfArrayRanges[1]) do
+          for i3 from 1 to op(2, ListOfArrayRanges[3]) do
+            Result[i1, i3]:= add(
+              Amat[i1, i2, i3]* x[i2], 
+              i2= 1..LengthOfVec
+            );
+          end do;
+        end do; 
+      
+      return(eval(Result)); 
+  
+    end proc; # TensProd:-Tijk_xj 

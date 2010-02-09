@@ -1,0 +1,83 @@
+########################################################################
+#
+# @path Aux/LinearEqns/isLinearIn.txt
+#
+# @brief Returns true if input expression is linear, false else.
+#
+# @param (i) One of: {RHS,
+#                   RHS=RHS,
+#                   [RHS=RHS, RHS=RHS, ..., RHS=RHS]
+#                  },
+#          where RHS is an expression containing arithmetic operations,
+#                     functions, constants, and variables.
+#        (ii) List of Vars in which linearity shall be tested.
+#
+# @return Returns true if input expression is linear, false else.
+#
+# @notes (i) Linear terms are converted into Ax=b for use in NPSOL.
+#   NPSOL expects A, b to be matrix/vector of floats. In particular
+#   A, b must not depend on Parameters. See NPSOL/ToDo.txt entry
+#   021217. 
+# (ii) some examples are in 021015/TestIsLinearIn/TestIsLinearIn.mws
+#
+# @authors mmo
+#
+# @revision
+#   021217 DEFINITION OF LINEARITY HAS BECOME STRICTER (motivated by 
+#     use with NPSOL): In order to be considered linear in Vars, 
+#     term must not depend
+#     on any other indets than those given in Vars. (This is not 
+#     implemented in type(..., linear(...)). Explicit check
+#     for dependency on other indets necessary, since 
+#     type(a+b, linear(b)) returns true.) See note (i) for comment
+#     on necessecity of stricter test for linearity. 
+#   021217 edited some comments
+#   021125 edited some comments only 
+#   010412 vars are no longer added to each equation before check is done
+#     as this resulted in 'false' for an equation which was exactely
+#     the sum over vars - mmo
+#   01xxxx written by mho and mmo
+#
+###########################################################################
+  isLinearIn:=proc(
+    ListOfRHS, Vars
+  )
+
+    local item, summand, ListOfIndets, SetOfIndets, VarsAsSet;
+
+    VarsAsSet:= convert(Vars, set); 
+
+    for item in ListOfRHS do 
+
+      #
+      # term is linear only if it does not depend on any
+      # other indets than Vars
+      #
+        ListOfIndets:= Aux:-ListOperations:-getListOfIndetsIn(
+          item
+        );
+        SetOfIndets:= convert(ListOfIndets, set);
+         
+        if not
+          SetOfIndets minus VarsAsSet= {}
+        then
+          return(false);
+        end if; 
+
+      #
+      # term is linear if (it is linear in Vars or
+      # evaluates to float)
+      #
+        if 
+          not type(item, linear(Vars))
+          and not type(item, EvalsToFloat)
+        then
+          return false;
+        end if;
+  
+    end do;
+  
+    return true;
+
+  end proc; # isLinearIn;
+

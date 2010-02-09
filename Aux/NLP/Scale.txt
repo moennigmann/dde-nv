@@ -1,0 +1,29 @@
+#------------------------------------------------------------
+#
+# @path Aux/NLP/Scale.txt
+#
+# @brief Collects procedures for rescaling NLP
+#
+# @authors mmo, dka
+#
+# @revision
+# 2008-03-05 created from ModelPack by dka
+# 
+#------------------------------------------------------------
+Scale:= module()
+
+  export
+    calcc,
+    calcD,
+    CreateInstanceForNLP,
+    createSubsLists,
+    replaceInfiniteRangesByTrivialRanges; 
+
+$include <NLP/Scale/calcc.txt>
+$include <NLP/Scale/calcD.txt>
+$include <NLP/Scale/CreateInstanceForNLP.txt>
+$include <NLP/Scale/createSubsLists.txt>
+$include <NLP/Scale/replaceInfiniteRangesByTrivialRanges.txt>
+
+end module; 
+ 

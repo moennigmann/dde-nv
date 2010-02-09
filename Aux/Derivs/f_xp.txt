@@ -1,0 +1,85 @@
+######################################################################################
+#
+# @path Aux/Deriv/f_xp.txt
+#
+# @brief Calculates second order derivative f_xp
+#
+# @notes
+#   if first argument is of type equation, rhs of equations are processed
+#
+# @authors mmo, dka
+#
+# @revision
+#  010613 paste, copy and modify from f_xx procedure by rgr
+#
+######################################################################################
+  f_xp:= proc(
+    Functions::{
+      Vector,
+      list({term, equation})
+    },
+    Vars::{Vector, list},
+    Pars::{Vector, list}
+  )
+
+    local i1, i2, i3, f, x, p, fxp, nx, nf, np, SetOfLHSs;
+
+    #
+    # convert Functions, Vars, Pars to standard type list
+    #
+      if
+        type(Functions, Vector)
+      then
+        f:= convert(Functions, list);
+      elif
+        type(Functions, list(equation))
+      then
+        f:= map(rhs, Functions);
+      else
+        f:= Functions;
+      end if;
+
+      if
+        type(Vars, Vector)
+      then
+        x:= convert(Vars, list);
+      else
+        x:= Vars;
+      end if;
+
+      if
+        type(Pars, Vector)
+      then
+        p:= convert(Pars, list);
+      else
+        p:= Pars;
+      end if;
+    #
+    # Functions and Vars must have same number of entries
+    #
+      nx:= nops(x);
+      nf:= nops(f);
+      np:= nops(p);
+
+      if not
+        nops(f)= nops(x)
+      then
+        error("dimensions of f and x are not the same");
+      fi;
+
+    #
+    # calculate derivatives
+    #
+      fxp:= array(1..nx, 1..nx, 1..np); 
+  
+      for i1 from 1 to nx do
+        for i2 from 1 to nx do
+          for i3 from 1 to np do
+            fxp[i1, i2, i3]:= diff(f[i1], x[i2], p[i3])
+          end do; 
+        end do; 
+      end do; 
+  
+    return(eval(fxp));
+  
+  end; # proc Derivs:-f_xp 

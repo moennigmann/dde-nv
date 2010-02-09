@@ -1,0 +1,93 @@
+#############################################################
+#
+# @path Aux/ListOperations/getObsolExprInList.txt
+#
+# @param  aListOfNames = name
+#  OR aListOfNames = list of names
+#  aListOfEquations = equation
+#  OR aListOfEquations = list of equations
+#
+# @return list of indets in aListOfNames that
+#  do not appear on the RHS of any equation in
+#  aListOfEquations.
+#
+# @authors mmo, dka
+#
+# @revision
+#   2008-02-28 renamed from GetObsolExprInList to getObsolExprInList
+#   010830 allowed for type list({name, name= EvalsToFloat}) 
+#     in first argument - mmo
+#
+#############################################################
+getObsolExprInList:=proc(
+  aListOfNames::{name, list({name, name= anything})},
+  aListOfEquations::{equation, list(equation)}
+)
+
+  local ListOfNames, ListOfEquations, ListOfRHSs, 
+    IndetsOfRHSs, ObsolExpr, i1, item; 
+
+  #
+  # put aListOfNames into generic format list(name)
+  #
+    if 
+      type(aListOfNames, name) 
+    then
+       ListOfNames := [aListOfNames];
+
+    elif 
+      type(aListOfNames, list(name))
+    then
+       ListOfNames := aListOfNames;
+
+    else
+      ListOfNames:= []:
+
+      for item in aListOfNames do
+        if
+          type(item, name)
+        then
+          ListOfNames:= [op(ListOfNames), item];
+        else
+          ListOfNames:= [op(ListOfNames), lhs(item)];
+        end if; 
+      end do; 
+          
+    end if; 
+
+  #
+  # put aListOfEquations into generic format list(equation)
+  #
+    if type(aListOfEquations, equation) then
+       ListOfEquations := [aListOfEquations];
+
+    elif type(aListOfEquations, list(equation)) then
+       ListOfEquations := aListOfEquations;
+
+    end if; 
+
+  ListOfRHSs := map(rhs, ListOfEquations);
+
+  #
+  # Check whether names in ListOfNames appear again in ListOfRHSs
+  #
+    IndetsOfRHSs := getListOfIndetsIn(ListOfRHSs);
+
+    ObsolExpr := [];
+
+    for i1 from 1 to nops(ListOfNames) do
+
+      if
+ member(ListOfNames[i1], IndetsOfRHSs)
+      then
+ next;
+      else
+ ObsolExpr := [op(ObsolExpr),ListOfNames[i1]];
+      end if; 
+
+    end do; 
+
+  RETURN(ObsolExpr);
+
+end proc; # getObsolExprInList
+

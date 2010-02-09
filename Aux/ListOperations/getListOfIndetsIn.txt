@@ -1,0 +1,119 @@
+#############################################################
+#
+# @path Aux/ListOperations/getListOfIndetsIn.txt
+#
+# @param anEqn, by default an equation,
+#    procedure will also execute if anEqn is of
+#    maple type anything
+#
+# @return list of maple indets in anEqn
+#
+# @brief procedure replaces
+#    functions and powers which are maple indets by the
+#    maple indets of their arguments
+#
+# @authors mmo, dka
+#
+# @revision
+# 2008-02-28 renamed by dka from GetListOfIndetsIn to getListOfIndetsIn
+# xxxxxx written by mmo
+#
+#############################################################
+getListOfIndetsIn:= proc(
+  anEqn::{equation, anything}
+)
+
+local listOfIndets, i1, currentItemInList, newItemsOfList,
+  ArgumentOfFunction,
+  Exponent;
+
+  #
+  # if 1st argument is a list,
+  # get list of indets in RHS of equation,
+  # else try to get indets of expression
+  #
+  if type(anEqn, equation) then
+
+    listOfIndets:= convert(
+      indets(op(2, anEqn)),
+      list
+    );
+
+  else
+
+    listOfIndets:= convert(
+      indets(anEqn),
+      list
+    );
+
+  end if; 
+
+  i1:=1;
+
+  while i1<= nops(listOfIndets) do
+
+    currentItemInList:= op(i1, listOfIndets):
+    newItemsOfList:= [];
+
+    #
+    # expand functions, powers
+    #
+    if type(currentItemInList, function) then
+
+      ArgumentOfFunction:= op(1, currentItemInList);
+
+      newItemsOfList:=convert(
+        indets(ArgumentOfFunction), list
+      );
+
+    elif type(currentItemInList, `^`) then
+
+      ArgumentOfFunction:= op(1, currentItemInList);
+      Exponent:= op(2, currentItemInList);
+
+      newItemsOfList:= [
+        op(
+          convert(
+            indets(ArgumentOfFunction), list
+          )
+        ),
+
+        op(
+          convert(
+            indets(Exponent), list
+          )
+        )
+      ];
+
+    end if; 
+
+
+    if not(newItemsOfList=[]) then
+
+      #
+      # remove function at entry i1 from list and
+      # append newItemsOfList to listOfIndets
+      #
+
+      listOfIndets:= subsop(i1=NULL, listOfIndets);
+      listOfIndets:= [op(listOfIndets), op(newItemsOfList)];
+
+    else
+      i1:= i1+ 1;
+    end if; 
+
+  end do; 
+
+  #
+  # convert to set to get rid of
+  # repeated entries, convert back to list to
+  # have acces to ordered entries
+  #
+
+  listOfIndets:= convert(
+    convert(listOfIndets, set),
+    list
+  );
+
+end proc; # getListOfIndetsIn
+

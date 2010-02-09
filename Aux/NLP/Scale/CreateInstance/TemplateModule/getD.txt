@@ -1,0 +1,12 @@
+#------------------------------------------------------------
+#
+# @path Aux/NLP/Scale/CreateInstance/TemplateModule/GetD.txt
+#
+# @brief Return D
+#
+#------------------------------------------------------------
+      getD:= proc()
+        return(D); 
+      end proc; 
+
+

@@ -1,0 +1,270 @@
+###############################################################################
+#
+# @path Aux/SystemClasses/ListOfErrorsInNlpPart2.txt
+#
+# @brief checks whether Constraints, LinearConstraints are well-defined,
+# recursively checks whether ExplicitAEs are well-defined
+#
+# @notes (i) Do NOT check for linearity of LinearConstraints
+#   in Variables and Parameters, but in Variables only. Cannot consider
+#   e.g. Parameters= [SF=0.3], LinearConstraints= [0=1+2*SF] linear,
+#   since NPSOL needs LinearConstraints to be transformed into
+#   Ax=b, where A/b are matrix/vector of numbers, not functions of p
+#   Parameters. 
+#
+# @authors mmo, dka
+#
+# @revision
+# 2008-04-07 delete cheking if there are linear constraints in entry Constraints  
+# 2008-03-06 instead of aSys[...] using aSys["..."]  by dka
+# 021217 skip check for linearity of LinearConstraints if empty
+# 021125 removed check for obsolete expressions; see
+#   ModelPack/ToDo.txt, entry 021125; 
+# 021124 written by mmo
+#
+###############################################################################
+listOfErrorsInNlpPart2:= proc(
+  Sys # no check, since input argument has already passed ListOfErrorsInNLP
+)
+  local ListOfErrors, i1, NumberOfConstraints, 
+    NumberOfLinearConstraints, SetOfValidExpr, ListOfValidExpr,
+    ListOfUndefExpr,  ParAndVar, ObsolExpr, ListOfTerms, item,
+    SetOfVariables, SetOfParameters, ListOfRhs, Rhs, 
+    IndetsOfConstraints;
+
+  #------------------------------------------------------------
+  #
+  # check whether ExplicitAEs are well-defined
+  #
+  #------------------------------------------------------------
+    #
+    # note: existence of Sys["Variables"] and
+    # Sys["Parameters"] has already been checked,
+    # so it is safe to form following sets
+    #
+      SetOfVariables := Aux:-ListOperations:-getSetOfValidExprIn(
+        map(lhs, Sys["Variables"])
+      );
+      SetOfParameters := Aux:-ListOperations:-getSetOfValidExprIn(
+        map(lhs, Sys["Parameters"])
+      );
+      SetOfValidExpr := SetOfParameters union SetOfVariables;
+      ListOfValidExpr:= convert(SetOfValidExpr, list);
+ 
+    ListOfErrors:= listOfErrorsInEAEs(
+      Sys["ExplicitAEs"],
+      ListOfValidExpr
+    ); 
+
+    #
+    # lhs of EAEs are valid expressions
+    #
+      ListOfValidExpr:= [
+        op(ListOfValidExpr),
+        op(map(lhs, Sys["ExplicitAEs"]))
+      ]; 
+    
+  #------------------------------------------------------------
+  #
+  # check whether Constraints are well-defined
+  #
+  #------------------------------------------------------------
+    #
+    # loop over Sys["Constraints"][i1]
+    #
+      NumberOfConstraints:= nops(Sys["Constraints"]);
+      for i1 from 1 to NumberOfConstraints do
+ 
+      #
+      # check whether Sys["Constraints"][i1]
+      # is well defined
+      #
+        ListOfUndefExpr:= Aux:-ListOperations:-getListOfUndefExprIn(
+          Sys["Constraints"][i1],
+          ListOfValidExpr
+        );
+ 
+      #
+      # append errors to list, add a comment
+      #
+        if not(ListOfUndefExpr= []) then
+          ListOfErrors:= [
+            op(ListOfErrors),
+            cat(
+              "expression(s) ",
+              ListOfUndefExpr,
+              " undefined in constraint number ",
+ 	     i1,
+              " of NLP[\"Constraints\"]"
+            )
+          ];
+        end if;
+
+     end do; #end loop over Sys["Constraints"][i1]
+
+   #
+   # loop over Sys["LinearConstraints"][i1]
+   #
+     NumberOfLinearConstraints := nops(Sys["LinearConstraints"]);
+     for i1 from 1 to NumberOfLinearConstraints do
+
+     #
+     # check whether Sys["LinearConstraints"][i1]
+     # is well defined
+     #
+       ListOfUndefExpr:= Aux:-ListOperations:-getListOfUndefExprIn(
+         Sys["LinearConstraints"][i1],
+         ListOfValidExpr
+       );
+
+     #
+     # append errors to list, add a comment
+     #
+       if not(ListOfUndefExpr= []) then
+         ListOfErrors:= [op(ListOfErrors),
+           cat(
+             "expression(s) ",
+             ListOfUndefExpr,
+             " undefined in constraint number ",
+             i1,
+             " of NLP[\"LinearConstraints\"]"
+           )
+         ];
+       end if;
+     end do; #end loop over Sys["LinearConstraints"][i1]
+
+   #
+   # check Sys[CostFunction][i1]
+   #
+     ListOfUndefExpr:= Aux:-ListOperations:-getListOfUndefExprIn(
+       Sys["CostFunction"],
+       ListOfValidExpr
+     );
+
+     #
+     # append errors to list, add a comment
+     #
+     if not(
+       ListOfUndefExpr= [])
+     then
+       ListOfErrors:= [
+         op(ListOfErrors),
+         cat(
+           "expression(s) ",
+           ListOfUndefExpr,
+           " undefined in CostFunction"
+         )
+       ];
+     end if;
+
+###  #------------------------------------------------------------
+###  #
+###  # check for obsolete expressions in Sys
+###  #
+###  #------------------------------------------------------------
+###    ListOfTerms := map(rhs, Sys["Constraints"]);
+###    ListOfTerms:= [op(ListOfTerms), map(rhs, Sys["LinearConstraints"])];
+###    ListOfTerms:= [op(ListOfTerms), Sys["CostFunction"]];
+###    
+###    IndetsOfConstraints := Aux:-ListOperations:-getListOfIndetsIn(ListOfTerms);
+###
+###    ObsolExpr := [];
+###    for item in ListOfValidExpr do
+###      if not
+###        member(item, IndetsOfConstraints)
+###      then
+###        ObsolExpr := [op(ObsolExpr), item];
+###      end if;
+###    end do;
+###
+###    if
+###      not(ObsolExpr=[])
+###    then
+###      WARNING("%1 is/are obsolete expression", ObsolExpr);
+###    end if;
+
+  #------------------------------------------------------------
+  #
+  # check if lists Parameters and Variables have common entries
+  #
+  #------------------------------------------------------------
+    ParAndVar:=[op(
+      SetOfParameters intersect SetOfVariables
+      )];
+    if not(
+      ParAndVar = [])
+    then
+      ListOfErrors:= [op(ListOfErrors),
+      cat(
+        ParAndVar,
+        ` is/are declared both, parameter and variable `
+       )];
+    end if;
+
+  #----------------------------------------------------------
+  #
+  # check if all of LinearConstraints are really linear,
+  # see notes (i) 
+  #
+  #----------------------------------------------------------
+    if not
+      Sys["LinearConstraints"]= []
+    then
+      #
+      # substitute ExplicitAEs into rhs of LinearConstraints
+      #
+        ListOfRhs:= Aux:-ListOperations:-subsEqnListIntoEqn(
+          Sys["ExplicitAEs"],
+          Sys["LinearConstraints"]
+        ); 
+        ListOfRhs:= map(rhs, ListOfRhs); 
+  
+      if not
+        Aux:-LinearEqns:-checkLinearityOfIn(
+          ListOfRhs,
+          map(lhs, Sys["Variables"])
+        )
+      then
+        ListOfErrors:= [
+          op(ListOfErrors),
+          "Not all constraints in LinearConstraints are linear"
+        ];
+      end if;
+
+    end if; # not Sys["LinearConstraints"]= []
+
+###  #----------------------------------------------------------
+###  #
+###  # check if there are linear constraints in entry Constraints 
+###  #----------------------------------------------------------
+###    for i1 from 1 to NumberOfConstraints do
+###      #
+###      # substitute EAEs into constraint
+###      #
+###        Rhs:= Aux:-ListOperations:-subsEqnListIntoEqn(
+###          Sys["ExplicitAEs"],
+###          Sys["Constraints"][i1]
+###       ); 
+###        Rhs:= rhs(Rhs); 
+###
+###      if
+###        Aux:-LinearEqns:-checkLinearityOfIn(
+###          Rhs,
+###          map(lhs, Sys["Variables"])
+###        )
+###      then
+###        WARNING(
+###          cat(
+###            "Constraint ",
+###            i1,
+###            " is linear in \"Variables\" and should be placed ",
+###            "in \"LinearConstraints\" "
+###          )
+###        );
+###      end if;
+###    end do;
+
+  return(ListOfErrors); 
+
+end proc; # listOfErrorsInNlpPart2 
+

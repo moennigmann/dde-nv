@@ -1,0 +1,82 @@
+###########################################################################
+#
+# @path Aux/TensProd/Tij_xj.txt
+#
+# @brief return product Aij xj of Vector and Matrix
+#
+# @param
+#   Amat,  Matrix or array
+#   xVec, Vector or list to be multiplied by Matrix
+#     passed in first argument
+#
+# @return
+#   Vector Amat xVec, returned result is of type list
+#
+# @notes
+#   conversion of array Amat to Matrix Amat only necessary for
+#     LinearAlgebra[RowDimension], LinearAlgebra[ColumnDimension]; better solution: extract
+#     rowdim/coldim in if-clause;
+#
+# @authors mmo, dka
+#
+# @revision
+#   010809 changed output type from array to list
+#   010517 mmo, reusing code previously used in
+#     makefile-based nld-software
+#
+###########################################################################
+    Tij_xj:= proc(
+      Amat::{Matrix, array}, 
+      xVec::{list, Vector}
+    )
+
+       local i1, x, A,NumColsA, NumRowsA, ResultInArray, ResultInList;
+
+      #
+      # convert to standard types
+      #
+        if not
+          type(xVec, Vector)
+        then
+          x:= convert(xVec, Vector);
+        else
+          x:= xVec;
+        end if;
+
+        if not
+          type(Amat, Matrix)
+        then
+          A:= convert(Amat, Matrix);
+        else
+          A:= Amat;
+        end if;
+ 
+      #
+      # length of x must be equal to coldim of A
+      #
+
+        NumColsA:=  nops(convert(A,listlist)[1]);
+
+        if not
+          NumColsA= nops(convert(x,list))
+        then
+          error("incompatible dimensions of 1st and 2nd argument"); 
+        end if; 
+
+      #
+      # calculate sum
+      #
+        ResultInArray:=Sij_Tjk(A,x); 
+      
+      #
+      # Sij_Tjk returns array, convert this to list 
+      #
+       NumRowsA:= nops(convert(A,listlist)); 
+       ResultInList:= [seq(
+          ResultInArray[i1, 1],
+          i1= 1..NumRowsA
+        )];
+
+      return(ResultInList); 
+  
+    end proc; # TensProd:-Tij_xj

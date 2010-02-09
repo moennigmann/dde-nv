@@ -1,0 +1,67 @@
+#############################################################
+#
+# @path Aux/equalWithinFudgedRelErr
+#
+# @return Returns true if abs(x1- x2)/mean(x1, x2)<= relErr.
+#
+# @brief Returns true if result of getFudgedRelErr is less than
+# upper bound specified in 3rd parameter.
+#
+# @authors mmo
+#
+# @revision
+# 2006-09-03 Procedure now also accepts lists. 
+# 2006-05-19 Written by M. Moennigmann.
+#
+#############################################################
+equalWithinFudgedRelErr:= proc(
+  x1::{list(numeric), numeric},
+  x2::{list(numeric), numeric},
+  relErr::numeric
+)
+
+  local i; 
+
+  if 
+    #
+    # treat case of two numbers
+    #
+    type(x1, numeric) and type(x2, numeric)
+  then 
+    if
+      getFudgedRelErr(x1, x2)<= relErr
+    then
+      return(true);
+    else
+      return(false);
+    end if;
+  elif
+    #
+    # treat case of two lists
+    #
+    type(x1, list(numeric)) and type(x2, list(numeric))
+  then
+    #
+    # make sure lists have same length
+    #
+    if not
+      nops(x1)= nops(x2)
+    then
+      error("lists specified in first and second parameter must have same length"); 
+    end if; 
+    #
+    # loop over all entries in list can call self
+    #
+    for i from 1 to nops(x1) do
+      if not
+        equalWithinFudgedRelErr(x1[i], x2[i], relErr)
+      then
+        return(false);
+      end if;
+    end do;
+    return(true); 
+  else
+    error("first and second parameter must be either type numeric or type list(numeric)");
+  end if;
+
+end proc: 

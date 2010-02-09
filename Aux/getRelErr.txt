@@ -1,0 +1,29 @@
+###############################################################################
+#
+# @path Aux/getRelError.txt
+#
+# @brief Calculates absolute relative error for two given numbers
+#
+# @param two numbers, x1, x2
+#
+# @return absolute difference over mean of x1, x2
+#
+# @authors mmo
+#
+# @revision
+# 020628 written by mmo
+#
+###############################################################################
+getRelErr:= proc(
+  x1::EvalsToFloat,
+  x2::EvalsToFloat
+)
+
+  option inline; 
+
+  abs(
+    evalf(x1- x2)/evalf(x1+x2)*2
+  ); 
+
+end proc; # getRelError
+

@@ -1,0 +1,81 @@
+#############################################################
+#
+# @path Aux/SystemClasses/exportDTASysToCLMatContM.txt
+#
+# @brief Generate text for CL_MatcontM of given DTASys 
+#
+# @param name of system, DTASys
+#
+# @return text for copying to content of .m file for creating the system
+#
+# @notes (i) uses subsExplicitAlgEqnsIntoDTASys
+#        (ii) output text can be substituted to CL_MatContM software
+#        (iii) output text should be copied to .m file without first and last inverted commas ""
+#
+# @authors dka
+#
+# @revision
+# 2008-03-06  instead of aSys[...] using aSys["..."] 
+# 2008-02-28 by dka rename from ExportDTASysToCLMatContM to exportDTASysToCLMatContM
+# 2007-12-17 written by dka
+#
+#############################################################
+exportDTASysToCLMatContM:= proc(nameOfSys::string,aSys::table)
+
+   local DESys, headOfFile, paramOfSys, strParam, setForSubs, dynVars, i, i1, i2,
+         dynEqns, strDynEqns, funcDyDtOfFile, y0, strY0, initOfFile, lastPartOfFile,
+         finalText;
+
+   #
+   # substitute equations from list ExplictAlgEqns into list DynEqns
+   #
+    
+   DESys := Aux:-SystemClasses:-subsExplicitAlgEqnsIntoDTASys(aSys);   
+
+   #
+   # constructing the string which corresponding to content of matlab .m file
+   #     
+   
+   # first part of the file
+   headOfFile := StringTools[Join](["function out = ", convert(nameOfSys, string), "\nout{1} = @init;\nout{2} = @fun_eval;\nout{3} = [];\nout{4} = [];\nout{5} = [];\nout{6} = [];\nout{7} = [];\nout{8} = [];\nout{9} = [];"], "");
+
+   # string of names of parameters separated with commas
+   paramOfSys := map(lhs, DESys["Parameters"]); 
+   strParam := ""; 
+   for i from 1 to nops(DESys["Parameters"]) do 
+    strParam := StringTools[Join]([strParam, convert(paramOfSys[i], string)], ","); 
+   end do;
+   
+   # instead names of variables we put kmgd(index of varible)
+   setForSubs := {}; 
+   dynVars := DESys["DynVars"]; 
+   for i1 from 1 to nops(dynVars) do 
+     setForSubs := setForSubs union {dynVars[i1] = kmrgd(i1)};
+   end do;
+   dynEqns := subs(setForSubs, map(rhs, DESys["DynEqns"]));
+   strDynEqns := ""; 
+   for i2 from 1 to nops(dynEqns) do 
+    strDynEqns := StringTools[Join]([convert(dynEqns[i2], string), strDynEqns], ";;");
+   end do;
+
+   # part of file with dymamic equations
+   funcDyDtOfFile := StringTools[Join](["function dydt = fun_eval(t,kmrgd", strParam, ")\n", "dydt =[", strDynEqns, "];"], "");
+   
+   # part of file with initialization
+   y0 := [seq(0, i = 1 .. nops(DESys["DynVars"]))]; 
+   strY0 := convert(y0, string);
+   initOfFile := StringTools[Join](["function [tspan,y0,options] = init\nhandles = feval(", nameOfSys,");\ny0=", strY0, ";\noptions = odeset('Jacobian',[],'JacobianP',[],'Hessians',[],'HessiansP',[]);\ntspan = [0 10];"], "");
+   
+   # part of file with initialization of jacobian, hessian and tensor functions (numeric)
+   lastPartOfFile := StringTools[Join](["function jac = jacobian(t,kmrgd", strParam, ")\nfunction jacp = jacobianp(t,kmrgd", strParam, ")\nfunction hess = hessians(t,kmrgd", strParam, ")\nfunction hessp = hessiansp(t,kmrgd", strParam, ")\nfunction tens3  = der3(t,kmrgd ", strParam, ")\nfunction tens4  = der4(t,kmrgd ", strParam, ")\n function tens5  = der5(t,kmrgd", strParam, ")"], "");
+   finalText := StringTools[Join]([headOfFile, "\n\n", funcDyDtOfFile, "\n\n", initOfFile, "\n\n", lastPartOfFile], "");
+
+   #
+   # return string with text for creating the system in CL_MatContM
+   #
+   
+   RETURN(finalText);
+
+   end proc; # exportDTASysToCLMatContM
+
+

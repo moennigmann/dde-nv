@@ -1,0 +1,348 @@
+#############################################################
+#
+# @path Aux/SystemClasses/listOfErrorsInDTASysPart2.txt
+#
+# @brief Generate 'strict' list of errors in DTASys 
+#
+# @param table of type DTASys
+#
+# @return list of errors found in aDTASys
+#
+# @notes (i) listOfErrorsInDTASys is used in init to
+#            define type/DTASys
+#        (ii) uses getSetOfValidExprIn, getListOfUndefExprIn
+#             getListOfIndetsIn, getObsolExprInList, 
+#             noNameConflictsInUnitsInDTASys
+#
+# @authors dka
+#
+# @revision
+# 2008-10-30  let AlgEqns in DTASys be not empty
+# 2008-03-06  instead of aSys[...] using aSys["..."] 
+# 2008-02-28  rename by dka from ListOfErrorsInDTASysPart2 to listOfErrorsInDTASysPart2
+# 2007-11-16  Created by dka, based on ListOfErrorsInDAESysPart2
+#
+#############################################################
+listOfErrorsInDTASysPart2:= proc(
+  aDTASys
+)
+
+  local ListOfErrors, LHSidesOfDynEqns, DynVarsFromDynEqns, i,
+    ParsAndIndependents, NumberOfExplicitAlgEqns, SetOfValidExpr, i1,
+    ListOfUndefExpr, ObsolExpr, Integrators, item, ParAndVar,
+    ParAndExplAE, DynVarsAndExplAE, aListOfNames, aListOfEquations; 
+
+
+  ListOfErrors:= []:
+
+  #----------------------------------------------------------
+  #
+  # Check whether left hand sides in DTESys["DynEqns"]
+  # are from DTESys["DynVars"] and
+  # compare
+  #
+  #----------------------------------------------------------
+    #
+    # DynVars must be the same and in same order as lhs of DynEqns
+    #
+      DynVarsFromDynEqns:= map(lhs, aDTASys["DynEqns"]);
+  
+      #
+      # compare strings to avoid problems with differences between
+      # names, symbols, indexed
+      #
+        DynVarsFromDynEqns:= map(convert, DynVarsFromDynEqns, string); 
+  
+      if not
+        DynVarsFromDynEqns= map(convert, aDTASys["DynVars"], string)
+      then
+        ListOfErrors:= [
+          op(ListOfErrors),
+          " \"DynVars\" must be in same order as lhs of \"DynEqns\" "
+        ]; 
+      end if; 
+
+  #----------------------------------------------------------
+  #
+  # Check whether left hand sides in DTASys["AlgEqns"]
+  # are zeors and compare number of alg eqns and algebraic vars 
+  #
+  #----------------------------------------------------------
+
+    #
+    # compare number of algebraic vars to number of AlgEqns
+    #
+      if not(nops(aDTASys["AlgEqns"])= nops(aDTASys["AlgVars"])) then
+        ListOfErrors:= [op(ListOfErrors),
+          `number of algebraic variables is not equal to number of AlgEqns`
+        ];
+      end if; 
+
+    #
+    # check whether lhs of equations is equal to zero
+    #
+      for i from 1 to nops(aDTASys["AlgEqns"]) do
+        if not (lhs(aDTASys["AlgEqns"][i]) = 0) then
+  	ListOfErrors:= [op(ListOfErrors),
+  	  `left hand sides of \"AlgEqns\" must be ZERO`
+  	];
+        end if;
+      end do;    
+
+
+  #----------------------------------------------------------
+  #
+  # check if lists Parameters and DynVars have common entries
+  #
+  #----------------------------------------------------------
+    ParAndVar:=map(
+      has,
+      aDTASys["Parameters"],
+      aDTASys["DynVars"]
+    );
+
+    if
+      (member(true, ParAndVar, 'i2'))
+    then
+      ListOfErrors := [op(ListOfErrors),
+     cat(
+       aDTASys["Parameters"][i2],
+       ` is declared both in \"Parameters\" and \"DynVars\" `
+     )
+      ];
+    end if; 
+
+  #------------------------------------------------------------
+  #
+  # lists Parameters and lhs in ExplicitAlgEqns must not have common
+  #   entries
+  #
+  #------------------------------------------------------------
+    ParAndExplAE:= map(
+      has,
+      aDTASys["Parameters"],
+      map(lhs, aDTASys["ExplicitAlgEqns"])
+    );
+
+    if
+      (member(true, ParAndExplAE, 'i2'))
+    then
+      ListOfErrors := [op(ListOfErrors),
+     cat(
+       aDTASys["Parameters"][i2],
+       ` occurs both in \"Parameters\" and lhs of \"ExplicitAlgEqns\" `
+     )
+      ];
+    end if; 
+
+  #------------------------------------------------------------
+  #
+  # lists DynVars and lhs in ExplicitAlgEqns must not have common
+  #   entries
+  #
+  #------------------------------------------------------------
+    DynVarsAndExplAE:= map(
+      has,
+      aDTASys["DynVars"],
+      map(lhs, aDTASys["ExplicitAlgEqns"])
+    );
+
+    if
+      (member(true, DynVarsAndExplAE, 'i2'))
+    then
+      ListOfErrors := [op(ListOfErrors),
+     cat(
+       aDTASys["DynVars"][i2],
+       ` occurs both in \"DynVars\" and lhs of \"ExplicitAlgEqns\" `
+     )
+      ];
+    end if; 
+
+  #----------------------------------------------------------
+  #
+  # Check whether aDTASys["ExplicitAlgEqns"] are well defined:
+  #
+  # Are indeterminants in aDTASys["ExplicitAlgEqns"][i1] either
+  # independent variable, parameter, or defined in previous
+  # equations aDTASys["ExplicitAlgEqns"][1..(i1- 1)]?
+  #
+  #----------------------------------------------------------
+
+      ParsAndIndependents:=
+        Aux:-ListOperations:-getSetOfValidExprIn(aDTASys["Parameters"]) union
+        Aux:-ListOperations:-getSetOfValidExprIn(aDTASys["AlgVars"]) union
+        Aux:-ListOperations:-getSetOfValidExprIn(aDTASys["DynVars"]);
+
+      NumberOfExplicitAlgEqns:= nops(aDTASys["ExplicitAlgEqns"]);
+
+      SetOfValidExpr:= ParsAndIndependents;
+
+      #
+      # loop over DTASys["ExplicitAlgEqns"][i1]
+      #
+
+      for i1 from 1 to NumberOfExplicitAlgEqns do
+        
+         #
+         # check whether aDTASys["ExplicitAlgEqns"][i1] is well
+         # defined
+         #
+                
+         ListOfUndefExpr:= Aux:-ListOperations:-getListOfUndefExprIn(
+           aDTASys["ExplicitAlgEqns"][i1],
+           convert(SetOfValidExpr, list)
+         );
+        
+         #
+         # append errors to list, add a comment
+         #
+        
+         if not(ListOfUndefExpr= []) then
+           ListOfErrors:= [op(ListOfErrors),
+             cat(
+               ListOfUndefExpr,
+               ` in equation `,
+               aDTASys["ExplicitAlgEqns"][i1],
+               ` of \"ExplicitAlgEqns\" undefined.`
+             )
+           ];
+         end if; 
+        
+         #
+         # add lhs of aDTASys["ExplicitAlgEqns"][i1] to
+         # SetOfValidExpr
+         #
+        
+         SetOfValidExpr:= SetOfValidExpr union
+           {op(1, aDTASys["ExplicitAlgEqns"][i1])}
+        
+      end do;  #end loop over DTASys["ExplicitAlgEqns"][i1]
+         
+  #----------------------------------------------------------
+  #
+  # Check whether aDTASys["DynEqns"] are well defined:
+  #
+  # Are indeterminants in aDTASys["DynEqns"] either
+  # independent variables or parameters
+  #
+  # Note that SetOfValidExpr comprises DynVars,
+  # Parameters and lhs of ExplicitAlgEqns after execution
+  # of preceding block.
+  #----------------------------------------------------------
+
+      #
+      # loop over DTASys["DynEqns"][1..i1]
+      #
+
+      for i1 from 1 to nops(aDTASys["DynEqns"]) do
+
+        #
+        # check whether aDTASys["DynEqns"][i1] is well
+        # defined
+        #
+       
+        ListOfUndefExpr:= Aux:-ListOperations:-getListOfUndefExprIn(
+          aDTASys["DynEqns"][i1],
+          convert(SetOfValidExpr, list)
+        );
+       
+        #
+        # append errors to list, add a comment
+        #
+       
+        if not(ListOfUndefExpr= []) then
+          ListOfErrors:= [op(ListOfErrors),
+            cat(
+              ListOfUndefExpr,
+              ` in equation `,
+              aDTASys["DynEqns"][i1],
+              ` of \"DynEqns\" undefined.`
+            )
+          ];
+        end if; 
+
+      end do;  #end loop over DTASys["DynEqns"][i1]
+
+  #------------------------------------------------------------------
+  #
+  # check whether list of all Parameters and lhs of ExplicitAlgEqns are used
+  #
+  #-------------------------------------------------------------------
+   
+   aListOfNames:=[
+      op(aDTASys["AlgVars"]),
+      op(aDTASys["Parameters"]),
+      op(map(lhs, aDTASys["ExplicitAlgEqns"]))
+    ];
+
+   aListOfEquations := [
+	op(aDTASys["ExplicitAlgEqns"]), 
+	op(aDTASys["AlgEqns"]), 
+	op(aDTASys["DynEqns"])];
+
+   ObsolExpr := Aux:-ListOperations:-getObsolExprInList(
+			aListOfNames, 
+			aListOfEquations);
+
+   if not(ObsolExpr = []) then
+          ListOfErrors:= [op(ListOfErrors),
+            cat(
+              ObsolExpr,
+              ` is defined but not used.`
+            )
+          ];
+        end if; 
+      
+
+  #------------------------------------------------------------------
+  #
+  # check whether some of Parameters is defined multiple times
+  #
+  #-------------------------------------------------------------------
+    
+  if not(nops({op(map(lhs, aDTASys["Parameters"]))}) = nops([op(map(lhs, aDTASys["Parameters"]))])) then
+	ListOfErrors:= [op(ListOfErrors),
+            cat(
+              [op(map(lhs, aDTASys["Parameters"]))],
+              `some of \"Parameters\" is defined multiple times.`
+            )
+          ];
+        end if; 
+
+  #------------------------------------------------------------------
+  #
+  # check whether some of lhs of ExplicitAlgEqns is defined multiple times
+  #
+  #-------------------------------------------------------------------
+    
+  if not(nops({op(map(lhs, aDTASys["ExplicitAlgEqns"]))}) = nops([op(map(lhs, aDTASys["ExplicitAlgEqns"]))])) then
+	ListOfErrors:= [op(ListOfErrors),
+            cat(
+              [op(map(lhs, aDTASys["ExplicitAlgEqns"]))],
+              `some of lhs of \"ExplicitAlgEqns\" is defined multiple times.`
+            )
+          ];
+        end if; 
+  
+
+  #------------------------------------------------------------
+  #
+  # if list Units exists, no name conflicts between units on 
+  # rhs of Units and variable names must exist
+  #
+  # note this is not a check for consistency of units, but
+  # only for name conflicts of unit names and variable names,
+  # for checks of unit consistency see CheckUnits
+  #
+  #------------------------------------------------------------
+  
+    if 
+     member('Units', map(op, [indices(aDTASys)]))
+    then
+      noNameConflictsInUnitsInDTASys(aDTASys);
+    end if; 
+
+  return(ListOfErrors); 
+
+end proc; # listOfErrorsInDAESysPart2
+

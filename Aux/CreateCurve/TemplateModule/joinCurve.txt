@@ -1,0 +1,142 @@
+#----------------------------------------
+# 
+# @path Aux/CreateCurve/TemplateModule/joinCurve.txt 
+#
+#----------------------------------------
+joinCurve:= proc(
+  curve2::`module`
+)
+
+    local SetNewVars, SetOldVars, SetNewPars, SetOldPars,
+      ObsoleteInNewCurve, ObsoleteInOldCurve, NewNumPoints, NewDataList,
+      DataCurve2, NewDataTable, item, i1, NewCurve; 
+
+    #------------------------------------------------------------
+    #
+    # var names of self and curve2 must be the same
+    #
+    #------------------------------------------------------------
+      SetNewVars:= curve2:-getVarNames();
+      SetNewVars:= convert(SetNewVars, set);
+      SetOldVars:= convert(VarNames, set);
+
+      ObsoleteInNewCurve:= SetNewVars minus SetOldVars;
+      if not
+        ObsoleteInNewCurve= {}
+      then
+        error(
+	  "first argument has obsolete variables %1",
+          ObsoleteInNewCurve
+        );
+      end if; 
+
+      ObsoleteInOldCurve:= SetOldVars minus SetNewVars;
+      if not
+        ObsoleteInOldCurve= {}
+      then
+        error(
+	  "first argument is missing variables %1",
+          ObsoleteInOldCurve
+        );
+      end if; 
+
+    #------------------------------------------------------------
+    #
+    # par names of self and curve2 must be the same
+    #
+    #------------------------------------------------------------
+      SetNewPars:= curve2:-getParNames();
+      SetNewPars:= convert(SetNewPars, set);
+      SetOldPars:= convert(ParNames, set);
+
+      ObsoleteInNewCurve:= SetNewPars minus SetOldPars;
+      if not
+        ObsoleteInNewCurve= {}
+      then
+        error(
+	  "first argument has obsolete parameters %1",
+          ObsoleteInNewCurve
+        );
+      end if; 
+
+      ObsoleteInOldCurve:= SetOldPars minus SetNewPars;
+      if not
+        ObsoleteInOldCurve= {}
+      then
+        error(
+	  "first argument is missing parameters %1",
+          ObsoleteInOldCurve
+        );
+      end if; 
+
+    #------------------------------------------------------------
+    #
+    # parameter values must be the same
+    #
+    #------------------------------------------------------------
+      if not
+        Aux:-ListOperations:-noConflictsInSubsLists(
+          getParameters(),
+          curve2:-getParameters()
+        )
+      then
+        error(cat(
+          "curves cannot be joined since there are ",
+          "conflicts w.r.t. Parameters"
+        )); 
+      end if; 
+
+    #------------------------------------------------------------
+    #
+    # create new curve
+    #      
+    #------------------------------------------------------------
+      #
+      # set number of points to sum of number in self and curve2
+      #
+        NewNumPoints:= NumDataPoints+ curve2:-getNumPoints();
+  
+        NewDataList:= ExtraData;
+        NewDataList:= Aux:-ListOperations:-setRHSofInTo(
+          NumPoints,
+          NewDataList, 
+          NewNumPoints
+        ); 
+
+      #
+      # concatenate data from self and curve2 into new data table
+      #
+        DataCurve2:= curve2:-getData();
+        NewDataTable:= table():
+        for item in VarNames do
+          NewDataTable[item]:= array(
+            1..NewNumPoints
+          ); 
+           
+          #
+          # store entries from self
+          #
+            for i1 from 1 to NumDataPoints do
+              NewDataTable[item][i1]:= data[item][i1];
+            end do;
+          #
+          # store entries form curve2
+          #
+  	  for i1 from 1 to curve2:-getNumPoints() do
+              NewDataTable[item][NumDataPoints+ i1]:= 
+  	      DataCurve2[item][i1];
+          end do;
+  
+        end do; 
+
+     NewCurve:= CreateCurve(
+       NewDataTable,
+       NewDataList
+     );
+
+     return(eval(NewCurve)); 
+
+   end proc; # JoinCurve
+  
+
+

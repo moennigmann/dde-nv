@@ -1,0 +1,10 @@
+#------------------------------------------------------------
+#
+# @path Aux/NLP/Scale/CreateInstance/TemplateModule/GetInvD.txt
+#
+#------------------------------------------------------------
+      getInvD:= proc()
+        return(InvD); 
+      end proc; 
+
+

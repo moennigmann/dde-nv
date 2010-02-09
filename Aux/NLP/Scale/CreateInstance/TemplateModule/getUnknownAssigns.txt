@@ -1,0 +1,24 @@
+#------------------------------------------------------------------------------
+#
+# @path Aux/NLP/Scale/CreateInstance/TemplateModule/GetUnknownAssigns.txt
+#
+# @brief checks whether substitution list provides assignments for
+# all variables and all scaled parameters
+#
+#------------------------------------------------------------------------------
+getUnknownAssigns:= proc(
+  SubsList::list(name= EvalsToFloat)
+)
+  local Unscaled, ValuesUnscaled; 
+
+  Unscaled:= convert(map(lhs, SubsList), set) minus
+    convert(NamesScaledParsAndVars, set);
+
+  ValuesUnscaled:= [seq(
+    Unscaled[i1]= subs(SubsList, Unscaled[i1]),
+    i1= 1..nops(Unscaled)
+  )]; 
+
+  return(ValuesUnscaled); 
+
+end proc; 

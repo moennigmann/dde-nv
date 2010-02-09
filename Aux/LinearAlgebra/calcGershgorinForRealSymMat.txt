@@ -1,0 +1,68 @@
+#------------------------------------------------------------
+#
+# @path Aux/LinearAlgebra/calcGershgorinForRealSymMat.txt
+#
+# @brief Implements lower and upper bound calculated
+# with Gershgorin's formula for any symmetric
+# real matrix. Note no test is carried out to
+# ensure matrix A to be real and symmetric. 
+#
+# @notes
+# (1) CodeGen/Aux/Tests/SpecialExamples/Monnigmann2008Example314/
+# compareGenericToSpecialGershgorinBoundCalculation tests the
+# present procedure by comparing it to Gershgorin bounds 
+# calculated with Gershgorin formulas that result from 
+# applying the generic Gershgorin formulas to the particular
+# example exp(||x||_2^2). Test is weak only in that two
+# different but similar Gershgorin bound calculations are 
+# carried out.
+#
+# @authors mmo
+#
+# @revision
+# 2008-01-05 Written by M. Moennigmann
+#
+#------------------------------------------------------------
+calcGershgorinForRealSymMat:= proc(
+  A::Matrix
+)
+
+  local numRows, numCols, D, i, j, lb, ub; 
+
+  #
+  # make sure matrix is square
+  #
+  numRows, numCols:= :-LinearAlgebra:-Dimension(A);
+  if not
+    numRows= numCols
+  then
+    error("first parameter must be square matrix");
+  end if; 
+
+  #
+  # calculate sums sum(abs(A[i, j]), j<> i)
+  #
+  D:= Array(1..numRows);
+  for i from 1 to numRows do
+    D[i]:= 0;
+    for j from 1 to numRows do
+      if j=i then next; end if;
+      D[i]:= D[i]+ abs(A[i, j]);
+    end do;
+  end do;
+
+  #
+  # calculate lower bound lb and upper bound ub
+  #
+  lb:= min(seq(
+    A[i, i]- D[i],
+    i= 1..numRows
+  ));
+  ub:= max(seq(
+    A[i, i]+ D[i],
+    i= 1..numRows
+  ));
+
+  return([lb, ub]);
+     
+end proc: 

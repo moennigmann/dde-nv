@@ -1,0 +1,62 @@
+#############################################################
+#
+# @path Aux/ListOperations/setRHSofInTo.txt
+#
+# @param aName LHS of equation to look for in list of
+#       equations alist,
+# NewRHS to replace current RHS in alist
+#        corresponding to LHS,
+# alist list of names or equations, or table, alist
+#        must comprise LHS aName
+#
+# @return list of equations alist where RHS of LHS has
+#  been replaced with NewRHS
+#
+# @notes procedure does not check what type NewRHS is of
+#
+# @authors mmo
+#
+# @revision
+#   010817 procedure now accepts second arg of type
+#     {list({name, equation}), table} rather than
+#     {list(equation), table}; this allows to set rhs
+#     item in list which did not have an rhs before - mmo
+#
+#############################################################
+setRHSofInTo:=proc(
+  aName::name,
+  FormerList::{list({name, equation}), table},
+  NewRHS::anything
+)
+
+  local NewList, PositionLHS;
+
+  #
+  # check whether aName is LHS in FormerList
+  #
+    if not
+      Aux:-ListOperations:-isLHSin(aName, FormerList)
+    then
+      ERROR(`, 1st argument does not occur in 2nd argument`);
+    end if; 
+
+  #
+  # set RHS of aName in FormerList
+  #
+    if type(FormerList, list({name, equation})) then
+  
+        PositionLHS:= Aux:-ListOperations:-getPosOfLHSin(aName, FormerList);
+  
+        NewList:= FormerList;
+        NewList:= subsop(PositionLHS= (aName= NewRHS), NewList);
+  
+    elif type(FormerList, table) then
+  
+        NewList:= copy(FormerList);
+        NewList[aName]:= NewRHS;
+    end if; 
+  
+  return(NewList);
+  
+end proc; # setRHSofInTo
+

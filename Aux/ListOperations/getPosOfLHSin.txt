@@ -1,0 +1,84 @@
+#############################################################
+#
+# @path Aux/ListOperations/getPosOfLHSin.txt
+#
+# @param aname which occurs in aList,
+# aList compl. with list(name,equation), or table
+#
+# @return integer indicating position of aname in list of eqn
+#
+# @authors mmo
+#
+# @revision
+# 030302 changed while condition from PositionOfLHS= 0 
+#   to PositionOfLHS= 0 and i1< nops(aList); makes sure that
+#   0 is returned if item does not occur and 'NoCheck' was
+#   specified; 
+# 030213 some changes to speed up procedure:
+#   optional keyword 'NoCheck' (i) forces procedure to
+#   avoid call to IsLHSin, (ii) forces procedure to 
+#   avoid type check of 2nd input arg
+# 030209 allowed for input argument array({name, equation})
+# 030209 changed op(i1, aList) to aList[i1]
+# 010817 second arg may now be of type list({name, equation})
+#   rather than list(name) only; see change in SetRHSofInTo
+#
+#############################################################
+getPosOfLHSin:= proc(
+  aName::name,
+  aList # {list({name, equation}), 'array'({name, equation})}
+        # type check only done if keyword 'NoChecks' is not
+        # given
+)
+
+  local i1, PositionOfLHS, currentEqn;
+
+  #
+  # check whether aName occurs in aList
+  #
+    if not
+      (nargs>2 and args[3]= 'NoChecks')
+    then
+      if not(isLHSin(aName, aList)) then
+        error(`, 1st argument does not occur`);
+      end if;
+      if not
+        type(aList, {list({name, equation}), 'array'({name, equation})})
+      then
+        error("unexpected 2nd input argument type"); 
+      end if; 
+    end if;  
+
+  #
+  # find position
+  #
+    i1:= 0;
+    PositionOfLHS:= 0;
+  
+    while PositionOfLHS= 0 and i1< nops(aList) do
+  
+      i1:= i1+ 1;
+      currentEqn:= aList[i1];
+  
+      if 
+        type(currentEqn, equation)
+      then
+        if 
+          lhs(currentEqn)= aName
+        then
+          PositionOfLHS:= i1;
+        end if;
+      else
+        if currentEqn= aName
+        then
+          PositionOfLHS:= i1;
+        end if;
+      end if;
+
+    end do; 
+
+  RETURN(PositionOfLHS);
+
+end proc; # getPosOfLHSin
+
+

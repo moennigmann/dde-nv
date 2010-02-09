@@ -1,0 +1,230 @@
+#############################################################
+#
+# @path Aux/TranferNlpToGams/createTextForGams.txt
+#
+# @brief Generate text for a given NLP that can be solved by GAMS
+#
+# @param aNLP of type NLP, modelName of type string
+#
+# @return text for copying to content of .txt file that can be called by GAMS
+#
+# @notes uses renameIndexedParamsAndVarsInNLP, convertMapleExprToGamsExpr
+#
+# @authors dka
+#
+# @revision
+# 2009-12-14 written by dka
+#
+#############################################################
+createTextForGams:= proc(aNLPpar::NLP,modelName::string)
+
+   local finalText, mapleParameters, i, textGamsParameters, newLineTextGamsParameters,
+         mapleVariables, textGamsVariables, newLineTextGamsVariables, newLineTextLowerBound,
+         newLineTextUpperBound, mapleCurrentVar, mapleCurrentLowerBound, mapleCurrentUpperBound,
+         mapleIntegerVariables, textGamsIntegerVariables, mapleCurrentIntVar, mapleCurrentIntLowerBound,
+         mapleCurrentIntUpperBound, mapleBinaryVariables, textGamsBinaryVariables, newLineTextGamsBinaryVariables,
+         newLineTextGamsIntVariables, newLineTextLowerIntBound, newLineTextUpperIntBound, 
+         newLineTextLowerBinaryBound, newLineTextUpperBinaryBound, mapleConstraints,
+         textGamsDeclarationEquations, currentGamsConstraintLine, textGamsConstraints, signOfConstraint,
+         mapleObjFunc,textGamsForObjFuncConstraint, iflessConstrRhs, iflessOrEqConstrRhs, ifGraterConstrRhs, 
+         ifGraterOrEqConstrRhs, iflessConstrLhs, textGamsModelName, textGamsSolverOption1,textGamsSolverOption2, 
+         textGamsSolveCommand,textGamsDisplayCommand, ifHasIntVariables, solverType, aNLP;
+
+   #
+   # we have to rename indexed names in NLP because for GAMS 
+   # indexed names is inappropriate 
+   # (e.g. [v[1]=v_1, v[1,1]=v_11, v[1][1]=v_1_1, ...) 
+   #
+   
+   aNLP:=Aux:-TransferNlpToGams:-renameIndexedParamsAndVarsInNLP(aNLPpar);
+   
+
+   #
+   # transter maple parameters from NLP to GAMS scalars
+   # i.e maple line [par1=val1,par2=val2,..] transter 
+   # to GAMS text Scalar par1 /val1/; 
+   #              Scalar par2 /val1/; ...
+   #
+
+   
+   mapleParameters:=aNLP["Parameters"];
+   textGamsParameters:="";
+
+   for i from 1 to nops(mapleParameters) do
+      newLineTextGamsParameters:=StringTools[Join](["Scalar ",convert(lhs(mapleParameters[i]),string)," /",convert(rhs(mapleParameters[i]),string),"/;"],"");
+      textGamsParameters:=StringTools[Join]([textGamsParameters,newLineTextGamsParameters,"\n"],"");
+   end do;
+
+
+
+   #
+   # transter maple variables from NLP to GAMS variables
+   # i.e maple line [var1=lowerBound1..upperBound1,..] transter 
+   # to GAMS text Variable var1; 
+   #              var1.lo=lowerBound1;
+   #              var1.up=upperBound1;...
+   # 
+   
+   
+   mapleVariables:=aNLP["Variables"];
+   textGamsVariables:="";
+   
+   for i from 1 to nops(mapleVariables) do
+      mapleCurrentVar:= lhs(mapleVariables[i]);
+      mapleCurrentLowerBound:=lhs(rhs(mapleVariables[i]));
+      mapleCurrentUpperBound:=rhs(rhs(mapleVariables[i]));
+      newLineTextGamsVariables:=StringTools[Join](["Variable ",convert(mapleCurrentVar,string),";\n"],"");      
+      newLineTextLowerBound:="";
+      newLineTextUpperBound:="";
+      if(mapleCurrentLowerBound>-infinity)
+         then newLineTextLowerBound:=StringTools[Join](["   ",convert(mapleCurrentVar,string),".lo=",convert(mapleCurrentLowerBound,string),";\n"],"");
+      end if;
+      if(mapleCurrentUpperBound<infinity)
+         then newLineTextUpperBound:=StringTools[Join](["   ",convert(mapleCurrentVar,string),".up=",convert(mapleCurrentUpperBound,string),";\n"],"");
+      end if;
+      textGamsVariables:=StringTools[Join]([textGamsVariables,newLineTextGamsVariables,newLineTextLowerBound,newLineTextUpperBound,"\n"],"");
+   end do;
+
+   #
+   # add slack variable for cost function
+   #
+  
+   textGamsVariables:=StringTools[Join]([textGamsVariables,
+                                         "Variable SlackVariableForMinimizing;\n",
+                                         "SlackVariableForMinimizing.lo=-100000;\n",
+                                         "SlackVariableForMinimizing.up=100000;\n\n"],"");
+
+
+   #
+   # if exists transter integer variables to GAMS integer variables
+   # i.e. maple line [ver1=lowerBound1..upperBound1,...]
+   # to GAMS text Integer variable var1; 
+   #              var1.lo=lowerBound1;
+   #              var1.up=upperBound1;...
+   #
+
+
+   mapleIntegerVariables:=aNLP["IntegerVariables"];
+   textGamsIntegerVariables:="";
+   ifHasIntVariables:=false;
+   
+   if(type(mapleIntegerVariables, list(name = EvalsToFloat .. EvalsToFloat)))
+   then 
+      ifHasIntVariables:=true;
+      for i from 1 to nops(mapleIntegerVariables) do
+         mapleCurrentIntVar:= lhs(mapleIntegerVariables[i]);
+	 mapleCurrentIntLowerBound:=lhs(rhs(mapleIntegerVariables[i]));
+         mapleCurrentIntUpperBound:=rhs(rhs(mapleIntegerVariables[i]));
+         newLineTextGamsIntVariables:=StringTools[Join](["Integer variable ",convert(mapleCurrentIntVar,string),";\n"],"");      
+         newLineTextLowerIntBound:="";
+         newLineTextUpperIntBound:="";
+         if(mapleCurrentIntLowerBound>0)
+            then newLineTextLowerIntBound:=StringTools[Join](["   ",convert(mapleCurrentIntVar,string),".lo=",convert(mapleCurrentIntLowerBound,string),";\n"],"");
+         end if;
+         if(mapleCurrentIntUpperBound<infinity)
+            then newLineTextUpperIntBound:=StringTools[Join](["   ",convert(mapleCurrentIntVar,string),".up=",convert(mapleCurrentIntUpperBound,string),";\n"],"");
+         end if;
+         textGamsIntegerVariables:=StringTools[Join]([textGamsIntegerVariables,newLineTextGamsIntVariables,newLineTextLowerIntBound,newLineTextUpperIntBound,"\n"],"");
+      end do;
+   end if;
+  
+
+
+   #
+   # if exists transter binary variables to GAMS binary varialbles
+   # i.e. maple line [var1,...]
+   # to GAMS text Binary variable var1;...
+   #
+
+   mapleBinaryVariables:=aNLP["BinaryVariables"];
+   textGamsBinaryVariables:="";
+  
+   if(type(mapleBinaryVariables,list(name)))
+   then 
+      ifHasIntVariables:=true;
+      for i from 1 to nops(mapleBinaryVariables) do
+          newLineTextGamsBinaryVariables:=StringTools[Join](["Binary variable ",convert(mapleBinaryVariables[i],string),";\n"],"");
+          newLineTextLowerBinaryBound:=StringTools[Join](["   ",convert(mapleBinaryVariables[i],string),".lo=0",";\n"],"");
+          newLineTextUpperBinaryBound:=StringTools[Join](["   ",convert(mapleBinaryVariables[i],string),".up=1",";\n"],"");
+          textGamsBinaryVariables:=StringTools[Join]([textGamsBinaryVariables,
+                                                      newLineTextGamsBinaryVariables, 
+                                                      newLineTextLowerBinaryBound, 
+                                                      newLineTextUpperBinaryBound,"\n"],"");
+      end do;
+   end if;
+
+
+
+   #
+   # transfer maple constraints and objective function to GAMS
+   #
+
+
+   mapleConstraints:=aNLP["Constraints"];
+   textGamsDeclarationEquations:="Equations \n";
+   
+   for i from 1 to nops(mapleConstraints) do
+      textGamsDeclarationEquations:=StringTools[Join]([textGamsDeclarationEquations,"   EquationN",convert(i,string),",\n"],"");
+   end do;
+   textGamsDeclarationEquations:=StringTools[Join]([textGamsDeclarationEquations,"   ObjectiveFunctionEquation;\n"],"");
+
+
+   textGamsConstraints:="";
+   
+   for i from 1 to nops(mapleConstraints) do
+      signOfConstraint:=" =e= ";
+      iflessConstrLhs := convert(mapleConstraints[i], string);
+      iflessConstrRhs := convert(lhs(mapleConstraints[i]) < rhs(mapleConstraints[1]), string);
+      iflessOrEqConstrRhs := convert(lhs(mapleConstraints[i]) <= rhs(mapleConstraints[1]), string);
+      if (StringTools[Compare](iflessConstrLhs,iflessConstrRhs) or StringTools[Compare](iflessConstrLhs,iflessOrEqConstrRhs) )
+               then signOfConstraint:=" =l= ";
+      end if;  
+
+      ifGraterConstrRhs := convert(lhs(mapleConstraints[i]) > rhs(mapleConstraints[1]), string);
+      ifGraterOrEqConstrRhs := convert(lhs(mapleConstraints[i]) >= rhs(mapleConstraints[1]), string);
+      if (StringTools[Compare](iflessConstrLhs,ifGraterConstrRhs) or StringTools[Compare](iflessConstrLhs,ifGraterOrEqConstrRhs) )
+               then signOfConstraint:=" =g= ";
+      end if;  
+      currentGamsConstraintLine:=StringTools[Join](["EquationN",convert(i,string)," .. ",
+                                                     Aux:-TransferNlpToGams:-convertMapleExprToGamsExpr(lhs(mapleConstraints[i])),
+                                                     signOfConstraint,
+                                                     Aux:-TransferNlpToGams:-convertMapleExprToGamsExpr(rhs(mapleConstraints[i])),
+                                                     ";"],"");
+      textGamsConstraints:=StringTools[Join]([textGamsConstraints,currentGamsConstraintLine,"\n"],"");
+   end do;
+
+   #
+   # add objective function constraint to GAMS
+   #
+   
+   mapleObjFunc:=aNLP["CostFunction"];
+   textGamsForObjFuncConstraint:=StringTools[Join](["ObjectiveFunctionEquation"," .. ",
+                                                    "SlackVariableForMinimizing"," =e= ",
+                                                     Aux:-TransferNlpToGams:-convertMapleExprToGamsExpr(mapleObjFunc),
+                                                     ";\n"],"");
+
+
+   #
+   # Add solver and name of GAMS modelName
+   #
+
+   textGamsModelName:=StringTools[Join](["Model ",modelName," /all/;\n"],"");
+   textGamsSolverOption1:="option nlp=SNOPT;\n";
+   textGamsSolverOption2:="option minlp=SBB;\n";
+   
+   solverType:="nlp";
+   if (ifHasIntVariables=true)
+      then solverType:="minlp";
+   end if;
+   textGamsSolveCommand:=StringTools[Join](["solve ",modelName," using ",solverType," minimizing SlackVariableForMinimizing;\n"],"");
+
+   textGamsDisplayCommand:="display SlackVariableForMinimizing.l;";
+
+   finalText:=StringTools[Join]([textGamsParameters,"\n",textGamsVariables, textGamsIntegerVariables, textGamsBinaryVariables,"\n",
+                                 textGamsDeclarationEquations, "\n", textGamsConstraints, textGamsForObjFuncConstraint, "\n",
+                                 textGamsModelName,textGamsSolverOption1,textGamsSolverOption2,textGamsSolveCommand,textGamsDisplayCommand],"");
+   RETURN(finalText);
+
+   end proc;
+
+

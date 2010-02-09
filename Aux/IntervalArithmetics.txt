@@ -1,0 +1,21 @@
+#------------------------------------------------------------
+#
+# @path Aux/IntervalArithmetic.txt
+#
+# @brief Collects auxiliary procedures for interval operations on
+# real closed intervals. 
+#
+# @authors mmo
+#
+# @revision
+# 2008-02-13 Written by mmo.
+#
+#------------------------------------------------------------
+IntervalArithmetics:= module()
+
+  export
+    square; 
+
+$include<IntervalArithmetics/square.txt>
+
+end module; 

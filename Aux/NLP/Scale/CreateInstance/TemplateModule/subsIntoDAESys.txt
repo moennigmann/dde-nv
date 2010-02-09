@@ -1,0 +1,84 @@
+#------------------------------------------------------------
+#
+# @path Aux/NLP/Scale/CreateInstance/TemplateModule/SubsIntoDAESys.txt
+#
+# @authors mmo, dka
+#
+# @revision
+# 2008-03-06  instead of aSys[...] using aSys["..."] by dka
+# 030121 changed error to warning if DynVars of instance
+#   are not the same as of parameter; 
+# 021030 added missing local var decl
+# 021003 added substitution of scaled parameters; 
+# 020930 added check for order of variables in aDAESys
+# 020929 written by mmo
+#
+#------------------------------------------------------------
+subsIntoDAESys:= proc(
+  aDAESys::DAESys
+)
+
+  local NewSys, FormerODE, NewRhs, i1; 
+
+  #
+  # refuse to work on AEs
+  #
+    if not
+      aDAESys["AEs"]= []
+    then
+      error("use on algebraic equations currently not implemented");
+    end if; 
+  
+  #
+  # DynVars in DAESys must be the same variables as ranges 
+  # passed to CreateInstance (and same order required)
+  #
+    if not
+      aDAESys["DynVars"]= VarNames
+    then
+      warning("instance of NLP:-Scale can only be applied to DAESys which has same \"DynVars\" as CreateInstances has received variables");
+    end if; 
+
+  NewSys:= copy(aDAESys); 
+
+  #
+  # substitute into rhs of EAEs
+  #
+    NewSys["ExplicitAEs"]:= array(1..nops(aDAESys["ExplicitAEs"]));
+    for i1 from 1 to nops(aDAESys["ExplicitAEs"]) do
+      NewSys["ExplicitAEs"][i1]:= subs(
+        SubsListScaledToPhys,
+        SubsListScaledParsScaledToPhys, 
+	aDAESys["ExplicitAEs"][i1]
+      ); 
+    end do;
+    NewSys["ExplicitAEs"]:= convert(
+      NewSys["ExplicitAEs"], 
+      list
+    ); 
+
+  #
+  # transform ODEs
+  #
+    NewSys["ODEs"]:= array(1..nops(aDAESys["ODEs"]));
+    for i1 from 1 to nops(aDAESys["ODEs"]) do
+      FormerODE:= aDAESys["ODEs"][i1];
+      NewRhs:= subs(
+        SubsListScaledToPhys,
+        SubsListScaledParsScaledToPhys, 
+        rhs(FormerODE)
+      ); 
+      NewRhs:= D[i1]* NewRhs; 
+
+      NewSys["ODEs"][i1]:= 
+        lhs(FormerODE)= NewRhs; 
+    end do; 
+    NewSys["ODEs"]:= convert(
+      NewSys["ODEs"],
+      list
+    ); 
+
+  return(eval(NewSys)); 
+
+end proc; 
+

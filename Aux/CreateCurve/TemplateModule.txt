@@ -1,0 +1,78 @@
+#------------------------------------------------------------
+#
+# @path Aux/CreateCurve/TemplateModule.txt
+#
+# @authors mmo, dka
+#
+# @revision
+# 2008-01-22 copied from ModelPack by dka
+# 030109 added local var decl for SubsListPars, ExtraData; 
+# 030106 added ExtendCurveByEAEs
+# 021018 added GetNonTableData, GetVariables
+# 02xxxx written by mmo
+#------------------------------------------------------------
+TemplateModule:= module()
+
+   export
+    createPS,
+    extendCurveByEAEs, 
+    getData,
+    getNonTableData, 
+    getNumPoints, 
+    getParameters,
+    getParNames,
+    getSinglePlotForFunction, 
+    getSinglePlotForFunction3d, 
+    getVariables,   
+    getVarNames,  
+    getPoint,         # returns Parameters and Variables
+    getPlot,
+    joinCurve,
+    splitCurve; 
+
+  local Indices, NumDataPoints, VarNames, data, ParNames,
+    getSinglePlot, SubsListPars, ExtraData; 
+
+
+  #
+  # receive data from constructor
+  # note this must be done explicitly, since otherwise
+  # instance cannot be saved to disk (can be saved, but
+  # data is lost
+  #
+    VarNames:= VarNamesInConstr;
+    NumDataPoints:= NumDataPointsInConstr; 
+    data:= copy(PointLikeData); 
+    ExtraData:= OtherData; 
+    SubsListPars:= SubsListParsInConstr; 
+
+  #
+  # calculate some data
+  #
+    ParNames:= map(
+      lhs,
+      Aux:-ListOperations:-getRHSofIn(
+        Parameters,
+        ExtraData
+      )
+    ); 
+
+$include<CreateCurve/TemplateModule/getData.txt>
+$include<CreateCurve/TemplateModule/getParameters.txt>
+$include<CreateCurve/TemplateModule/getPlot.txt>
+$include<CreateCurve/TemplateModule/getSinglePlot.txt>
+$include<CreateCurve/TemplateModule/getSinglePlotForFunction.txt>
+$include<CreateCurve/TemplateModule/getSinglePlotForFunction3d.txt>
+$include<CreateCurve/TemplateModule/createPS.txt> 
+$include<CreateCurve/TemplateModule/getNonTableData.txt> 
+$include<CreateCurve/TemplateModule/getNumPoints.txt>
+$include<CreateCurve/TemplateModule/getPoint.txt>
+$include<CreateCurve/TemplateModule/getVarNames.txt>
+$include<CreateCurve/TemplateModule/getParNames.txt>
+$include<CreateCurve/TemplateModule/joinCurve.txt>
+$include<CreateCurve/TemplateModule/splitCurve.txt> 
+$include<CreateCurve/TemplateModule/getVariables.txt>
+$include<CreateCurve/TemplateModule/extendCurveByEAEs.txt>
+
+end module; # TemplateModule
+

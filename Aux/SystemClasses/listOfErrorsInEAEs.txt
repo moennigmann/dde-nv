@@ -1,0 +1,79 @@
+###############################################################################
+#
+# @path Aux/SystemClasses/ListOfErrorsInEAEs.txt
+#
+# @brief Generate list of errors in EAEs
+#
+# @authors mmo
+#
+# @revision
+# 030325 rewritten for use on large EAEs
+#
+###############################################################################
+listOfErrorsInEAEs:= proc(
+  EAEs::list(name= term),
+  ReqValidSymbs::{set(name), list(name)}
+)
+
+local ValidSymbs, NumEAEs, FoundNoErrors, i1, Inds, i2;
+
+  ValidSymbs:= convert(ReqValidSymbs, set); 
+  NumEAEs:= nops(EAEs);
+  FoundNoErrors:= true; 
+
+  #
+  # loop over EAEs
+  #
+    for i1 from 1 to NumEAEs do
+
+      #
+      # inform user about progress
+      #
+        if
+          i1 mod 100= 0
+        then
+          printf(
+            "have analysed %d out of %d equations\n",
+            i1,
+            NumEAEs
+          );
+        end if;
+
+      #
+      # get indets of current EAE
+      #
+        Inds:= convert(
+          Aux:-ListOperations:-getListOfIndetsIn(rhs(EAEs[i1])),
+          set
+        );
+        Inds:= Inds minus ValidSymbs; 
+      
+      #
+      # loop over EAEs backwards, starting at current EAE,
+      #   until all indets of current EAE have been found
+      #
+        for i2 from (i1- 1) to 1 by -1 do
+          Inds:= Inds minus {lhs(EAEs[i2])};
+          if 
+            Inds= {}
+          then
+            break;
+          end if;
+        end do;
+
+      #
+      # check if all indets have been resolved
+      #
+        if not
+          Inds= {}
+        then
+          FoundNoErrors:= false; 
+          printf("symbols %q \n", Inds);
+          printf("   cannot be resolved in equation number %d\n", i1);
+        end if;
+
+      end do;
+
+  return(FoundNoErrors); 
+ 
+end proc:

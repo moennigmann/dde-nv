@@ -1,0 +1,12 @@
+#------------------------------------------------------------
+#
+# @path Aux/NLP/Scale/CreateInstance/TemplateModule/GetListOfVars.txt
+#
+# @brief Retirn list of variables
+#
+#------------------------------------------------------------
+      getListOfVars:= proc()
+        return(VarNames);
+      end proc; # getListOfVars
+ 
+

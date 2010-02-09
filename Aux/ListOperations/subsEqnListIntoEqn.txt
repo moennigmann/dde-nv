@@ -1,0 +1,77 @@
+#############################################################
+#
+# @path Aux/ListOperations/subsEqnListIntoEqn
+#
+# @param alist, anEqn
+#
+# @return equation, equations from alist substituted in
+#  reverse order
+#
+# @notes works if anEqn is a list of equations
+#
+# @authors mmo
+#
+# @revision
+# 2008-02-28 renamed by dka form SubsEqnListIntoEqn to subsEqnListIntoEqn
+# 021217 no longer use l:= [op(l), newitem], but use
+#   array instead; 
+# 021125 allow second input argument to be of type '>', or
+#   of type term; 
+# xxxxxx written by mmo
+#
+#############################################################
+subsEqnListIntoEqn:= proc(
+  aList::list(equation),
+  anEqn::{
+    {`<`, equation, term},
+    list({equation, `<`, term})
+  }
+)
+
+  local i1, i2, newEqn, NumberOfEqns, ListOfEqns, newList;
+
+  NumberOfEqns:= nops(aList);
+
+  if 
+    type(anEqn, {`<`, equation, term}) 
+  then
+    newEqn:= subs(
+      seq(
+        aList[NumberOfEqns+ 1 -i1],
+        i1= 1..NumberOfEqns
+      ),
+      anEqn
+    );
+
+    RETURN(newEqn);
+
+  elif 
+    type(anEqn, list({`<`, equation, term})) 
+  then
+
+    ListOfEqns:= anEqn;
+    newList:= array(1..nops(ListOfEqns)); 
+
+    for i2 from 1 to nops(ListOfEqns) do
+
+      newEqn:= subs(
+        seq(
+          aList[NumberOfEqns+ 1- i1],
+          i1= 1..NumberOfEqns
+        ),
+        ListOfEqns[i2]
+      );
+     
+      newList[i2]:= newEqn; 
+     
+    end do; 
+
+    newList:= convert(newList, list); 
+
+    RETURN(eval(newList));
+  end if; 
+
+  false;
+
+end proc; # subsEqnListIntoEqn
+

@@ -1,0 +1,69 @@
+##################################################################################
+#
+# @path Aux/TensProd/xi_Aij.txt
+#
+# @brief return product xi Aij of Vector and Matrix
+#
+# @param
+#   xVec, Vector or list 
+#   Amat, square Matrix or array to be multiplied by list
+#     passed in first argument
+#
+# @return
+#   Vector xVec Amat, returned result is of type array
+#
+# @notes
+#   conversion of array Amat to Matrix Amat only necessary for
+#     LinearAlgebra[RowDimension], LinearAlgebra[ColumnDimension]; better solution: extract
+#     rowdim/coldim in if-clause;
+#
+# @authors mmo, dka
+#
+# @revision
+#   010517 mmo, reusing code previously used in
+#     makefile-based nld-software
+#
+##################################################################################
+    xi_Aij:= proc(
+      xVec::{list, Vector},
+      Amat::{Matrix, array} 
+    )
+
+       local  A, NumRows, NumCols, result;
+
+    
+      #
+      # convert Amat to standard types
+      #
+
+        if not
+          type(Amat, Matrix)
+        then
+          A:= convert(Amat, Matrix);
+        else
+          A:= Amat;
+        end if;
+
+     
+      #
+      # A must be square
+      #
+        NumRows:= nops(convert(A,listlist));
+        NumCols:= nops(convert(A,listlist)[1]);
+
+       if not
+          NumRows= NumCols
+        then
+          error("2nd  argument is not square Matrix."); 
+        end if; 
+   
+      #
+      # calculate sum
+      #
+
+  
+      result:= xi_Tij(xVec,A);
+   
+      return(eval(result)); 
+  
+    end proc; # TensProd:-xi_Aij

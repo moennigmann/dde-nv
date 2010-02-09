@@ -1,0 +1,30 @@
+###############################################################################
+#
+# @path Aux/Derivs.txt
+#
+# @brief Collects procedures for calculation dirivatives first and second orders
+#
+# @authors mmo, dka
+#
+# @notes type checking for args of procs is not tight; tighter checking
+#        is too expensive for low level procs as the ones in this module
+#
+# @revision
+#   2008-11-19 Splited procedures in module into files by dka
+#
+###############################################################################
+Derivs:= module()
+
+  export
+    f_p,   # n x n_p
+    f_x,   # n x n
+    f_xx,  # n x n x n
+    f_xp;  # n x n x n_p
+
+$include <Derivs/f_p.txt>
+$include <Derivs/f_x.txt>
+$include <Derivs/f_xx.txt>
+$include <Derivs/f_xp.txt>
+
+end module; # Deriv
+ 

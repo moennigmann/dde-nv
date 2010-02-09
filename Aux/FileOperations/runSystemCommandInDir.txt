@@ -1,0 +1,31 @@
+###############################################################################
+#
+# @path Aux/FileOperations/RunSystemCommandInDir.txt
+#
+# @authors mmo
+#
+# @revision
+# 2008-03-05 by dka moved from ModelPack
+# 030318 written by mmo
+#
+###############################################################################
+runSystemCommandInDir:= proc(
+  command::string,
+  WorkingDir::string
+)
+
+  local OldDir;
+
+  OldDir:= currentdir();
+  try
+    currentdir(WorkingDir);
+    system(command);
+  catch:
+    error;
+  finally
+    currentdir(OldDir);
+  end try;
+
+  return(true);
+
+end proc:

@@ -1,0 +1,77 @@
+#------------------------------------------------------------
+#
+# @path Aux/Programming/createHeader.txt
+#
+# @brief Creates header for maple procedure or module to be stored
+# in a text file that becomes part of a module to be read
+# into maple sessions.
+#
+# @authors mmo
+#
+# @revision
+# 2007-10-19 Written by M. Moennigmann.
+#------------------------------------------------------------
+createHeader:= proc(
+  procOrModuleName::string,
+  author::string,
+  fileName::string
+  # optional copyrightIndicator::string
+)
+
+  local copyrightIndicator, fh, today, copyrightNote; 
+
+  #
+  # select copyright note
+  #
+  if 
+    nargs> 3
+  then
+    copyrightIndicator:= args[4];
+  else
+    copyrightIndicator:= "ISM";
+  end if;
+  if
+    copyrightIndicator= "ISM"
+  then
+    copyrightNote:= "# This software is development software that is not free \n# and not open. It may become available in the future. Please\n# contact M. Moennigmann for details. \n# Copyright Integrierte Systeme der Mikroprozesstechnik."; 
+  elif 
+    copyrightIndicator= "mmo" 
+    or copyrightIndicator= "Moennigmann"
+    or copyrightIndicator= "Monnigmann" 
+  then
+    copyrightNote:= "# This software is development software that is not free \n# and not open. It may become available in the future. Please\n# contact M. Moennigmann for details. Copyright M. Moennigmann."; 
+  else
+    error("internal error, unknown copyrightIndicator");
+  end if; 
+
+  today:= ssystem("date +%Y-%m-%d")[2][1..-2];
+
+  #
+  # create header
+  #
+  fh:= open(fileName, 'WRITE');
+  fprintf(fh, "#------------------------------------------------------------\n");
+  fprintf(fh, "#\n");
+  fprintf(fh, "# %s\n", procOrModuleName);
+  fprintf(fh, "#\n");
+  fprintf(fh, "# (put brief description here)\n");
+  fprintf(fh, "#\n");
+  fprintf(fh, "# Notes:\n");
+  fprintf(fh, "#\n");
+  fprintf(fh, "# to do:\n");
+  fprintf(fh, "#\n");
+  fprintf(fh, "# revision history:\n");
+  fprintf(fh, "# %s Written by %s.\n", today, author);
+  fprintf(fh, "#\n");
+  fprintf(fh, "%s\n", copyrightNote); 
+  fprintf(fh, "#\n"); 
+  fprintf(fh, "#------------------------------------------------------------\n");
+  fprintf(fh, "%s:= proc()\n", procOrModuleName);
+  fprintf(fh, "end proc;\n");
+  close(fh);
+
+  return();
+
+end proc; 
+
+      

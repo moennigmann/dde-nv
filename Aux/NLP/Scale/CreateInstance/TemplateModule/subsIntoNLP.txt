@@ -1,0 +1,119 @@
+#------------------------------------------------------------
+#
+# @path Aux/NLP/Scale/CreateInstance/TemplateModule/SubsIntoNLP.txt
+#
+# @authors mmo, dka
+#
+# @revision
+# 2008-03-06  instead of aSys[...] using aSys["..."] by dka
+# 021209 written by mmo, starting from SubsIntoExtAESys
+#
+#------------------------------------------------------------
+subsIntoNLP:= proc(
+  anNLP::NLP
+)
+
+  local NewSys, NewRhs, i1, Ranges, Bounds, NumBounds, 
+    LowerBounds, UpperBounds, NumVars, NewBounds, CurrentName,
+    CurrentRange; 
+
+  #
+  # Variables in NLP must be the same variables as ranges 
+  # passed to CreateInstance (and same order required)
+  #
+    if not
+      map(lhs, anNLP["Variables"])= VarNames
+    then
+      error("instance of NLP:-Scale can only be applied to NLP which has same \"Variables\" as CreateInstances has received variables");
+    end if; 
+
+  NewSys:= copy(anNLP); 
+
+  #
+  # substitute into rhs of EAEs
+  #
+    NewSys["ExplicitAEs"]:= array(1..nops(anNLP["ExplicitAEs"]));
+    for i1 from 1 to nops(anNLP["ExplicitAEs"]) do
+      NewSys["ExplicitAEs"][i1]:= subs(
+        SubsListScaledToPhys,
+        SubsListScaledParsScaledToPhys, 
+	anNLP["ExplicitAEs"][i1]
+      ); 
+    end do;
+    NewSys["ExplicitAEs"]:= convert(
+      NewSys["ExplicitAEs"],
+      list
+    ); 
+
+  #
+  # substitute into rhs of LinearConstraints
+  #
+    NewSys["LinearConstraints"]:= array(1..nops(anNLP["LinearConstraints"]));
+    for i1 from 1 to nops(anNLP["LinearConstraints"]) do
+      NewSys["LinearConstraints"][i1]:= subs(
+        SubsListScaledToPhys,
+        SubsListScaledParsScaledToPhys, 
+	anNLP["LinearConstraints"][i1]
+      ); 
+    end do;
+    NewSys["LinearConstraints"]:= convert(
+      NewSys["LinearConstraints"],
+      list
+    ); 
+
+  #
+  # substitute into rhs of Constraints
+  #
+    NewSys["Constraints"]:= array(1..nops(anNLP["Constraints"]));
+    for i1 from 1 to nops(anNLP["Constraints"]) do
+      NewSys["Constraints"][i1]:= subs(
+        SubsListScaledToPhys,
+        SubsListScaledParsScaledToPhys, 
+	anNLP["Constraints"][i1]
+      ); 
+    end do;
+    NewSys["Constraints"]:= convert(
+      NewSys["Constraints"],
+      list
+    ); 
+
+  #
+  # substitute into rhs of cost function
+  #
+    NewSys["CostFunction"]:= subs(
+      SubsListScaledToPhys,
+      SubsListScaledParsScaledToPhys, 
+      anNLP["CostFunction"]
+    ); 
+
+  #
+  # scale bounds of variables: leave bounds which contain +/-infinity
+  # unchanged, all others have been scaled to -1..1
+  #
+    NumVars:= nops(anNLP["Variables"]);
+    NewBounds:= array(1..NumVars);
+    for i1 from 1 to NumVars do
+      CurrentName:= lhs(anNLP["Variables"][i1]); 
+      CurrentRange:= rhs(anNLP["Variables"][i1]);
+      if
+        (op(1, CurrentRange)= -infinity or
+         op(2, CurrentRange)= infinity
+        )
+      then
+        #
+        # keep unscaled bound, variable has not been scaled
+        #
+          NewBounds[i1]:= CurrentName= CurrentRange;
+      else
+        #
+        # set bounds to -1..1, since variable has been scaled
+        #
+          NewBounds[i1]:= CurrentName= -1..1;
+      end if; 
+    end do;
+    NewSys["Variables"]:= convert(NewBounds, list); 
+
+  return(eval(NewSys)); 
+
+end proc; 
+

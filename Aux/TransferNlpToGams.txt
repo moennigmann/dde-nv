@@ -1,0 +1,28 @@
+#------------------------------------------------------------
+#
+# @path  Aux/TransferNlpToGams.txt
+#
+# @brief Collects pocedure for creating text that can be used by solving a NLP by GAMS
+#
+# @authors dka
+#
+# @revision
+# 2009-12-14 Created by dka. 
+#------------------------------------------------------------
+TransferNlpToGams:= module()
+  export
+    convertMapleExprToGamsExpr,
+    createFileWithTextForGams,
+    createInitialPointTextForGams,
+    createTextForGams,
+    renameIndexedNameForGams,
+    renameIndexedParamsAndVarsInNLP; 
+
+$include <TransferNlpToGams/convertMapleExprToGamsExpr.txt>
+$include <TransferNlpToGams/createFileWithTextForGams.txt>
+$include <TransferNlpToGams/createInitialPointTextForGams.txt>
+$include <TransferNlpToGams/createTextForGams.txt>
+$include <TransferNlpToGams/renameIndexedNameForGams.txt>
+$include <TransferNlpToGams/renameIndexedParamsAndVarsInNLP.txt>
+
+end module; 

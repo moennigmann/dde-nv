@@ -1,0 +1,64 @@
+###############################################################################
+#
+# @path Aux/FileOperations/FindFirstSharedObject.txt
+#
+# @param TruncatedFileName
+#
+# @return string "<TruncatedFileName><number>.so" if number
+#   is the lowest number>=1 for which file of this name exists
+#   in current directory
+#
+# @authors mmo
+#
+# @revision
+# 040608 SharedObjectEnd for windows .dll for solaris and linux = .so
+# 020615 written by mmo
+#
+###############################################################################
+findFirstSharedObject:= proc(
+  TruncatedFileName::string
+)
+
+  local MaxIndex, FileName, i1, SharedObjectEnd;
+
+  MaxIndex:= 999;
+
+  SharedObjectEnd:=".so";
+  if
+    _EnvOperatingSystemType="windows"
+  then
+    SharedObjectEnd:=".dll";
+  end if;
+  #
+  # loop over files <FileName><i1>.so and check if they exist 
+  # in current directory
+  #
+    for i1 from 1 to MaxIndex do
+      FileName:= cat(
+        TruncatedFileName,
+        convert(i1, string),
+        SharedObjectEnd
+      ); 
+
+      if
+        Aux:-FileOperations:-fileExists(FileName)
+      then
+        break;
+      end if;
+    end do;
+
+  #
+  # throw error if no such fiel was found
+  #
+    if 
+      i1> MaxIndex
+    then
+      error("requested file not found");
+    end if;
+
+  #
+  # return number of first file found
+  #
+    return(FileName); 
+
+end proc;

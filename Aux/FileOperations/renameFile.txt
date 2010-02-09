@@ -1,0 +1,50 @@
+###############################################################################
+#
+# @path Aux/FileOperations/RenameFile.txt
+#
+# @param OldFileName, name of file to be renamed
+#  NewFileName
+#
+# @return none
+#
+# @notes system dependent, solaris only
+#
+# @authors mmo
+#
+# @revision
+# xxxxxx written by mmo
+#
+###############################################################################
+renameFile:= proc(
+  OldFileName::string,
+  NewFileName::string
+)
+
+  local UnixCommand;
+
+  #
+  # error if OldFileName does not refer to existing file
+  #
+    if not(
+      fileExists(OldFileName))
+    then
+      error("file to be renamed %1 does not exist", OldFileName);
+    end if; 
+
+  #
+  # error if NewFileName does refer to existing file
+  #
+  if
+      fileExists(NewFileName)
+    then
+      error("file named %1 already exists", NewFileName);
+    end if; 
+
+  UnixCommand:= cat(
+    `mv `, OldFileName, ` `, NewFileName
+  );
+
+  system(UnixCommand);
+
+end proc; #renameFile
+

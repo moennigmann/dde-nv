@@ -1,0 +1,73 @@
+#----------------------------------------
+#
+# @path Aux/CreateCurve/TemplateModule/getPlot.txt
+#
+# @brief Return plot of the curve
+#
+# @param (i) Name of x-axes
+#        (ii) List of names of y-axes
+#
+# @authors mmo
+#
+# @revision
+# 030108 allowed second input arg to be of type term, added appropriate
+#   call to GetSinglePlotForFunction for type term; 
+# 02xxxx written by mmo
+#
+#----------------------------------------
+    getPlot:= proc(
+      xName::name,
+      yName::{name, list(name), term}
+    )
+      
+      local Result, i1, PlotOpts, LegendString, xNameString; 
+
+      xNameString:= convert(xName, string); 
+
+      PlotOpts:= [
+        style= line
+      ];
+
+      if
+        type(yName, list(name))
+      then
+        LegendString:= map(convert, yName, string); 
+        Result:= [seq(
+          getSinglePlot(
+            xName,
+            yName[i1], 
+            op(PlotOpts),
+            linestyle= i1,
+            labels= [xNameString, ""],
+            legend= LegendString[i1],  
+            args[3..-1]
+          ),
+          i1= 1..nops(yName)
+        )];
+      elif
+        type(yName, name)
+      then
+        LegendString:= convert(yName, string); 
+        Result:= getSinglePlot(
+          xName,
+          yName,
+          op(PlotOpts),
+          linestyle= 1,
+          args[3..-1]
+        );
+      elif
+        type(yName, term)
+      then
+        Result:= getSinglePlotForFunction(
+          xName,
+          yName,
+          op(PlotOpts),
+          linestyle= 1,
+          args[3..-1]
+        ); 
+      end if;
+
+      return(Result); 
+
+    end proc; # GetPlot
+

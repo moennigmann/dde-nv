@@ -1,0 +1,11 @@
+#----------------------------------------
+# 
+# @path Aux/CreateCurve/TemplateModule/getParNames.txt
+#
+# @brief Return names of parameters
+#
+#----------------------------------------
+getParNames:= proc()
+  return(ParNames); 
+end proc; 
+

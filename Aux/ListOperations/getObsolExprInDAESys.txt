@@ -1,0 +1,57 @@
+#############################################################
+#
+# @path Aux/ListOperations/getObsolExprInDAESys.txt
+#
+# @param aDAESys = model
+#
+# @return list of Parameters, DynVars, AlgVars and
+#  LHSs of equations in DAESys[ExplicitAEs],
+#  that do not appear on the RHS of any equation in
+#  DAESys[ExplicitAEs] and DAESys[ODEs].
+#
+# @notes (i) uses  GetObsolExprInList.
+#        (ii) check for obsolete DynVars is redundant
+#             (already performed earlier in ListOfErrorsInDAESys)
+#
+# @authors mmo, dka
+#
+# @revision
+#   2008-05-15  instead of aSys[...] using aSys["..."] 
+#   2008-05-15 copied from ModelPack by dka
+#
+#############################################################
+getObsolExprInDAESys:=proc(
+  aDAESys::table
+)
+
+  local ListOfEquations, ListOfNames, ObsolExpr;
+
+  #
+  # merge Parameters, DynVars and
+  # LHSs of ExplicitAEs into ListOfNames
+  #
+    ListOfNames:=[
+      op(aDAESys["DynVars"]),
+      op(aDAESys["AlgVars"]),
+      op(aDAESys["Parameters"]),
+      op(map(lhs, aDAESys["ExplicitAEs"]))
+    ];
+
+  #
+  # merge aDAESys["ExplicitAEs"], aDAESys["AEs"] and aDAESys["ODEs"] into ListOfEquations
+  #
+    ListOfEquations:=[
+      op(aDAESys["ExplicitAEs"]),
+      op(aDAESys["AEs"]),
+      op(aDAESys["ODEs"])
+    ];
+
+  ObsolExpr:= getObsolExprInList(
+    ListOfNames,
+    ListOfEquations
+  );
+
+  RETURN(ObsolExpr);
+
+end proc; # getObsolExprInDAESys
+

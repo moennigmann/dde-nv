@@ -1,0 +1,66 @@
+#------------------------------------------------------------
+#
+# @path Aux/ListOperations.txt
+#
+# @brief Collects auxiliary procedures that operate on lists. 
+#
+# @authors mmo, dka
+#
+# @revision
+# 2008-10-01 Added prettyPrintListToFile - mmo
+# 2008-03-05 copied getMissingAndObsoleteNames, getNameFromDerivSymbol, 
+#            getObsolExprInDAESys from ModelPack by dka            
+# 2008-02-28 copied by dka getPosOfLHSin, getRHSofIn, isLHSin, setRHSofInTo 
+#            from ModelPack   
+# 2008-02-28 by dka rename the procedures that have a name that starts with 
+#            a capital letter to a lower case letter
+# 2008-02-26 Added getIndexToMaxElement, getIndexToMinElement. 
+# 2007-11-18 Changed by dka, added GetListOfIndetsIn, GetListOfUndefExprIn, 
+# 	     GetObsolExprInList, GetSetOfValidExprIn, SubsEqnListIntoEqn.
+# 2007-11-16 Written by M. Moennigmann. 
+#------------------------------------------------------------
+ListOperations:= module()
+  export
+    getIndexToMinElement, 
+    getIndexToMaxElement,
+    getIndicesToAllMaxElements,
+    getIndicesToAllMinElements,  
+    getListOfIndetsIn,
+    getListOfUndefExprIn,
+    getMissingAndObsoleteNames,
+    getNameFromDerivSymbol,
+    getObsolExprInDAESys,
+    getObsolExprInList,
+    getPosOfLHSin,
+    getPosOfObjectInList,
+    getRHSofIn,
+    getSetOfValidExprIn,
+    isLHSin,
+    prettyPrintListToFile, 
+    removeItemFromList,
+    setRHSofInTo,
+    subsEqnListIntoEqn,
+    subsSubsList; 
+
+$include <ListOperations/getIndexToMinElement.txt>
+$include <ListOperations/getIndexToMaxElement.txt>
+$include <ListOperations/getIndicesToAllMaxElements.txt>
+$include <ListOperations/getIndicesToAllMinElements.txt>
+$include <ListOperations/getListOfIndetsIn.txt>
+$include <ListOperations/getListOfUndefExprIn.txt>
+$include <ListOperations/getMissingAndObsoleteNames.txt>
+$include <ListOperations/getNameFromDerivSymbol.txt>
+$include <ListOperations/getObsolExprInDAESys.txt>
+$include <ListOperations/getObsolExprInList.txt>
+$include <ListOperations/getPosOfLHSin.txt>
+$include <ListOperations/getPosOfObjectInList.txt>
+$include <ListOperations/getRHSofIn.txt>
+$include <ListOperations/getSetOfValidExprIn.txt>
+$include <ListOperations/isLHSin.txt>
+$include <ListOperations/removeItemFromList.txt>
+$include <ListOperations/setRHSofInTo.txt>
+$include <ListOperations/subsEqnListIntoEqn.txt>
+$include <ListOperations/subsSubsList.txt>
+$include <ListOperations/prettyPrintListToFile.txt>
+
+end module; 

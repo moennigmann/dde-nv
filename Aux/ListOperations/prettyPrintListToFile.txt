@@ -1,0 +1,83 @@
+############################################################
+#
+# @path Aux/ListOperations/prettyPrintListToFile.txt
+#
+# @brief
+# Prints list to file and creates new line for each list element.
+#
+# @notes
+# Prints list specified in first parameter to file specified 
+# in third parameter, creates a new line for each list entry;
+# list is assigned to name passed in second parameter in file.
+# 
+# @throws error if file specified in 3rd parameter already exists
+#
+# @authors mmo
+#
+# @revision
+#   xxxxx Written by mmo.
+#
+############################################################ 
+prettyPrintListToFile:= proc(
+  aList::list,
+  listName::string, 
+  fileName::string
+  # comment::list(string) optional comments to be inserted at beginning
+)
+
+  local numElements, i, line, fileHandle;
+
+  numElements:= nops(aList);
+
+  #
+  # make sure file requested in 3rd parameter does not 
+  # already exist
+  #
+  if 
+    FileOperations:-fileExists(fileName) # Aux:-FileOperations
+  then
+    error(cat("fileto be created ", fileName, " already exists"));
+  else
+    fileHandle:= open(fileName, 'WRITE');
+  end if;
+
+  #
+  # if optional 4th parameter comment::list(string)
+  # is given, print those comments to file first,
+  # add leading "#"
+  #
+  if 
+    nargs> 3
+  then
+    if  
+      type(args[4], list(string))
+    then
+      for line in args[4] do
+        fprintf(fileHandle, "# %s\n", line);
+      end do;
+    else
+      error("expecting optional 4th parameter to be of type list(string)");
+    end if;
+  end if;
+
+  #
+  # print lhs of list definition
+  #
+  fprintf(fileHandle, "%s:= [\n", listName);
+  
+  #
+  # print all but last element
+  #
+  for i from 1 to numElements- 1 do
+    fprintf(fileHandle, "  %q,\n", aList[i]);
+  end do;
+
+  #
+  # print last list element
+  #
+  fprintf(fileHandle, "  %q\n", aList[numElements]);
+  fprintf(fileHandle, "];\n");
+
+  return();
+
+end proc: 

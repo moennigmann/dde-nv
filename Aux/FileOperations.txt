@@ -1,0 +1,38 @@
+#------------------------------------------------------------
+#
+# @path Aux/FileOperations.txt
+#
+# @brief Collects procedures that operating with files 
+#
+# @authors mmo, dka
+#
+# @revision
+# 2008-03-05 created from ModelPack by dka 
+# 
+#------------------------------------------------------------
+FileOperations:= module()
+
+  export
+    dirExists,
+    fileExists,
+    findFirstSharedObject,
+    findObjectFile,
+    nextFileNumber,
+    removeAllFilesInDir,
+    renameFile,
+    runSystemCommandInDir,
+    splitPathAndFile; 
+
+$include <FileOperations/dirExists.txt>
+$include <FileOperations/fileExists.txt>
+$include <FileOperations/findFirstSharedObject.txt>
+$include <FileOperations/findObjectFile.txt>
+$include <FileOperations/nextFileNumber.txt>
+$include <FileOperations/removeAllFilesInDir.txt>
+$include <FileOperations/renameFile.txt>
+$include <FileOperations/runSystemCommandInDir.txt>
+$include <FileOperations/splitPathAndFile.txt>
+
+
+end module; 
+ 

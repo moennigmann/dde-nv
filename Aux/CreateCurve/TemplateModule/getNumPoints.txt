@@ -1,0 +1,12 @@
+#----------------------------------------
+# 
+# @path Aux/CreateCurve/TemplateModule/getNumPoints.txt
+#
+# @brief Return number of points
+#
+#----------------------------------------
+  getNumPoints:= proc()
+    return(NumDataPoints);
+  end proc; # getNumPoints
+
+

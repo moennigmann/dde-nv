@@ -1,0 +1,27 @@
+###############################################################################
+#
+# @path Aux/getFudgedRelErr.txt
+#
+# @brief Returns relative error between 1st and second argument where one 
+# is added in denominator of rel err calculation.
+#
+# @authors mmo
+#
+# @revision
+# 2006-05-19 Written by M. Moennigmann
+#
+###############################################################################
+getFudgedRelErr:= proc(
+  r1::numeric,
+  r2::numeric
+)
+
+  local d, s, res;
+
+  d:= abs(r1- r2);
+  s:= abs(r1+ r2);
+  res:= d/(1+ s);
+
+  return(res);
+
+end proc:

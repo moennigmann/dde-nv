@@ -1,0 +1,35 @@
+#------------------------------------------------------------
+#
+# @path Aux/ListOperations/getIndexToMinElement.txt
+#
+# @brief Returns the index of the minimum object in a list with
+# entries of type numeric.
+#
+# @authors mmo
+#
+# @revision
+# 2008-02-25 Written by Martin Moennigmann. 
+#
+#------------------------------------------------------------
+getIndexToMinElement:= proc(
+  l::list(numeric)
+)
+
+  local i, indexToMin;
+
+  #
+  # loop over elements in list and remember where the
+  # smallest one was found
+  #
+  indexToMin:= 1;
+  for i from 1 to nops(l) do
+    if
+      l[i]< l[indexToMin]
+    then
+      indexToMin:= i;
+    end if;
+  end do;
+
+  return indexToMin; 
+
+end proc: 

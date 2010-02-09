@@ -1,0 +1,33 @@
+###############################################################################
+#
+# @path Aux/ListOperations/GetMissingAndObsoleteNames.txt
+#
+# @brief given two lists/sets of names, returns set of names which occur in
+# second but not in first ('Missing'), and set of names which occur in first
+# but not in second ("Obsolete")
+#
+# @authors mmo
+#
+# @revision
+# 021030 written by mmo
+#
+###############################################################################
+getMissingAndObsoleteNames:= proc(
+  Names1::{set(name), list(name), list(string), set(string)},
+  Names2::{set(name), list(name), list(string), set(string)}
+)
+
+  local SetNames1, SetNames2, Missing, Obsolete; 
+
+  #
+  # convert input arguments to standard type set
+  #
+    SetNames1:= convert(Names1, set);
+    SetNames2:= convert(Names2, set);
+
+    Missing:= SetNames2 minus SetNames1;
+    Obsolete:= SetNames1 minus SetNames2;
+
+  return(Missing, Obsolete);
+
+end proc; 

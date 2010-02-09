@@ -1,0 +1,99 @@
+#####################################################################################
+#
+# @path Aux/TensProd/xi_Tij_yj.txt
+#
+# @brief  return product xi Tij yj of Vector and Matrix
+#
+# @param
+#   xVec, Vector or list 
+#   Amat,  Matrix or array to be multiplied by list
+#     passed in first argument
+#   yVec, Vector or list to be multiplied by Matrix
+#     passed in second argument
+# @return
+#   Vector xVec Amat yVec, returned result is of type array
+#
+# @notes
+#   conversion of array Amat to Matrix Amat only necessary for
+#     LinearAlgebra[RowDimension], LinearAlgebra[ColumnDimension]; better solution: extract
+#     rowdim/coldim in if-clause;
+#
+# @authors mmo, dka
+#
+# @revision
+#   010517 mmo, reusing code previously used in
+#     makefile-based nld-software
+#
+#####################################################################################
+    xi_Tij_yj:= proc(
+      xVec::{list, Vector},
+      Amat::{Matrix, 'array'(2)}, 
+      yVec::{list, Vector}
+    )
+
+       local  x,y, A,NumRowsA,NumColsA, media, result;
+
+    
+      #
+      # convert to standard types
+      #
+
+
+        if not
+          type(xVec, list)
+        then
+          x:= convert(xVec, list);
+        else
+          x:= xVec;
+        end if;
+
+        if not
+          type(Amat, Matrix)
+        then
+          A:= convert(Amat, Matrix);
+        else
+          A:= Amat;
+        end if;
+
+        if not
+          type(yVec, Vector)
+        then
+          y:= convert(yVec, Vector);
+        else
+          y:= yVec;
+        end if;
+
+      #
+      # rowdium of A must be equal to length of x
+      #
+
+        NumRowsA:= nops(convert(A,listlist));
+
+        if not
+          NumRowsA= nops(x)
+        then
+          error("incompatible dimensions of 1st and 2nd argument"); 
+        end if; 
+
+      #
+      # length of y must be equal to coldim of A
+      #
+
+        NumColsA:= nops(convert(A,listlist)[1]);
+
+        if not
+          NumColsA= nops(convert(y,list))
+        then
+          error("incompatible dimensions of 2nd and 3rd argument"); 
+        end if; 
+
+      #
+      # calculate sum
+      #
+
+      media:= array([xi_Tij(x,A)]);
+      result:= Sij_Tjk(media,y)[1,1];
+   
+      return(eval(result)); 
+  
+    end proc; # TensProd:-xi_Tij_yj

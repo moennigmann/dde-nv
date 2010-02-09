@@ -1,0 +1,46 @@
+#------------------------------------------------------------
+#
+# @path Aux/IntervalArithmetics/square.txt
+#
+# @brief Given a closed real interval, procedure returns
+# lower and upper bound of square on that interval. 
+#
+# @notes
+# (i) Procedure is not at all optimized for performance,
+# but meant to be as readible as possible in order
+# to be robust and useful for testing and debugging
+# optimized implementations.
+#
+# @authors mmo
+#
+# @revision
+# 2008-02-13 Written by mmo.
+#
+#------------------------------------------------------------
+square:= proc(
+  Ix::[numeric, numeric]
+)
+
+  local lowerBound, upperBound, IxBoundsSquared; 
+
+  IxBoundsSquared:= Ix[1]^2, Ix[2]^2; 
+
+  #
+  # calculate lower bound
+  #
+  if
+    Ix[1]<= 0 and 0<= Ix[2]
+  then
+    lowerBound:= 0;
+  else
+    lowerBound:= min(IxBoundsSquared); 
+  end if; 
+
+  #
+  # calculate upper bound
+  #
+  upperBound:= max(IxBoundsSquared); 
+
+  return [lowerBound, upperBound];
+
+end proc;  

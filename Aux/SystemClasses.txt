@@ -1,0 +1,55 @@
+#------------------------------------------------------------
+#
+# @path Aux/SystemClasses.txt
+#
+# @brief Collects auxiliary procedures that operate with System. 
+#
+# @authors mmo, dka
+#
+# @revision
+# 2008-05-15 added listOfErrorsInDAESys, listOfErrorsInDAESysPart2, 
+#             noNameConflictsInUnitsInDAESys, subsExplicitAEsIntoDAESys from ModelPack
+# 2008-03-05 copied from ModelPack listOfErrorsInEAEs, listOfErrorsInNlpPart2,
+#            listOfErrorsInNLP by dka
+# 2008-02-28 by dka rename the procedures that have a name that starts with 
+#            a capital letter to a lower case letter
+# 2007-11-16 written by dka 
+# 2007-12-17 added by dka ExportDTASysToMatCont, ExportDTASysToCLMatContM
+#
+#------------------------------------------------------------
+SystemClasses:= module()
+
+export
+    exportDTASysToCLMatContM,
+    exportDTASysToMatCont,
+    listOfErrorsInDAESys,
+    listOfErrorsInDAESysPart2,
+    listOfErrorsInDTASys,
+    listOfErrorsInDTASysPart2,
+    listOfErrorsInEAEs,
+    listOfErrorsInNlpPart2,
+    listOfErrorsInNLP,
+    noNameConflictsInUnitsInDAESys,
+    noNameConflictsInUnitsInDTASys,
+    subsExplicitAEsIntoDAESys,
+    subsExplicitAlgEqnsIntoDTASys; 
+
+
+$include <SystemClasses/exportDTASysToCLMatContM.txt>
+$include <SystemClasses/exportDTASysToMatCont.txt>
+$include <SystemClasses/listOfErrorsInDAESys.txt>
+$include <SystemClasses/listOfErrorsInDAESysPart2.txt>
+$include <SystemClasses/listOfErrorsInDTASys.txt>
+$include <SystemClasses/listOfErrorsInDTASysPart2.txt>
+$include <SystemClasses/listOfErrorsInEAEs.txt>
+$include <SystemClasses/listOfErrorsInNlpPart2.txt>
+$include <SystemClasses/listOfErrorsInNLP.txt>
+$include <SystemClasses/noNameConflictsInUnitsInDAESys.txt>
+$include <SystemClasses/noNameConflictsInUnitsInDTASys.txt>
+$include <SystemClasses/subsExplicitAEsIntoDAESys.txt>
+$include <SystemClasses/subsExplicitAlgEqnsIntoDTASys.txt>
+
+
+
+end module; 
+ 

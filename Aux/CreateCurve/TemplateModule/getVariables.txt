@@ -1,0 +1,44 @@
+#----------------------------------------
+# 
+# @path Aux/CreateCurve/TemplateModule/getVariables.txt
+#
+# @notes as opposed to getPoint, Parameters are not returned
+#
+# @brief Returns list of variables
+#
+# @authors mmo
+#
+# @revision
+# 021018 written by mmo
+#
+#----------------------------------------
+  getVariables:= proc(
+    ReqNum::posint
+  )
+     local i1, point;  
+
+    #
+    # make sure requested point exists
+    #      
+      if not
+        ReqNum<= NumDataPoints
+      then
+        error("only %1 points are available", NumDataPoints);
+      end if; 
+
+    #
+    # create named list
+    #
+      point:= [
+        seq(
+          VarNames[i1]= data[VarNames[i1]][ReqNum],
+          i1= 1..nops(VarNames)
+        )
+      ]; 
+      
+
+     return(point); 
+
+   end proc; # getVariables
+  
+

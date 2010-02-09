@@ -1,0 +1,63 @@
+#------------------------------------------------------------
+#
+# @path Aux/NLP/Scale/CreateInstance/TemplateModule/SubsIntoAESys.txt
+#
+# @notes
+# (i) currently no check is run for num of vars vs num of eqns
+# (ii) in analogy to transformation of ODEs 
+#   [transformation of ODEs diff(x, t)= f(x, p):
+#   y= Dx- c yields diff(y, t)= D* diff(x, t)=
+#   D* diff(x(y), t) ] 
+#   AEs are transformed 0= f(x, t) -> 0= D* f(x(y),t) while
+#                       0= f(x, t) -> 0= f(x(y), t) is also
+#   possible;
+#
+# @authors mmo, dka
+#
+# @revision
+# 2008-03-06  instead of aSys[...] using aSys["..."] by dka
+# 020930 written by mmo
+#
+#------------------------------------------------------------
+subsIntoAESys:= proc(
+  anAESys::AESys
+)
+
+  local NewSys; 
+
+  #
+  # 'Variables' in AESys must be the same variables as ranges 
+  # passed to CreateInstance (and same order required)
+  #
+    if not
+      anAESys["Variables"]= VarNames
+    then
+      error("instance of NLP:-Scale can only be applied to AESys which has same \"DynVars\" as CreateInstances has received variables");
+    end if; 
+
+  NewSys:= copy(anAESys); 
+ 
+  #
+  # transform Equations
+  #
+    NewSys["Equations"]:= array(1..nops(anAESys["Equations"]));
+    for i1 from 1 to nops(anAESys["Equations"]) do
+      FormerEqn:= anAESys["Equations"][i1];
+      NewRhs:= subs(
+        SubsListScaledToPhys,
+        rhs(FormerEqn)
+      ); 
+      NewRhs:= D[i1]* NewRhs; 
+
+      NewSys["Equations"][i1]:= 
+        lhs(FormerEqn)= NewRhs; 
+    end do; 
+    NewSys["Equations"]:= convert(
+      NewSys["Equations"],
+      list
+    ); 
+
+  return(eval(NewSys)); 
+
+end proc; 
+

@@ -1,0 +1,21 @@
+#------------------------------------------------------------
+#
+# @path Aux/LinearAlgebra.txt
+#
+# @brief Collects auxiliary procedures for operations on vectors
+# and matrices. 
+#
+# @authors mmo
+#
+# @revision
+# 2008-01-04 Written by mmo.
+#
+#------------------------------------------------------------
+LinearAlgebra:= module()
+
+  export
+    calcGershgorinForRealSymMat; 
+
+$include<LinearAlgebra/calcGershgorinForRealSymMat.txt>
+
+end module; 

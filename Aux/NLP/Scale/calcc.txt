@@ -1,0 +1,44 @@
+#------------------------------------------------------------
+#
+# @path Aux/NLP/Scale/calcc.txt
+#
+# @brief given ranges [ai, bi], procedure calculates 
+# ci= (bi+ ai)/ (bi- ai)
+#
+# @authors mmo
+#
+# @revision
+# 2008-05-29 coppied from ModelPack - dka
+# 021002 written by mmo
+#------------------------------------------------------------
+calcc:= proc(
+    Ranges::list(name= range)
+  )
+
+    local NumRanges, VarNames, a, b, c, i1; 
+
+    NumRanges:= nops(Ranges);
+    VarNames:= map(lhs, Ranges); 
+
+      c:= array(1..NumRanges); 
+    
+      for i1 from 1 to NumRanges do
+        a:= op(1, rhs(Ranges[i1]));
+        b:= op(2, rhs(Ranges[i1]));
+    
+        c[i1]:= evalf((b+ a)/(b- a)); 
+        if not
+          type(c[i1], float)
+        then
+          error(
+            "entry %1 of vector c is not a float",
+            c[i1]
+          ); 
+        end if; 
+
+      end do;
+
+    return(eval(c)); 
+
+  end proc; # Calcc
+

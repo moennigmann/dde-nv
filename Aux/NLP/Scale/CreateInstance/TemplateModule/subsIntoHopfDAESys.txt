@@ -1,0 +1,78 @@
+#------------------------------------------------------------
+#
+# @path Aux/NLP/Scale/CreateInstance/TemplateModule/SubsIntoHopfDAESys.txt
+#
+# @authors mmo, dka
+#
+# @revision
+# 2008-03-06  instead of aSys[...] using aSys["..."] by dka
+# 030122 changed header only
+# 030121 written by mmo
+#
+#------------------------------------------------------------
+subsIntoHopfDAESys:= proc(
+  aDAESys::DAESys
+)
+
+  local NewSys, FormerODE, NewRhs, i1; 
+
+  #
+  # refuse to work on AEs
+  #
+    if not
+      aDAESys["AEs"]= []
+    then
+      error("use on algebraic equations currently not implemented");
+    end if; 
+  
+  #
+  # DynVars in DAESys must be the same variables as ranges 
+  # passed to CreateInstance (and same order required)
+  #
+    if not
+      aDAESys["DynVars"]= VarNames[1..nops(aDAESys["DynVars"])]
+    then
+      warning("instance of LA:-Scale can only be applied to \"DAESys\" which has same \"DynVars\" as CreateInstances has received variables");
+    end if; 
+
+  NewSys:= copy(aDAESys); 
+
+  #
+  # substitute into rhs of EAEs
+  #
+    NewSys["ExplicitAEs"]:= array(1..nops(aDAESys["ExplicitAEs"]));
+    for i1 from 1 to nops(aDAESys["ExplicitAEs"]) do
+      NewSys["ExplicitAEs"][i1]:= subs(
+        SubsListScaledToPhys,
+	aDAESys["ExplicitAEs"][i1]
+      ); 
+    end do;
+    NewSys["ExplicitAEs"]:= convert(
+      NewSys["ExplicitAEs"], 
+      list
+    ); 
+
+  #
+  # transform ODEs
+  #
+    NewSys["ODEs"]:= array(1..nops(aDAESys["ODEs"]));
+    for i1 from 1 to nops(aDAESys["ODEs"]) do
+      FormerODE:= aDAESys["ODEs"][i1];
+      NewRhs:= subs(
+        SubsListScaledToPhys,
+        rhs(FormerODE)
+      ); 
+      NewRhs:= D[i1]* NewRhs; 
+
+      NewSys["ODEs"][i1]:= 
+        lhs(FormerODE)= NewRhs; 
+    end do; 
+    NewSys["ODEs"]:= convert(
+      NewSys["ODEs"],
+      list
+    ); 
+
+  return(eval(NewSys)); 
+
+end proc; 
+

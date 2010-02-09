@@ -1,0 +1,73 @@
+#==============================================================================
+#
+# @path Aux/SystemClasses/noNameConflictsInUnitsInDAESys.txt
+#
+# @brief check for name conlicts between DAESys["Units"] and variables in 
+# DAESys; note this is NOT a check for consistency of units
+#
+# @param a DAESys which has non-mandatory list Units
+#
+# @return true if no conflicts exist, error otherwise
+#
+# @authors mmo, dka
+#
+# @revision
+# 2008-05-15  instead of aSys[...] using aSys["..."] 
+# 2008-05-15  copied from ModelPack by dka
+# 020823 written by mmo
+#
+#==============================================================================
+noNameConflictsInUnitsInDAESys:= proc(
+  aDAESys # no type check since called by ListOfErrorsInDAESysPart2
+)
+  
+  local VarNames, UnitNames, Conflicts;
+
+  #
+  # non-mandatory entry Units must exist
+  #
+    if not
+      member("Units", map(op, [indices(aDAESys)]))
+    then
+      error("entry Units must exist in DAESys");
+    end if;
+
+  #
+  # get set of unit names
+  #
+    UnitNames:= map(
+      ModelPack:-GetListOfIndetsIn,
+      aDAESys["Units"]
+    ); 
+    UnitNames:= map(op, UnitNames);
+    UnitNames:= convert(UnitNames, set); 
+
+  #
+  # get list of variable names
+  #
+    VarNames:= [
+      op(map(lhs, aDAESys["Parameters"])),
+      op(aDAESys["DynVars"]),
+      op(aDAESys["AlgVars"]),
+      op(map(lhs, aDAESys["ExplicitAEs"]))
+    ]; 
+    VarNames:= convert(VarNames, set); 
+  
+  #
+  # check for conflicts
+  #
+    Conflicts:= UnitNames intersect VarNames; 
+    if not
+      Conflicts= {}
+    then
+      error(
+        "conflicts in unit names and variables names for %1", 
+        Conflicts
+      );
+    end if;
+
+  return(true); 
+
+end proc; # noNameConflictsInUnitsInDAESys
+
+

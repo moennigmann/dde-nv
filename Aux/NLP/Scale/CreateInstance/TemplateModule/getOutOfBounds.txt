@@ -1,0 +1,29 @@
+#------------------------------------------------------------------------------
+#
+# @path Aux/NLP/Scale/CreateInstance/TemplateModule/GetOutOfBounds.txt
+#
+# @brief returns names of variables in substitution list to which values not
+# in [-1, 1] are assigned
+#
+#------------------------------------------------------------------------------
+getOutOfBounds:= proc(
+  SubsList::list(name= EvalsToFloat)
+)
+
+  local OutOfBounds, item; 
+
+  OutOfBounds:= [];
+  for item in SubsList do
+    if 
+      rhs(item)> 1 or rhs(item)< -1
+    then
+      OutOfBounds:= [
+        op(OutOfBounds),
+        lhs(item)
+      ];
+    end if;
+  end do; 
+
+  return(OutOfBounds); 
+
+end proc; 

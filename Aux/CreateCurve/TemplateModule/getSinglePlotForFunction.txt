@@ -1,0 +1,134 @@
+#----------------------------------------
+# 
+# @path Aux/CreateCurve/TemplateModule/getSinglePlotForFunction.txt
+#
+# @brief Returns plot of the curve
+#
+# @param (i) name of x-axes
+#        (ii) name of y-axes
+#        (iii) additional options arguments - optional
+#
+# @notes called by exported procedure getPlot
+#
+# @authors mmo
+#
+# @revision
+# 030313 xName may now by '#', returns plot vs. number of point
+# 030105 written by mmo, differs from GetSinglePlot in that here 
+#   second input argument is allowed to be of type term 
+#
+#----------------------------------------
+    getSinglePlotForFunction:= proc(
+      xName::name,
+      yName::term
+      # note that additional arguments are passed
+      # to plot[pointplot]
+    )
+    
+      local points, ListOfPoints, ListOfPlots, PlotObj, 
+        ListOfIndets, item, AllNames, i1, i2, NewPoint, NumIndets,
+        VarsInIndets, ParsInIndets, NumVarsInIndets, SubsListPars,
+        SubsList, xValue; 
+     
+      #
+      # make sure requested name xName are names in PointLikeData
+      #
+        if not
+          member(xName, {op(VarNames), `#`})
+        then
+          error("%1 must be a variable or #", xName);
+        end if; 
+
+      #
+      # make sure term given in yName is a function of Parameters
+      # and variables of curve
+      #
+        ListOfIndets:= Aux:-ListOperations:-getListOfIndetsIn(
+          yName
+        ); 
+        NumIndets:= nops(ListOfIndets); 
+        AllNames:= [
+          op(VarNames),
+          op(ParNames)
+        ]; 
+        for item in ListOfIndets do
+          if not
+            member(item, AllNames)
+          then
+            error("%1 is not a variable, nor a parameter ", item);
+          end if;
+        end do; 
+      
+      #
+      # split indets into vars and pars
+      #
+        VarsInIndets:= convert(
+          convert(VarNames, set) intersect convert(ListOfIndets, set),
+          list
+        ); 
+        ParsInIndets:= convert(
+          convert(ParNames, set) intersect convert(ListOfIndets, set),
+          list
+        ); 
+        NumVarsInIndets:= nops(VarsInIndets); 
+  
+      #
+      # create list of points
+      #
+        #
+        # prepare parameter values necessary for evaluation
+        # of yName
+        #
+          SubsListPars:= subs(
+            GetParameters(),
+            ParsInIndets
+          ); 
+          SubsListPars:= [seq(
+            ParsInIndets[i1]= SubsListPars[i1],
+            i1= 1..nops(ParsInIndets)
+          )]; 
+
+        points:= array(1..NumDataPoints); 
+        for i1 from 1 to NumDataPoints do
+          #
+          # substitution list to allow evaluation of yName
+          #
+            SubsList:= [seq(
+              VarsInIndets[i2]= PointLikeData[VarsInIndets[i2]][i1],
+              i2= 1..NumVarsInIndets
+            )];
+ 
+          if not
+            xName= `#`
+          then
+            xValue:= PointLikeData[xName][i1];
+          else
+            xValue:= i1;
+          end if; 
+
+          NewPoint:= [
+            xValue,
+            evalf(subs(
+              SubsList,
+              SubsListPars, 
+              yName
+            ))
+          ]; 
+          points[i1]:= NewPoint;
+        end do;
+
+        points:= convert(points, list);  
+    
+      #
+      # create plot object,
+      # pass all aditional arguments to pointplot
+      #
+        PlotObj:= plots[pointplot](
+          points,
+          args[3..-1]
+        );
+       return(PlotObj);
+    
+    end proc; 
+    
+

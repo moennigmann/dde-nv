@@ -1,0 +1,49 @@
+########################################################################
+#
+# @path Aux/LinearEqns/convertLinSysToStandardForm.txt;
+#
+# @param  (i) One of: {RHS,
+#                   RHS=RHS,
+#                   [RHS=RHS, RHS=RHS, ..., RHS=RHS]
+#                  },
+#          where RHS is an expression containing arithmetic operations,
+#                     functions, constants, and variables.
+#         (ii) List of vars with which matrix multiplication shall lead back
+#          to given equation array
+#
+# @return Returns matrix A and vector b so that A * vector(Vars) = b is
+#         the given equation array
+#
+# @authors mmo
+#
+# @revision
+# xxxxxx written by mmo
+#
+#########################################################################
+convertLinSysToStandardForm := proc(
+    ListOfRHS,
+    Vars
+    )
+
+    local i, LHS, A, b;
+
+    #
+    # build A, b so that A &* Vars = b
+    #
+
+    A := linalg[jacobian](
+      ListOfRHS,
+      Vars
+      );
+
+    b := map(
+      simplify,
+      evalm(
+        evalm(A &* linalg[vector](Vars)) -
+        linalg[vector](ListOfRHS)
+        )
+      );
+
+    return(evalm(A), evalm(b));
+
+  end proc; #convertLinSysToStandardForm

@@ -1,0 +1,48 @@
+#############################################################
+#
+# @path Aux/ListOperations/getSetOfValidExprIn.txt
+#
+# @brief return expressions that can be extracted from input
+#
+# @param  aModelOrList= table which comprises lists ExplicitAEs and
+#  IndependetVars, Parameters
+#  OR aModelOrList= list of equations (e.g. ExplicitAEs of a
+#      model)
+#  OR aModelOrList= list (e.g. IndependentVars of a model)
+#
+# @return set of expressions that occur on the left hand sides
+#  of list of equations or of lists of equations in
+#  aModelOrList[ExplicitAEs], aModelOrList[IndependentVars],
+#  aModelOrList[Parameters]
+#
+# @authors mmo, dka
+#
+# @revision
+#   2008-02-28 renamed from GetSetOfValidExprIn to getSetOfValidExprIn
+#   010529 argument may now be list with mixed entries,
+#     list({name= anything, name})- mmo
+#
+#############################################################
+getSetOfValidExprIn:= proc(
+  aModelOrList::list({name= anything, name})
+)
+
+  local ListOfValidExpr, SetOfValidExpr, item;
+
+  ListOfValidExpr:= [];
+
+  for item in aModelOrList do
+    if
+      type(item, equation)
+    then
+      ListOfValidExpr:= [op(ListOfValidExpr), lhs(item)];
+    else
+      ListOfValidExpr:= [op(ListOfValidExpr), item];
+    end if;
+  end do;
+
+  SetOfValidExpr:= convert(ListOfValidExpr, set);
+
+  return(SetOfValidExpr);
+
+end proc; # getSetOfValidExprIn

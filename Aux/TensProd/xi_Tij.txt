@@ -1,0 +1,84 @@
+##############################################################################
+#
+# @path Aux/TensProd/xi_Tij.txt
+#
+# @brief return product xi_Tij  of Vector and Matrix
+#
+# @param
+#   xVec, Vector or list
+#   Amat, Matrix or array to be multiplied by Matrix,
+#     passed in first argument
+#
+# @return
+#   list xVec Amat , returned result is of type array
+#
+# @notes
+#   conversion of array Amat to Matrix Amat only necessary for
+#     LinearAlgebra[RowDimension], LinearAlgebra[ColumnDimension]; better solution: extract
+#     rowdim/coldim in if-clause;
+#
+# @authors mmo, dka
+#
+# @revision
+#   010810 replaced array by 'array'(2) in type check
+#   010517 mmo, reusing code previously used in
+#     makefile-based nld-software
+#
+##############################################################################
+    xi_Tij:= proc(
+      xVec::{list, Vector},
+      Amat::{Matrix, 'array'(2)}
+    )
+
+       local  j1, x, A, NumRowsA, NumColsA, y, ResultInArray, ResultInList;
+
+      #
+      # convert to standard types
+      #
+        if not
+          type(xVec, list)
+        then
+          x:= convert(xVec,list);
+        else
+          x:= xVec;
+        end if;
+
+        if not
+          type(Amat, Matrix)
+        then
+          A:= convert(Amat, Matrix);
+        else
+          A:= Amat;
+        end if;
+
+      #
+      # rowdim of A must be equal to length of x
+      #
+
+        NumRowsA:= nops(convert(A,listlist));
+        NumColsA:= nops(convert(A,listlist)[1]); 
+
+        if not
+          NumRowsA= nops(x)
+        then
+          error("incompatible dimensions of 1st and 2nd argument"); 
+        end if; 
+
+      #
+      # calculate sum
+      #
+
+      y:=array([x]);    
+      ResultInArray:= Sij_Tjk(y,A); 
+    
+      #
+      # Sij_Tjk returns array, convert this to list 
+      #
+        ResultInList:= [seq(
+          ResultInArray[1, j1],
+          j1= 1..NumColsA
+        )];
+
+      return(ResultInList); 
+  
+    end proc; # TensProd:-xi_Tij 

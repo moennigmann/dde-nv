@@ -1,0 +1,82 @@
+#############################################################
+#
+# @path Aux/ListOperations/isLHSin.txt
+#
+# @param aName,
+# aList which must be list of equations or empty list
+#
+# @return true if aName occurs as a LHS of an equation in aList
+#  false otherwise
+#
+# @authors mmo
+#
+# @revision
+#   030209 allowed for input argument type array({name, equation})
+#   010817 second arg may now be of type 
+#     {list({name, equation}), table} rather than
+#     {list(equation), table}; see change in SetRHSofInTo -
+#     mmo
+#
+#############################################################
+isLHSin:=proc(
+  aName::name,
+  aList::{list({name, equation}), 'array'({name, equation}), table}
+)
+
+  local i1, eqn, NumEntries; 
+
+  #
+  # treat aList= []
+  #
+    if aList= [] then
+      RETURN(false);
+    end if;
+
+  #
+  # treat aList::{list({name, equation}), array({name, equation})}
+  #
+    if 
+      type(aList, {list({name, equation}), 'array'({name, equation})})
+    then
+      if
+        type(aList, list)
+      then
+        NumEntries:= nops(aList);
+      else
+        NumEntries:= linalg[vectdim](aList);
+      end if; 
+
+      for i1 from 1 to NumEntries do
+
+         eqn:= aList[i1]; 
+
+         if type(eqn, equation)
+         then
+           if
+             lhs(eqn)= aName
+           then
+             RETURN(true);
+           end if;
+         else
+           if
+             eqn= aName
+           then
+             RETURN(true);
+           end if;
+         end if;
+
+      end do;
+
+
+    elif type(aList, table) then
+
+      if
+        member([aName], [indices(aList)])
+      then
+        RETURN(true);
+      end if;
+
+    end if;
+
+  RETURN(false);
+end; #proc isLHSin

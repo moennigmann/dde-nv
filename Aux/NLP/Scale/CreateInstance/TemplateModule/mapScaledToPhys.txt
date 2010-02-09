@@ -1,0 +1,123 @@
+#------------------------------------------------------------
+#
+# @path Aux/NLP/Scale/CreateInstance/TemplateModule/MapScaledToPhys.txt
+#
+# @authors mmo
+#
+# @revision
+# 030223 edited comments only 
+# 021030 added missing local var decl
+# 021002 introduced new procedures for several tasks
+#   added transformation of scaled parameters; 
+# 020930 (i) changed return argument type to named list, 
+#   (ii) warns about variables in first argument which are
+#   out of bounds [-1, 1]; 
+# 0209xx written by mmo
+#
+#------------------------------------------------------------
+      mapScaledToPhys:= proc(
+        SubsList::list(name= EvalsToFloat)
+      )
+        local NewVars, i1, NamedListVars, x, p, Missing, 
+	  OutOfBounds, ValuesUnknowns, result,
+	  NewPars, NamedListPars, xNamed, pNamed;  
+
+        #
+        # check for missing assignments
+        #
+          Missing:= getMissingAssigns(SubsList); 
+          if not
+            Missing= {}
+          then
+            error("assignments are missing for %1", Missing); 
+          end if;
+
+        #
+        # collect obsolete values, these are passed back to the 
+        # user together with scaled variables and parameters
+        #
+	  ValuesUnknowns:= getUnknownAssigns(SubsList); 
+
+        #
+        # extract values of variables (but not scaled parameters)
+        # from first argument
+        #
+  	  x:= subs(
+            SubsList,
+            VarNames
+          );
+ 
+        #
+        # extract values of scaled parameters
+        # from first argument
+        #
+          p:= subs(
+            SubsList,
+            ScaledParNames
+          ); 
+
+	#
+        # check whether any of the scaled variables or scaled parameters 
+        # are out of bounds [-1, 1]
+        #
+          xNamed:= [seq(
+            VarNames[i1]= x[i1],
+            i1= 1..nops(x)
+          )];
+          pNamed:= [seq(
+            ScaledParNames[i1]= p[i1],
+            i1= 1..nops(p)
+          )]; 
+          OutOfBounds:= getOutOfBounds([
+            op(xNamed),
+            op(pNamed)
+          ]); 
+          if not
+            OutOfBounds= []
+          then
+            WARNING(
+              "values for some variables and/or parameters are out of bounds [-1, 1]: %1",
+              OutOfBounds
+            );
+          end if; 
+
+
+        #
+        # run actual transformation on variables
+        #
+          NewVars:= array(1..NumVarRanges); 
+  
+          for i1 from 1 to NumVarRanges do
+            NewVars[i1]:= InvD[i1]* (x[i1]+ c[i1]);
+          end do;
+  
+          NamedListVars:= [seq(
+            VarNames[i1]= NewVars[i1],
+       	    i1= 1..NumVarRanges
+          )]; 
+
+        #
+        # run actual transformation on parameters
+        #
+          NewPars:= array(1..NumScaledParRanges); 
+  
+          for i1 from 1 to NumScaledParRanges do
+            NewPars[i1]:= InvScaledParsD[i1]* (p[i1]+ ScaledParsc[i1]);
+          end do;
+  
+          NamedListPars:= [seq(
+            ScaledParNames[i1]= NewPars[i1],
+       	    i1= 1..NumScaledParRanges
+          )]; 
+
+        result:= [
+          op(NamedListVars), 
+          op(NamedListPars), 
+          op(ValuesUnknowns)
+        ]; 
+
+        return(result); 
+
+      end proc; # mapScaledToPhys
+
+

@@ -1,0 +1,65 @@
+#############################################################
+#
+# @path Aux/SystemClasses/subsExplicitAlgEqnsIntoDTASys.txt
+#
+# @brief substitute ExplicitAlgEqns into DynEqns and AlgEqns
+#
+# @param aModel
+#
+# @return aModel, equations from list ExplictAlgEqns in aModel
+#   have been substituted into list DynEqns and AlgEqns in
+#   aModel
+#
+# @authors dka
+#
+# @revision
+# 2008-03-06  instead of aSys[...] using aSys["..."] 
+# 2008-02-28  renamed by dka from SubsExplicitAlgEqnsInDTASys to subsExplicitAlgEqnsInDTASys
+# 2007-11-21  created by dka on the base of SubsExplicitAlgEqnsIntoDAESys
+#
+#############################################################
+subsExplicitAlgEqnsIntoDTASys:= proc(
+  aDTASys::table
+)
+
+  local i1, item, ListOfUnaffectedEntries, 
+    FormerDynEqns, FormerExplicitAlgEqns, FormerAlgEqns,
+    PositionDynEqns, PositionExplicitAlgEqns,
+    NewDynEqns, NewExplicitAlgEqns, NewDTASys, LHSNewDTASys;
+
+  #
+  # substitute ExplicitAlgEqns into DynEqns and AlgEqns
+  #
+    NewDTASys:= table();
+
+    #
+    # copy entries of aDTASys which are not changed by 
+    # substitution
+    #
+      ListOfUnaffectedEntries:= map(op, [indices(aDTASys)]);
+      ListOfUnaffectedEntries:= Aux:-ListOperations:-removeItemFromList(
+        ["ExplicitAlgEqns", "DynEqns", "AlgEqns"],
+         ListOfUnaffectedEntries
+      ); 
+      for item in ListOfUnaffectedEntries do
+        NewDTASys[item]:= aDTASys[item];
+      end do;
+
+    #
+    # treat entries which are affected by substitution
+    #          
+      NewDTASys["ExplicitAlgEqns"]:=[];
+    
+      NewDTASys["DynEqns"]:= Aux:-ListOperations:-subsEqnListIntoEqn(
+        aDTASys["ExplicitAlgEqns"],
+        aDTASys["DynEqns"]
+      );
+
+      NewDTASys["AlgEqns"]:= Aux:-ListOperations:-subsEqnListIntoEqn(
+        aDTASys["ExplicitAlgEqns"],
+        aDTASys["AlgEqns"]
+      );
+  
+  RETURN(eval(NewDTASys));
+
+end proc; # subsExplicitAlgEqnsInDAESys

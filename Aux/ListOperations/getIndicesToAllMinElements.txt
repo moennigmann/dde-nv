@@ -1,0 +1,34 @@
+#------------------------------------------------------------
+#
+# @path Aux/ListOperations/getIndicesToAllMinElements.txt
+#
+# @brief Returns the index of the minimum object in a list with
+# entries of type numeric. If more than one object has 
+# the minimum value, indices to all these objects are returned. 
+#
+# @authors mmo
+#
+# @revision
+# 2008-02-25 Written by Martin Moennigmann. 
+#
+#------------------------------------------------------------
+getIndicesToAllMinElements:= proc(
+  l::list(numeric)
+)
+
+  local minValue, i, indicesToMinimumElements, newIndex; 
+
+  minValue:= min(op(l));
+  indicesToMinimumElements:= {};
+  for i from 1 to nops(l) do
+    if
+      l[i]= minValue
+    then
+      newIndex:= i; 
+      indicesToMinimumElements:= indicesToMinimumElements union {newIndex};
+    end if;
+  end do;
+
+  return indicesToMinimumElements; 
+
+end proc: 

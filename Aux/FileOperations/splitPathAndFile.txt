@@ -1,0 +1,48 @@
+###############################################################################
+#
+# @path Aux/FileOperations/SplitPathAndFile.txt
+#
+# @brief splits string into path and file
+#
+# @authors mmo
+#
+# @revision
+# 030318 written by mmo
+#
+###############################################################################
+splitPathAndFile:= proc(
+  PathAndFile::string
+)
+
+  local SubsStrings, LeadingPath, FileName;
+
+  #
+  # if PathAndFile does not contain "/",
+  #   return "./" as path and PathAndFile as file
+  #
+    if
+      StringTools[Search]("/", PathAndFile)= 0
+    then
+      return("./", PathAndFile);
+    end if;
+
+  #
+  # split into strings in between "/"
+  #
+    SubsStrings:= StringTools[Split](PathAndFile, "/"); 
+  
+  #
+  # concatenate all but last part
+  #
+    LeadingPath:= cat(seq(
+      cat(
+        SubsStrings[i1], "/"
+      ),
+      i1= 1..nops(SubsStrings)-1
+    ));
+
+  FileName:= SubsStrings[-1];
+
+  return(LeadingPath, FileName);
+
+end proc:  

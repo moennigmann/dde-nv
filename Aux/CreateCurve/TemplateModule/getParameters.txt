@@ -1,0 +1,19 @@
+#----------------------------------------
+# 
+# @path Aux/CreateCurve/TemplateModule/getParameters.txt
+#
+# @brief Return parameters
+#
+#----------------------------------------
+getParameters:= proc()
+  local Pars;
+
+  Pars:= Aux:-ListOperations:-getRHSofIn(
+    Parameters,
+    ExtraData
+  ); 
+  
+  return(Pars); 
+
+end proc; 
+

@@ -1,0 +1,31 @@
+##############################################################################
+#
+# @path Aux/NLP/NewNLP.txt
+#
+# @param none
+#
+# @return table of empty lists which are mandatory for nlp 
+#
+# @authors mmo, dka
+#
+# @revision
+# 2008-03-14 entry was missing "ExplicitAEs" 
+# 2008-03-06 instead of aSys[...] using aSys["..."] by dka
+# xxx- written by Mmo
+#
+##############################################################################
+newNLP:= proc()
+
+  local aSys;
+
+  aSys:= table(); 
+  aSys["LinearConstraints"]:= [];
+  aSys["Constraints"]:= [];
+  aSys["CostFunction"]:= [];
+  aSys["ExplicitAEs"]:= [];
+  aSys["Parameters"]:= [];
+  aSys["Variables"]:= [];
+
+  return(eval(aSys));
+
+end proc; #newNLP

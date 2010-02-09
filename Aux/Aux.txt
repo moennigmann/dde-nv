@@ -1,0 +1,97 @@
+#------------------------------------------------------------
+#
+# @path Aux/Aux.txt
+#
+# @brief Collects auxiliary procedures that do not fit into
+# any of the more specific packages or are likely needed by
+# more than one of the more specific packages. 
+#
+# @authors mmo, dka
+#
+# @revision
+# 2008-03-05 added by dka NLP, LinearEqns, getRelErr, 
+#            moved fileExists to FileOperations
+# 2008-02-28 added by dka fileExists
+# 2008-02-28 printCompileOptions.moved to Programming.
+#            subsSubsList moved to ListOperations:-subsSubsList
+# 2008-02-26 Added BoxOperations - mmo
+# 2008-02-25 Removed getPosOfObjectInList since
+#   copy ListOperations:-getPosOfObjectsInList exists - mmo
+# 2008-02-13 Sorted exported procedures and modules
+#   alphabetically. 
+# 2008-02-13 Added IntervalArithmetic - mmo
+# 2008-01-22 Added by dka CreateCurve
+# 2007-12-20 Added by dka Derivs, TensProd
+# 2007-11-23 Added by dka Parsers
+# 2007-11-16 Added by dka SystemClasses
+# 2007-10-16 Written by M. Moennigmann on the train
+#   to the ProcessNet conference.
+#
+# @param describes input parameters to procedures, does not apply
+# @return describes return values from procedures, does not apply
+# @throws describes thrown exceptions, does not apply
+# @notes describes additional information which are fit in the previous tags, does not apply 
+# @todo describes the future work, does not apply 
+#------------------------------------------------------------
+Aux:= module()
+
+  option package;
+  
+ global
+    `type/EvalsToFloat`,
+    `type/NLP`,
+    `type/BCNLP`,
+    `type/term`,
+    `type/DTASys`,
+    `type/DAESys`;
+
+  export
+    BoxOperations, 
+    CreateCurve, 
+    Derivs,
+    FileOperations,
+    equalWithinRelErr, 
+    equalWithinFudgedRelErr, 
+    getAbsErr,
+    getFudgedRelErr, 
+    getRelErr,
+    init,
+    IntervalArithmetics, 
+    LinearAlgebra, 
+    LinearEqns, 
+    ListOperations, 
+    NLP,
+    Other, 
+    Parsers,
+    Programming,
+    SystemClasses,
+    TensProd,
+    TransferNlpToGams;
+
+    load= init();
+
+$include <BoxOperations.txt>
+$include <CreateCurve.txt>
+$include <Derivs.txt>
+$include <FileOperations.txt>
+$include <equalWithinRelErr.txt>
+$include <equalWithinFudgedRelErr.txt>
+$include <getAbsErr.txt>
+$include <getFudgedRelErr.txt>
+$include <getRelErr.txt>
+$include <init.txt>
+$include <IntervalArithmetics.txt>
+$include <LinearAlgebra.txt>
+$include <LinearEqns.txt>
+$include <ListOperations.txt>
+$include <NLP.txt>
+$include <Other.txt>
+$include <Parsers.txt>
+$include <Programming.txt>
+$include <SystemClasses.txt>
+$include <TensProd.txt>
+$include <TransferNlpToGams.txt>
+
+
+end module; 
+save(Aux, "Aux.mpl"); 

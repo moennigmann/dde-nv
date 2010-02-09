@@ -1,0 +1,12 @@
+#------------------------------------------------------------
+#
+# @path Aux/NLP/Scale/CreateInstance/TemplateModule/Getc.txt
+#
+# @brief Return c
+#
+#------------------------------------------------------------
+      getc:= proc()
+        return(c);
+      end proc; 
+
+

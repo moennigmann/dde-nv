@@ -1,0 +1,351 @@
+#############################################################
+#
+# @path Aux/SystemClasses/listOfErrorsInDAESysPart2.txt
+#
+# @brief Generate 'strict' list of errors in DAESys 
+#
+# @param table of type DAESys
+#
+# @return list of errors found in aDAESys
+#
+# @notes (i) ListOfErrorsInDAESys is used in init to
+#            define type/DAESys
+#        (ii) uses GetObsolExprInDAESys
+#
+# @authors mmo, dka
+#
+# @revision
+# 2008-05-15  instead of aSys[...] using aSys["..."] 
+# 2008-05-15 copied from ModelPack by dka
+# 020823 added call to local proc 
+#   NoNameConflictsInUnitsInDAESys;
+# 020807 split procedure into simple and first part and
+#   slow part which runs more elaborate checks (present
+#   procedure); 
+#
+#############################################################
+listOfErrorsInDAESysPart2:= proc(
+  aDAESys
+)
+
+  local ListOfErrors, LHSidesOfODEs, DynVarsFromODEs, i,
+    ParsAndIndependents, NumberOfExplicitAEs, SetOfValidExpr, i1,
+    ListOfUndefExpr, ObsolExpr, Integrators, item, ParAndVar,
+    ParAndExplAE; 
+
+
+  ListOfErrors:= []:
+
+  #----------------------------------------------------------
+  #
+  # Check whether left hand sides in DAESys["ODEs"]
+  # are derivatives of DAESys["Independents"] and
+  # compare
+  #
+  #----------------------------------------------------------
+    #
+    # DynVars must be the same and in same order as lhs of ODEs
+    #
+      LHSidesOfODEs:= map(lhs, aDAESys["ODEs"]);
+      DynVarsFromODEs:= map(Aux:-ListOperations:-getNameFromDerivSymbol, LHSidesOfODEs);  
+  
+      #
+      # compare strings to avoid problems with differences between
+      # names, symbols, indexed
+      #
+        DynVarsFromODEs:= map(convert, DynVarsFromODEs, string); 
+  
+      if not
+        DynVarsFromODEs= map(convert, aDAESys["DynVars"], string)
+      then
+        ListOfErrors:= [
+          op(ListOfErrors),
+          " DynVars must be in same order as lhs of ODEs"
+        ]; 
+      end if; 
+
+  #----------------------------------------------------------
+  #
+  # Check whether left hand sides in DAESys["AEs"]
+  # are zeors and compare number of AEs and algebraic vars
+  #
+  #----------------------------------------------------------
+    #
+    # compare number of algebraic vars to number of AEs
+    #
+      if not(nops(aDAESys["AEs"])= nops(aDAESys["AlgVars"])) then
+        ListOfErrors:= [op(ListOfErrors),
+          `number of algebraic variables is not equal to number of AEs`
+        ];
+      end if; 
+
+    #
+    # check whether lhs of equations is equal to zero
+    #
+      for i from 1 to nops(aDAESys["AEs"]) do
+        if not (lhs(aDAESys["AEs"][i]) = 0) then
+  	ListOfErrors:= [op(ListOfErrors),
+  	  `left hand sides of AEs must be ZERO`
+  	];
+        end if;
+      end do;    # end loop over DAESys["AEs"][i]
+
+  #----------------------------------------------------------
+  #
+  # Check whether aDAESys["ExplicitAEs"] are well defined:
+  #
+  # Are indeterminants in aDAESys["ExplicetAEs"][i1] either
+  # independent variable, parameter, or defined in previous
+  # equations aDAESys["ExplicitAEs"][1..(i1- 1)]?
+  #
+  #----------------------------------------------------------
+
+      ParsAndIndependents:=
+        Aux:-ListOperations:-getSetOfValidExprIn(aDAESys["Parameters"]) union
+        Aux:-ListOperations:-getSetOfValidExprIn(aDAESys["AlgVars"]) union
+        Aux:-ListOperations:-getSetOfValidExprIn(aDAESys["DynVars"]);
+
+      NumberOfExplicitAEs:= nops(aDAESys["ExplicitAEs"]);
+
+      SetOfValidExpr:= ParsAndIndependents;
+
+      #
+      # loop over DAESys["ExplicitAEs"][i1]
+      #
+
+      for i1 from 1 to NumberOfExplicitAEs do
+        
+         #
+         # check whether aDAESys["ExplicitAEs"][i1] is well
+         # defined
+         #
+                
+         ListOfUndefExpr:= Aux:-ListOperations:-getListOfUndefExprIn(
+           aDAESys["ExplicitAEs"][i1],
+           convert(SetOfValidExpr, list)
+         );
+        
+         #
+         # append errors to list, add a comment
+         #
+        
+         if not(ListOfUndefExpr= []) then
+           ListOfErrors:= [op(ListOfErrors),
+             cat(
+               ListOfUndefExpr,
+               ` in equation `,
+               aDAESys["ExplicitAEs"][i1],
+               ` of ExplicitAEs undefined.`
+             )
+           ];
+         end if; 
+        
+         #
+         # add lhs of aDAESys["ExplicitAEs"][i1] to
+         # SetOfValidExpr
+         #
+        
+         SetOfValidExpr:= SetOfValidExpr union
+           {op(1, aDAESys["ExplicitAEs"][i1])}
+        
+      end do;  #end loop over DAESys["ExplicitAEs"][i1]
+        
+  #----------------------------------------------------------
+  #
+  # Check whether aDAESys["ODEs"] are well defined:
+  #
+  # Are indeterminants in aDAESys["ODEs"] either
+  # independent variables, parameters, or defined in
+  # equations aDAESys["ExplicitAEs"]?
+  #
+  # Note that SetOfValidExpr comprises DynVars,
+  # Parameters and lhs of ExplicitAEs after execution
+  # of preceding block.
+  #----------------------------------------------------------
+
+      #
+      # loop over DAESys["ODEs"][1..i1]
+      #
+
+      for i1 from 1 to nops(aDAESys["ODEs"]) do
+
+        #
+        # check whether aDAESys["ODEs"][i1] is well
+        # defined
+        #
+       
+        ListOfUndefExpr:= Aux:-ListOperations:-getListOfUndefExprIn(
+          aDAESys["ODEs"][i1],
+          convert(SetOfValidExpr, list)
+        );
+       
+        #
+        # append errors to list, add a comment
+        #
+       
+        if not(ListOfUndefExpr= []) then
+          ListOfErrors:= [op(ListOfErrors),
+            cat(
+              ListOfUndefExpr,
+              ` in equation `,
+              aDAESys["ODEs"][i1],
+              ` of ODEs undefined.`
+            )
+          ];
+        end if; 
+
+      end do;  #end loop over DAESys["ODEs"][i1]
+
+  #----------------------------------------------------------
+  #
+  # Check whether aDAESys["AEs"] are well defined:
+  #
+  # Are indeterminants in aDAESys["AEs"] either
+  # algebraic variables, parameters, or defined in
+  # equations aDAESys["AEs"]?
+  #
+  # Note that SetOfValidExpr comprises AlgVars,
+  # Parameters and lhs of AEs after execution
+  # of preceding block.
+  #----------------------------------------------------------
+
+      #
+      # loop over DAESys["AEs"][1..i1]
+      #
+
+      for i1 from 1 to nops(aDAESys["AEs"]) do
+
+        #
+        # check whether aDAESys["AEs"][i1] is well
+        # defined
+        #
+       
+        ListOfUndefExpr:= Aux:-ListOperations:-getListOfUndefExprIn(
+          aDAESys["AEs"][i1],
+          convert(SetOfValidExpr, list)
+        );
+       
+        #
+        # append errors to list, add a comment
+        #
+       
+        if not(ListOfUndefExpr= []) then
+          ListOfErrors:= [op(ListOfErrors),
+            cat(
+              ListOfUndefExpr,
+              ` in equation `,
+              aDAESys["AEs"][i1],
+              ` of AEs undefined.`
+            )
+          ];
+        end if; 
+
+      end do;  #end loop over DAESys["AEs"][i1]
+
+  #--------------------------------------------------
+  #
+  # check for obsolete expressions in aDAESys
+  #
+  #--------------------------------------------------
+    #
+    # note that x will be an obsolete expression if only
+    # `x'` but not `x` occurs
+    #
+      ObsolExpr:=Aux:-ListOperations:-getObsolExprInDAESys(aDAESys);
+      #
+      # check if ObsoleteExpr comprises variables `x` which
+      # occur as `x'` on lhs of ODEs but not as `x` on rhs of ODEs
+      # or on rhs of AEs
+      #
+        Integrators:= [];
+        for item in ObsolExpr do
+          if 
+            member(item, aDAESys["DynVars"])
+          then
+            Integrators:= [op(Integrators), item];
+          end if;
+        end do;
+      #
+      # remove Integrators from ObsolExpr and warn about
+      # existence of Integrators separately
+      #
+        if not
+          Integrators= []
+        then 
+          ObsolExpr:= Aux:-ListOperations:-removeItemFromList(Integrators, ObsolExpr);
+          WARNING(
+            "in ListOfErrorsInDAESys, the following variables only occur as derivatives but not as variables: %1", 
+            op(Integrators));
+        end if; 
+
+    if
+      not(ObsolExpr=[])
+    then
+      WARNING("in ListOfErrorsInDAESys, %1 is an obsolete expression", op(ObsolExpr));
+    end if; 
+
+  #----------------------------------------------------------
+  #
+  # check if lists Parameters and DynVars have common entries
+  #
+  #----------------------------------------------------------
+    ParAndVar:=map(
+      has,
+      aDAESys["Parameters"],
+      aDAESys["DynVars"]
+    );
+
+    if
+      (member(true, ParAndVar, 'i2'))
+    then
+      ListOfErrors := [op(ListOfErrors),
+     cat(
+       aDAESys["Parameters"][i2],
+       ` is declared both parameter and variable `
+     )
+      ];
+    end if; 
+
+  #------------------------------------------------------------
+  #
+  # lists Parameters and lhs in ExplicitAEs must not have common
+  #   entries
+  #
+  #------------------------------------------------------------
+    ParAndExplAE:= map(
+      has,
+      aDAESys["Parameters"],
+      map(lhs, aDAESys["ExplicitAEs"])
+    );
+
+    if
+      (member(true, ParAndExplAE, 'i2'))
+    then
+      ListOfErrors := [op(ListOfErrors),
+     cat(
+       aDAESys["Parameters"][i2],
+       ` occurs both in Parameters and lhs of ExplicitAEs `
+     )
+      ];
+    end if; 
+
+  #------------------------------------------------------------
+  #
+  # if list Units exists, no name conflicts between units on 
+  # rhs of Units and variable names must exist
+  #
+  # note this is not a check for consistency of units, but
+  # only for name conflicts of unit names and variable names,
+  # for checks of unit consistency see CheckUnits
+  #
+  #------------------------------------------------------------
+    if 
+      member('Units', map(op, [indices(aDAESys)]))
+    then
+      noNameConflictsInUnitsInDAESys(aDAESys);
+    end if; 
+
+  return(ListOfErrors); 
+
+end proc; # ListOfErrorsInDAESysPart2
+

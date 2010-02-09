@@ -1,0 +1,112 @@
+#############################################################
+#
+# @path Aux/TranferNlpToGams/renameIndexedParamsAndVarsInNLP.txt
+#
+# @brief Renames all indexed variables and parameters in NLP 
+#
+# @param aNLP of type NLP
+#
+# @return aNLP with renamed variables and parameters
+#
+# @notes  (1) Uses procedure renameIndexedNameForGams
+#         (2) Renames as e.g. v[1] to v_1
+#
+# @authors dka
+#
+# @revision
+# 2009-12-23 written by dka
+#
+#############################################################
+renameIndexedParamsAndVarsInNLP:= proc(aNLP::NLP)
+
+   local mapleParameters, mapleVariables, mapleIntegerVariables, mapleBinaryVariables,
+         hasIntegerVariables, hasBinaryVariables, varsAndPars, i, 
+         newVarName, listOfNaamesForSubstitution, newParam, varToRename,
+         newVars, newIntVars, newBinVars, newContrs, newCostFun, newAEs, newLinContrs;
+
+   mapleParameters:=aNLP["Parameters"];
+   mapleVariables:=aNLP["Variables"];
+   mapleIntegerVariables:=aNLP["IntegerVariables"];
+   hasIntegerVariables:=false;
+   mapleBinaryVariables:=aNLP["BinaryVariables"];
+   hasBinaryVariables:=false;
+ 
+   
+   #
+   # collect all variables and parameters of NLP to one list
+   #
+   
+   varsAndPars:=[op(map(lhs,mapleParameters)),op(map(lhs,mapleVariables))];
+   
+   if(type(mapleIntegerVariables, list(name = EvalsToFloat .. EvalsToFloat)))
+   then 
+      hasIntegerVariables:=true;
+      varsAndPars:=[op(varsAndPars),op(map(lhs,mapleIntegerVariables))];
+   end if;
+
+   if(type(mapleBinaryVariables,list(name)))
+   then 
+      hasBinaryVariables:=true;
+       varsAndPars:=[op(varsAndPars),op(mapleBinaryVariables)];
+   end if;
+
+   #
+   # contruct list of indexed names that has to be changed 
+   # (e.g. [v[1]=v_1, v[1,1]=v_11, v[1][1]=v_1_1, ...)
+   #
+   
+ 
+
+   listOfNaamesForSubstitution:=[];
+   
+   for i from 1 to nops(varsAndPars) do
+     if(type(varsAndPars[i],indexed))
+     then
+        varToRename:=varsAndPars[i];
+        newVarName:= renameIndexedNameForGams(varToRename);
+        listOfNaamesForSubstitution:=[op(listOfNaamesForSubstitution),varToRename=newVarName];
+     end if;
+   end do;
+   
+   #
+   # replace indexed names in the given NLP
+   #
+   
+   newParam:=subs(listOfNaamesForSubstitution,mapleParameters);
+   newVars:=subs(listOfNaamesForSubstitution,mapleVariables);
+   
+   if(hasIntegerVariables=true)
+   then newIntVars:=subs(listOfNaamesForSubstitution,mapleIntegerVariables);
+   else newIntVars:=[];
+   end if; 
+   
+   if(hasBinaryVariables=true)
+   then newBinVars:=subs(listOfNaamesForSubstitution,mapleBinaryVariables);
+   else newBinVars:=[];
+   end if; 
+   
+   newContrs:=subs(listOfNaamesForSubstitution, aNLP["Constraints"]);
+   newCostFun:=subs(listOfNaamesForSubstitution, aNLP["CostFunction"]);
+   
+   if type(anNLP["ExplicitAEs"],list)
+   then newAEs:=subs(listOfNaamesForSubstitution, aNLP["ExplicitAEs"]);
+   else newAEs:=[];
+   end if;
+   
+   if type(anNLP["LinearConstraints"],list)
+   then newLinContrs:=subs(listOfNaamesForSubstitution, aNLP["LinearConstraints"]);
+   else newLinContrs:=[];
+   end if;
+
+   #
+   # return NLP with new variables and parameters names
+   #
+   
+   RETURN(table(["Parameters"=newParam,"Variables"=newVars,
+		 "IntegerVariables"=newIntVars,"BinaryVariables"=newBinVars,
+                 "Constraints"=newContrs,"CostFunction"=newCostFun,
+                 "ExplicitAEs"=newAEs,"LinearConstraints"=newLinContrs]));
+
+   end proc;
+
+

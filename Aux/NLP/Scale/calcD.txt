@@ -1,0 +1,48 @@
+#------------------------------------------------------------
+#
+# @path Aux/NLP/Scale/calcD.txt
+#
+# @brief calculate diagonal matrix D with entries Di= 2/(bi- ai)
+# for ranges [ai, bi]
+#
+# @param list of ranges
+#
+# @return vector of diagonal entries of D
+#
+# @authors mmo
+#
+# @revision
+# 2008-05-29 coppied from ModelPack
+# 021002 written by mmo
+#------------------------------------------------------------
+calcD:= proc(
+    Ranges::list(name= range)
+  )
+
+    local D, a, b, NumRanges, VarNames, i1; 
+
+    NumRanges:= nops(Ranges);
+    VarNames:= map(lhs, Ranges); 
+
+      D:= array(1..NumRanges); 
+    
+      for i1 from 1 to NumRanges do
+        a:= op(1, rhs(Ranges[i1]));
+        b:= op(2, rhs(Ranges[i1]));
+    
+        D[i1]:= evalf(2/ (b- a)); 
+        if not
+          type(D[i1], float)
+        then
+          error(
+            "entry %1 on diagonal of diagonal matrix D is not a float",
+            D[i1]
+          ); 
+        end if; 
+
+      end do; 
+
+    return(eval(D)); 
+
+  end proc; # CalcD
+

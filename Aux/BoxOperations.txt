@@ -1,0 +1,19 @@
+#------------------------------------------------------------
+#
+# @path Aux/BoxOperations.txt
+#
+# @brief Collects auxiliary procedures that operate on lists. 
+#
+# @authors mmo
+#
+# @revision  
+# 
+#------------------------------------------------------------
+BoxOperations:= module()
+
+  export
+    getIndexToLongestAxis; 
+
+$include <BoxOperations/getIndexToLongestAxis.txt>
+
+end module; 

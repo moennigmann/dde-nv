@@ -1,0 +1,35 @@
+###################################################################################
+#
+# @path Aux/Deriv/f_p.txt
+#
+# @brief Calculate first order derivative f_p
+#
+# @authors mmo, dka
+#
+###################################################################################
+  f_p:= proc(
+    functions::{Vector, list},
+    p::{Vector, list}
+  )
+
+    local f, Result;
+
+    #
+    # convert first argument to standard type
+    #
+      if
+        type(functions, list(equation))
+      then
+        f:= map(rhs, functions);
+      else
+        f:= functions;
+      end if;
+
+    #
+    # calculate derivatives
+    #
+      Result:= VectorCalculus[Jacobian](f, p);
+
+    return(eval(Result));
+  
+  end; # proc Derivs:-f_p

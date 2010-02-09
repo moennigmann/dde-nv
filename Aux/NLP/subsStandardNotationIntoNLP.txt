@@ -1,0 +1,127 @@
+##############################################################################
+#
+# @path Aux/NLP/SubsStandardNotationIntoNLP.txt
+#
+# @param
+#   NLP
+#
+# @return
+#   NLP in which Variables and Parameters have been replaced by
+#     standard names x[i], par[i], i=1..?
+#
+# @notes
+#   entry Substitutions (type list) added to output; list contains
+#     replacements
+#
+# @authors mmo, dka
+#
+# @revision
+#   2008-03-06 instead of aSys[...] using aSys["..."] - dka
+#   2008-03-05 by dka moved from ModelPack
+#   041018 added optional argument for standard names
+#   030109 added local var decl for NumOfEAEs, NamesEAEs,
+#     ListOfEAEsSubst;
+#   021125 added standard notation subsitution for EAEs; 
+#   021017 introduced NamesEAEs, NamesPars to avoid repeated access
+#     of type lhs(Sys[ExplicitAE][i1]); 
+#   010417: entry variables of type NLP used to contain list of
+#     variable names, now consists of list of type
+#     list(name= EvalsToFloat..EvalsToFloat); substitutions for standard
+#     notation changed accordingly - mmo
+#   010411 written by mho and mmo
+#
+##############################################################################
+subsStandardNotationIntoNLP:= proc(
+  Sys::NLP,
+  ReqNames::[name, name, name] # Parameters, EAEs, Vars
+)
+
+  local NumOfVars, NumOfPars, ListOfVarsSubst, ListOfParsSubst,
+    NewSystem, NamesVars, NamesPars, NumOfEAEs, NamesEAEs,
+    ListOfEAEsSubst, StandardVarName, StandardParName, StandardEAEName; 
+
+  #
+  # standard names 
+  #
+   if
+     nargs > 1
+   then
+     StandardParName:=ReqNames[1];
+     StandardEAEName:=ReqNames[2];
+     StandardVarName:=ReqNames[3];
+   else
+     StandardParName:=par;
+     StandardEAEName:=z;
+     StandardVarName:=x;
+   end if;
+
+  #
+  # create lists of substitutions
+  #
+    NumOfVars:= nops(Sys["Variables"]);
+    NumOfPars:= nops(Sys["Parameters"]); 
+    NumOfEAEs:= nops(Sys["ExplicitAEs"]); 
+
+    NamesVars:= map(lhs, Sys["Variables"]); 
+    ListOfVarsSubst:= [seq(
+      NamesVars[i1]= StandardVarName[i1],
+      i1= 1..NumOfVars
+    )];
+
+    NamesPars:= map(lhs, Sys["Parameters"]);
+    ListOfParsSubst:= [seq(
+      NamesPars[i1]= StandardParName[i1],
+      i1= 1..NumOfPars
+    )];          
+
+    NamesEAEs:= map(lhs, Sys["ExplicitAEs"]); 
+    ListOfEAEsSubst:= [seq(
+      NamesEAEs[i1]= StandardEAEName[i1],
+      i1= 1..NumOfEAEs
+    )]; 
+
+    #
+    # create new system of equations
+    #
+      NewSystem:= copy(Sys);
+
+      NewSystem["Substitutions"]:= [
+        op(ListOfVarsSubst),
+        op(ListOfParsSubst),
+        op(ListOfEAEsSubst)
+      ];
+
+      NewSystem["Constraints"]:= subs(
+        NewSystem["Substitutions"], 
+        Sys["Constraints"]
+      );
+
+      NewSystem["LinearConstraints"]:=subs(
+        NewSystem["Substitutions"], 
+        Sys["LinearConstraints"]
+      );
+
+      NewSystem["CostFunction"]:=subs(
+        NewSystem["Substitutions"], 
+        Sys["CostFunction"]
+      );
+
+      NewSystem["ExplicitAEs"]:= subs(
+        NewSystem["Substitutions"], 
+        Sys["ExplicitAEs"]
+      );
+
+      NewSystem["Parameters"]:= subs(
+        ListOfParsSubst,
+        Sys["Parameters"]
+      );
+
+      NewSystem["Variables"]:= subs(
+        ListOfVarsSubst,
+        Sys["Variables"]
+      );
+
+  return(eval(NewSystem));
+
+end proc; #subsStandardNotationIntoNLP
+

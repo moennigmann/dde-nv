@@ -1,0 +1,31 @@
+#------------------------------------------------------------
+#
+# @path Aux/Other/myModulo.txt
+#
+# @brief Returns same result as built-in command mod with the exception that
+# (k* m) mod m is mapped to m instead of to zero for all
+# k in Z.
+#
+# @authors mmo
+#
+# @revision
+# 2007-10-17 Written by M. Moennigmann on the train back from the
+#   ProcessNet 2007 conference.
+#
+#------------------------------------------------------------
+myModulo:= proc(
+  n,
+  m
+)
+  local tmp;
+
+  tmp:= n mod m;
+  if 
+    tmp= 0
+  then
+    return(m);
+  else
+    return(tmp);
+  end if;
+
+end proc;  

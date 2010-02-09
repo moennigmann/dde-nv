@@ -1,0 +1,24 @@
+###############################################################################
+#
+#  @path Aux/getAbsErr.txt
+#
+# @brief inline procedure for calculation of absolute error, used to increase
+# readability 
+#
+# @authors mmo
+#
+# @revision:
+# 021107 written by mmo
+#
+###############################################################################
+getAbsErr:= proc(
+  x1::EvalsToFloat,
+  x2::EvalsToFloat
+)
+
+  option inline;
+
+  abs(x1- x2);
+
+end proc; 
+

@@ -1,0 +1,67 @@
+###############################################################################
+#
+# @path Aux/NLP/Scale/ReplaceInfinityRangesByTrivialRanges.txt
+#
+# @brief replace ranges -infinity..EvalsToFloat, EvalsToFloat..infinity, 
+# -infinity..infinity by -1..1; this will cause Scale:-CreateInstance
+# not to scale the corresponding variables; 
+#
+# @param list of ranges
+#
+# @return (i) list of names which gives names of ranges which have 
+#   been changed
+# (ii) new ranges 
+#
+# @authors mmo
+#
+# @revision
+# 2008-03-05 by dka moved from ModelPack
+# 021207 written by mmo
+#
+###############################################################################
+replaceInfiniteRangesByTrivialRanges:= proc(
+  Ranges::list(name= range)
+)
+
+  local NewRanges, item, LowerBound, UpperBound, ChangedRanges; 
+
+  NewRanges:= Ranges; 
+  ChangedRanges:= [];
+  for item in NewRanges do
+    LowerBound:= op(1, rhs(item));  
+    if
+      LowerBound= -infinity
+    then
+      NewRanges:= Aux:-ListOperations:-setRHSofInTo(
+        lhs(item),
+        NewRanges,
+        -1..1
+      ); 
+      ChangedRanges:= [
+        op(ChangedRanges), 
+        lhs(item)
+      ]; 
+      next; 
+    end if;
+
+    UpperBound:= op(2, rhs(item)); 
+    if
+      UpperBound= infinity
+    then
+      NewRanges:= Aux:-ListOperations:-setRHSofInTo(
+        lhs(item),
+        NewRanges,
+        -1..1
+      ); 
+      ChangedRanges:= [
+        op(ChangedRanges), 
+        lhs(item)
+      ]; 
+    end if;
+
+  end do;
+
+  return(ChangedRanges, NewRanges); 
+
+end proc; 
+

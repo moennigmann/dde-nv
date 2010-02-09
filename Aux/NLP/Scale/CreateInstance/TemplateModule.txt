@@ -1,0 +1,79 @@
+#------------------------------------------------------------
+#
+# @path Aux/NLP/Scale/TemplateModule.txt
+#
+# @todo (i) instance does not know which type of system
+#   (NLP, ExtAESys, DAESys) it must be applied to; in fact
+#   it should ideally know which instance of the 
+#   appropriate type it should be applied to 
+#
+# @authors mmo
+#
+# @revision
+# 2008-03-05 by dka moved from ModelPack
+# 030223 edited comments only 
+# 021209 added entries to list of commented list of
+#   received variables; (ii) added SubsIntoNLP
+# 021009 added GetInvD
+# 020930 added SubsIntoAESys
+# 0209xx written by mmo
+#
+#------------------------------------------------------------
+    module()
+
+      local NamesScaledParsAndVars, NumVarRanges, NumScaledParRanges; 
+
+      export
+        getc,
+        getD, 
+        getInvD, 
+        getSubsListPhysToScaled,
+	getSubsListScaledToPhys, 
+        getListOfVars, 
+	getMissingAssigns,        # local after debugging
+	getOutOfBounds,           # local after debugging
+	getUnknownAssigns,        # local after debugging
+        mapScaledToPhys,
+        mapPhysToScaled,
+        subsIntoDAESys,
+        subsIntoExtAESys,
+        subsIntoHopfDAESys, 
+        subsIntoNLP;  
+
+      #
+      # calc some local vars
+      #
+        NamesScaledParsAndVars:= [
+          op(VarNames),
+          op(ScaledParNames)
+        ]; 
+	NumVarRanges:= nops(VarNames); 
+	NumScaledParRanges:= nops(ScaledParNames); 
+
+      #
+      # module currently receives from constructor
+      # c, D, InvD, SubsListPhysToScaled, SubsListScaledToPhys,  
+      # VarNames, ScaledParNames, ScaledParsD, InvScaledParsD,
+      # ScaledParsc, SubsListScaledParsPhysToScaled,
+      # SubsListScaledParsScaledToPhys
+      #
+
+$include<NLP/Scale/CreateInstance/TemplateModule/getc.txt>
+$include<NLP/Scale/CreateInstance/TemplateModule/getD.txt>
+$include<NLP/Scale/CreateInstance/TemplateModule/getInvD.txt>
+$include<NLP/Scale/CreateInstance/TemplateModule/getSubsListPhysToScaled.txt>
+$include<NLP/Scale/CreateInstance/TemplateModule/getSubsListScaledToPhys.txt>
+$include<NLP/Scale/CreateInstance/TemplateModule/getListOfVars.txt>
+$include<NLP/Scale/CreateInstance/TemplateModule/getMissingAssigns.txt>
+$include<NLP/Scale/CreateInstance/TemplateModule/getOutOfBounds.txt>
+$include<NLP/Scale/CreateInstance/TemplateModule/getUnknownAssigns.txt>
+$include<NLP/Scale/CreateInstance/TemplateModule/mapScaledToPhys.txt>
+$include<NLP/Scale/CreateInstance/TemplateModule/mapPhysToScaled.txt>
+$include<NLP/Scale/CreateInstance/TemplateModule/subsIntoDAESys.txt>
+$include<NLP/Scale/CreateInstance/TemplateModule/subsIntoExtAESys.txt>
+$include<NLP/Scale/CreateInstance/TemplateModule/subsIntoNLP.txt>
+$include<NLP/Scale/CreateInstance/TemplateModule/subsIntoHopfDAESys.txt>
+
+    end module; # template module
+ 
+

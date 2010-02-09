@@ -1,0 +1,138 @@
+#############################################################
+#
+# @path Aux/TranferNlpToGams/convertMapleExprToGamsExpr.txt
+#
+# @brief Converts maple expression to expression with appropriate GAMS grammar
+#
+# @param Maple expression (e.g. a^2+b)
+#
+# @return String with the rewritten expression according by GAMS syntaxis
+#
+# @notes (1) The input parameter (maple expression) is not validated
+#        (2) Rules for fransformation: a^2 -> sqr(a)
+#                                      a^(1/2) -> sqrt(a)
+#                                      a^(-b) -> 1/a^b
+#                                      a^b -> power(a,b), if b is an integer number         
+#                                      a^b -> exp(a,b), if b is an integer number
+#
+# @authors dka
+#
+# @revision
+# 2009-12-23 written by dka
+#
+#############################################################
+convertMapleExprToGamsExpr:= proc(mapleExpr)
+
+   local cCodeExprString, indexOfEqSign, isMatchRegExpr, suffNumForComma,
+         subStrForSubstitution, suffNumForPower, SubStr1, SubStr2, SubStr3,
+         numForCommaList, numForBracket, powerExpr, powerExprNumeric, 
+         idexesForPower, SubStr1New, srtUnderPower, i;
+   
+   #
+   # To do the transformation form maple to GAMS sysntaxis
+   # we use C systaxis and then transform it GAMS 
+   #
+   
+   #
+   # Transforms equations to C code
+   #
+   cCodeExprString:=CodeGeneration[C](mapleExpr, resultname = "tempCodeCGenName", output = string);
+   
+   #
+   # Cuts the beginning and the end, to leave only expression itself 
+   #
+   indexOfEqSign:=StringTools[FirstFromLeft]("=",cCodeExprString);
+   cCodeExprString:=StringTools[Delete](cCodeExprString,1..indexOfEqSign);
+   cCodeExprString:=StringTools[SubstituteAll](cCodeExprString,";","");
+   cCodeExprString:=StringTools[Trim](cCodeExprString);
+   
+   #
+   # Removes unnessesary declarations
+   #
+   cCodeExprString:=StringTools[SubstituteAll](cCodeExprString,"(double) ","");
+   cCodeExprString:=StringTools[SubstituteAll](cCodeExprString,"(int) ","");
+   
+   #
+   # Gams uses keyword "power" instead of C "pow"
+   #
+   cCodeExprString:=StringTools[SubstituteAll](cCodeExprString,"pow","power");
+   
+   #
+   # Replaces all power(expr1,-expr2) to 1/power(expr1,expr2)
+   #
+   isMatchRegExpr:=StringTools[RegMatch]("power( )*\(.*\, \-.*)",cCodeExprString);
+   while (isMatchRegExpr) do
+     suffNumForComma := StringTools[Search](", -", cCodeExprString); 
+     subStrForSubstitution := StringTools[SubString](cCodeExprString, 1 .. suffNumForComma-1); 
+     suffNumForPower := [StringTools[SearchAll]("power", subStrForSubstitution)]; 
+     SubStr1 := StringTools[SubString](subStrForSubstitution, 1 .. suffNumForPower[-1]-1); 
+     SubStr2 := StringTools[SubString](subStrForSubstitution, suffNumForPower[-1]+5 .. StringTools[Length](subStrForSubstitution)); 
+     SubStr3 := StringTools[SubString](cCodeExprString, suffNumForComma+3 .. StringTools[Length](cCodeExprString)); 
+     cCodeExprString := StringTools[Join]([SubStr1, "1/power", SubStr2, ", ", SubStr3], ""); 
+     isMatchRegExpr := StringTools[RegMatch]("power( )*\(.*\, \-.*)", cCodeExprString)
+   end do;
+   
+   #
+   # Replaces all power(expr,1/2) to sqrt(expr)
+   #
+   isMatchRegExpr:=StringTools[RegMatch]("power( )*\(.*\, 0.1e1 / 0.2e1)",cCodeExprString);
+   while (isMatchRegExpr) do
+     suffNumForComma:=StringTools[Search](", 0.1e1 / 0.2e1",cCodeExprString);
+     subStrForSubstitution:=StringTools[SubString](cCodeExprString,1..suffNumForComma-1);
+     suffNumForPower:=[StringTools[SearchAll]("power",subStrForSubstitution)];
+     SubStr1:=StringTools[SubString](subStrForSubstitution,1..suffNumForPower[-1]-1);
+     SubStr2:=StringTools[SubString](subStrForSubstitution,suffNumForPower[-1]+5..StringTools[Length](subStrForSubstitution));
+     SubStr3:=StringTools[SubString](cCodeExprString,suffNumForComma+15..StringTools[Length](cCodeExprString));
+     cCodeExprString:=StringTools[Join]([SubStr1,"sqrt",SubStr2,SubStr3],"");
+     isMatchRegExpr:=StringTools[RegMatch]("power( )*\(.*, 0.1e1 / 0.2e1)",cCodeExprString);
+   end do;
+   
+   #
+   # Replaces all power(expr,2) to sqr(expr)
+   #
+   isMatchRegExpr:=StringTools[RegMatch]("power( )*\(.*\, 0.2e1)",cCodeExprString);
+   while (isMatchRegExpr) do
+     suffNumForComma:=StringTools[Search](", 0.2e1",cCodeExprString);
+     subStrForSubstitution:=StringTools[SubString](cCodeExprString,1..suffNumForComma-1);
+     suffNumForPower:=[StringTools[SearchAll]("power",subStrForSubstitution)];
+     SubStr1:=StringTools[SubString](subStrForSubstitution,1..suffNumForPower[-1]-1);
+     SubStr2:=StringTools[SubString](subStrForSubstitution,suffNumForPower[-1]+5..StringTools[Length](subStrForSubstitution));
+     SubStr3:=StringTools[SubString](cCodeExprString,suffNumForComma+7..StringTools[Length](cCodeExprString));
+     cCodeExprString:=StringTools[Join]([SubStr1,"sqr",SubStr2,SubStr3],"");
+     isMatchRegExpr:=StringTools[RegMatch]("power( )*\(.*\, 0.2e1)",cCodeExprString);
+   end do;
+   
+
+   #
+   # Evaluates expr2 in power(expr1,expr2) and replaces it to exp(expr2*log(expr1)) 
+   # in the case if expr2 is not an ingeger number. 
+   # Otherwise write an integer number in the power sign. 
+   #
+   numForCommaList := [StringTools[SearchAll](", ", cCodeExprString)];
+   for i from 1 to nops(numForCommaList) do
+     numForCommaList := [StringTools[SearchAll](",", cCodeExprString)];
+     SubStr1:= StringTools[SubString](cCodeExprString, 1..numForCommaList[i]); 
+     subStrForSubstitution := StringTools[SubString](cCodeExprString, numForCommaList[i]+2 .. StringTools[Length](cCodeExprString)); 
+     numForBracket:=StringTools[Search](")", subStrForSubstitution); 
+     powerExpr:=StringTools[SubString](subStrForSubstitution, 1..numForBracket-1);
+     powerExprNumeric:=parse(powerExpr);
+     SubStr3:=StringTools[SubString](subStrForSubstitution, numForBracket..StringTools[Length](subStrForSubstitution)); 
+     if (trunc(powerExprNumeric)-powerExprNumeric = 0) 
+     then SubStr2 := convert(trunc(powerExprNumeric),string); 
+          cCodeExprString := StringTools[Join]([SubStr1, SubStr2, SubStr3], ""); 
+     else SubStr2 := convert(evalf(powerExprNumeric, 5), string); 
+          idexesForPower := [StringTools[SearchAll]("power", SubStr1)]; 
+          SubStr1New := StringTools[SubString](SubStr1, 1 .. idexesForPower[-1]-1);
+          srtUnderPower:= StringTools[SubString](SubStr1,idexesForPower[-1]+6..StringTools[Length](SubStr1)-1);
+          cCodeExprString:=StringTools[Join]([SubStr1New,"exp(","(",SubStr2,")","*(","log(",srtUnderPower,")",")",SubStr3], "");
+     end if;
+   end do;
+  
+   #
+   # Returns string with Gams expression
+   #
+   return(cCodeExprString);
+ 
+   end proc;
+
+

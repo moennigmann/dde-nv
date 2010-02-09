@@ -1,0 +1,20 @@
+#------------------------------------------------------------
+#
+# @path Aux/Other.txt
+#
+# @brief Collects auxiliary procedures used when programming
+# in maple.  
+#
+# @authors mmo
+#
+# @revision
+# 2007-11-16 Written by M. Moennigmann. 
+#
+#------------------------------------------------------------
+Other:= module()
+  export
+    myModulo; 
+
+$include <Other/myModulo.txt>
+
+end module; 
