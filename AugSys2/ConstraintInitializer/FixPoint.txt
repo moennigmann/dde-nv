@@ -1,0 +1,30 @@
+##############################################################
+#
+# @path AugSys2/ConstraintInitializer/FixPoint.txt
+#
+# @brief Collects procedures for defining fixed points for NLP
+#
+# @revision
+#    2008-03-12 Written by dka
+#
+#############################################################
+  FixPoint:=module()
+  
+    export
+      getConstraints,
+      getParameters,
+      setParameters; 
+
+   local fixPointParametersInModule,
+         fixPointVariablesInModule,
+         isFixPointParamsInModule;
+
+$include <ConstraintInitializer/FixPoint/getConstraints.txt>
+$include <ConstraintInitializer/FixPoint/getParameters.txt>
+$include <ConstraintInitializer/FixPoint/setParameters.txt>
+
+
+  end module; # AugSys2:-ConstraintInitializer:-FixPoint 
+ 
+ 
+ 

@@ -1,0 +1,83 @@
+###############################################################################
+#
+# @path AugSys2/ConstraintInitializer/calcOptPoint.txt
+#
+# @brief Calcutates the result of NLP
+#
+# @notes Creates directory tmp2 for saving Npsol files
+#
+# @revision
+# 2008-03-14 written by dka
+#
+###############################################################################
+calcOptPoint:= proc()
+
+  local anNLP, ListOfErrorsInAugSysNLP, NPSOLproc, StrartingCriticalPoint, Inform,
+        Objf, OptPoint, isCalcOPSucceeded;
+  
+  isCalcOPSucceeded:=false;
+  AugSys2:-ConstraintInitializer:-CriticalPoint:-setCalcOPSucceeded(isCalcOPSucceeded);      
+
+  #
+  # make sure that NLP is defined correct
+  #
+
+  anNLP:=AugSys2:-ConstraintInitializer:-NLP:-getNLP();
+  ListOfErrorsInAugSysNLP:=Aux:-SystemClasses:-listOfErrorsInNLP(anNLP, 'strict');
+  
+  if (ListOfErrorsInAugSysNLP <> true)
+  then error("NLP is not defined correct",ListOfErrorsInAugSysNLP);
+  end if;
+
+  #
+  # check if the folder tmp2 already exists
+  #
+ 
+   if Aux:-FileOperations:-dirExists("tmp2")
+      then
+        error("temporary directory ./tmp2 needed to run test already exists")
+      else  
+          mkdir("tmp2")
+      end if;
+
+  #
+  # check if starting point for optimization is defined
+  #
+  
+  StrartingCriticalPoint:=AugSys2:-ConstraintInitializer:-CriticalPoint:-getStartingCriticalPoint();
+  
+  if not type(StrartingCriticalPoint,list(EvalsToFloat))
+  then error("Starting critical point is not defined");
+  end if;
+
+  printf("\n");
+  printf("running Optimization for NLP\n"); 
+
+  NPSOLproc := NPSOL:-CreateInstance(anNLP, "./tmp2");
+  NPSOLproc:-setXVEC(StrartingCriticalPoint);
+  NPSOLproc:-runOpt();
+  
+  Inform := NPSOLproc:-getInform();
+
+  #
+  # set isCalcClosestCPSucceeded to frue if optimization succeded
+  # and Objf,OptPoint its values
+  # 
+
+  if (Inform=0)
+  then
+      isCalcOPSucceeded:=true; 
+      AugSys2:-ConstraintInitializer:-CriticalPoint:-setCalcOPSucceeded(isCalcOPSucceeded);
+      Objf:= NPSOLproc:-getObjf();
+      OptPoint:= NPSOLproc:-getXVEC();
+      AugSys2:-ConstraintInitializer:-CriticalPoint:-setCalcOPObjf(Objf);
+      AugSys2:-ConstraintInitializer:-CriticalPoint:-setCalcOPOptPoint(convert(OptPoint,list));
+  end if;
+
+
+  return(isCalcOPSucceeded);
+
+end proc; 
+
+ 
+ 

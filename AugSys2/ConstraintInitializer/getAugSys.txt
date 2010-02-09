@@ -1,0 +1,10 @@
+##############################################################
+#
+# @path AugSys2/ConstraintInitializer/getAugSys.txt
+#
+# @brief Returns augmented system
+#
+##############################################################
+    getAugSys:= proc()
+        return(eval(augSysInModule)); 
+     end proc; # getAugSys 

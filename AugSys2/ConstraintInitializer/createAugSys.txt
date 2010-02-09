@@ -1,0 +1,111 @@
+##################################################################
+# 
+# @path AugSys2/ConstraintInitializer/createAugSys.txt
+#
+# @brief Creates augmented system of normal vector equations
+#
+# @param  
+#   a model to be augmented by system for finding normal vectors,
+#   list of names of free parameters Alpha,
+#   keyword which defines type of bifurcation
+#   optional argument: radius of circle where eigenvalues have to lie (if not given by default = 1)
+#
+# @return 
+#   an augmented system, first part of it the equations that defines fix point, 
+#   2nd part is system that defining the critical boundaries
+#   3rd part is system that defines the normal vectors to the critical boundaries
+#
+# @notes (1) Niemark-Sacker bifurcation corresponding keyword "Neimark-Sacker", "NeimarkSacker" or "NS" 
+#            to flip bifurcation - "Flip" or "flip"
+#            to fold bifurcation - "Fold" or "fold"
+#
+# @revision
+# 2009-07-24 Add Saddle-Node and Hopf bifurcations type for DAEs
+# 2008-10-30 Add in DTASys possibilities to have AlgEqns
+# 2008-04-23 Added optional paremeter radius of eigenvalues
+# 2008-03-13 Written by dka
+# 
+##################################################################
+    createAugSys:=proc(
+      aSys::{DTASys,DAESys},
+      listOfNVparams::list(name),
+      keyword::string
+      # optional radiusOfEig
+    )
+
+     local augSys, radiusOfEig;
+
+      #
+      # extract optional arguments
+      #
+      
+
+       if (keyword="Neimark-Sacker" or keyword="NeimarkSacker" or keyword="NS" or keyword="Flip" or keyword="flip"
+           or keyword="Fold" or keyword="fold")
+       then    
+           if 
+             nargs>3
+           then 
+             radiusOfEig:= args[4];
+             if not ((radiusOfEig>=0) and (radiusOfEig<=1))
+  	     then error("Radius of circle where eigenvalues have to lie (forth input) have to be between 0 to 1");
+   	      end if;
+           else
+             radiusOfEig:=1; 
+           end if; 
+       else if ((keyword="SaddleNode") or (keyword="saddleNode") or (keyword="Saddle") or (keyword="saddle")
+                 or (keyword="Hopf") or (keyword="hopf"))
+            then 
+               if 
+                 nargs>3
+               then 
+                 radiusOfEig:= args[4];
+                 if (radiusOfEig>0)
+  	         then error("Bound on a real part of eigenvalue should be negative");
+   	         end if;
+               else
+                 radiusOfEig:=0; 
+               end if; 
+             else  
+               error("Name of bifurcation (third parameter) is wrong defined. The keyword has to be one of the folowing strings \"NS\",\"flip\",\"fold\",\"saddle\" or \"hopf\.");
+             end if;  
+       end if;    
+     
+
+     # creating augmented system of bifurcation type equals "keyword"
+     
+     isNSType:=false;
+     isFlipOrFoldType:=false;
+     isSaddleNodeType=false;
+     isHopfType=false;       
+
+     if ((keyword="Neimark-Sacker") or (keyword="NeimarkSacker") or (keyword="NS"))
+     then augSys:=AugSys2:-NeimarkSackerNV:-CreateNSWithAlgEqnsNVSys(aSys, listOfNVparams, radiusOfEig):-getSys();
+          isNSType:=true;
+     else if ((keyword="Flip") or (keyword="flip"))
+          then augSys:=AugSys2:-FlipAndFoldNV:-CreateFlipWithAlgEqnsNVSys(aSys, listOfNVparams, radiusOfEig):-getSys();
+               isFlipOrFoldType:=true; 
+          else if ((keyword="Fold") or (keyword="fold"))
+               then augSys:=AugSys2:-FlipAndFoldNV:-CreateFoldWithAlgEqnsNVSys(aSys, listOfNVparams, radiusOfEig):-getSys();
+                    isFlipOrFoldType:=true; 
+               else if ((keyword="SaddleNode") or (keyword="saddleNode") or (keyword="Saddle") or (keyword="saddle")) 
+		    then augSys:=AugSys2:-SaddleNodeNV:-CreateSaddleNodeNVSys(aSys, listOfNVparams, radiusOfEig):-getSys();
+			 isSaddleNodeType:=true;
+                    else if ((keyword="Hopf") or (keyword="hopf")) 
+			 then augSys:=AugSys2:-HopfNV:-CreateHopfNVSys(aSys, listOfNVparams, radiusOfEig):-getSys();
+			 isHopfType:=true;
+			 else error("The keyword has to be one of the folowing strings \"NS\",\"flip\",\"fold\",\"saddle\" or \"hopf\"");
+			 end if;   
+		     end if; 
+               end if;  
+          end if;
+     end if;
+
+    augSysInModule:= augSys;
+    isAugSysCreatedInModule:=true;
+    listOfNVParamsInModule:= listOfNVparams;
+    listOfDynVarsInModule:= aSys["DynVars"];
+ 
+    return (eval(augSys));
+
+   end proc;  #createAugSys

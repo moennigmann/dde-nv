@@ -1,0 +1,52 @@
+##########################################################################
+# 
+# @path AugSys2/FlipAndFoldNV/CreateFlipNVSys.txt
+#
+# @brief Creates an augmented NV system for Flip critical boundaries
+#        for DTASys without algebraic equations
+# @param  
+#   a model to be augmented by system for finding Neimark-Sacker normal vectors,
+#   list of names of free parameters Alpha
+#   optional argument: radius of circle where eigenvalues have to lie (if not given by default = 1)
+#
+# @return 
+#   an Sys, first part is the result from converting DynEqns to substitude to it AlgEqns, 
+#    2nd part is system for finding normal vertors
+#
+# @notes (1) a line of content data is a list of form 
+#            [param1=..., param2=..., ...]
+#        (2) eigenvalue =-1 corresponding to flip bifurcation, 
+#            eigenvalue = 1 corresponding to fold  bifurcation, 
+#
+# @revision
+# 2008-04-23 Added optional paremeter radius of eigenvalues
+# 2008-01-10 Written by dka
+# 
+##########################################################################
+    
+    CreateFlipNVSys:=proc(
+      aSys::table,
+      ListOfNVparams::list(name)
+      # optional radius
+    )
+    
+    local flipNVSys, radius; 
+    
+      #
+      # extract optional arguments
+      #
+        if 
+          nargs>2
+        then 
+          radius:= args[3];
+          if not ((radius>=0) and (radius<=1))
+  	  then error("Radius of circle where eigenvalues have to lie (third input) have to be between 0 to 1");
+   	  end if;
+        else
+          radius:=1; 
+        end if; 
+      
+    flipNVSys:=CreateFlipOrFoldNVSys(aSys,ListOfNVparams,-1,radius); 
+    return(flipNVSys);
+
+    end proc;  #AugSys2:-FlipAndFoldNV:-CreateFlipNVSys 

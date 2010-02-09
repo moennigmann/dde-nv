@@ -1,0 +1,344 @@
+##########################################################################
+# 
+# @path AugSys2/FlipAndFoldNV/CreateFlipOrFoldNVSys.txt
+#
+# @brief Creates an augmented NV system for Flip or Fold critical boundaries
+#        for DTASys without algebraic equations
+#
+# @param  
+#   a model to be augmented by system for finding Neimark-Sacker normal vectors,
+#   list of names of free parameters Alpha
+#   real eigenvalue corresponding to bifurcation (+/-1)
+#   optional argument: radius of circle where eigenvalues have to lie (if not given by default = 1)
+#
+# @return 
+#   an Sys, first part is the result from converting DynEqns to substitude to it AlgEqns, 
+#    2nd part is system for finding normal vertors
+#
+# @notes (1) a line of content data is a list of form 
+#            [param1=..., param2=..., ...]
+#        (2) eigenvalue =-1 corresponding to flip bifurcation, 
+#            eigenvalue = 1 corresponding to fold  bifurcation, 
+#
+# @revision
+# 2008-04-23 Added optional paremeter radius of eigenvalues
+# 2008-03-06 instead of aSys[...] using aSys["..."] 
+# 2008-01-09 Written by dka
+# 
+##########################################################################
+    CreateFlipOrFoldNVSys:=proc(
+      aSys::DTASys,
+      ListOfNVparams::list(name),
+      inputEigVal::numeric
+      # optional radius
+    )
+
+      local ListofNames, item, ComplexRightEigSys, ExtendedSysToBeSubs,
+     	ExtendedSystemEquations, ExtendedSystemVariables,
+	ExtendedSystemParameters, DESys, NumOfDynEqns, f_x, f_xTransp, f_xx,
+	f_xalpha, f_p, f_xpTransp, V, U, R, NewVariables, NewEquations, 
+        f_alpha, f_alphaTransp, W, fxx_w, v_fxx_w, fxalpha_w, v_fxalpha_w,
+        NumNVparamsToBeSubs, ParsOfModel, VarsOfModel, result, NumOfDynEqnsInModule,
+        radius;
+        
+
+      #
+      # extract optional arguments
+      #
+        if 
+          nargs>3
+        then 
+          radius:= args[4];
+          if not ((radius>=0) and (radius<=1))
+  	  then error("Radius of circle where eigenvalues have to lie (forth input) have to be between 0 to 1");
+   	  end if;
+        else
+          radius:=1; 
+        end if; 
+
+       #
+       # make sure entries of ListOfNVparams exist in first arg
+       #
+
+        ListofNames:=map(lhs,aSys["Parameters"]);
+
+        for item in ListOfNVparams do
+          if not member(item,ListofNames)
+	  then
+	    error(
+	      "requested normal vector parameter %1 does not exist in model",
+	      item
+	    );
+	  end if;
+	end do; 
+
+      #
+      # substitude into DynEqns AlgEqns, prepare some variables
+      # 
+       
+        DESys := Aux:-SystemClasses:-subsExplicitAlgEqnsIntoDTASys(aSys); 
+        
+
+        NumOfDynEqns:= nops(DESys["DynEqns"]);
+        VarsOfModel:= DESys["DynVars"];
+        ParsOfModel:= DESys["Parameters"]; 
+  
+        f_x:= Aux:-Derivs:-f_x(
+          DESys["DynEqns"],
+          DESys["DynVars"]
+        );
+
+        f_xTransp:= LinearAlgebra[Transpose](f_x); 
+
+        f_alpha:= Aux:-Derivs:-f_p(
+          DESys["DynEqns"],
+          ListOfNVparams
+        );
+
+        f_alphaTransp:= LinearAlgebra[Transpose](
+          f_alpha
+        ); 
+
+        f_xx:= Aux:-Derivs:-f_xx(
+          DESys["DynEqns"],
+          DESys["DynVars"]
+        ); 
+
+        f_xalpha:= Aux:-Derivs:-f_xp(
+	  DESys["DynEqns"],
+          DESys["DynVars"], 
+          ListOfNVparams
+ 	);         
+
+  
+      #------------------------------------------------------------
+      #
+      # start construction of normal vector system
+      #
+      #------------------------------------------------------------
+        #
+        # v, w 
+        #
+          V:= [seq(
+            v[i1], 
+            i1=1..NumOfDynEqns)
+          ]; 
+  
+          W:= [seq(
+            w[i1], 
+            i1=1..NumOfDynEqns)
+          ]; 
+
+        #
+        # u and r 
+        #
+          U:= [seq(
+          u[i1], 
+            i1=1..NumOfDynEqns)
+          ]; 
+  
+          R:= [seq(
+          r[i1], 
+            i1=1..nops(ListOfNVparams))
+          ]; 
+  
+          NewVariables:= [ 
+            op(U),
+            op(R)
+          ];
+
+      # augmented system will be in ExtendedSystemEquations, 
+      # ExtendedSystemVariables etc., 
+      # lists NewEquations, NewVariables are used to build next block 
+      #
+
+        #--------------------
+        #
+        # model equations f-x = 0
+        #
+        #--------------------
+          NewEquations:= [seq(
+            0= rhs(DESys["DynEqns"][i1])-DESys["DynVars"][i1],
+            i1= 1..NumOfDynEqns
+          )];
+  
+          NewVariables:= DESys["DynVars"];
+
+          #
+          # ExtendedSystem with NewEquations, NewVariables
+          #
+            ExtendedSystemEquations:= NewEquations;
+            ExtendedSystemVariables:= NewVariables; 
+
+        #----------------------------------------
+        #
+        # fx w +/- w = 0
+        #
+        #----------------------------------------
+
+         NewEquations := LinearAlgebra[Multiply](f_x, convert(W,Vector))
+         -LinearAlgebra[Multiply](convert(W,Vector), inputEigVal*radius);
+         
+         NewEquations:=[seq(0=NewEquations[i1],i1=1..NumOfDynEqns)];
+
+         NewVariables:=[op(W)];
+          
+          ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            op(NewEquations)                    
+          ];
+  
+          ExtendedSystemVariables:= [
+            op(ExtendedSystemVariables),
+            op(NewVariables)
+          ];
+
+
+        #----------------------------------------
+        #
+        # wT w -1 = 0
+        #
+        #----------------------------------------
+
+        
+
+       NewEquations := LinearAlgebra[Multiply](LinearAlgebra[Transpose](convert(W,Vector)), convert(W,Vector))-1; 
+
+       ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            0=NewEquations                    
+          ];
+
+
+        #----------------------------------------
+        #
+        # fxT v +/- v + g1 w = 0
+        #
+        #----------------------------------------
+
+         NewEquations := LinearAlgebra[Multiply](f_xTransp, convert(V,Vector))
+         -LinearAlgebra[Multiply](convert(V,Vector), inputEigVal*radius)
+         +LinearAlgebra[Multiply](convert(W,Vector), g1);
+         
+         NewEquations:=[seq(0=NewEquations[i1],i1=1..NumOfDynEqns)];
+
+         NewVariables:=[op(V),g1];
+          
+          ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            op(NewEquations)                    
+          ];
+  
+          ExtendedSystemVariables:= [
+            op(ExtendedSystemVariables),
+            op(NewVariables)
+          ];
+
+
+        #----------------------------------------
+        #
+        # vT w -1 = 0
+        #
+        #----------------------------------------
+       
+
+        NewEquations := LinearAlgebra[Multiply](LinearAlgebra[Transpose](convert(V,Vector)), convert(W,Vector))-1;
+
+        ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            0=NewEquations                    
+          ];
+
+
+        #----------------------------------------
+        #
+        # fxT u -u + vT fxx w = 0
+        #
+        #----------------------------------------
+          fxx_w:= Aux:-TensProd:-Tijk_xj(
+            f_xx, W
+          );
+
+          v_fxx_w:= Aux:-TensProd:-xi_Aij(
+            V,
+            fxx_w
+          ); 
+
+          NewEquations:= LinearAlgebra[Multiply](f_xTransp,convert(U,Vector))-convert(U,Vector)+convert(v_fxx_w,Vector);
+
+          NewEquations:=[seq(0=NewEquations[i1],i1=1..NumOfDynEqns)];
+             
+          NewVariables:= U;
+          
+          ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            op(NewEquations)                    
+          ];
+  
+          ExtendedSystemVariables:= [
+            op(ExtendedSystemVariables),
+            op(NewVariables)
+          ];
+
+        #----------------------------------------
+        #
+        # f_alphaT u+ vT fxalpha w - r = 0
+        #
+        #----------------------------------------
+          fxalpha_w:= Aux:-TensProd:-Tijk_xj(
+            f_xalpha, W
+          );
+
+          v_fxalpha_w:= Aux:-TensProd:-xi_Tij(
+            V,
+            fxalpha_w
+          ); 
+
+          NewEquations:= LinearAlgebra[Multiply](
+              f_alphaTransp,
+              convert(U,Vector)
+            ) + convert(v_fxalpha_w,Vector)-convert(R,Vector);
+
+
+          NewEquations:=[seq(
+            0=NewEquations[i1],
+            i1=1..nops(ListOfNVparams)
+          )];
+
+          NewVariables:= R;
+   
+          ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            op(NewEquations)                    
+          ];
+         
+           ExtendedSystemVariables:= [
+            op(ExtendedSystemVariables),
+            op(NewVariables)
+          ];
+  
+      #------------------------------------------------------------
+      #
+      # build table for augmented system from lists
+      #
+      #------------------------------------------------------------
+      
+      #
+      # apart from vars listed explicitly, the following vars
+      # are passed on to template:
+      #   f_x -> Jac
+      #   NumOfDynEqns -> NumDynEqns
+      #
+        ExtendedSysToBeSubs:= table();
+        ExtendedSysToBeSubs["Equations"]:= ExtendedSystemEquations;
+        ExtendedSysToBeSubs["Variables"]:= ExtendedSystemVariables;
+        ExtendedSysToBeSubs["Parameters"]:= DESys["Parameters"];
+    
+        NumNVparamsToBeSubs:= nops(ListOfNVparams); 
+
+$include <FlipAndFoldNV/CreateFlipOrFoldNVSys/TemplateModule.txt>
+
+
+    return result;
+
+       end proc;  #AugSys2:-FlipAndFoldNV:-CreateFlipOrFoldNVSys

@@ -1,0 +1,63 @@
+###############################################################################
+#
+# @path AugSys2/ConstraintInitializer/runOptForListStartPoints.txt
+#
+# @brief running Npsol for list starting points
+#
+# @param Instance of NPSOL, list of starting points, number of parameters to print
+# @return Best optimal point
+#
+# @revision
+# 2008-05-15 written by dka
+#
+###############################################################################
+runOptForListStartPoints:= proc( NPSOLproc, ListOfStartingPoints, NumberParamToPrint::integer )
+
+  local StrartingCriticalPoint, i, imform1, obj1, optVec1, numberStartPoints,
+        bestObj, bestImform, bestNumber, bestOptVect, bestList, i2;
+  
+numberStartPoints:=nops(ListOfStartingPoints);
+bestObj:= infinity;
+
+for i from 1 to numberStartPoints do
+AugSys2:-ConstraintInitializer:-CriticalPoint:-setStartingCriticalPoint(ListOfStartingPoints[i]);
+StrartingCriticalPoint:= AugSys2:-ConstraintInitializer:-CriticalPoint:-getStartingCriticalPoint();
+NPSOLproc:-setXVEC(StrartingCriticalPoint); 
+
+try
+NPSOLproc:-runOpt();
+imform1:=NPSOLproc:-getInform();
+obj1 := NPSOLproc:-getObjf();
+optVec1 := convert(NPSOLproc:-getXVEC(), list);
+printf("i=%d, inform=%d, obj=%f, opt=[",i,imform1,obj1);
+
+for i2 from 1 to NumberParamToPrint-1 do
+printf("%f, ",optVec1[i2]);
+end do;
+
+if (bestObj>obj1)
+then bestObj:=obj1;
+     bestImform:=imform1;
+     bestNumber:=i;
+     bestOptVect:=optVec1;
+end if;
+
+printf("%f",optVec1[NumberParamToPrint]);
+printf("], bestNo=%d\n",bestNumber); 
+
+catch:
+printf("i=%d, time limit error\n",i)
+end try;
+
+end do;
+  
+  printf("\n");
+  bestList:=[bestNumber,bestImform,bestObj,bestOptVect];
+
+  return(bestList);
+
+end proc; 
+
+ 
+ 
+ 
