@@ -1,0 +1,215 @@
+    ##########################################################################
+    # 
+    # @path AugSys2/SaddleNodeNV/CreateRight.txt
+    #
+    # @param
+    #   a model to be augmented by saddle node system
+    #
+    # @return  
+    #   an AESys, first part is result from converting first arg
+    #     to ODE-model using SubsExplicitAEsIntoODEs, 2nd part
+    #     is eigenvector system for saddle node
+    #
+    # @notes
+    #  (1) proc introduces variables fx[.,.]; proc checks whether
+    #  fx already occurs in model and throws error if so
+    #  
+    #  @revision
+    #  2009-12-22 Moved from AugSys by dka
+    # 
+    ##########################################################################
+    CreateRight:=proc(
+      aModel::DAESys
+    )
+  
+      local ODEmodel, NumOfODEs, f_x, SaddleNodeSystemEquations, 
+        SaddleNodeSystemVariables, NewEquations, NewVariables, 
+        w, w2, i1, ComplexEigSysToBeSubs, ParsOfModel, VarsOfModel,
+        SetOfODEmodelVars, Jac; 
+
+      #
+      # convert model to ODE model
+      # 
+        ODEmodel:= Aux:-SystemClasses:-subsExplicitAEsIntoDAESys(
+          aModel
+        );
+
+      #
+      # variable fx must not occur in ODEmodel
+      #
+        SetOfODEmodelVars:= {
+          op(ODEmodel["DynVars"]), 
+          op(ODEmodel["Parameters"]), 
+          op(map(lhs, ODEmodel["ExplicitAEs"]))
+        }; 
+
+        if
+          member(fx, SetOfODEmodelVars)
+        then
+          error("symbol fx must not occur in first argument");
+        end if;
+
+      #
+      # prepare some vars needed repeatedly
+      #
+        NumOfODEs:= nops(ODEmodel["ODEs"]);
+        VarsOfModel:= ODEmodel["DynVars"];
+        ParsOfModel:= map(lhs, ODEmodel["Parameters"]); 
+  
+      #
+      # fill jacobian f_x with names fx[1, 1]...fx[n, n]
+      #
+        f_x:= Matrix(NumOfODEs, NumOfODEs,
+          [seq(
+            seq(
+              fx[i1, i2],
+              i2= 1..NumOfODEs
+            ),
+            i1= 1..NumOfODEs
+          )]
+        ); 
+  
+      #------------------------------------------------------------
+      #
+      # start construction of system equations:
+      #
+      #------------------------------------------------------------
+
+      #
+      # augmented system will be in ComplexEigSysEquations, 
+      # ComplexEigSysVariables etc., 
+      # lists NewEquations, NewVariables are used to build next block 
+      #
+
+        #--------------------
+        #
+        # model equations
+        #
+        #--------------------
+          NewEquations:= [seq(
+            0= rhs(ODEmodel["ODEs"][i1]),
+            i1= 1..NumOfODEs
+          )];
+  
+          NewVariables:= ODEmodel["DynVars"];
+
+          #
+          # SaddleNodeSystem with NewEquations, NewVariables
+          #
+            SaddleNodeSystemEquations:= NewEquations;
+            SaddleNodeSystemVariables:= NewVariables; 
+
+        #--------------------    
+        #
+        # equations which define entries of jacobian
+        #
+        #--------------------
+       
+        #
+        # remember we need vectors to be represented by lists of
+        # names for linalg and Aux:-TensProd
+        #
+
+          NewVariables:= [
+            seq(
+              seq(
+                fx[i1, i2],
+                i2= 1..NumOfODEs
+              ),
+              i1= 1..NumOfODEs
+            )
+          ];
+       
+          Jac:= Aux:-Derivs:-f_x(
+            ODEmodel["ODEs"],
+            ODEmodel["DynVars"]
+          );
+
+          NewEquations:= [
+            seq(
+              seq(
+                0= fx[i1, i2]- Jac[i1, i2],
+                i2= 1..NumOfODEs
+              ),
+              i1= 1..NumOfODEs
+            )
+          ]; 
+    
+          SaddleNodeSystemEquations:= [
+            op(SaddleNodeSystemEquations),   
+            op(NewEquations)                    
+          ];
+  
+          SaddleNodeSystemVariables:= [
+            op(SaddleNodeSystemVariables),
+            op(NewVariables)
+          ];
+        
+        #--------------------    
+        #
+        # eigenvector equations 0= f_x w
+        #
+        #--------------------
+       
+        #
+        # remember we need vectors to be represented by lists of
+        # names for linalg and Aux:-TensProd
+        #
+          w:= [seq(
+            wvec[i1], 
+            i1=1..NumOfODEs)
+          ]; 
+
+          NewVariables:= [ 
+            op(w)
+          ];
+          
+          NewEquations:=  LinearAlgebra[Multiply](f_x,convert(w,Vector));
+         
+ 
+          NewEquations:=[seq(
+            0=NewEquations[i1],
+            i1=1..NumOfODEs
+          )];
+   
+          SaddleNodeSystemEquations:= [
+            op(SaddleNodeSystemEquations),   
+            op(NewEquations)                    
+          ];
+  
+          SaddleNodeSystemVariables:= [
+            op(SaddleNodeSystemVariables),
+            op(NewVariables)
+          ];
+        
+        #--------------------  
+        #
+        # normalization: w^T *w= 0
+        #
+        #--------------------
+
+          NewEquations:= [
+            0=linalg[multiply](w, w)- 1
+          ];
+  
+          #
+          # append new equation to SaddleNodeSystem
+          #
+            SaddleNodeSystemEquations:= [
+              op(SaddleNodeSystemEquations),
+              op(NewEquations)                    
+            ];
+
+      #------------------------------------------------------------
+      #
+      # build table for augmented system from lists
+      #
+      #------------------------------------------------------------
+        ComplexEigSysToBeSubs:= table();
+        ComplexEigSysToBeSubs["Equations"]:= SaddleNodeSystemEquations;
+        ComplexEigSysToBeSubs["Variables"]:= SaddleNodeSystemVariables;
+        ComplexEigSysToBeSubs["Parameters"]:= ODEmodel["Parameters"];
+
+$include <SaddleNodeNV/CreateRight/TemplateModule.txt>
+
+    end proc;  # AugSys2:-SaddleNodeNV:-CreateRight

@@ -1,0 +1,10 @@
+#------------------------------------------------------------
+#
+# @path AugSys2/ConstraintInitializer/CriticalPoint/getCalcClosestCPOptPoint.txt
+#
+# @brief Returns closest point on the critical boundary
+#
+#------------------------------------------------------------
+    getCalcClosestCPOptPoint:= proc() 
+       return(eval(calcClosestCPOptPointInModule)); 
+    end proc; # getCalcClosestCPOptPoint 

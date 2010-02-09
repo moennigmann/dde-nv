@@ -1,0 +1,49 @@
+###############################################################################
+# 
+# NPSOL/source/Templates/SimpleWrapperTemplate/createOptionsFile
+#
+# revision history:
+# 021217 written by mmo
+#
+###############################################################################
+createOptionsFile:= proc()
+
+  local item, EntryNames, OldDir, fd; 
+
+  #
+  # change to working dir
+  #
+    OldDir:= currentdir();
+    currentdir(WorkingDir); 
+
+  #
+  # open file and write lines
+  #
+    fd := fopen(
+      cat("./npsol_options.txt"),
+      WRITE,
+      TEXT
+    );
+
+    fprintf(fd, "begin\n"); 
+
+    EntryNames:= map(op, [indices(NpsolOptions)]); 
+    for item in EntryNames do
+      fprintf(
+        fd,
+        cat("  ", item, " ", convert(NpsolOptions[item], string), "\n")
+      );
+    end do; 
+    
+    fprintf(fd, "end\n"); 
+
+    fclose(fd);
+
+  #
+  # change back to former dir
+  #
+    currentdir(OldDir); 
+
+  return(); 
+
+end proc; 

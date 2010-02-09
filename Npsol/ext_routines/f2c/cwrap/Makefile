@@ -1,0 +1,48 @@
+###############################################################################
+#
+# NPSOL/ext_routines/f2c/cwrap/Makefile
+# revision history:
+# 2008-02-11 Makefile no longer copies files from ext_routines/cwrap,
+# but all necessary files are stored in current directory. 
+# 2008-02-11 Started with copy /media/disk/Backup/FirewireDisk-2007-04-08/
+# backup/2006-07-backup-with-cp/home/mmo/maple/npsol - mmo
+#
+###############################################################################
+
+CCFLAGS= -shared -O0 -fPIC 
+FFFLAGS= -C -shared -O0 -fPIC
+CC= gcc
+FF= gfortran
+
+all: npsol_open.o npsol_close.o cwrap_npsol.o npsolconfunad.o npsolobjfunad.o \
+	set_params.o
+
+#
+# compile c and fortran files
+#
+npsol_open.o: npsol_open.f
+	${FF} -c $(FFFLAGS) npsol_open.f -o npsol_open.o
+
+npsol_close.o: npsol_close.f
+	${FF} -c $(FFFLAGS) npsol_close.f -o npsol_close.o
+
+set_params.o: set_params.f
+	${FF} -c $(FFFLAGS) set_params.f -o set_params.o
+
+cwrap_npsol.o: cwrap_npsol.c
+	${CC} -c $(CCFLAGS) cwrap_npsol.c -o cwrap_npsol.o
+
+npsolconfunad.o: npsolconfunad.c
+	${CC} -c $(CCFLAGS) npsolconfunad.c -o npsolconfunad.o 
+
+npsolobjfunad.o: npsolobjfunad.c
+	${CC} -c $(CCFLAGS) npsolobjfunad.c -o npsolobjfunad.o 
+
+clean: 
+	rm -f *.o *~
+
+
+
+
+
+

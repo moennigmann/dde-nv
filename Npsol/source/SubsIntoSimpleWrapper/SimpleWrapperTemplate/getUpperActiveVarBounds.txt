@@ -1,0 +1,33 @@
+###############################################################################
+#
+# NPSOL/source/SubsIntoSimpleWrapper/SimpleWrapper/getUpperActiveVarBounds
+#
+# return list of names of variables which are within relative error 
+# Eps of their lower bound; for Eps see ./GetIndicesActiveVarBounds.txt
+#
+# revision history:
+# 030108 written by mmo
+#
+###############################################################################
+getUpperActiveVarBounds:= proc(
+  # optional argument SetEps, passed to GetIndicesActiveVarBounds
+)
+
+  local ViolatedLower, ViolatedUpper, VarNames; 
+
+  ViolatedLower, ViolatedUpper:= getIndicesActiveVarBounds(args);
+
+  if not
+    ViolatedUpper= []
+  then
+    VarNames:= [seq(
+      RequiredVars[ViolatedUpper[i1]],
+      i1= 1..nops(ViolatedUpper)
+    )];   
+  else
+    VarNames:= [];
+  end if; 
+  
+  return(VarNames); 
+
+end proc; 

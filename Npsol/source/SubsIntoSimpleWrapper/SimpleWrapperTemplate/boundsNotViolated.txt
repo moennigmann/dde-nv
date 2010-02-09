@@ -1,0 +1,77 @@
+###############################################################################
+#
+# boundsNotViolated
+#
+# returns true if current point does not variable violate bounds, 
+# false otherwise
+#
+# revision history:
+# 030109 proc now returns names rather than indices of violated
+#   variable bounds; 
+# 02xxxx written by mmo
+###############################################################################
+boundsNotViolated:= proc()
+
+  local ViolatedLowerBounds, ViolatedUpperBounds, i1, NamesViolated; 
+
+  #
+  # find violated bounds
+  #
+        ViolatedLowerBounds:= [];
+        ViolatedUpperBounds:= [];
+        for i1 from 1 to N do
+          if
+            xvec_swnpsol[i1]< BL_swnpsol[i1]
+          then
+            ViolatedLowerBounds:= [
+              op(ViolatedLowerBounds),
+              i1
+            ];
+          end if; 
+           if
+            xvec_swnpsol[i1]> BU_swnpsol[i1]
+          then
+            ViolatedUpperBounds:= [
+              op(ViolatedUpperBounds),
+              i1
+            ];
+          end if; 
+        end do;
+
+  #
+  # throw warnings if violated bounds exist
+  #
+        if not
+          ViolatedUpperBounds= []
+        then
+          NamesViolated:= [seq(
+            RequiredVars[i1], i1= ViolatedUpperBounds
+          )];
+          WARNING(
+            "some variables violate upper bounds: %1", 
+            NamesViolated
+          );
+        end if; 
+
+        if not
+          ViolatedLowerBounds= []
+        then
+          NamesViolated:= [seq(
+            RequiredVars[i1], i1= ViolatedLowerBounds
+          )];
+          
+          WARNING(
+            "some variables violate lower bounds: %1",
+            NamesViolated
+          );
+        end if; 
+
+  if not
+    (ViolatedLowerBounds= [] and ViolatedUpperBounds= [])
+  then
+    return(false);
+  else
+    return(true); 
+  end if; 
+
+end proc; 

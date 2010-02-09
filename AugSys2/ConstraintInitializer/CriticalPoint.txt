@@ -1,0 +1,72 @@
+##############################################################
+#
+# @path AugSys2/ConstraintInitializer/CriticalPoint.txt
+#
+# @brief Collects procedures for defining critical points for NLP
+#
+# @revision
+#    2008-03-12 Written by dka
+#
+##############################################################
+  CriticalPoint:=module()
+  
+    export
+      getCalcClosestCPObjf,
+      getCalcClosestCPOptPoint,
+      getCalcOPObjf,
+      getCalcOPOptPoint,
+      getConstraints,
+      getNVConstraints,
+      getParameters,
+      getStartingCriticalPoint,
+      getVariables,
+      isCalcClosestCPSucceeded,
+      isCalcOPSucceeded,
+      setCalcClosestCPObjf,
+      setCalcClosestCPOptPoint,
+      setCalcClosestCPSucceeded,
+      setCalcOPObjf,
+      setCalcOPOptPoint,
+      setCalcOPSucceeded,
+      setParameters,
+      setStartingCPWithDistance,
+      setStartingCriticalPoint,
+      setVariables; 
+
+   local criticalPointParametersInModule,
+         criticalPointVariablesInModule,
+         startingCriticalPointInModule,
+         isCalcClosestCPSucceededInModule,
+         calcClosestCPObjfInModule,
+         calcClosestCPOptPointInModule,
+         isCalcOPSucceededInModule,
+         calcOPObjfInModule,
+         calcOPOptPointInModule;
+
+$include <ConstraintInitializer/CriticalPoint/getCalcClosestCPObjf.txt>
+$include <ConstraintInitializer/CriticalPoint/getCalcClosestCPOptPoint.txt>
+$include <ConstraintInitializer/CriticalPoint/getCalcOPObjf.txt>
+$include <ConstraintInitializer/CriticalPoint/getCalcOPOptPoint.txt>
+$include <ConstraintInitializer/CriticalPoint/getConstraints.txt>
+$include <ConstraintInitializer/CriticalPoint/getNVConstraints.txt>
+$include <ConstraintInitializer/CriticalPoint/getParameters.txt>
+$include <ConstraintInitializer/CriticalPoint/getStartingCriticalPoint.txt>
+$include <ConstraintInitializer/CriticalPoint/getVariables.txt>
+$include <ConstraintInitializer/CriticalPoint/isCalcClosestCPSucceeded.txt>
+$include <ConstraintInitializer/CriticalPoint/isCalcOPSucceeded.txt>
+$include <ConstraintInitializer/CriticalPoint/setCalcClosestCPObjf.txt>
+$include <ConstraintInitializer/CriticalPoint/setCalcClosestCPOptPoint.txt>
+$include <ConstraintInitializer/CriticalPoint/setCalcClosestCPSucceeded.txt>
+$include <ConstraintInitializer/CriticalPoint/setCalcOPObjf.txt>
+$include <ConstraintInitializer/CriticalPoint/setCalcOPOptPoint.txt>
+$include <ConstraintInitializer/CriticalPoint/setCalcOPSucceeded.txt>
+$include <ConstraintInitializer/CriticalPoint/setParameters.txt>
+$include <ConstraintInitializer/CriticalPoint/setStartingCPWithDistance.txt>
+$include <ConstraintInitializer/CriticalPoint/setStartingCriticalPoint.txt>
+$include <ConstraintInitializer/CriticalPoint/setVariables.txt>
+
+
+  end module; # AugSys2:-ConstraintInitializer:-CriticalPoint 
+ 
+ 
+ 

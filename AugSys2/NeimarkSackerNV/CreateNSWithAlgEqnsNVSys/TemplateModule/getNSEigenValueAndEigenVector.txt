@@ -1,0 +1,141 @@
+#------------------------------------------------------------
+#
+# @path AugSys2/NeimarkSackerNV/CreateNSWithAlgEqnsNVSys/TemplateModule/getNSEigenValueAndEigenVector.txt
+#
+# @brief Computes Neimark-Sacker eigen value and eigen vector
+# 
+# @notes (1) Proc returns *sequence* of items of type
+#            [naimarkSackerEigenVal, phi, naimarkSackerEigenVector] 
+#        (2) a line of content data is a list of form 
+#            [param1=..., param2=..., ...]
+#
+#------------------------------------------------------------
+        getNSEigenValueAndEigenVector:= proc(
+          lineOfDataInit::list(name=EvalsToFloat)
+          # optional radius
+        )
+        
+          local ListOfNamesInlineOfDataInit,ListOfVarsAndPars,ListOfUnassigneds,
+                fixPointJac0, eigVectors, i1, naimarkSackerEigenVal,
+                naimarkSackerEigenVectors, naimarkSackerEigenVector, result,
+                reEigenVal, imEigenVal, p, paramList, radius, cForGenEigVec, i2; 
+        
+      #
+      # extract optional arguments
+      #
+        if 
+          nargs>1
+        then 
+          radius:= args[2];
+          if not ((radius>=0) and (radius<=1))
+  	  then error("Radius of circle where eigenvalues have to lie (second input) have to be between 0 to 1");
+   	  end if;
+        else
+          radius:=1; 
+        end if; 
+         
+         
+          #
+          # lineOfDataInit must fix all dynamic variables, algebraic variables and parameters of system
+          #
+            ListOfNamesInlineOfDataInit:= map(lhs, lineOfDataInit);
+
+            paramList:=map(lhs,ParsOfModelInModule);
+            
+            ListOfVarsAndPars:= [
+              op(VarsOfModelInModule),
+              op(AlgVarsOfModelInModule),
+              op(paramList)
+            ];
+
+            ListOfUnassigneds:= [];
+            for item in ListOfVarsAndPars do
+              if not
+                member(item, ListOfNamesInlineOfDataInit)
+              then
+                ListOfUnassigneds:= [op(ListOfUnassigneds),
+                  item
+                ];
+              end if;
+            end do; 
+
+            if not
+              ListOfUnassigneds= []
+            then
+              error("variables and parameters %1 must be assigned "
+                "by 1st argument", ListOfUnassigneds
+              );
+            end if;  
+ 
+          # 
+          # substract data of parameters to Jacobian of system  
+          #
+
+          fixPointJac0 := evalf(subs(lineOfDataInit, getJac()));
+
+          #
+          # list of generalized eigenvalues and corresponding generalized eigenvectors of the system
+          #  F_x w = lambda C w, in our case C=[[I,0],[0,0]]
+          #
+
+           cForGenEigVec:=Matrix(NumOfEqnsInModule);
+  
+           for i2 from 1 to nops(VarsOfModelInModule) do
+            cForGenEigVec[i2,i2]:=1;
+	   end do; 
+            
+            
+           eigVectors := LinearAlgebra[Eigenvectors](fixPointJac0,cForGenEigVec,output = 'list');
+
+           
+        
+         # 
+         # choosing eigenvalue which is laying on the unit circle 
+         #
+
+	naimarkSackerEigenVal := 0; 
+	for i1 from 1 while ((i1<= nops(eigVectors)) and (naimarkSackerEigenVal=0) ) do
+ 	if ( (abs(norm(eigVectors[i1,1],2)-radius)<10^(-4)) 
+	     and (evalf(Im(eigVectors[i1,1]),6)>0) )   
+ 	then naimarkSackerEigenVal:=eigVectors[i1,1];       	 
+        naimarkSackerEigenVectors:=eigVectors[i1,3];   
+	 end if;  
+	end do;
+
+	#
+        # if no eigenvalue is laying on the unit circle then send an error
+        #
+
+	if ( naimarkSackerEigenVal = 0) 
+	 then error "There is no point corresponding generalized Neimark Sacker bifurcation";
+	end if;
+
+	naimarkSackerEigenVector := naimarkSackerEigenVectors[1];
+
+        reEigenVal := Re(naimarkSackerEigenVal); 
+        imEigenVal := Im(naimarkSackerEigenVal);
+
+        # corresponding angle p of complex eigenvalue 
+
+       if (reEigenVal = 0) 
+       then p := (1/2)*evalf[20](Pi); 
+       else if (reEigenVal > 0) 
+       then p := arctan(imEigenVal/reEigenVal); 
+       else p := arctan(imEigenVal/reEigenVal)+evalf[20](Pi); 
+       end if; 
+       end if;  
+
+      # rotate eigenvector such way, that in additional holds the equation 
+      # the transpose real part of it multiply by imaginary part = 0
+
+      naimarkSackerEigenVector := AugSys2:-NeimarkSackerNV:-normalizeVector(naimarkSackerEigenVector);
+         
+      
+	# result has form list([EigenValue, p, EigenVector])  
+
+	result:= [naimarkSackerEigenVal,p,naimarkSackerEigenVector];
+        
+        return(result):
+        
+        end proc; # getNSEigenValueAndEigenVector
+ 

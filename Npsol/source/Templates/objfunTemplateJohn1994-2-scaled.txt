@@ -1,0 +1,121 @@
+    ###------------------------------------------------------------------------
+    #
+    # template function objfunTemplate, local to NPSOL
+    #
+    # below actual information from anNLP is substituted into
+    # this template from cost function for system by John 1994
+    # cost funstion to minimize error in inventory and noise of bandwidth
+    # without adding selectivity vector and product robustness vector 
+    #
+    # revision history:
+    #   2008-05-22 written by dka
+    ###------------------------------------------------------------------------
+    objfunTemplate:= proc(
+      mode::integer,
+      n::integer,
+      x, 
+      objf::float,
+      objgrad, 
+      nstate::integer
+    )
+
+      global par;   
+      local n_in_objfun, z, cs, i, erainv, cainv, wn, score, xsc; 
+  
+      declare(
+        par= array(
+          1..(NumParsToBeSubs+ 1), # see note concerning dummy
+          numeric                  # parameter in ConfunTemplate above
+        ),
+  
+        x= array(
+          1..NumVarsToBeSubs,
+          numeric
+        ),
+
+        objgrad= array(
+          1..NumVarsToBeSubs,
+          numeric
+        ),
+
+        n_in_objfun= integer,
+
+        z= array(
+          1..NumEAEsToBeSubs+ 1,
+          numeric
+        ),
+
+       cs=array(1..50000,1..3,numeric),
+
+       
+       i= integer, 
+       erainv= float, 
+       cainv= float, 
+       wn= float, 
+       score= float,
+        
+       xsc=array(1..3,numeric)
+
+      ); 
+  
+      #
+      # check for errors
+      #
+        n_in_objfun:= NumVarsToBeSubs;
+        if
+          not(n_in_objfun= n)
+        then
+          ERROR(`Error in confun: n differs from number of variables`);
+          # note: do not change to Maple6 syntax of error command,
+          #   codegen/fortran cannot deal with new syntax
+          #   this is probably a bug in Maple6 - mmo
+        end if; 
+      
+      #
+      # calculate explicit algebraic equations
+      #
+        z:= [EAEsToBeSubs, 0]; 
+
+      #
+      # calculate objective function
+      #
+
+   
+   cs[1,1]:=0;
+   cs[1,2]:=0;
+   cs[1,3]:=0;
+   
+   
+   erainv := 0; 
+
+   xsc[1]:=x[1];
+   xsc[2]:=x[2]*(1386500/100000000);
+   xsc[3]:=x[3]*(43356250/100000000);
+
+   for i from 1 to 50000 do
+
+   cs[i+1,1]:= cs[i,1]+(cs[i,2]+cs[i,3]+(par[1]-cs[i,3])/(1+xsc[1])+(par[3]-cs[i,1])/xsc[2]+(cs[i,3]*par[2]-cs[i,2])/xsc[3])/(1+par[2])-par[1];
+   cs[i+1,2]:= par[2]*(cs[i,2]+cs[i,3]+(par[1]-cs[i,3])/(1+xsc[1])+(par[3]-cs[i,1])/xsc[2]+(cs[i,3]*par[2]-cs[i,2])/xsc[3])/(1+par[2]);
+   cs[i+1,3]:= cs[i,3]+(par[1]-cs[i,3])/(1+xsc[1]);
+
+   cainv := ((abs(cs[i,1]-par[3]))^2)*(i-1); 
+   erainv := erainv+cainv;
+
+   end do;
+
+
+   wn:=((par[2]*xsc[1]+par[2]*xsc[2]+(par[2]^2+xsc[2])/xsc[3])^2*(xsc[2]+par[2]*xsc[2]/xsc[3]+xsc[1])/(par[2]*xsc[2]*xsc[1])+(xsc[1]+xsc[2]+par[2]+par[2]*xsc[2]/xsc[3])^2-2*par[2]*xsc[1]-par[2]*xsc[2]-2*par[2]^2*xsc[2]/xsc[3]+xsc[1]*xsc[2]+par[2]*xsc[2]*xsc[1]/xsc[3])/((par[2]*xsc[2]+xsc[1]*xsc[2]+par[2]*xsc[2]*xsc[1]/xsc[3])*(xsc[2]+par[2]*xsc[2]/xsc[3]+xsc[1])-par[2]*xsc[2]*xsc[1]);
+
+
+   score := (erainv)^2+(par[4]*(wn)^2);
+
+        objf:= score;
+  
+      #
+      # calculate gradient of objective function
+      #
+      # objgrad:= GradToBeSubs;
+              
+      RETURN();
+  
+    end proc: #objfunTemplate

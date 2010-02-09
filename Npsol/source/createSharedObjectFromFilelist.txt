@@ -1,0 +1,131 @@
+#######################################################################
+#
+# NPSOL/source/createSharedObjectFromFilelist
+#
+# link problem-dependent files and connect to maple via define_external
+#
+# revision history:
+# 2008-03-05 Change ModelPack calls to Aux by dka 
+# 2008-02-11 Removed compiler and linker commands for solaris. 
+# 2008-02-11 Started with copy /media/disk/Backup/FirewireDisk-2007-04-08/
+# backup/2006-07-backup-with-cp/home/mmo/maple/npsol - mmo
+#
+#######################################################################
+createSharedObjectFromFilelist:= proc(
+  FileList::list({name, string}),
+  WorkingDir::string
+)
+
+  local SharedObjectName, LinkerCommand, OldDir, ObjectListForLinker,
+    NpsolCwrapper, StringFileList, FortranFileList,
+    ObjectList, item, CompileCommand, Path, File; 
+
+  #
+  # preparations
+  #
+    InstanceCounter:= InstanceCounter+ 1; 
+  
+    OldDir:= currentdir(); 
+  
+    SharedObjectName:= cat(
+      "cwrap_npsol", InstanceCounter, ".so"
+    );
+
+    #
+    # split files passed in FileList into those which have been
+    #   compiled and those which need to be compiled
+    #
+      StringFileList:= map(convert, FileList, string);
+
+      ObjectList, FortranFileList:= Aux:-FileOperations:-findObjectFile(
+        StringFileList
+      );
+      FortranFileList:= [seq(
+        cat(FortranFileList[i1], ".f"),
+        i1= 1..nops(FortranFileList)
+      )];
+        
+    if  
+      OperatingSystem= "linux"
+    then 
+        #
+        # compile files in FortranFileList, append generated object
+        #   files to ObjectList
+        #
+          try
+            currentdir(WorkingDir);
+            for item in FortranFileList do
+  	    Path, File:= Aux:-FileOperations:-splitPathAndFile(item);
+              Aux:-FileOperations:-runSystemCommandInDir(
+                cat("g77 -O0 -c ", File),
+                Path
+              );
+              ObjectList:= [
+                op(ObjectList),
+                cat(Path, File[1..-3], ".o")
+              ]; 
+            end do;
+            ObjectListForLinker:= cat(seq(
+              cat(ObjectList[i1], " "),
+              i1= 1..nops(ObjectList)
+            ));
+          catch:
+            printf("building of file lists failed with error:\n");
+	    error;
+          finally
+	    currentdir(OldDir);
+          end try; 
+
+      #
+      # link
+      #
+        LinkerCommand:= cat(
+          "gcc -O0 -shared -Xlinker -Bsymbolic ",
+          ObjectListForLinker, 
+          _EnvModulesDir, `/NPSOL/ext_routines/f2c/cwrap/npsol_open.o `,
+          _EnvModulesDir, `/NPSOL/ext_routines/f2c/cwrap/npsol_close.o `,
+          _EnvModulesDir, `/NPSOL/ext_routines/f2c/cwrap/set_params.o `,
+	  _EnvModulesDir, "/NPSOL/ext_routines/f2c/cwrap/cwrap_npsol.o ", 
+          _EnvModulesDir, "/NPSOL/ext_routines/f2c/shared_obj/npsol.so ",
+          "$AD_LIB/lib/ReqADIntrinsics-$AD_OS.o ",
+          "$AD_LIB/lib/libADIntrinsics-$AD_OS.a ",
+          "$AD_LIB/lib/libSparsLinC-$AD_OS.a ", 
+          "-lf2c -lm -o ",
+          SharedObjectName
+        );
+
+    else
+      error("operating system unknown"); 
+    end if; 
+
+    try
+      currentdir(WorkingDir);
+      printf("%s\n", LinkerCommand);
+      system(LinkerCommand); 
+    catch:
+      printf("linking failed with following error: "); 
+      error; 
+    finally:
+      currentdir(OldDir);
+    end try; 
+
+  #----------------------------------------------------------------------
+  #
+  # create interface to npsol
+  #
+  #----------------------------------------------------------------------
+
+      try
+        currentdir(WorkingDir);
+        NpsolCwrapper:= runDefineExternal(SharedObjectName); 
+
+      catch:
+        printf("define_external failed with following error");
+	error;
+      finally:
+        currentdir(OldDir); 
+      end try; 
+
+    return(NpsolCwrapper);
+
+  end proc;

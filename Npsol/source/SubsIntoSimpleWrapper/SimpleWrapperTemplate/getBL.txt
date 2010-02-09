@@ -1,0 +1,12 @@
+###############################################################################
+#
+# local procedure NPSOL/source/SimpleWrapperTemplate/getBL
+#
+# 021210 written by mmo
+#
+###############################################################################
+getBL:= proc()
+
+  return(eval(BL_swnpsol));
+
+end proc; 

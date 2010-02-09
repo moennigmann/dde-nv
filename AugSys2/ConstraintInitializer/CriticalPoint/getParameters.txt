@@ -1,0 +1,10 @@
+#------------------------------------------------------------
+#
+# @path AugSys2/ConstraintInitializer/CriticalPoint/getParameters.txt
+#
+# @brief Returns parameters of augmented system
+#
+#------------------------------------------------------------
+    getParameters:= proc()
+       return(eval(criticalPointParametersInModule)); 
+    end proc; # getParameters 

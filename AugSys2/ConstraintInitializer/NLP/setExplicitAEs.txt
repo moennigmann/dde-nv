@@ -1,0 +1,22 @@
+###############################################################################
+#
+# @path AugSys2/ConstraintInitializer/NLP/setExplicitAEs.txt
+#
+# @brief Sets explicit algebraic equations to NLP
+#
+# @revision
+#  2008-03-13 written by dka
+#
+###############################################################################
+setExplicitAEs:= proc(
+  NewExplicitAEs::list(name= term)
+)
+
+  NLPinModule["ExplicitAEs"]:=NewExplicitAEs;
+
+    return();
+
+end proc; 
+
+ 
+ 

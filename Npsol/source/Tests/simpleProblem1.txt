@@ -1,0 +1,194 @@
+    ###------------------------------------------------------------------------
+    #
+    # Simple Test Problem 1
+    #
+    #   Cost Function: g:= (x-2)^2 + (y - 1)^2
+    #   Constraints: 0 < y - x^2
+    #                0 < 2 - x - y
+    #
+    # revision history:
+    #   2008-03-06  instead of aSys[...] using aSys["..."] by dka
+    #   051003 added option noremove to keep working directory contents
+    #   050927 added dlclose() to avoid error thrown due to existence 
+    #     of hidden system files in working directory
+    #   021210 replaced call to GetOptPoint by call to GetXVEC
+    #   021125 added empty anNLP[ExplicitAEs] to comply with new
+    #     ListOfErrorsInNLP(..., strict)
+    #   021122 added optional argument which is passed to
+    #     CreateInstance; allows to call same procedure with and without
+    #     option adifor; 
+    #   021120 added option 'adifor' to first call to CreateInstance
+    #   021107 added call to RestoreInstance
+    #   021105 adjustments after change of structure of module NPSOL:
+    #     removed call to CreateStandardOptionsFile, removed
+    #     substitution of standard notation, now use set/get methods
+    #     instead of optional arguments; 
+    #   010503 proc returns true of false, proc throws error if
+    #     directory tmp exists, creates temporary directory tmp and
+    #     removes it after completion - mmo
+    #   010425 written by mho
+    #
+    ###------------------------------------------------------------------------
+    simpleProblem1:= proc(
+     # optional arguments are passed to CreateInstance
+    )
+    
+      local
+        g, xRange, yRange, anNLP, StandardNLP, NPSOLproc, Objf, OptPoint,
+        ExpectedObjf, ExpectedOptPoint, Inform, i1, RelErr, rmv, argslist;  
+
+      argslist:=[args];
+
+      if member(noremove, argslist) then
+        rmv:=false;
+        Aux:-ListOperations:-removeItemFromList(noremove, argslist);
+      else
+        rmv:=true;
+      end if;	
+
+      ExpectedObjf:= 1.00000;
+      ExpectedOptPoint:= [1.0, 1.0];
+
+      if
+        Aux:-FileOperations:-dirExists("tmp")
+      then
+        error("temporary directory ./tmp needed to run test already exists")
+      else  
+          mkdir("tmp")
+      end if;
+
+      #
+      # init Test-NLP with entries as described above
+      #
+        g:= (x-2)^2 + (y-1)^2;
+        xRange:=-infinity..infinity; yRange:=-infinity..infinity;
+        anNLP:=Aux:-NLP:-newNLP();
+  
+        anNLP["CostFunction"]:= [eval(g)];
+        anNLP["Variables"]:= [x = xRange, y = yRange];
+        anNLP["Constraints"]:= [0 < y - x^2];
+        anNLP["LinearConstraints"]:= [0 < 2 - x - y];
+        anNLP["ExplicitAEs"]:= [];
+
+        #
+        # pass optional argument to self
+        #
+          printf("\n"); 
+	  printf("running SimpleProblem1\n"); 
+          if 
+            nargs>0
+          then
+            NPSOLproc:=NPSOL:-CreateInstance(anNLP, "./tmp", argslist[1..-1]);
+          else
+            NPSOLproc:=NPSOL:-CreateInstance(anNLP, "./tmp");
+          end if; 
+
+      #
+      # execute NPSOL 
+      #
+        NPSOLproc:-setXVEC(
+          [0,1]
+        ); 
+        NPSOLproc:-createDebugFiles();
+        NPSOLproc:-runOpt();
+
+      #
+      # extract result
+      #
+        Objf:= NPSOLproc:-getObjf();
+        OptPoint:= NPSOLproc:-getXVEC();
+        Inform:= NPSOLproc:-getInform();
+
+      #
+      # compare results to expected results: solution point
+      #
+        for i1 from 1 to nops(anNLP["Variables"]) do 
+          RelErr:= Aux:-getRelErr(
+            ExpectedOptPoint[i1],
+            OptPoint[i1]
+          );
+          if not
+            RelErr< 0.00001
+          then
+            return(false); 
+          end if;
+        end do;
+  
+      #
+      # compare results to expected results: value of objective
+      #
+        RelErr:= Aux:-getRelErr(
+          ExpectedObjf,
+          Objf
+        );
+        if not
+          RelErr< 0.001
+        then
+          return(false); 
+        end if;
+        
+      #------------------------------------------------------------
+      #
+      # run same problem using RestoreInstance
+      #
+      #------------------------------------------------------------
+      unassign('NPSOLproc'); 
+      NPSOLproc:= RestoreInstance("./tmp");
+
+      #
+      # execute NPSOL 
+      #
+        NPSOLproc:-setXVEC(
+          [0,1]
+        ); 
+
+        NPSOLproc:-runOpt();
+
+      #
+      # extract result
+      #
+        Objf:= NPSOLproc:-getObjf();
+        OptPoint:= NPSOLproc:-getXVEC();
+        Inform:= NPSOLproc:-getInform();
+
+      #
+      # remove temporary working directory
+      #
+      if rmv then      
+        dlclose("cwrap_npsol1.so");
+      # dlclose("mwrap_cwrapper_npsol.so");
+        Aux:-FileOperations:-removeAllFilesInDir("tmp");
+        rmdir("tmp");
+      end if;
+
+      #
+      # compare results to expected results: solution point
+      #
+        for i1 from 1 to nops(anNLP["Variables"]) do 
+          RelErr:= Aux:-getRelErr(
+            ExpectedOptPoint[i1],
+            OptPoint[i1]
+          );
+          if not
+            RelErr< 0.00001
+          then
+            return(false); 
+          end if;
+        end do;
+  
+      #
+      # compare results to expected results: value of objective
+      #
+        RelErr:= Aux:-getRelErr(
+          ExpectedObjf,
+          Objf
+        );
+        if not
+          RelErr< 0.001
+        then
+          return(false); 
+        end if;
+        
+        return(true); 
+
+    end proc; #SimpleProblem1

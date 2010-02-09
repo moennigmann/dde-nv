@@ -1,0 +1,122 @@
+###############################################################################
+#
+# NPSOL/source/SubsIntoSimpleWrapper/SimpleWrapper/getIndicesActiveVarBounds
+#
+# identifies variables which are within a relative error Eps of their
+# upper or lower bounds
+#
+# revision history:
+# 030108 written by mmo
+#
+###############################################################################
+getIndicesActiveVarBounds:= proc(
+  # optional argument SetEps
+)
+
+  local Eps, ErrsLowerBounds, ErrsUpperBounds, i1, OptArgs,
+    ViolatedLower, ViolatedUpper, nLower, nUpper, ReqEps; 
+
+  #
+  # make sure no variables *violate* their bounds
+  # before checking which variables are close to their bounds
+  #
+    boundsNotViolated();
+
+  #------------------------------------------------------------
+  #
+  # check for optional arguments
+  #
+  #------------------------------------------------------------
+    if 
+      nargs< 1
+    then
+      OptArgs:= []; 
+    else
+      OptArgs:= [args[1..-1]]; 
+
+      #
+      # check type of optional args
+      #
+        if not
+          type(OptArgs, list(name= {EvalsToFloat}))
+        then
+          error(
+            "valid optional arguments are "
+            "SetEps= EvalsToFloat "
+          );
+        end if;
+
+      #
+      # check whether reqested optional args are valid
+      #
+        if not
+          map(lhs, convert(OptArgs, set)) minus 
+          {'SetEps'}= {}
+        then
+          error(
+            "valid optional arguments are "
+            "SetEps= EvalsToFloat "
+          );
+        end if; 
+
+      end if; 
+
+  #
+  # treat optional arg SetEps
+  #
+    if
+      hasoption(OptArgs, 'SetEps', ReqEps, 'OptArgs')
+    then
+      Eps:= ReqEps
+    else
+      Eps:= 1e-3;
+    end if;
+
+  #------------------------------------------------------------
+  #
+  # calculate relative errors of variables vs. lower bounds
+  # and relative errors of variables vs. upper bounds
+  #
+  #------------------------------------------------------------
+    ErrsLowerBounds:= array(1..N);
+    ErrsUpperBounds:= array(1..N);
+    for i1 from 1 to N do
+      ErrsLowerBounds[i1]:= Aux:-getRelErr(
+        xvec_swnpsol[i1],
+        BL_swnpsol[i1]
+      );
+      ErrsUpperBounds[i1]:= Aux:-getRelErr(
+        xvec_swnpsol[i1],
+        BU_swnpsol[i1]
+      );
+    end do;   
+
+  #
+  # identify variables which are within Eps of their bounds
+  #
+    ViolatedLower:= array(1..N):
+    ViolatedUpper:= array(1..N):
+    nLower:= 0:
+    nUpper:= 0:
+    for i1 from 1 to N do
+      if 
+        ErrsLowerBounds[i1]<= Eps
+      then
+        nLower:= nLower+ 1;
+        ViolatedLower[nLower]:= i1;
+      end if;
+      if 
+        ErrsUpperBounds[i1]<= Eps
+      then
+        nUpper:= nUpper+ 1;
+        ViolatedUpper[nUpper]:= i1;
+      end if; 
+    end do; 
+    ViolatedLower:= convert(ViolatedLower, list);
+    ViolatedUpper:= convert(ViolatedUpper, list);
+    ViolatedLower:= ViolatedLower[1..nLower];
+    ViolatedUpper:= ViolatedUpper[1..nUpper]; 
+ 
+  return(ViolatedLower, ViolatedUpper); 
+
+end proc; 

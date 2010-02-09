@@ -1,0 +1,157 @@
+    ###------------------------------------------------------------------------
+    #
+    # Simple Test Problem 2
+    #
+    #   Cost Function: g := 100*(y - x^2)^2 + (1 - x)^2
+    #   Constraints: none
+    #
+    # revision history:
+    # 2008-03-06  instead of anNLP[...] using anNLP["..."] by dka
+    # 021210 replaced call to GetOptPoint by call to GetXVEC
+    # 021125 added empty anNLP[ExplicitAEs] to comply with new
+    #   ListOfErrorsInNLP(..., strict)
+    # 021122 added optional argument which is passed to
+    #   CreateInstance; allows to call same procedure with and without
+    #   option adifor; 
+    # 021107 changed structure to work with NPSOLproc= object with
+    #   RunOpt, GetObjf, etc.= methods
+    # 010425 written by mho
+    #
+    ###------------------------------------------------------------------------
+    simpleProblem2:= proc(
+      # optional argument is passed to CreateInstance
+    )
+    
+      local
+        g, xRange, yRange, anNLP, StandardNLP, NPSOLproc, Objf, OptPoint,
+        ExpectedObjf, ExpectedOptPoint, Inform, RelErr, i1, AbsErr; 
+
+      ExpectedObjf := 0.00000;
+      ExpectedOptPoint := [1.0, 1.0];
+
+      if
+        Aux:-FileOperations:-dirExists("tmp")
+      then
+        error("temporary directory ./tmp needed to run test already exists")
+      else  
+          mkdir("tmp")
+      end if;
+
+      CreateStandardOptionsFile("tmp");
+
+      #
+      # init Test-NLP with entries as described above
+      #
+        g := 100*(y - x^2)^2 + (1 - x)^2;
+        xRange:=-infinity..infinity; yRange:=-infinity..infinity;
+        anNLP:=Aux:-NLP:-newNLP();
+  
+        anNLP["CostFunction"] := [eval(g)];
+        anNLP["Variables"] := [x = xRange, y = yRange];
+        anNLP["ExplicitAEs"]:= []; 
+
+      #
+      # create instance of interface
+      # pass optional argument to self to CreateInstance
+      #
+        printf("\n"); 
+	printf("running SimpleProblem2\n"); 
+        if 
+          nargs>0
+        then
+          NPSOLproc:=CreateInstance(anNLP, "./tmp", args[1..-1]);
+        else
+	  printf("running SimpleProblem2 without option adifor\n"); 
+          NPSOLproc:=CreateInstance(anNLP, "./tmp");
+        end if; 
+
+      #
+      # run NPSOL
+      #
+        NPSOLproc:-setXVEC(
+          [-1.2,1.0]
+        ); 
+
+        NPSOLproc:-runOpt();
+
+        Objf:= NPSOLproc:-getObjf();
+        OptPoint:= NPSOLproc:-getXVEC();
+        Inform:= NPSOLproc:-getInform();
+
+      #
+      # compare results to expected results: solution point
+      #
+        for i1 from 1 to nops(anNLP["Variables"]) do 
+          RelErr:= Aux:-getRelErr(
+            ExpectedOptPoint[i1],
+            OptPoint[i1]
+          );
+          if not
+            RelErr< 0.001
+          then
+            return(false); 
+          end if;
+        end do;
+
+      #
+      # compare results to expected results: value of objective
+      #
+        AbsErr:= Aux:-getAbsErr(
+          ExpectedObjf,
+          Objf
+        );
+        if not
+          AbsErr< 0.001
+        then
+          return(false); 
+        end if;
+        
+      #
+      # execute it a second time with another starting point
+      # 
+        NPSOLproc:-setXVEC(
+          [-0.3,0.1]
+        ); 
+
+        NPSOLproc:-runOpt(); 
+
+        Objf:= NPSOLproc:-getObjf();
+        OptPoint:= NPSOLproc:-getXVEC();
+        Inform:= NPSOLproc:-getInform();
+
+        dlclose("cwrap_npsol1.so");
+      # dlclose("mwrap_cwrapper_npsol.so");
+        Aux:-FileOperations:-removeAllFilesInDir("tmp");
+        rmdir("tmp");        
+
+      #
+      # compare results to expected results: solution point
+      #
+        for i1 from 1 to nops(anNLP["Variables"]) do 
+          RelErr:= Aux:-getRelErr(
+            ExpectedOptPoint[i1],
+            OptPoint[i1]
+          );
+          if not
+            RelErr< 0.001
+          then
+            return(false); 
+          end if;
+        end do;
+
+      #
+      # compare results to expected results: value of objective
+      #
+        RelErr:= Aux:-getAbsErr(
+          ExpectedObjf,
+          Objf
+        );
+        if not
+          AbsErr< 0.001
+        then
+          return(false); 
+        end if;
+
+      return(true); 
+
+    end proc; #SimpleProblem2

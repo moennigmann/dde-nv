@@ -1,0 +1,53 @@
+###############################################################################
+#
+# @path AugSys2/ConstraintInitializer/getScaledDTASys.txt
+#
+# @brief Scales parameters in DTASys 
+#
+# @param DTASys, list of scaling parameters ex. [[Tw,dTw],[Ti,dTi],...]=[[name of parameter,scaling value],...]
+#
+# @return scaled DTA system
+#
+# @revision
+# 2008-06-06 written by dka
+#
+###############################################################################
+getScaledDTASys:= proc(aSys::DTASys,listScaledParam::listlist)
+
+  local numScaledParams, listSubsScaling, i1, aSysDynEqns, aSysExplicitAlgEqns, aSysAlgEqns;
+
+   #
+   # listScaledParam must be given in the form [[Param1,dParam1],[Param2,dParam2],...]
+   #
+
+   numScaledParams:=nops(listScaledParam);
+
+   #
+   # extraction parameters for scaling
+   #
+
+   listSubsScaling:=[];
+   for i1 from 1 to numScaledParams do
+   listSubsScaling:=[op(listSubsScaling),listScaledParam[i1][1]=listScaledParam[i1][1]*listScaledParam[i1][2]];
+   end do;
+
+   #
+   # scale equations in DTASys
+   #
+
+   aSysDynEqns:=subs(listSubsScaling,aSys["DynEqns"]);
+   aSysExplicitAlgEqns:=subs(listSubsScaling,aSys["ExplicitAlgEqns"]);
+   aSysAlgEqns:=subs(listSubsScaling,aSys["AlgEqns"]);
+   
+   #
+   # return scaled DTASys
+   #
+
+   return(table(["ExplicitAlgEqns" = aSysExplicitAlgEqns, 
+   		    "DynEqns" = aSysDynEqns, 
+   		    "AlgEqns" = aSysAlgEqns, 
+   		    "DynVars" = aSys["DynVars"], 
+   		    "AlgVars" = aSys["AlgVars"], 
+   		    "Parameters" = aSys["Parameters"]]));
+
+end proc;  

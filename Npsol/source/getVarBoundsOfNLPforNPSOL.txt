@@ -1,0 +1,73 @@
+ ###============================================================
+  #
+  # local procedure getVarBoundsOfNLPforNPSOL
+  #
+  # input:    
+  #   an NLP
+  #
+  # output:   
+  #   lower bounds of vars of nlp assigned to name in 2nd arg
+  #   upper bounds of vars of nlp assigned to name in 2nd arg
+  #
+  # notes:
+  #   +/- infinity in ranges given in NLP[Variables] are
+  #     replaced by +/- BigBoundNPSOL
+  #
+  # revision history:
+  # 2008-03-06  instead of anNLP[...] using anNLP["..."] by dka
+  #   021210 changes after introduction of scaling: CreateInstance
+  #     passes unscaled NLP without substitutions to 
+  #     SubsIntoSimpleWrapper. Therefore bounds in anNLP[Variables]
+  #     are bounds of unscaled NLP. If scaling was requested, 
+  #     present procedure sets all ranges which do not contain
+  #     +/-infinity to -1..1. 
+  #   010616 proc used to be part of CreateNPSOLinstance, 
+  #     moved from CreateNPSOLinstance to separate
+  #     procedure in order to allow code to be reused
+  #     when resetting linear bounds of relaxed BCNLPs - mmo
+  #
+  ###============================================================
+  getVarBoundsOfNLPforNPSOL:= proc(
+    anNLP::NLP,
+    NameForLowerBounds::name,
+    NameForUpperBounds::name
+  )
+
+    local RangesVars, LowerBoundsVars, UpperBoundsVars; 
+
+    #
+    # if scaling was requested, all ranges which do
+    # not contain +/-infinity must be set to -1..1
+    #
+      if
+        ScalingOn= true
+      then 
+        RangesVars:= 
+          Aux:-NLP:-Scale:-replaceInfiniteRangesByTrivialRanges(
+            anNLP["Variables"]
+        ); 
+      end if;   
+
+    RangesVars:= map(rhs, anNLP["Variables"]);
+        
+    NameForLowerBounds:= [seq(
+      subs(
+        infinity= BigBoundNPSOL,
+        -infinity= -BigBoundNPSOL,
+        op(1, RangesVars[i1])
+      ), 
+      i1= 1..nops(RangesVars)
+    )];
+
+    NameForUpperBounds:= [seq(
+      subs(
+        infinity= BigBoundNPSOL,
+        -infinity= -BigBoundNPSOL,   
+        op(2, RangesVars[i1])
+      ), 
+      i1= 1..nops(RangesVars)
+    )]; 
+
+    return; 
+
+  end proc; # getVarBoundsOfNLPforNPSOL

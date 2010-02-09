@@ -1,0 +1,12 @@
+#------------------------------------------------------------
+#
+# @path AugSys2/ConstraintInitializer/NLP/getLinearConstraints.txt
+#
+# @brief Returns linear constraints of NLP
+#
+# @notes For the moment Npsol does not consider the linear constraints
+#
+#------------------------------------------------------------
+    getLinearConstraints:= proc()
+       return(eval(NLPinModule["LinearConstraints"])); 
+    end proc; # getLinearConstraints  

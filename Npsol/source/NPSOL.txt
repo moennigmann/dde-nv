@@ -1,0 +1,82 @@
+###############################################################################
+#
+# module NPSOL
+#
+# Provides interface to optimization software NPSOL. 
+#
+# revision history:
+# 2008-02-11 Started with copy /media/disk/Backup/FirewireDisk-2007-04-08/
+# backup/2006-07-backup-with-cp/home/mmo/maple/npsol - mmo
+#
+###############################################################################
+NPSOL:= module()
+
+  export
+    CreateInstance,
+    createNumNLP, 
+    createNumSysForConstraints,
+    createNumSysForCostFunction, 
+    createNumSysWrappers,
+    createSharedObject,
+    createSharedObjectFromFilelist,
+    getLinConstrOfNLPforNPSOL,
+    getConstrBoundsOfNLPforNPSOL, 
+    getVarBoundsOfNLPforNPSOL,  
+    init, 
+    RestoreInstance,
+    runDefineExternal,
+    SubsIntoSimpleWrapper, 
+    Tests;
+
+  local
+    Templates,
+    createExternalFunctions,     
+    prepareDir,
+    createStandardOptionsFile, 
+    BigBoundNPSOL,
+    InstanceCounter,
+    OperatingSystem,
+    UseAdifor;	
+
+  load= init();
+
+  #
+  # BigBoundNPSOL is the floating point number which npsol considers
+  #   to be infinity; note that this must comply with the settings
+  #   of the externally linked npsol code; no error checking is
+  #   done here;
+  #
+    BigBoundNPSOL:= 1e20; 
+
+$include <init.txt>
+$include <CreateInstance.txt>
+$include <createExternalFunctions.txt>
+$include <createSharedObject.txt>
+$include <prepareDir.txt>
+$include <Templates.txt>
+$include <createStandardOptionsFile.txt>
+$include <getConstrBoundsOfNLPforNPSOL.txt>
+$include <getLinConstrOfNLPforNPSOL.txt>
+$include <getVarBoundsOfNLPforNPSOL.txt>
+$include <Tests.txt>
+$include <SubsIntoSimpleWrapper.txt>
+$include <RestoreInstance.txt>
+$include <createSharedObjectFromFilelist.txt>
+$include <runDefineExternal.txt>
+$include <createNumSysWrappers.txt>
+$include <createNumSysForConstraints.txt>
+$include <createNumSysForCostFunction.txt>
+$include <createNumNLP.txt>
+
+  #
+  # explicit call to init if module is loaded from a text file
+  #
+    init();
+
+end module; # NPSOL
+
+#
+# save module after expanding all include-directives
+#
+  save NPSOL, "NPSOL.mpl";
+

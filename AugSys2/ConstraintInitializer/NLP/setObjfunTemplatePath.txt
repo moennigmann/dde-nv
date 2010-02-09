@@ -1,0 +1,24 @@
+###############################################################################
+#
+# @path AugSys2/ConstraintInitializer/NLP/setObjfunTemplatePath.txt
+#
+# @brief Sets the path to the object function calculation code
+#        if the object function not given explicitely
+#
+# @revision
+#  2008-04-07 written by dka
+#
+###############################################################################
+setObjfunTemplatePath:= proc(
+  path::string
+)
+
+  NLPinModule["ObjfunTemplatePath"]:=path;
+
+    return();
+
+end proc; 
+
+ 
+ 
+ 

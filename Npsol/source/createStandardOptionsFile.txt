@@ -1,0 +1,40 @@
+  ###=====================================================================
+  #
+  # createStandardOptionsFile
+  #
+  #   input: subdirectory into which file will be written
+  #
+  #   output: writes npsol_options.txt into subdirectory ./NPSOL/
+  #     with following entries:
+  #begin
+  #  major output level 10
+  #end
+  #
+  # revision history:
+  #   021216 set major print level to 20
+  #   021121 added verify level 3
+  #   010426 added parameter dirname
+  #   010425 written by mho
+  #
+  ###=====================================================================
+  createStandardOptionsFile:=proc(
+    dirname::string
+  )
+  
+    local fd;
+  
+    fd := fopen(
+      cat("./", dirname, "/npsol_options.txt"),
+      WRITE,
+      TEXT
+    );
+
+    fprintf(
+      fd,
+      "begin\n  major iteration limit 9999\n  major print level 20\n  Verify level -1\nend\n"
+
+    );
+
+    fclose(fd);
+  
+  end proc; #createStandardOptionsFile

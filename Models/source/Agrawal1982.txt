@@ -1,0 +1,24 @@
+###############################################################################
+#
+# @path Models/source/Agrawal1982.txt
+#
+# @brief Implements simple fermentation model from Agrawal1982.
+#
+# @authors mmo
+#
+# @revision
+#  2008-04-11 Created new repository entry from ealier files. 
+#
+###############################################################################
+Agrawal1982:= module()
+
+  export
+    CSTR,
+    DimensionalCSTR;
+
+$include <source/Agrawal1982/CSTR.txt>
+$include <source/Agrawal1982/DimensionalCSTR.txt>
+
+end module; 
+
+

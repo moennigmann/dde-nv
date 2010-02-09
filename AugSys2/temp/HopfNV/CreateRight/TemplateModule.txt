@@ -1,0 +1,266 @@
+      ###########################################################################
+      # 
+      # @path AugSys2/HopfNV/CreateRight/TemplateModule.txt 
+      # 
+      # @brief local template module 
+      # 
+      # @notes
+      #   local vars in template have suffix "InModule" to 
+      #   distinguish them from variables in the constructor
+      #   
+      #  @revision
+      #  2009-12-22 Moved from AugSys by dka
+      #
+      ###########################################################################
+      module() # Template
+  
+        export 
+          GetSys, TurnParIntoVar, TurnVarIntoPar, AddEquation, GetJac,
+          GetEigVects; 
+  
+        local 
+          HopfSysInModule, NumODEsInModule, JacInModule,
+          VarsOfModelInModule, ParsOfModelInModule; 
+  
+        #
+        # receive information from constructor
+        #
+          HopfSysInModule:= copy(HopfSysToBeSubs);
+          NumODEsInModule:= NumOfODEs;   
+          VarsOfModelInModule:= VarsOfModel;
+          ParsOfModelInModule:= ParsOfModel;
+          JacInModule:= copy(f_x); 
+
+        ###------------------------------------------------------------
+        #
+        # procedure GetEigVects
+        # 
+        # notes
+        #   (1) Proc returns *sequence* of items of type
+        #   [sigma=..., omega=..., wvec1=..., wvec2=...] 
+        #   rather than list. This allows to apply map() to GetEigVects
+        #   over a list of Inits (see first arg) more easily. 
+        #
+        ###------------------------------------------------------------
+        GetEigVects:= proc(
+          Init::list(name=EvalsToFloat)
+        )
+        
+          local EigSys, SetOfMultiplicities, ListOfNormalizedEigVects,
+            ListOfEigVals, result, ListOfNamesInInit, 
+            ListOfVarsAndPars, ListOfUnassigneds, item; 
+        
+          #
+          # Init must fix all variables and parameters of system
+          #
+            ListOfNamesInInit:= map(lhs, Init);
+
+            ListOfVarsAndPars:= [
+              op(VarsOfModelInModule),
+              op(ParsOfModelInModule)
+            ];
+
+            ListOfUnassigneds:= [];
+            for item in ListOfVarsAndPars do
+              if not
+                member(item, ListOfNamesInInit)
+              then
+                ListOfUnassigneds:= [op(ListOfUnassigneds),
+                  item
+                ];
+              end if;
+            end do; 
+
+            if not
+              ListOfUnassigneds= []
+            then
+              error("variables and parameters %1 must be assigned "
+                "by 1st argument", ListOfUnassigneds
+              );
+            end if;  
+
+          EigSys:= [linalg[eigenvects](
+            evalf(subs(
+              Init,
+              GetJac()
+            ))
+          )];
+        
+          #
+          # no eigenvalue multiplicities > 1 must exist
+          #
+            SetOfMultiplicities:= {seq(
+              EigSys[i1][2],
+              i1=1..nops(EigSys)
+            )};
+        
+            if not
+              SetOfMultiplicities= {1}
+            then
+              error("eigenvalue multiplicities larger than 1 exist");
+            end if; 
+        
+          #
+          # normalize eigenvectors
+          #
+            ListOfNormalizedEigVects:= [seq(
+              NormVec(op(EigSys[i1][3])),
+              i1= 1..nops(EigSys)
+            )];
+        
+          #
+          # extract eigenvalues
+          #
+            ListOfEigVals:= [seq(
+              EigSys[i1][1],
+              i1= 1..nops(EigSys)
+            )];
+        
+          #
+          # result has form list([EigVals, EigVec])
+          #
+            result:= seq(
+              [sigma= Re(ListOfEigVals[i1]),
+               omega= Im(ListOfEigVals[i1]),
+               seq( 
+                 wvec1[i2]= Re(ListOfNormalizedEigVects[i1][i2]),
+                 i2= 1..nops(EigSys)
+               ),
+               seq( 
+                 wvec2[i2]= Im(ListOfNormalizedEigVects[i1][i2]),
+                 i2= 1..nops(EigSys)
+               )
+              ],
+              i1=1..nops(EigSys)
+            );
+        
+          return(result):
+        
+        end proc; # GetEigVects
+
+        ###------------------------------------------------------------
+        #
+        # procedure GetJac
+        #
+        # returns Jacobian
+        # 
+        ###------------------------------------------------------------
+        GetJac:= proc()
+          return(eval(JacInModule)); 
+        end proc; # GetJac
+
+        ###------------------------------------------------------------
+        #
+        # procedure GetSys
+        #
+        ###------------------------------------------------------------
+          GetSys:= proc()
+            return(eval(HopfSysInModule)); 
+          end proc; # GetSys
+
+        ###------------------------------------------------------------
+        #
+        # procedure TurnParIntoVar
+        #
+        ###------------------------------------------------------------
+          TurnParIntoVar:= proc(
+            aParam::name
+          )
+
+            if not
+              member(aParam, HopfSysInModule["Parameters"])
+            then
+              error(
+                "requested parameter does not exist in list of "
+                "parameters"
+              )
+            else
+              HopfSysInModule["Variables"]:= [
+                op(HopfSysInModule["Variables"]),
+                aParam
+              ];
+              HopfSysInModule["Parameters"]:= Aux:-ListOperations:-removeItemFromList(
+                aParam, 
+                HopfSysInModule["Parameters"]
+              ); 
+            end if; 
+
+            return; 
+          end proc; # TurnParIntoVar
+
+        ###------------------------------------------------------------
+        #
+        # procedure TurnVarIntoPar
+        #
+        ###------------------------------------------------------------
+          TurnVarIntoPar:= proc(
+            aVar::name
+          )
+
+            if not
+              member(aVar, HopfSysInModule["Variables"])
+            then
+              error(
+                "requested variable does not exist in list of "
+                "parameters"
+              )
+            else
+              HopfSysInModule["Parameters"]:= [
+                op(HopfSysInModule["Parameters"]),
+                aVar
+              ];
+              HopfSysInModule["Variables"]:= Aux:-ListOperations:-removeItemFromList(
+                aVar, 
+                HopfSysInModule["Variables"]
+              ); 
+            end if; 
+
+            return; 
+          end proc; # TurnVarIntoPar
+
+        ###------------------------------------------------------------
+        #
+        # procedure AddEquation
+        #
+        ###------------------------------------------------------------
+        AddEquation:= proc(
+          anEquation::equation
+        )
+	  local ListOfUndefExpr;
+
+          if not
+            lhs(anEquation)= 0
+          then
+            error("argument must be of type 0=...");
+          end if;
+
+          #
+          # make sure equation is well defined
+          #
+            ListOfUndefExpr:= Aux:-ListOperations:-getListOfUndefExprIn(
+              anEquation,
+              [op(HopfSysInModule["Parameters"]), 
+               op(HopfSysInModule["Variables"])
+              ]
+            ); 
+            if not
+              ListOfUndefExpr= []
+            then
+              error(
+                "equation is not well defined with respect to "
+                "augmented system; expressions %1 are not defined",
+                ListOfUndefExpr
+              );
+            else
+              HopfSysInModule["Equations"]:= [
+                op(HopfSysInModule["Equations"]),
+                anEquation
+              ]; 
+            end if;
+   
+          return; 
+
+        end proc; # AddEquation
+          
+      end module; # Template  
+ 

@@ -1,0 +1,22 @@
+###############################################################################
+#
+# @path AugSys2/ConstraintInitializer/NLP/createNewNLP.txt
+#
+# @brief Creates an empty NLP
+#
+# @revision
+#  2008-03-13 written by dka
+#
+###############################################################################
+createNewNLP:= proc()
+
+   # create new NLP
+
+    NLPinModule := Aux:-NLP:-newNLP();
+
+    return();
+
+
+end proc; 
+
+ 

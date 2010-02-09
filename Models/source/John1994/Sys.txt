@@ -1,0 +1,69 @@
+###############################################################################
+#
+# @path Models/source/John1994/Sys.txt
+#
+# @brief Implements supply chain model from John1994
+#
+# @authors dka
+#
+# @revision
+# 2008-04-11 Created new repository for models from earlier files. 
+#
+###############################################################################
+Sys:= module()
+
+  local Syst;
+
+  export
+    getSys,
+    getFixPoint; 
+
+ Syst := table([("ExplicitAlgEqns")=[CONS_t=CONSpar, 
+ 				     AVCON_t=AVCON+1/(1+Ta)*(CONS_t-AVCON), 
+ 				     DWIPaux=Tpbar*AVCON, 
+ 				     EWIPaux=DWIPaux-WIP, 
+ 				     EINVaux=DINV-AINV, 
+ 				     ORATE_t=AVCON_t+EINVaux/Ti+EWIPaux/Tw, 
+ 				     WIP_t=Tp*(WIP+ORATE_t)/(1+Tp), 
+ 				     COMRATE_t=WIP_t/Tp, 
+ 				     AINV_t=AINV+COMRATE_t-CONS_t],
+ 		("DynEqns")=[AINV=AINV_t, 
+			     WIP=WIP_t, 
+			     AVCON=AVCON_t],
+		("AlgVars")=[],
+		("DynVars")=[AINV, WIP, AVCON],
+		("Parameters")=[CONSpar=4, Ti=16, Ta=16, Tw=16, Tp=4, Tpbar=4, DINV=50],
+		("AlgEqns")=[]]);
+
+  #------------------------------------------------------------
+  #
+  # getSys
+  #
+  #------------------------------------------------------------
+  getSys:= proc()
+    return(eval(Syst)); 
+  end proc;   
+
+  #------------------------------------------------------------
+  #
+  # getFixPoint
+  #
+  # for this fix point max value of transpose gradient matrix 
+  # multiply on gradient matrix less then 1
+  #
+  #------------------------------------------------------------
+  getFixPoint:= proc()
+    
+    local FP;
+
+    FP:= [Ti = 3., Ta = 1., Tw = 16., Tp = 3., Tpbar = 3., AINV = 1., DINV = 1., CONSpar = 1., AVCON = 1., WIP = 3.];
+   
+    return(FP); 
+  end proc;   
+
+end module; 
+
+
+
+
+

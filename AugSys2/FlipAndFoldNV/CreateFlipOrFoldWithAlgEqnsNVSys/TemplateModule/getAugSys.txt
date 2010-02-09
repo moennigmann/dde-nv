@@ -1,0 +1,19 @@
+#################################################################
+#
+# @path AugSys2/FlipAndFoldNV/CreateFlipOrFoldWithAlgEqnsNVSys/TemplateModule/getAugSys.txt
+#
+# @brief Returns first block of system which defines fixed point
+#        and block for generalized flip or fold eigenvectors
+#
+#################################################################
+    getAugSys:= proc()
+        local AugSysEqns, AugSysVars; 
+
+          AugSysEqns:= ExtendedSysInModule["Equations"][
+           1..(2*NumOfEqnsInModule+ 1)
+          ]; 
+        AugSysVars:=ExtendedSysInModule["Variables"][1..2*NumOfEqnsInModule];
+	  
+	return(table(["Equations"=AugSysEqns,"Variables"=AugSysVars, "Parameters"=ParsOfModel])); 
+
+    end proc; # getAugSys

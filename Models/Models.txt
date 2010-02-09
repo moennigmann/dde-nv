@@ -1,0 +1,35 @@
+###############################################################################
+# 
+# @path Models/Models.txt
+#
+# @brief Collects all Models into one module. 
+#
+# @authors mmo, dka
+#
+# @revision
+#  2008-07-16 added SOFC Reformer
+#  2008-04-22 added Disney2002 and John1994
+#  2008-04-11 Created new repository Models from ealier files. 
+#
+###############################################################################
+Models:= module()
+
+  export
+    Agrawal1982,
+    Disney2002, 
+    John1994,
+    SOFC,
+    Teymour1989b;
+
+$include <source/Agrawal1982.txt>
+$include <source/Disney2002.txt>
+$include <source/John1994.txt>
+$include <source/SOFC.txt>
+$include <source/Teymour1989b.txt>
+
+end module; 
+
+#
+# save to disk
+#
+save Models, "Models.mpl"; 

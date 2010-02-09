@@ -1,0 +1,106 @@
+###############################################################################
+#
+# NPSOL/source/SimpleWrapperTemplate/createDebugFiles
+#
+# revision history:
+# 030317 changed to ansi type comments /* */
+# 021217 added printing of number and values of parameters; print
+#   debug file directory to sheet; 
+# 021216 written by mmo
+#
+###############################################################################
+createDebugFiles:= proc(
+    # optional dirname::string
+)
+  
+  local fd, i1, dirname; 
+
+  #
+  # set directory for writing to requested directory
+  # or to _EnvModulesDir/ext_routines/debugging if no
+  # directory was requested
+  #
+    if 
+      nargs>0
+    then
+      if 
+        type(arg[1]= string)
+      then
+        dirname:= arg[1];
+      else
+        error("expecting first input argument to be of type string");
+      end if;
+    else
+      #
+      # set dirname to default directory
+      #
+        dirname:= cat(
+          _ModulesDirectory,
+          "/Npsol/ext_routines/debugging/"
+        );
+    end if; 
+
+    printf(
+      "Writing debug files to directory %s",
+      dirname
+    ); 
+  
+  #------------------------------------------------------------
+  #
+  # write system dimension
+  #
+  #------------------------------------------------------------
+   
+
+   fd := fopen(
+      cat(dirname, "/system_dimension.h"),
+      WRITE,
+      TEXT
+    );
+    #
+    # print some integers which contain various system dimensions
+    #
+      fprintf(fd, "ncnln= %d;\n", NCNLN);
+      fprintf(fd, "n    = %d;\n", N);
+      fprintf(fd, "nrowj= %d;\n", NROWJ);
+      fprintf(fd, "numparams= %d;\n", NumParams); 
+    
+    fclose(fd);
+
+  #------------------------------------------------------------
+  #
+  # print current values of variables and parameters to file
+  #
+  #------------------------------------------------------------
+    fd := fopen(
+      cat(dirname, "/variables.h"),
+      WRITE,
+      TEXT
+    );
+
+    for i1 from 1 to N do
+      fprintf(
+        fd, 
+        "x[%d]= (double) %e; /* %s */\n",
+        i1-1, 
+        xvec_swnpsol[i1], 
+        convert(RequiredVars[i1], string)
+      ); 
+    end do; 
+
+    fprintf(fd, "\n"); 
+
+    for i1 from 1 to NumParams do
+      fprintf(
+        fd, 
+        "par[%d]= (double) %e; // %s\n",
+        i1-1, 
+        Params[i1], 
+        convert(ParNames[i1], string)
+      ); 
+    end do; 
+  
+  fclose(fd);
+
+end proc; 
+

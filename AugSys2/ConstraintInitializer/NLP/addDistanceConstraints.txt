@@ -1,0 +1,72 @@
+###############################################################################
+#
+# @path AugSys2/ConstraintInitializer/NLP/addDistanceConstraints.txt
+#
+# @brief Adds in NLP the constraints and the new variables of them
+#        on the distance to the critical boundary
+#
+# @notes add Constraint:  PointStar=PointOnCriticalBoundaries + Distance*NV
+#              		  Distance>=GivenDistance
+#        and Variables:   list of names for optimizing variables and dist
+#
+# @param list of names for optimizing variables,
+#        value of given distance
+#        sign an optional parameter if =-1 then direction of NV change to opposite
+#
+# @revision
+#  2008-03-17 written by dka
+#
+###############################################################################
+addDistanceConstraints:= proc(	NewNamesOfVars::list(name),
+				        GivenDistance::EvalsToFloat,
+                                        Sign::EvalsToFloat
+                                     )
+
+  local NewConstraints, RhsNewConstraint, NumOfNVParams, i, NormR, distSign;
+  
+  if (isAugSysCreatedInModule <> true)
+   then error("first define augmented system with the procedure createAugSys");
+  end if;
+
+  #
+  # add Variables
+  #
+  
+  NumOfNVParams:=nops(listOfNVParamsInModule);
+  
+  if nops(NewNamesOfVars)<>NumOfNVParams
+  then error("Names of Optimized Variables have to be the same order as list of NV Parameters in augmented system", nops(listOfNVParamsInModule));
+  end if;
+  
+  #
+  # add Constraints
+  #
+  
+  NewConstraints:=[];
+
+  if (Sign=-1)
+  then distSign:=-1;
+  else distSign:=1;
+  end if;
+  
+  NormR:=0;
+  for i from 1 to NumOfNVParams do
+  NormR:=NormR+(r[i])^2;
+  end do;
+  NormR:=NormR^(1/2);
+  for i from 1 to NumOfNVParams do
+  	RhsNewConstraint:=listOfNVParamsInModule[i]-NewNamesOfVars[i]+distSign*dist*r[i]/NormR;
+  	NewConstraints:=[op(NewConstraints),0=RhsNewConstraint]
+  end do;
+  NewConstraints:=[op(NewConstraints),0<(dist)-abs(GivenDistance)];
+ 
+  addConstraints(NewConstraints);
+
+  return();
+
+end proc; 
+
+ 
+ 
+ 
+ 

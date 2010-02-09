@@ -1,0 +1,101 @@
+###################################################################
+# 
+# @path AugSys2/Discretization/getGaussSaidelDTASys.txt
+#
+# @brief Return discretization of DTASys without AlgEqns
+#        with Gauss-Seidel method
+#
+# @param  
+#   a continuous model (DAESys)
+#   list with dividing by parts the function for Gauss-Seidel method
+#   (x_i'=g_i-x_i*h_i, the list in the form [[g_1,h_1],[g_2,h_2],...])
+#
+# @return 
+#  DTASys that is a result from discretizing DAESys with Gauss-Seidel method
+# 
+# @revision
+#  2008-07-09  Written by dka
+#
+###################################################################
+    getGaussSaidelDTASys:=proc(
+      aDAESys::DAESys,
+      listOfFuncParts::listlist
+    )
+
+    local aDAESysEqns, newDTASys, numDAESysEqns, i, gPart, hPart, i1, aDESysWithSubs,
+          newDynEqns, newDTASysDynVars,newDTASysAlgVars, newDTASysAlgEqns,
+          newDTASysExplicitAlgEqns,newDTASysParameters;
+
+   #
+   # substitute ExplicitAEs into DAESys
+   #
+   
+    aDESysWithSubs := Aux:-SystemClasses:-subsExplicitAEsIntoDAESys(aDAESys);
+    
+   #
+   # check if number of inputs the same as number of variables in ODEs
+   # 
+
+   aDAESysEqns:= aDESysWithSubs["ODEs"];
+    numDAESysEqns:=nops(aDAESysEqns);  
+ 
+    if (nops(listOfFuncParts)<>numDAESysEqns)
+    then error("number of parts of equations in input has to be the same as ODEs");
+    end if;
+    
+   #
+   # check if input two parts of input functions are given, and extract input function
+   # 
+    
+    for i from 1 to numDAESysEqns do
+     if (nops(listOfFuncParts[i])<>2)
+     then error("number of parts of equations in every input has to be equal two");
+     end if;
+     gPart[i]:=listOfFuncParts[i][1];
+     hPart[i]:=listOfFuncParts[i][2];
+    end do;
+    
+   #
+   # check if input functions are defined correct
+   # i.e. x[i]'=g[i]-x[i]*h[i]
+   # input has to be in the form [[g[1],h[1]],[g[2],h[2]],...] 
+   #  
+
+    for i1 from 1 to numDAESysEqns do
+     if (0 <> simplify( rhs(aDAESysEqns[i1])-(gPart[i1]-aDESysWithSubs["DynVars"][i1]*hPart[i1])))
+     then error("parts of equation", i1, "defined wrong", rhs(aDAESysEqns[i1]), not equal, (gPart[i1]-aDESysWithSubs["DynVars"][i1]*hPart[i1]));
+     end if;
+    end do;
+
+   #
+   # consctruct discrete time model
+   #
+
+    newDTASys:=table([]);
+  
+    newDTASysDynVars:=aDESysWithSubs["DynVars"];
+    newDTASysAlgVars:=aDESysWithSubs["AlgVars"];
+    newDTASysAlgEqns:=aDESysWithSubs["AEs"];
+    newDTASysExplicitAlgEqns:=aDESysWithSubs["ExplicitAEs"];
+    newDTASysParameters:=[op(aDESysWithSubs["Parameters"]),TimeStep=1];
+
+    #
+    # using Gauss-Saidel method 
+    # x[1]^(n+1)=(x[1]^(n)+TimeStep*g[1](x[1]^(n),...,x[m]^(n)))/(1+TimeStep*h[1](x[1]^(n),...,x[m]^(n)))
+    # x[i]^(n+1)=(x[i]^(n)+TimeStep*g[i](x[1]^(n+1),...,x[i-1]^(n+1),x[i]^(n),...,x[m]^(n)))/(1+TimeStep*h[i](x[1]^(n),...,x[i-1]^(n+1),x[i]^(n),...,x[m]^(n)))
+    #
+
+    newDynEqns:=[];
+    for i from 1 to nops(newDTASysDynVars) do
+     newDynEqns:=[op(newDynEqns),newDTASysDynVars[i]=subs(newDynEqns,(newDTASysDynVars[i]+TimeStep*gPart[i])/(1+TimeStep*hPart[i]))];
+    end do;
+
+   #
+   # return DTASys
+   #
+
+    return (table(["DynVars"= newDTASysDynVars,"AlgVars"=newDTASysAlgVars,"AlgEqns"=newDTASysAlgEqns,
+                  "ExplicitAlgEqns"=newDTASysExplicitAlgEqns,"Parameters"=newDTASysParameters,"DynEqns"=newDynEqns]));
+    
+
+    end proc;  #getGaussSaidelDTASys

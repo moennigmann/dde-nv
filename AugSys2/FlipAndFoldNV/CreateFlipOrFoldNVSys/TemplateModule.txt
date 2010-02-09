@@ -1,0 +1,49 @@
+###########################################################################
+# 
+# @path AugSys2/FlipAndFoldNV/CreateFlipOrFoldNVSys/TemplateModule.txt 
+#
+# @brief Template for the module CreateFlipOrFoldNVSys
+#
+# @param   
+#   a model to be augmented by general eigenvector system
+#
+# @return 
+#    an Sys, first part is the result from converting DynEqns to substitude to it AlgEqns, 
+#    2nd part is system for finding normal vertors
+# 
+# @notes
+#   (1) local var names of module which are similar to names 
+#   which occur in constructor AugSys2:-FlipAndFoldNV are 
+#   appended by "InModule" 
+#
+###########################################################################
+      result := module() # Template
+  
+        export 
+          getAugSys, getSys, getNVsys, getJac, getFlipOrFoldEigenVector, 
+          getFoldEigenVector, getFlipEigenVector; 
+  
+        local 
+          ExtendedSysInModule, NumNVparamsInModule, 
+          JacInModule, VarsOfModelInModule, ParsOfModelInModule; 
+  
+        #
+        # receive information from constructor
+        #
+          ExtendedSysInModule:= copy(ExtendedSysToBeSubs);
+          NumOfDynEqnsInModule:= NumOfDynEqns; 
+          NumNVparamsInModule:= NumNVparamsToBeSubs; 
+          VarsOfModelInModule:= VarsOfModel;
+          ParsOfModelInModule:= ParsOfModel;
+          JacInModule:= copy(f_x); 
+
+$include <FlipAndFoldNV/CreateFlipOrFoldNVSys/TemplateModule/getSys.txt>
+$include <FlipAndFoldNV/CreateFlipOrFoldNVSys/TemplateModule/getJac.txt>
+$include <FlipAndFoldNV/CreateFlipOrFoldNVSys/TemplateModule/getNVsys.txt>
+$include <FlipAndFoldNV/CreateFlipOrFoldNVSys/TemplateModule/getFlipOrFoldEigenVector.txt>
+$include <FlipAndFoldNV/CreateFlipOrFoldNVSys/TemplateModule/getFlipEigenVector.txt>
+$include <FlipAndFoldNV/CreateFlipOrFoldNVSys/TemplateModule/getFoldEigenVector.txt>
+$include <FlipAndFoldNV/CreateFlipOrFoldNVSys/TemplateModule/getAugSys.txt>
+
+
+      end module; # Template  

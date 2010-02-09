@@ -1,0 +1,93 @@
+###############################################################################
+#
+# @path AugSys2/ConstraintInitializer/CriticalPoint/setStartingCPWithDistance.txt
+#
+# @brief Sets critical point on the boundary with which the optimization will start:
+#        
+# @notes First take the result of optimization for finding closest point on the critical boundaty 
+#        and then define additional variables which appears in the next optimization
+#
+# @revision
+# 2008-03-18 written by dka
+#
+###############################################################################
+setStartingCPWithDistance:= proc( NewNamesOfVars::list(name),
+  Distanse::EvalsToFloat
+)
+
+  local VariblesOfNLP, calcClosestPointSucceded, NumOfNVParams, ClosestCP,
+        RVector, NormRVector, NVVars, i, ListofNewVars, NewVarValue, ListOfAllVars;
+  
+  if (isAugSysCreatedInModule <> true)
+   then error("first define augmented system with the procedure createAugSys");
+  end if;
+
+  #
+  # checking if "Variables" is defined in NLP
+  #
+  
+  VariblesOfNLP:=AugSys2:-ConstraintInitializer:-NLP:-getVariables();
+       
+  if not type(VariblesOfNLP, list(name= EvalsToFloat..EvalsToFloat)) or (nops(VariblesOfNLP)=0)
+  then error("first define \"Variables\" in NLP");
+  end if;
+
+  #
+  # cheking if calculation of the closest point on the critical boundaty was succeed
+  #
+  
+  calcClosestPointSucceded:=AugSys2:-ConstraintInitializer:-CriticalPoint:-isCalcClosestCPSucceeded(); 
+  
+  if(calcClosestPointSucceded<>true)
+  then error("Calculation of closest critical point on the boundary was not succeed");
+  end if;
+
+  #
+  # checkng if Names of Optimized Variables have the same order as the list of NV Parameters in augmented system
+  #
+
+  NumOfNVParams:=nops(listOfNVParamsInModule);
+  if nops(NewNamesOfVars)<>NumOfNVParams
+  then error("Names of Optimized Variables have to be the same order as the list of NV Parameters in augmented system", nops(listOfNVParamsInModule));
+  end if;
+  
+  #
+  # closest point on the critical boundaty
+  #  
+
+  ClosestCP:=AugSys2:-ConstraintInitializer:-CriticalPoint:-getCalcClosestCPOptPoint();
+
+  #
+  # calculating values of new variables 
+  #
+  
+  RVector:=Vector(NumOfNVParams, symbol = r);
+  RVector:=subs(ClosestCP,RVector);
+  NormRVector:=LinearAlgebra[Norm](RVector, 2);
+  
+  NVVars:=subs(ClosestCP,listOfNVParamsInModule);
+
+  ListofNewVars:=[]; 
+  
+  for i from 1 to NumOfNVParams do
+  	NewVarValue:=NVVars[i]+Distanse*RVector[i]/NormRVector;
+  	ListofNewVars:=[op(ListofNewVars),NewNamesOfVars[i]=NewVarValue];
+  end do;
+  
+  ListofNewVars:=[op(ListofNewVars),dist=abs(Distanse)];
+  
+  #
+  # set starting point for optimization
+  #
+  
+  ListOfAllVars:=[op(ClosestCP),op(ListofNewVars)];
+  
+  AugSys2:-ConstraintInitializer:-CriticalPoint:-setStartingCriticalPoint(ListOfAllVars);
+  
+  return();
+
+
+end proc; 
+
+ 
+ 

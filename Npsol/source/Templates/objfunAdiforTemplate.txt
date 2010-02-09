@@ -1,0 +1,52 @@
+###------------------------------------------------------------------------
+#
+# template function objfunAdiforTemplate, local to NPSOL
+#
+# revision history:
+# 021217 introduced common block for parameters; deleted code
+#   which assigned values to par; 
+# 021122 written by mmo starting from 
+#   NPSOL/source/Templates/ConfunAdiforTemplate
+#
+###------------------------------------------------------------------------
+objfunAdiforTemplate:= proc(
+  x,                          # type declared below
+  objf::float
+)
+
+  global par; 
+  local z; 
+
+  declare(
+    par= array(
+      1..(NumParsToBeSubs+1), # one dummy par is always introduced
+      numeric                 # this allows to use the same 
+    ),                        # template in case the NLP to be
+                              # substituted does not have any
+                              # parameters
+    x= array(
+      1..NumVarsToBeSubs,
+      numeric
+    ),
+
+    z= array(
+      1..NumEAEsToBeSubs+ 1,
+      numeric
+    )
+  ); 
+
+      #
+      # calculate explicit algebraic equations
+      #
+        z:= [EAEsToBeSubs, 0]; 
+
+      #
+      # calculate objective function
+      #
+        objf:= ObjToBeSubs;
+  
+  RETURN();
+
+end proc; # confunAdiforTemplate
+
+

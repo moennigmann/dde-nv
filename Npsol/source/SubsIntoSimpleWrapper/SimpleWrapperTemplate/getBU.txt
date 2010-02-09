@@ -1,0 +1,12 @@
+###############################################################################
+#
+# local procedure NPSOL/source/SimpleWrapperTemplate/getBU
+#
+# 021210 written by mmo
+#
+###############################################################################
+getBU:= proc()
+
+  return(eval(BU_swnpsol));
+
+end proc; 

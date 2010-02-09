@@ -1,0 +1,23 @@
+###############################################################################
+#
+# @path Models/source/John1994.txt
+#
+# @brief Implements supply chain model from John1994.
+#
+# @authors dka
+#
+# @revision
+#  2008-04-22 Created new repository entry from ealier files. 
+#
+###############################################################################
+John1994:= module()
+
+  export
+    Sys;
+
+$include <source/John1994/Sys.txt>
+
+end module; 
+
+
+ 

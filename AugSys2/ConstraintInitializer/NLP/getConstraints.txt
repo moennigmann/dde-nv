@@ -1,0 +1,10 @@
+#------------------------------------------------------------
+#
+# @path AugSys2/ConstraintInitializer/NLP/getConstraints.txt
+#
+# @brief Returns constraints of NLP
+#
+#------------------------------------------------------------
+  getConstraints:= proc()
+     return(eval(NLPinModule["Constraints"])); 
+  end proc; # getConstraints  

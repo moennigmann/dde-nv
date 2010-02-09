@@ -1,0 +1,24 @@
+###############################################################################
+#
+# NPSOL/source/SimpleWrapperTemplate/getVariables
+#
+# revision history:
+# 021210 replaced call to GetOptPoint by call to GetXVEC
+# 021209 written by mmo
+#
+###############################################################################
+getVariables:= proc(
+)
+  local NamedList, OptPoint; 
+
+  OptPoint:= getXVEC();
+
+  NamedList:= [seq(
+    RequiredVars[i1]= OptPoint[i1],
+    i1= 1..nops(RequiredVars)
+  )]; 
+
+  return(NamedList); 
+
+end proc; 
+

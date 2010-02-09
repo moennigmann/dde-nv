@@ -1,0 +1,67 @@
+###############################################################################
+#
+# @path AugSys2/ConstraintInitializer/NLP/addGeneralConstraints.txt
+#
+# @brief Adding constraints for NLP:
+#        cheking if constraint is liniar than add it to "LinearConstraints" 
+#        if not to "Constraints"
+#
+# @notes For the moment Npsol does not consider the linear constraints
+#
+# @revision
+#  2008-03-14 written by dka
+#
+###############################################################################
+addGeneralConstraints:= proc(
+  listOfConstraints:: {[], list({0 < term, 0 = term})}
+)
+  local NumberOfConstraints, Rhs, i1;
+
+  # make sure that variabels for NLP is already defined
+
+     if not
+       type(NLPinModule["Variables"], list(name= EvalsToFloat..EvalsToFloat))
+     then
+       error("first define list of \"Variables\" in NLP");
+     end if;
+
+   # make sure that ExplicitAEs for NLP is already defined
+
+     if not
+       type(NLPinModule["ExplicitAEs"], list(name= term))
+     then
+       error("first define list of \"ExplicitAEs\" in NLP");
+     end if;
+  
+   NumberOfConstraints:=nops(listOfConstraints); 
+
+   for i1 from 1 to NumberOfConstraints do
+      #
+      # substitute EAEs into constraint
+      #
+        Rhs:= Aux:-ListOperations:-subsEqnListIntoEqn(
+          NLPinModule["ExplicitAEs"],
+          listOfConstraints[i1]
+        ); 
+        Rhs:= rhs(Rhs); 
+
+      if
+        Aux:-LinearEqns:-checkLinearityOfIn(
+          Rhs,
+          map(lhs, NLPinModule["Variables"])
+        )
+      then
+        addLinearConstraint(listOfConstraints[i1]);
+      else
+        addConstraint(listOfConstraints[i1]); 
+      end if;
+    end do;  
+
+
+ 
+    return();
+
+end proc; 
+
+ 
+ 

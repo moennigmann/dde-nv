@@ -1,0 +1,88 @@
+###############################################################################
+#
+# @path Models/source/Agrawal1982/DimensionalCSTR
+#
+# @brief Implements simple fermentation from Agrawal1982 with dimensional variables. 
+#
+# @authors mmo, dka
+#
+# @revision
+# 2008-05-15  instead of Sys[...] using Sys["..."] by dka
+# 2008-04-11 Created new model repository entry from earlier files. 
+#
+###############################################################################
+DimensionalCSTR:= module()
+
+  local Sys;
+
+  export
+    getSys,
+    getSolutions; 
+
+  Sys:= table():
+  
+  Sys["ODEs"]:= [
+    `X'`= -F/V* X+ mu* X,
+    `S'`= F/V* (SF- S)- sigma* X
+  ]:
+  
+  Sys["ExplicitAEs"]:= [
+    k= 1,
+    K= 0.12,
+    a= 5.4,
+    b= 180,
+    c1= 5,                # not needed for model but for cost function
+    V= Pi* 3^2* 5.7,      # Pi* r^2* h
+    mu= k* S* exp(-S/K),
+    sigma= mu/(a+ b* S),
+    c2= -70.3+ 270.3* SF  # not needed for model but for cost function
+  ]:
+  
+  Sys["DynVars"]:= [X, S]:
+  Sys["AlgVars"]:= []:
+  Sys["AEs"]:= []:
+  Sys["Parameters"]:= [
+    F= 3.0, 
+    SF= 0.3
+  ]:
+
+  #------------------------------------------------------------
+  #
+  # getSys
+  #
+  #------------------------------------------------------------
+  getSys:= proc()
+    return(eval(Sys)); 
+  end proc;   
+
+  #------------------------------------------------------------
+  #
+  # getSolutions
+  #
+  #------------------------------------------------------------
+  getSolutions:= proc()
+
+    local Sol1, Sol2, solutions; 
+
+    Sol1:= [F = 3, SF = .3, X = 2.6201, S = .022443, k = 1., K = .12, a
+        = 5.4, b = 180., c1 = 5., V = 161.1637032, mu = .01861474040,
+        sigma = .001971954779, c2 = 10.79];  
+
+    # Hopf point:
+    Sol2:= [X = 4.22744, S = .7385282e-1, F = 6.432089, SF = .3, k =
+1., K = .12, a = 5.4, b = 180., c1 = 5., V = 161.1637032, mu =
+.3991028368e-1, sigma = .2134981007e-2, c2 = 10.79, 
+      w1_Hopf[1] = -.1102549550e-7, 
+      w1_Hopf[2] = -.4923686503e-1,
+      w2_Hopf[1] = .9987871301, 
+      w2_Hopf[2] = -.2294538897e-6, 
+      omega_Hopf = .4330884089e-1];
+
+    solutions:= [Sol1, Sol2];
+
+    return(solutions); 
+
+  end proc;   
+
+end module; 
+

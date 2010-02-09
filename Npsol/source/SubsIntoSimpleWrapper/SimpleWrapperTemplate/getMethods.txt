@@ -1,0 +1,62 @@
+###############################################################################
+#
+# NPSOL/source/SubsIntoSimpleWrapper/SimpleWrapperTemplate/getMethods
+#
+# collection of very simple get methods, too tedious to 
+# place into a separate file each
+#
+# revision history:
+# 021210 commented GetOptPoint which used to have same purpose
+#   as GetXVEC
+# 02xxxx written by mmo
+#
+###############################################################################
+getInform:= proc()
+  return(inform_swnpsol);
+end proc; 
+
+getIter:= proc()
+  return(iter_swnpsol);
+end proc; 
+
+getIstate:= proc()
+  return(istate_swnpsol);
+end proc;
+
+getC:= proc()
+  return(c_swnpsol);
+end proc; 
+
+getCjac:= proc()
+  return(cjac_swnpsol);
+end proc; 
+
+getClambda:= proc()
+  return(clambda_swnpsol);
+end proc;
+
+getObjf:= proc()
+  return(objf_swnpsol); 
+end proc; 
+
+getGrad:= proc()
+  return(grad_swnpsol);
+end proc; 
+
+getR:= proc()
+  return(r_swnpsol);
+end proc; 
+
+#getOptPoint:= proc()
+#  return(xvec_swnpsol);
+#end proc; 
+
+
+
+
+
+
+
+
+
+

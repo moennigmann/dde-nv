@@ -1,0 +1,45 @@
+###############################################################################
+#
+# NPSOL/source/SimpleWrapperTemplate/setVariables
+#
+# revision history:
+# 021210 replaced assignment of xvec_swnpsol by call to SetXVEC
+#   which takes care of scaling; 
+# 021125 replaced NtoBeSubs by N; 
+# xxxxxx written by mmo
+###############################################################################
+setVariables:= proc(
+  vars::list(name= EvalsToFloat)
+)
+
+  local GivenVars, Missing, Obsolete, InitialPoint; 
+
+  GivenVars:= map(lhs, vars); 
+
+  Missing, Obsolete:= Aux:-ListOperations:-getMissingAndObsoleteNames(
+    GivenVars,
+    RequiredVars
+  );
+  if not
+    Missing= {}
+  then
+    error("assignments missing for the variables %1", Missing); 
+  end if; 
+
+  #
+  # extract values for free variables
+  #
+    InitialPoint:= subs(
+      vars,
+      RequiredVars
+    ); 
+
+  #
+  # assign InitialPoint
+  #
+    setXVEC(InitialPoint); 
+
+  return(); 
+
+end proc; 
+

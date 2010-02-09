@@ -1,0 +1,48 @@
+###############################################################################
+#
+# NPSOL/source/SimpleWrapperTemplate/setXVEC
+#
+# 021210 rewritten for use with scaling 
+# 02xxxx written by mmo
+###############################################################################
+setXVEC:= proc(
+  x::list(EvalsToFloat)
+)
+
+  local i1, D, c; 
+
+  #
+  # make sure length is correct
+  #
+    if not
+      nops(x)= N
+    then
+      error("SetXVEC expects a list of %1 entries", N);
+    end if; 
+
+  #
+  # assign local module variable xvec_swnpsol
+  # scale if scaling was introduced at time of instanciation
+  #
+    if 
+      ScalingOn= true
+    then
+      D:= Scaling:-getD();
+      c:= Scaling:-getc();
+      for i1 from 1 to N do
+        xvec_swnpsol[i1]:= D[i1]* x[i1]- c[i1];
+      end do; 
+    else
+      for i1 from 1 to N do
+        xvec_swnpsol[i1]:= x[i1];
+      end do; 
+    end if; 
+
+  #
+  # warn if initial point violates lower or upper bounds
+  #
+    boundsNotViolated();
+
+  return();
+
+end proc; 

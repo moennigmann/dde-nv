@@ -1,0 +1,240 @@
+
+
+ OPTIONS file
+ ------------
+
+      begin                                                                   
+        major iteration limit 9999                                            
+        major print level 20                                                  
+      end                                                                     
+
+
+
+
+
+                     NPSOL  ---  Version 4.06-2     Nov  1992
+                     ========================================
+
+
+ Parameters
+ ----------
+
+ Linear constraints.....         1       Linear feasibility.....  1.05E-08       cold start.............
+ Variables..............         2       Infinite bound size....  1.00E+20       Crash tolerance........  1.00E-02
+ Step limit.............  2.00E+00       Infinite step size.....  1.00E+20
+
+ Nonlinear constraints..         1       Optimality tolerance...  3.26E-12       Function precision.....  4.37E-15
+ Nonlinear Jacobian vars         2       Nonlinear feasibility..  1.05E-08       eps (machine precision)  1.11E-16
+ Nonlinear objectiv vars         2       Linesearch tolerance...  9.00E-01       Print file.............         9
+ Derivative level.......         3       Verify level...........         0       Summary file...........         6
+
+ Major iterations limit.      9999       Major print level......        20
+ Minor iterations limit.        50       Minor print level......         0
+ RUN loaded from file...         0       RUN to be saved on file         0       Save frequency.........     10000
+
+ Workspace provided is     iw(       9),  w(      86).
+ To solve problem we need  iw(       9),  w(      86).
+
+
+
+ Verification of the constraint gradients.
+ -----------------------------------------
+
+ The constraint Jacobian seems to be ok.
+
+ The largest relative error was    2.27E-08  in row    1
+
+
+
+
+ Verification of the objective gradients.
+ ----------------------------------------
+
+ The objective gradients seem to be ok.
+
+ Directional derivative of the objective   -2.00000000E+00
+ Difference approximation                  -1.99999994E+00
+
+
+
+ Major iteration    0
+ ====================
+
+
+  Maj  Mnr    Step  Fun  Merit function  Violtn Norm gZ   nZ  Bnd  Lin  Nln Penalty Norm Gf  Cond H Cond Hz  Cond T Conv
+    0    2 0.0E+00    1  4.00000000E+00 1.4E+00 0.0E+00    0    0    1    1 0.0E+00 4.0E+00  1.E+00  1.E+00  2.E+00 F TF     
+
+ Nonlinear objective value =    4.000000E+00   Norm of the nonlinear constraint violations =    0.000000E+00
+
+ Values of the constraints and their predicted status
+ ----------------------------------------------------
+
+ Variables                  
+    0.000000E+00   0   1.000000E+00   0
+
+ General linear constraints 
+   -1.000000E+00   1
+
+ Nonlinear constraints      
+    1.000000E+00   1
+ =========================================================================================
+
+
+
+
+
+
+ Major iteration    1
+ ====================
+
+
+  Maj  Mnr    Step  Fun  Merit function  Violtn Norm gZ   nZ  Bnd  Lin  Nln Penalty Norm Gf  Cond H Cond Hz  Cond T Conv
+    1    0 4.4E-01    3  1.55945783E+00 6.0E-01 0.0E+00    0    0    1    1 0.0E+00 2.4E+00  2.E+00  1.E+00  1.E+00 F TF     
+
+ Nonlinear objective value =    1.432257E+00   Norm of the nonlinear constraint violations =    2.343654E-01
+
+ Values of the constraints and their predicted status
+ ----------------------------------------------------
+
+ Variables                  
+    8.888000E-01   0   5.556000E-01   0
+
+ General linear constraints 
+   -1.444400E+00   1
+
+ Nonlinear constraints      
+   -2.343654E-01   1
+ =========================================================================================
+
+
+
+
+
+
+ Major iteration    2
+ ====================
+
+
+  Maj  Mnr    Step  Fun  Merit function  Violtn Norm gZ   nZ  Bnd  Lin  Nln Penalty Norm Gf  Cond H Cond Hz  Cond T Conv
+    2    0 1.0E+00    4  1.00003981E+00 1.3E-02 0.0E+00    0    0    1    1 1.8E+01 2.0E+00  1.E+00  1.E+00  2.E+00 F TF     
+
+ Nonlinear objective value =    9.911360E-01   Norm of the nonlinear constraint violations =    1.337535E-02
+
+ Values of the constraints and their predicted status
+ ----------------------------------------------------
+
+ Variables                  
+    1.004452E+00   0   9.955482E-01   0
+
+ General linear constraints 
+   -2.000000E+00   1
+
+ Nonlinear constraints      
+   -1.337535E-02   1
+ =========================================================================================
+
+
+
+
+
+
+ Major iteration    3
+ ====================
+
+
+  Maj  Mnr    Step  Fun  Merit function  Violtn Norm gZ   nZ  Bnd  Lin  Nln Penalty Norm Gf  Cond H Cond Hz  Cond T Conv
+    3    0 1.0E+00    5  1.00000000E+00 2.0E-05 0.0E+00    0    0    1    1 4.3E+00 2.0E+00  1.E+00  1.E+00  2.E+00 F TF     
+
+ Nonlinear objective value =    9.999868E-01   Norm of the nonlinear constraint violations =    1.976031E-05
+
+ Values of the constraints and their predicted status
+ ----------------------------------------------------
+
+ Variables                  
+    1.000007E+00   0   9.999934E-01   0
+
+ General linear constraints 
+   -2.000000E+00   1
+
+ Nonlinear constraints      
+   -1.976031E-05   1
+ =========================================================================================
+
+
+
+
+
+
+ Major iteration    4
+ ====================
+
+
+  Maj  Mnr    Step  Fun  Merit function  Violtn Norm gZ   nZ  Bnd  Lin  Nln Penalty Norm Gf  Cond H Cond Hz  Cond T Conv
+    4    0 1.0E+00    6  1.00000000E+00 4.3E-11 0.0E+00    0    0    1    1 4.3E+00 2.0E+00  1.E+00  1.E+00  2.E+00 F TT     
+
+ Nonlinear objective value =    1.000000E+00   Norm of the nonlinear constraint violations =    4.338496E-11
+
+ Values of the constraints and their predicted status
+ ----------------------------------------------------
+
+ Variables                  
+    1.000000E+00   0   1.000000E+00   0
+
+ General linear constraints 
+   -2.000000E+00   1
+
+ Nonlinear constraints      
+   -4.338496E-11   1
+ =========================================================================================
+
+
+
+
+
+
+ Major iteration    5
+ ====================
+
+
+  Maj  Mnr    Step  Fun  Merit function  Violtn Norm gZ   nZ  Bnd  Lin  Nln Penalty Norm Gf  Cond H Cond Hz  Cond T Conv
+    5    0 1.0E+00    7  1.00000000E+00 0.0E+00 0.0E+00    0    0    1    1 4.3E+00 2.0E+00  1.E+00  1.E+00  1.E+00 T TT     
+
+ Nonlinear objective value =    1.000000E+00   Norm of the nonlinear constraint violations =    0.000000E+00
+
+ Values of the constraints and their predicted status
+ ----------------------------------------------------
+
+ Variables                  
+    1.000000E+00   0   1.000000E+00   0
+
+ General linear constraints 
+   -2.000000E+00   1
+
+ Nonlinear constraints      
+    0.000000E+00   1
+ =========================================================================================
+
+
+
+
+ Exit  NP phase.  Inform =  0  Majits =    5   nfun =    7   ngrad =    7
+
+
+ Variable        State      Value       Lower bound     Upper bound  Lagr multiplier     Residual
+
+ varbl  1          fr    1.000000          None            None          0.000000          0.1000E+21
+ varbl  2          fr    1.000000          None            None          0.000000          0.1000E+21
+
+
+ Linear constr   State      Value       Lower bound     Upper bound  Lagr multiplier     Residual
+
+ lncon  1          ll   -2.000000       -2.000000          None         0.6666667          0.4441E-15
+
+
+ Nonlnr constr   State      Value       Lower bound     Upper bound  Lagr multiplier     Residual
+
+ nlcon  1          ll    0.000000        0.000000          None         0.6666667           0.000    
+
+ Exit NPSOL - Optimal solution found.
+
+ Final nonlinear objective value =    1.000000    

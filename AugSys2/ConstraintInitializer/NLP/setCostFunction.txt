@@ -1,0 +1,21 @@
+###############################################################################
+#
+# @path AugSys2/ConstraintInitializer/NLP/setCostFunction.txt
+#
+# @brief Sets cost function to NLP
+#
+# @revision
+#  2008-03-13 written by dka
+#
+###############################################################################
+setCostFunction:= proc(
+  costFunction::list(term)
+)
+
+  NLPinModule["CostFunction"]:=costFunction;
+
+    return();
+
+end proc; 
+
+ 

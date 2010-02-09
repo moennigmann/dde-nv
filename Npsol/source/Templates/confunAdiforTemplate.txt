@@ -1,0 +1,61 @@
+###------------------------------------------------------------------------
+#
+# template function confunAdiforTemplate, local to NPSOL
+#
+# revision history:
+# 021216 moved par from local to global to have codegen create a common
+#   block, deleted code which assigned values to parameters; 
+# 021127 introduced dummy explicit AE;
+# 021124 template now receives EAEs; 
+# 021122 deleted obsolete comments; 
+# 021120 written by mmo starting from 
+#   DDASPK/source/Templates/ConfunAdiforTemplate
+#
+###------------------------------------------------------------------------
+confunAdiforTemplate:= proc(
+  x,                          # type declared below
+  c                           # type declared below
+)
+
+  global par; # force par to become common block
+  local z;  
+
+  declare(
+    par= array(
+      1..(NumParsToBeSubs+1), # one dummy par is always introduced
+      numeric                 # this allows to use the same 
+    ),                        # template in case the NLP to be
+                              # substituted does not have any
+                              # parameters
+    x= array(
+      1..NumVarsToBeSubs,
+      numeric
+    ),
+
+    c= array(
+      1..NumConsToBeSubs,
+      numeric
+    ),
+
+    z= array(
+      1..NumEAEsToBeSubs+ 1,
+      numeric
+    )
+  ); 
+
+  
+      #
+      # calculate explicit algebraic equations
+      #
+        z:= [EAEsToBeSubs, 0];
+
+      #
+      # calculate right hand sides of equations
+      #
+        c:= ConstraintsToBeSubs;
+  
+  RETURN();
+
+end proc; # ConfunAdiforTemplate
+
+

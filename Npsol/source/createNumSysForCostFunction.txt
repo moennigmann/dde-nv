@@ -1,0 +1,64 @@
+###############################################################################
+#
+# NPSOL/source/createNumSysForCostFunction
+#
+# revision history:
+# 2008-03-06  instead of anNLP[...] using anNLP["..."] by dka
+# 030319 added checking of cost function
+# 030318 written by mmo
+#
+###############################################################################
+createNumSysForCostFunction:= proc(
+  Sys::NLP,
+  WorkingDir::string,
+  RestoreKeyword::name,
+  EAEsForObjf::{name, [], list(name= term)} # if of type name, EAEs
+                                            # of NLP will be used 
+)
+
+  local CostFuncNLP, ObjectiveAEsInstance, OldDir; 
+
+  OldDir:= currentdir();
+
+  #
+  # check for common errors
+  #
+    if 
+      Sys["CostFunction"]= []
+    then
+      error("cost function is empty");
+    end if; 
+
+  #
+  # abuse CreateCostFunctionForConstraints
+  #
+    CostFuncNLP:= copy(Sys):
+    CostFuncNLP["Constraints"]:= [0= op(CostFuncNLP["CostFunction"])]:
+    CostFuncNLP["CostFunction"]:= [0]:    
+
+    #
+    # if EAEs for objective were specified, use them,
+    # otherwise use EAEs of NLP
+    #
+      if not
+        type(EAEsForObjf, name)
+      then
+        CostFuncNLP["ExplicitAEs"]:= EAEsForObjf; 
+      end if; 
+
+    try
+      ObjectiveAEsInstance:= createNumSysForConstraints(
+        CostFuncNLP,
+        WorkingDir,
+        RestoreKeyword
+      );
+    catch:
+      printf("in CreateNumSysForCostFunction, call to CreateNumSysForConstraints failed with following error:\n");
+      error;
+    finally
+      currentdir(OldDir);
+    end try;
+
+  return(ObjectiveAEsInstance);
+ 
+end proc:

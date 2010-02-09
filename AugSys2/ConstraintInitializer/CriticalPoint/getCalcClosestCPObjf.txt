@@ -1,0 +1,11 @@
+#------------------------------------------------------------
+#
+# @path AugSys2/ConstraintInitializer/CriticalPoint/getCalcClosestCPObjf.txt
+#
+# @brief Returns value of the objective function while the 
+#        calculations of closest critical point is finished
+#
+#------------------------------------------------------------
+   getCalcClosestCPObjf:= proc(V)
+      return(eval(calcClosestCPObjfInModule)); 
+    end proc; # getCalcClosestCPObjf 

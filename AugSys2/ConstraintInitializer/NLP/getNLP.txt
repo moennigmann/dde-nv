@@ -1,0 +1,10 @@
+#------------------------------------------------------------
+#
+# @path AugSys2/ConstraintInitializer/NLP/getNLP.txt
+#
+# @brief Returns current NLP
+#
+#------------------------------------------------------------
+   getNLP:= proc()
+      return(eval(NLPinModule)); 
+   end proc; # getNLP 

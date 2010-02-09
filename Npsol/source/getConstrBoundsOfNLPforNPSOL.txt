@@ -1,0 +1,143 @@
+  ###============================================================
+  #
+  #
+  # proc NPSOL:-getConstrBoundsOfNLPforNPSOL
+  #
+  # input:
+  #   an nlp
+  #   bVEC as extracted from NLP by 
+  #     GetLinConstrOfNLPforNPSOL
+  #
+  # output:
+  #
+  # notes:
+  #   bounds are turned into following form for NPSOL:
+  #     0<Ax-b           becomes   b<= Ax<= infinity 
+  #     0=Ax-b           becomes   b<= Ax<=  b 
+  #     0= NonlinConstr  becomes   0<= NonlinConstr<= 0
+  #     0< NonlinConstr  becomes   0<= NonlinConstr<= -infinity
+  #
+  #   in type nlp, form of linear constraints is 
+  #     0= Ax+ b or 0< Ax+ b,
+  #     (not term=0, 0>term, term>0, term<0)
+  #
+  #   if no linear constraints exist for nlp, bVEC is a name,
+  #     while AMAT is a dummy matrix, 
+  #     see GetLinConstrOfNLPforNPSOL
+  #
+  ###============================================================
+  getConstrBoundsOfNLPforNPSOL:= proc(
+    anNLP::NLP,
+    bVEC::{vector, name}, 
+    NameForLowerBounds::name,
+    NameForUpperBounds::name
+  )
+
+    local NCLIN, NCNLN, LowerBoundsConstraints,
+      UpperBoundsConstraints, i1, item;  
+
+    NCLIN:= nops(anNLP["LinearConstraints"]);
+    NCNLN:= nops(anNLP["Constraints"]); 
+
+    #------------------------------------------------------------
+    #
+    # lower bounds
+    #
+    # note that NCLIN= 0 if no linear constraints exist
+    #
+    #-------------------------------------------------------------
+      LowerBoundsConstraints:= [
+        seq(bVEC[i1], i1=1..NCLIN),
+        seq(0, i1=(NCLIN + 1)..(NCLIN + NCNLN))
+      ];
+
+    #------------------------------------------------------------
+    #
+    # upper bounds
+    #
+    #------------------------------------------------------------
+      UpperBoundsConstraints:= []; #prepare list
+
+      #--------------------------------------------------
+      #
+      # treat LinearConstraints 
+      #
+      #--------------------------------------------------
+        if not
+          anNLP["LinearConstraints"]= []
+        then
+            for
+              i1 from 1 to nops(anNLP["LinearConstraints"])
+            do
+              item:= anNLP["LinearConstraints"][i1];
+
+              if
+                type(item, `=`)
+              then
+                UpperBoundsConstraints:=[
+                  op(UpperBoundsConstraints),
+                  bVEC[i1]
+                ];
+
+              elif
+                type(item, 0< term)
+              then
+                UpperBoundsConstraints:=[
+                  op(UpperBoundsConstraints),
+                  BigBoundNPSOL
+                ];
+
+              else
+                error(
+                  "internal error, this only works if "
+                  "inequality has standard form 0 < expr."
+                );
+              end if;
+
+            end do; # loop over linear constraints
+
+        end if; # check for existence of linear constraints
+
+    #---------------------------------------------------
+    #
+    # treat nonlinear constraints 
+    #
+    #--------------------------------------------------
+      for
+        i1 from 1 to nops(anNLP["Constraints"])
+      do
+        item:= anNLP["Constraints"][i1];
+        if
+          type(item, `=`)
+        then
+          UpperBoundsConstraints:=[
+            op(UpperBoundsConstraints),
+            0
+          ];
+         elif
+          type(item, 0< term)
+        then
+          UpperBoundsConstraints:=[
+            op(UpperBoundsConstraints),
+            BigBoundNPSOL
+          ];
+         else
+          error(
+            "internal error, nonlinear constraints are expected to "
+            "have form 0=... or 0<..."
+          );
+        end if;
+      end do;
+
+    #
+    # assign result to user requested names
+    #
+      NameForUpperBounds:= UpperBoundsConstraints;
+      NameForLowerBounds:= LowerBoundsConstraints; 
+
+    return;
+
+  end proc; # getConstrBoundsOfNLPforNPSOL 
+
+
+

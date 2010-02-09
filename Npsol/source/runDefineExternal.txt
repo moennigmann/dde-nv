@@ -1,0 +1,51 @@
+###############################################################################
+#
+# NPSOL/source/runDefineExternal
+#
+# revision history:
+# 2008-03-03 by dka, in the call of define_external put arguments 
+#            BL, BU, CLAMBDA and LENIW, LENW together
+# 030317 written by mmo, copying call from CreateSharedObject cvs 1.9
+#
+###############################################################################
+runDefineExternal:= proc(
+  SharedObjectName::string
+)
+
+  local npsol;
+
+  # 
+  # create interface to NPSOL
+  #
+    npsol:= define_external(
+       'cwrapper_npsol',
+        N::integer[4],                                      #input
+        NCLIN::integer[4],                                  #input
+        NCNLN::integer[4],                                  #input
+        NROWA::integer[4],                                  #input
+        NROWJ::integer[4],                                  #input
+        NROWR::integer[4],                                  #input
+        A::ARRAY(1..NROWA, 1..N, float[8]                   #input
+        ),                                                  
+        B::ARRAY(1..3, 1..(N+ NCLIN+ NCNLN), float[8]),     #input
+        INFORM::REF(integer[4]),                            #output only
+        ITER::REF(integer[4]),                              #output only
+        ISTATE::ARRAY(1..(N+ NCLIN+ NCNLN), integer[4]),    #input/output
+        C::ARRAY(1..NCNLN, float[8]),                       #output only
+        CJAC::ARRAY(1..NROWJ, 1..N, float[8]                #input/output
+        ),              
+        OBJF::REF(float[8]),                                #output only
+        GRAD::ARRAY(1..N, float[8]),                        #output only
+        R::ARRAY(1..NROWR, 1..N, float[8]                   #input/output
+        ),                 
+        XVEC::ARRAY(1..N, float[8]),                        #input/output
+        LE::ARRAY(1..2, integer[4]),                        #input 
+        NumParams::integer[4],                # not npsol arguments but 
+        Params::ARRAY(1..NumParams, float[8]),# to pass parameters to
+                                              # npsol in common block
+        LIB= SharedObjectName
+      );
+  
+  return(npsol);
+
+end proc; 

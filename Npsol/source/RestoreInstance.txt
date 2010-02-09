@@ -1,0 +1,202 @@
+###############################################################################
+#
+# RestoreInstance
+#
+# input: 
+#   WorkingDir, directory in which instance created by 
+#     NPSOL:-CreateInstance is located
+#   
+# output:
+#   instance of NPSOL interface
+#
+# notes:
+#   (1) Call to define_external in CreateSharedObject must be exactely 
+#   the same. Unfortunately, there is no simple way to reflect this in
+#   the code, but consistency with CreateSharedObject must be ensured by 
+#   hand. 
+#
+# revision history:
+# 2008-03-03 by dka, in the call of define_external put arguments 
+#            BL, BU, CLAMBDA and LENIW, LENW together
+# 021216 added NumParams and Params to create_external, necessary to 
+#   pass parameter values to npsol in common block
+# 021210 (i) replaced ReqNLPwithSubstitutions by ScaledNLPwithSubstitutions
+#   after corr. changes to CreateInstance; (ii) deleted commented parts
+#   from PITCON file; (iii) added recovery of instance of Scaling from
+#   file Scaling.m created by CreateInstance; 
+# 021107 written by mmo, starting with corr. PITCON file; left parts
+#   of the code for scaling in here but commented
+#
+###############################################################################
+RestoreInstance:= proc(
+  WorkingDir::string
+  # optional arg SharedObjectName::string
+)
+
+  local NPSOLinstance, SharedObjectName, FileName, SimpleWrapper, OldDir,
+    NumPars, StandardSys, npsol, Scaling, VariablesTmp; 
+
+  #
+  # save current dir and change to working dir
+  #
+    OldDir:= currentdir();
+    currentdir(WorkingDir):
+
+  #
+  # recover NLP from file
+  #
+  # remember object in file saved by CreateInstance is always called 
+  # ScaledNLPwithSubstitutions, file is always called NLP.m
+  #
+    FileName:= "NLP.m"; 
+
+    if not
+      Aux:-FileOperations:-fileExists(FileName)
+    then
+      currentdir(OldDir); 
+      error(
+        "in the requested dir %1, file named NLP.m does not exist",
+        WorkingDir
+      ); 
+    end if; 
+
+    #
+    # remember that table read by read-command causes assignment of 
+    # 'ScaledNLPwithSubstitutions' in global namespace; 
+    # 'ScaledNLPwithSubstitutions' is unassigned at
+    # end of procedure
+    #
+      read("NLP.m"); 
+
+  # 
+  # treat optional 2nd argument
+  #
+    if 
+      nargs>1
+    then
+      if not
+        type(args[2], string)
+      then
+        error("optional third argument, SharedObjectName, must be a string");
+      else
+        SharedObjectName:= args[2];
+      end if;
+    else
+      SharedObjectName:= Aux:-FileOperations:-findFirstSharedObject(
+        "cwrap_npsol"
+      ); 
+    end if;
+
+  #
+  # make sure shared object to be recovered really exists
+  #
+    if not
+       Aux:-FileOperations:-fileExists(SharedObjectName)
+    then
+      currentdir(OldDir); 
+      error(
+        "in the requested dir %1, file named %2 does not exist",
+        WorkingDir,
+        SharedObjectName
+      ); 
+    end if; 
+
+  #
+  # warn if no shared object was requested explicitly
+  #
+    if not
+      nargs>1
+    then
+      warning(
+        "using shared object %1 in %2",
+        SharedObjectName, 
+        WorkingDir
+      );
+    end if; 
+
+  #------------------------------------------------------------
+  # 
+  # create interface to NPSOL
+  #
+  # note that call to define_external in CreateSharedObject must be exactely 
+  # the same; unfortunately there is no simple way to reflect this in
+  # the code, but consistency must be ensured by hand
+  #
+  #------------------------------------------------------------
+    # 
+    # create interface to NPSOL
+    #
+      npsol:= define_external(
+        'cwrapper_npsol',
+        N::integer[4],                                      #input
+        NCLIN::integer[4],                                  #input
+        NCNLN::integer[4],                                  #input
+        NROWA::integer[4],                                  #input
+        NROWJ::integer[4],                                  #input
+        NROWR::integer[4],                                  #input
+        A::ARRAY(1..NROWA, 1..N, float[8]                   #input
+        ),                                                  
+        B::ARRAY(1..3, 1..(N+ NCLIN+ NCNLN), float[8]),     #input
+        INFORM::REF(integer[4]),                            #output only
+        ITER::REF(integer[4]),                              #output only
+        ISTATE::ARRAY(1..(N+ NCLIN+ NCNLN), integer[4]),    #input/output
+        C::ARRAY(1..NCNLN, float[8]),                       #output only
+        CJAC::ARRAY(1..NROWJ, 1..N, float[8]                #input/output
+        ),              
+        OBJF::REF(float[8]),                                #output only
+        GRAD::REF(ARRAY(1..N, float[8])),                   #output only
+        R::ARRAY(1..NROWR, 1..N, float[8]                   #input/output
+        ),                 
+        XVEC::ARRAY(1..N, float[8]),                        #input/output
+        LE::ARRAY(1..2, integer[4]),                        #input 
+        NumParams::integer[4],                # not npsol arguments but 
+        Params::ARRAY(1..NumParams, float[8]),# to pass parameters to
+                                              # npsol in common block
+        LIB= SharedObjectName
+      );
+
+
+  #------------------------------------------------------------
+  #
+  # if file ScalingOn exists, create instance of Scale
+  # 
+  #------------------------------------------------------------
+    if 
+       Aux:-FileOperations:-fileExists("Ranges.m")
+    then
+
+      read("Ranges.m"); 
+        Scaling:= Aux:-NLP:-Scale:-CreateInstanceForNLP(
+          Ranges
+        );
+    end if; 
+
+  #------------------------------------------------------------
+  #
+  # create instance of interface to pitcon
+  #
+  #------------------------------------------------------------
+    currentdir(OldDir); 
+    NPSOLinstance:= SubsIntoSimpleWrapper(
+      ScaledNLPwithSubstitutions,
+      npsol, 
+      WorkingDir,
+      Scaling,
+      'ScalingPars'
+    ); 
+
+  #
+  # change to former dir
+  #
+    currentdir(OldDir); 
+
+  #
+  # unassign global variables created by read commands
+  #
+    unassign('ScaledNLPwithSubstitutions'); 
+    unassign('Ranges'); 
+
+    RETURN(eval(NPSOLinstance)); 
+
+end proc; # RestoreInstance
+

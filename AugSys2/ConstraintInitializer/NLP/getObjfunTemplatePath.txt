@@ -1,0 +1,20 @@
+###############################################################################
+#
+# @path AugSys2/ConstraintInitializer/NLP/getObjfunTemplatePath
+#
+# @brief Returns the path to the object function calculation code
+#        if the object function not given explicitely
+#
+# @revision
+#  2008-04-07 written by dka
+#
+###############################################################################
+getObjfunTemplatePath:= proc()
+
+    return( NLPinModule["ObjfunTemplatePath"]);
+
+end proc; 
+
+ 
+ 
+ 

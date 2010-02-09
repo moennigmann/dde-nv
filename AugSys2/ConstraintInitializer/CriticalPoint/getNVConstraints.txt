@@ -1,0 +1,51 @@
+#------------------------------------------------------------
+#
+# @path AugSys2/ConstraintInitializer/CriticalPoint/getNVConstraints.txt
+#
+# @brief returns equations for defining a NV
+#        (third block of augmented system equations)
+#
+# @revision
+#    2008-03-17 Written by dka
+#
+#------------------------------------------------------------
+getNVConstraints:= proc()
+
+local numOfFixSystemEqns, augSysEqns, newEquations, numOfNVParams;
+
+# check if augmented system defined
+
+ if (isAugSysCreatedInModule <> true)
+  then error("first define augmented system with the procedure createAugSys");
+ end if;
+
+# number of equations n in FixPoint system
+
+numOfFixSystemEqns:=nops(listOfDynVarsInModule);
+numOfNVParams:=nops(listOfNVParamsInModule);
+
+
+# take the equations which defines critical boundaries of the system
+
+augSysEqns:=augSysInModule["Equations"];
+
+if (isNSType=true)
+then newEquations:=[seq(augSysEqns[i1],i1=3*numOfFixSystemEqns+3..6*numOfFixSystemEqns+4+numOfNVParams)];
+end if;
+
+if (isFlipOrFoldType=true)
+then newEquations:=[seq(augSysEqns[i1],i1=2*numOfFixSystemEqns+2..4*numOfFixSystemEqns+2+numOfNVParams)];
+end if;
+
+if (isSaddleNodeType=true)
+then newEquations:=[seq(augSysEqns[i1],i1=2*numOfFixSystemEqns+2..2*numOfFixSystemEqns+1+numOfNVParams)];
+end if;
+
+if (isHopfType=true)
+then newEquations:=[seq(augSysEqns[i1],i1=3*numOfFixSystemEqns+3..6*numOfFixSystemEqns+4+numOfNVParams)];
+end if;
+
+return(eval(newEquations)); 
+
+end proc; # getConstraints 
+ 

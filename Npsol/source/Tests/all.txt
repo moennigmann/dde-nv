@@ -1,0 +1,38 @@
+    ###------------------------------------------------------------------------
+    #
+    # procedure NPSOL:-Tests:-all
+    #
+    # input: none
+    #
+    # output: true if all tests completed succesfully, false otherwise
+    #
+    # notes: (i) see Agrawal82 for comment on related sheet,
+    #   see 021015/Teymour89b/TestNPSOL for simple test with Teymour89b
+    #   with cost function phi= 0
+    #
+    # revision history
+    # 021211 added Agrawal82 (3 times, with different options)
+    #   added call to SimpleProblem1 with option scale, this is test
+    #   on problem in which no variables can be scaled, since ranges
+    #   are -infinity..infinity; 
+    # 021122 added SimpleProblem1, 2 with option adifor
+    # written by mmo
+    ###------------------------------------------------------------------------
+    all:= proc()
+
+      if 
+        SimpleProblem1()= true 
+        and SimpleProblem1(adifor)= true
+        and SimpleProblem1(adifor, scale)= true
+        and SimpleProblem2()= true 
+        and SimpleProblem2(adifor)= true
+        and Agrawal82()= true
+        and Agrawal82(adifor)= true
+        and Agrawal82(adifor, scale)= true
+      then
+        return(true)
+      else
+        return(false)
+      end if; 
+
+    end proc; # all

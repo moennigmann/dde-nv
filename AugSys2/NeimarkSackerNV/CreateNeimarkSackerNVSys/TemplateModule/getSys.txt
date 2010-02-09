@@ -1,0 +1,10 @@
+#------------------------------------------------------------
+#
+# @path AugSys2/NeimarkSackerNV/CreateNeimarkSackerNVSys/TemplateModule/getSys.txt
+#
+# @brief returns complete system
+#
+#------------------------------------------------------------
+   getSys:= proc()
+       return(eval(ExtendedSysInModule)); 
+   end proc; # getSys

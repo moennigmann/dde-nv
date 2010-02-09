@@ -1,0 +1,45 @@
+###########################################################################
+# 
+# @path AugSys2/SaddleNodeNV/CreateSaddleNodeNVSys/TemplateModule.txt 
+#
+# @brief Template for the module CreateSaddleNodeSys
+#
+# @param   
+#   a model to be augmented by general eigenvector system
+#
+# @return 
+#    an Sys, first part is the result from substitution of AlgEqns to ODEs, 
+#    2nd part is a system for finding normal vertors
+# 
+# @notes
+#   (1) local var names of module which are similar to names 
+#   which occur in constructor AugSys2:-SaddleNodeNV are 
+#   appended by "InModule" 
+#
+###########################################################################
+result := module() # Template
+  
+        export 
+          getAugSys, getSys, getNVsys, getJac; 
+  
+        local 
+          ExtendedSysInModule, NumNVparamsInModule, 
+          JacInModule, VarsOfModelInModule, ParsOfModelInModule; 
+  
+        #
+        # receive information from constructor
+        #
+          ExtendedSysInModule:= copy(ExtendedSysToBeSubs);
+          NumOfDynEqnsInModule:= NumOfDynEqns; 
+          NumNVparamsInModule:= NumNVparamsToBeSubs; 
+          VarsOfModelInModule:= VarsOfModel;
+          ParsOfModelInModule:= ParsOfModel;
+          JacInModule:= copy(f_x); 
+
+$include <SaddleNodeNV/CreateSaddleNodeNVSys/TemplateModule/getSys.txt>
+$include <SaddleNodeNV/CreateSaddleNodeNVSys/TemplateModule/getJac.txt>
+$include <SaddleNodeNV/CreateSaddleNodeNVSys/TemplateModule/getNVsys.txt>
+$include <SaddleNodeNV/CreateSaddleNodeNVSys/TemplateModule/getAugSys.txt>
+
+
+      end module; # Template  

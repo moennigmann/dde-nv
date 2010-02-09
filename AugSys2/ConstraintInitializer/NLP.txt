@@ -1,0 +1,93 @@
+##############################################################
+#
+# @path AugSys2/ConstraintInitializer/NLP.txt
+#
+# @brief collects procedures for defining NLP
+#
+# @revision
+#    2008-07-14 Added addConstraintsForTighterApprBox by dka
+#    2008-03-12 Written by dka
+#
+##############################################################
+  NLP:=module()
+  
+    export
+       addConstraint,
+       addConstraints,
+       addCriticalPointConstraints,
+       addDistanceConstraints,
+       addFixPointConstraints,
+       addGeneralConstraints,
+       addLinearConstraint,
+       addNVConstraintsForTighterApprBox,
+       addNVConstraints,
+       addVariable,
+       addVariableWithoutRange,
+       copyCriticalPointParamsToNLP,
+       createNewNLP,
+       getConstraints,
+       getCostFunction,
+       getExplicitAEs,
+       getLinearConstraints,
+       getNLP,
+       getObjfunTemplatePath,
+       getParameters,
+       getVariables,
+       setBinaryVariables,
+       setConstraints,
+       setCostFunctionForClosestCP,
+       setCostFunction,
+       setExplicitAEs,
+       setGeneralConstraints,
+       setLinearConstraints,
+       setObjfunTemplatePath,
+       setParametersForAugSys,
+       setParameters,
+       setVariables,
+       setVarsForAugSysWithoutRange,
+       setVarsForClosestPontWithoutRange,
+       setVarsWithoutRange; 
+
+   local NLPinModule;
+
+$include <ConstraintInitializer/NLP/addConstraint.txt>
+$include <ConstraintInitializer/NLP/addConstraints.txt>
+$include <ConstraintInitializer/NLP/addCriticalPointConstraints.txt>
+$include <ConstraintInitializer/NLP/addDistanceConstraints.txt>
+$include <ConstraintInitializer/NLP/addFixPointConstraints.txt>
+$include <ConstraintInitializer/NLP/addGeneralConstraints.txt>
+$include <ConstraintInitializer/NLP/addLinearConstraint.txt>
+$include <ConstraintInitializer/NLP/addNVConstraintsForTighterApprBox.txt>
+$include <ConstraintInitializer/NLP/addNVConstraints.txt>
+$include <ConstraintInitializer/NLP/addVariable.txt>
+$include <ConstraintInitializer/NLP/addVariableWithoutRange.txt>
+$include <ConstraintInitializer/NLP/copyCriticalPointParamsToNLP.txt>
+$include <ConstraintInitializer/NLP/createNewNLP.txt>
+$include <ConstraintInitializer/NLP/getConstraints.txt>
+$include <ConstraintInitializer/NLP/getCostFunction.txt>
+$include <ConstraintInitializer/NLP/getExplicitAEs.txt>
+$include <ConstraintInitializer/NLP/getLinearConstraints.txt>
+$include <ConstraintInitializer/NLP/getNLP.txt>
+$include <ConstraintInitializer/NLP/getObjfunTemplatePath.txt>
+$include <ConstraintInitializer/NLP/getParameters.txt>
+$include <ConstraintInitializer/NLP/getVariables.txt>
+$include <ConstraintInitializer/NLP/setBinaryVariables.txt>
+$include <ConstraintInitializer/NLP/setConstraints.txt>
+$include <ConstraintInitializer/NLP/setCostFunctionForClosestCP.txt>
+$include <ConstraintInitializer/NLP/setCostFunction.txt>
+$include <ConstraintInitializer/NLP/setExplicitAEs.txt>
+$include <ConstraintInitializer/NLP/setGeneralConstraints.txt>
+$include <ConstraintInitializer/NLP/setLinearConstraints.txt>
+$include <ConstraintInitializer/NLP/setObjfunTemplatePath.txt>
+$include <ConstraintInitializer/NLP/setParametersForAugSys.txt>
+$include <ConstraintInitializer/NLP/setParameters.txt>
+$include <ConstraintInitializer/NLP/setVariables.txt>
+$include <ConstraintInitializer/NLP/setVarsForAugSysWithoutRange.txt>
+$include <ConstraintInitializer/NLP/setVarsForClosestPontWithoutRange.txt>
+$include <ConstraintInitializer/NLP/setVarsWithoutRange.txt>
+
+
+  end module; # AugSys2:-ConstraintInitializer:-NLP 
+ 
+ 
+ 

@@ -1,0 +1,53 @@
+###########################################################################
+# 
+# @path AugSys2/FlipAndFoldNV/CreateFlipWithAlgEqnsNVSys.txt
+#
+# @brief Creates an augmented NV system for Flip critical boundaries
+#        for DTASys with or without algebraic equations
+#
+# @param  
+#   a model (with algebraic equations) to be augmented by system for finding flip normal vectors,
+#   list of names of free parameters Alpha
+#   optional argument: radius of circle where eigenvalues have to lie (if not given by default = 1)
+#
+# @param 
+#   an Sys, first part is the result from converting DynEqns to substitude to it AlgEqns, 
+#    2nd part is the result from converting AlgEqns to substitude to it AlgEqns 
+#    3nd part is system for finding normal vertors
+#
+# @notes (1) a line of content data is a list of form 
+#            [param1=..., param2=..., ...]
+#        (2) eigenvalue =-1 corresponding to generalized flip bifurcation, 
+#            eigenvalue = 1 corresponding to generalized fold  bifurcation, 
+#
+# @revision
+# 2008-10-30 Written by dka
+# 
+###########################################################################
+    
+   CreateFlipWithAlgEqnsNVSys:=proc(
+      aSys::table,
+      ListOfNVparams::list(name)
+      # optional radius
+    )
+    
+    local flipNVSys, radius; 
+    
+      #
+      # extract optional arguments
+      #
+        if 
+          nargs>2
+        then 
+          radius:= args[3];
+          if not ((radius>=0) and (radius<=1))
+  	  then error("Radius of circle where eigenvalues have to lie (third input) have to be between 0 to 1");
+   	  end if;
+        else
+          radius:=1; 
+        end if; 
+      
+    flipNVSys:=CreateFlipOrFoldWithAlgEqnsNVSys(aSys,ListOfNVparams,-1,radius); 
+    return(flipNVSys);
+
+    end proc;  #AugSys2:-FlipAndFoldNV:- CreateFlipWithAlgEqnsNVSys

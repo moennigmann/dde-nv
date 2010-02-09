@@ -1,0 +1,153 @@
+    ###------------------------------------------------------------------------
+    #
+    # template function objfunTemplate, local to NPSOL
+    #
+    # below actual information from anNLP is substituted into
+    # this template
+    #
+    # revision history:
+    #   2008-05-13 add cost function calculated here
+    #   021217 introduced common block for parameters; deleted code
+    #     which assigned values to par; 
+    #   021127 introduced dummy explicit AE;
+    #   021124 introduced EAEs; 
+    #   010424 introduced dummy parameter which allows to use template
+    #     for nlps without any parameters - mmo 
+    #   0011xx written by mmo
+    ###------------------------------------------------------------------------
+    objfunTemplate:= proc(
+      mode::integer,
+      n::integer,
+      x, 
+      objf::float,
+      objgrad, 
+      nstate::integer
+    )
+
+      global par;   
+      local n_in_objfun, z, cs, i, i1, i2,  erainv, cainv, ervcon, cvcon, score, nb, k, w, curnb; 
+  
+      declare(
+        par= array(
+          1..(NumParsToBeSubs+ 1), # see note concerning dummy
+          numeric                  # parameter in ConfunTemplate above
+        ),
+  
+        x= array(
+          1..NumVarsToBeSubs,
+          numeric
+        ),
+
+        objgrad= array(
+          1..NumVarsToBeSubs,
+          numeric
+        ),
+
+        n_in_objfun= integer,
+
+        z= array(
+          1..NumEAEsToBeSubs+ 1,
+          numeric
+        ),
+
+       cs=array(1..10000,1..12,numeric),
+      
+       i= integer, 
+       i1= integer, 
+       i2= integer,  
+       erainv= float, 
+       cainv= float, 
+       ervcon= float, 
+       cvcon= float,
+       score= float,
+      
+       nb= float,
+       k= integer, 
+       w= float, 
+       curnb= float
+        
+      ); 
+  
+      #
+      # check for errors
+      #
+        n_in_objfun:= NumVarsToBeSubs;
+        if
+          not(n_in_objfun= n)
+        then
+          ERROR(`Error in confun: n differs from number of variables`);
+          # note: do not change to Maple6 syntax of error command,
+          #   codegen/fortran cannot deal with new syntax
+          #   this is probably a bug in Maple6 - mmo
+        end if; 
+      
+      #
+      # calculate explicit algebraic equations
+      #
+        z:= [EAEsToBeSubs, 0]; 
+
+      #
+      # calculate objective function
+      #
+
+   
+   cs[1,1]:=0;
+   cs[1,2]:=0;
+   cs[1,3]:=0;
+   cs[1,4]:=0;
+   cs[1,5]:=0;
+   cs[1,6]:=0;
+   cs[1,7]:=0;
+   cs[1,8]:=0;
+   cs[1,9]:=0;
+   cs[1,10]:=0;
+   cs[1,11]:=0;
+   cs[1,12]:=0;
+   
+   erainv := 0; 
+   cainv := 1; 
+ 
+   ervcon := 0; 
+   cvcon := 1; 
+
+   for i from 1 to 2000 do
+   cs[i+1,1]:=par[1]+cs[i, 1]+(par[2]*par[1]-cs[i, 1])/(1+x[3])-cs[i, 5]-(par[2]*cs[i, 4]-cs[i, 5])/(1+x[3]);
+   cs[i+1,2]:=cs[i, 2]+(par[1]+cs[i, 1]+(par[2]*par[1]-cs[i, 1])/(1+x[3])-cs[i, 5]-(par[2]*cs[i, 4]-cs[i, 5])/(1+x[3])-cs[i, 2])/(1+x[4]);
+   cs[i+1,3]:=par[1]; 
+   cs[i+1,4]:=par[1]; 
+   cs[i+1,5]:=cs[i, 1]; 
+   cs[i+1,6]:=cs[i, 10]; 
+   cs[i+1,7]:=cs[i, 6];
+   cs[i+1,8]:=cs[i, 7];
+   cs[i+1,9]:=cs[i, 9];
+   cs[i+1,10]:=cs[i, 2]-cs[i, 11]/x[2]+(cs[i, 2]*par[3]-cs[i, 10]-cs[i, 6]-cs[i, 7]-cs[i, 8])/x[1];
+   cs[i+1,11]:=cs[i, 11]+cs[i, 8]-par[1];
+   cs[i+1,12]:=cs[i, 12]+(par[1]*par[2]-cs[i, 12])/(1+x[3]);
+
+   cainv := ((abs(cs[i,11]))^2)*(i-1); 
+   erainv := erainv+cainv;
+   
+   cvcon := ((abs(cs[i,12]-par[1]*par[2]))^2)*(i-1); 
+   ervcon := ervcon+cvcon;   
+   end do;
+
+   nb:=0;
+
+   for k from 1 to 3141 do
+   w:=0.001*k;
+   curnb:=(1+2*x[3]+2*par[2]+2*x[3]^2+4*x[3]*par[2]+2*par[2]^2-4*par[2]*cos(w)*x[3]-2*x[3]*cos(w)-2*par[2]*cos(w)-2*par[2]^2*cos(w)-2*x[3]^2*cos(w))*(-32*x[2]^2*cos(w)+4*x[1]^2*x[4]*x[2]-8*x[1]*x[2]*cos(w)-2*x[1]^2*x[4]*cos(w)-16*x[1]*x[2]^2*cos(w)-2*x[1]^2*x[2]*cos(w)-2*x[1]^2*x[2]^2*cos(w)-2*x[1]^2*x[4]^2*cos(w)+8*x[1]*x[2]+2*x[1]^2*x[4]^2+2*x[1]^2*x[2]^2+16*x[1]*x[2]^2+32*x[2]^2+x[1]^2+16*x[1]*x[4]*x[2]+2*x[1]^2*x[4]+2*x[1]^2*x[2]-16*x[1]*x[4]*x[2]*cos(w)-4*x[1]^2*x[4]*x[2]*cos(w))/((-2*x[4]*cos(w)-2*x[4]^2*cos(w)+2*x[4]^2+2*x[4]+1)*(-2*x[3]*cos(w)-2*x[3]^2*cos(w)+2*x[3]^2+2*x[3]+1)*(-16*x[2]^2*cos(w)^4+16*x[2]^2*cos(w)^2-2*x[1]^2*x[2]^2*cos(w)+2*x[1]^2*x[2]^2+x[1]^2-2*x[1]^2*x[2]-32*x[2]^2*cos(w)^5*x[1]+16*x[2]^2*cos(w)^4*x[1]+40*x[2]^2*cos(w)^3*x[1]-16*x[2]^2*cos(w)^2*x[1]-8*x[1]*x[2]^2*cos(w)+32*x[2]*x[1]^2*cos(w)^5-16*x[2]*x[1]^2*cos(w)^4+16*x[2]*x[1]*cos(w)^4-40*x[2]*x[1]^2*cos(w)^3-16*x[2]*x[1]*cos(w)^2+16*x[2]*x[1]^2*cos(w)^2+10*x[1]^2*x[2]*cos(w)));
+   nb:=nb+0.001*curnb;
+   end do;
+
+   score := ((1/500)*erainv)^2+((1/250)*ervcon)^2+par[4]*(nb)^2;
+
+        objf:= score;
+  
+      #
+      # calculate gradient of objective function
+      #
+      # objgrad:= GradToBeSubs;
+              
+      RETURN();
+  
+    end proc: #objfunTemplate

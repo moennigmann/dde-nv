@@ -1,0 +1,43 @@
+###############################################################################
+#
+# @path AugSys2/AugSys2.txt
+#
+# @brief Collects procedures that deal with augmentation of discrete time systems 
+#        by normal vectors and helping procedures for optimization with Npsol
+#
+# @authors dka
+#
+# @revision
+#   2009-12-22 Added SaddleNodeNV, HopfNV
+#   2008-07-09 Added Discretization
+#   2008-03-13 Added ConstraintInitializer
+#   2008-02-28 Sorted procedures alphabetically
+#   2007-12-04 Created by dka  
+#
+###############################################################################
+
+AugSys2:=module()
+
+  export 
+    ConstraintInitializer,
+    Discretization,
+    FlipAndFoldNV,
+    HopfNV,
+    NeimarkSackerNV,
+    SaddleNodeNV; 
+
+$include <ConstraintInitializer.txt>
+$include <Discretization.txt>
+$include <FlipAndFoldNV.txt>
+$include <HopfNV.txt>
+$include <NeimarkSackerNV.txt>
+$include <SaddleNodeNV.txt>
+  
+end module; # AugSys
+
+save(AugSys2, "AugSys2.mpl");
+
+
+
+
+ 

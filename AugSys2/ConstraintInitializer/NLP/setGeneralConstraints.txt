@@ -1,0 +1,31 @@
+###############################################################################
+#
+# @path AugSys2/ConstraintInitializer/NLP/setGeneralConstraints.txt
+#
+# @brief Sets constraints for NLP:
+#        cheking if constraint is liniar than add it to "LinearConstraints" 
+#        if not to "Constraints"
+#
+# @notes For the moment Npsol does not consider the linear constraints
+#
+# @param contraints in the following form: 
+#        0 < term or 0 = term or empty
+#
+# @revision
+# 2008-03-14 written by dka
+#
+###############################################################################
+setGeneralConstraints:= proc(
+  listOfConstraints:: {[], list({0 < term, 0 = term})}
+)
+     NLPinModule["LinearConstraints"]:=[];
+     NLPinModule["Constraints"]:=[];
+     addGeneralConstraints(listOfConstraints);
+
+ 
+    return();
+
+end proc; 
+
+ 
+ 
