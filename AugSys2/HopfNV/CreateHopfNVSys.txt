@@ -15,6 +15,7 @@
 #   2nd part is system for finding normal vertors
 # 
 # @revision
+# 2010-02-18 Added possibility of gereralized eigen vectors, i.e. systems with AEs, by dka  
 # 2009-12-22 Apdated from AugSys by dka
 # 
 ###########################################################################
@@ -26,12 +27,13 @@
 
       local ListofNames, item, ComplexRightEigSys, ExtendedSysToBeSubs,
      	ExtendedSystemEquations, ExtendedSystemVariables,
-	ExtendedSystemParameters, DESys, NumOfDynEqns, f_x, f_xTransp, f_xx,
+	ExtendedSystemParameters, DESys, f_x, f_xTransp, f_xx,
 	f_xalpha, f_p, f_xpTransp, V1, V2, U, R, NewVariables, NewEquations, 
         f_alpha,f_alphaTransp,W1,W2,fxx_w1,v1_fxx_w1,fxx_w2,v2_fxx_w2,
         fxalpha_w1,v1_fxalpha_w1,fxalpha_w2,v2_fxalpha_w2,
         NumNVparamsToBeSubs, ParsOfModel, VarsOfModel, result, 
-        NumOfDynEqnsInModule, radius;
+        radius, DynEqnsOfModel, AlgEqnsOfModel, NumOfEqnsOfModel,
+        AlgVarsOfModel, i2, CMatr, NumOfDynEqnsInModule;
         
       #
       # extract optional arguments
@@ -70,19 +72,22 @@
         DESys := Aux:-SystemClasses:-subsExplicitAEsIntoDAESys(aSys); 
         
 
-        NumOfDynEqns:= nops(DESys["ODEs"]);
+        DynEqnsOfModel:= DESys["ODEs"]; 
+        AlgEqnsOfModel := DESys["AEs"]; 
+        NumOfEqnsOfModel:= nops(DynEqnsOfModel)+nops(AlgEqnsOfModel);
         VarsOfModel:= DESys["DynVars"];
         ParsOfModel:= DESys["Parameters"]; 
+        AlgVarsOfModel:= DESys["AlgVars"];
   
         f_x:= Aux:-Derivs:-f_x(
-          DESys["ODEs"],
-          DESys["DynVars"]
+          [op(DynEqnsOfModel),op(AlgEqnsOfModel)],
+          [op(VarsOfModel),op(AlgVarsOfModel)]
         );
 
         f_xTransp:= LinearAlgebra[Transpose](f_x); 
 
         f_alpha:= Aux:-Derivs:-f_p(
-          DESys["ODEs"],
+          [op(DynEqnsOfModel),op(AlgEqnsOfModel)],
           ListOfNVparams
         );
 
@@ -91,17 +96,26 @@
         ); 
 
         f_xx:= Aux:-Derivs:-f_xx(
-          DESys["ODEs"],
-          DESys["DynVars"]
+          [op(DynEqnsOfModel),op(AlgEqnsOfModel)],
+          [op(VarsOfModel),op(AlgVarsOfModel)]
         ); 
 
         f_xalpha:= Aux:-Derivs:-f_xp(
-	  DESys["ODEs"],
-          DESys["DynVars"], 
+	  [op(DynEqnsOfModel),op(AlgEqnsOfModel)],
+          [op(VarsOfModel),op(AlgVarsOfModel)],
           ListOfNVparams
  	);         
+ 
+        #
+        # introducing the matrix C for the general eigenvalues definition
+        #
 
-  
+         CMatr:= Matrix(NumOfEqnsOfModel);
+
+         for i2 from 1 to nops(DESys["ODEs"]) do
+         CMatr[i2,i2]:=1;
+	 end do; 
+      
       #------------------------------------------------------------
       #
       # start construction of normal vector system
@@ -112,22 +126,22 @@
         #
           V1:= [seq(
             v1[i1], 
-            i1=1..NumOfDynEqns)
+            i1=1..NumOfEqnsOfModel)
           ]; 
 
           V2:= [seq(
             v2[i1], 
-            i1=1..NumOfDynEqns)
+            i1=1..NumOfEqnsOfModel)
           ];
   
           W1:= [seq(
             w1[i1], 
-            i1=1..NumOfDynEqns)
+            i1=1..NumOfEqnsOfModel)
           ]; 
 
           W2:= [seq(
             w2[i1], 
-            i1=1..NumOfDynEqns)
+            i1=1..NumOfEqnsOfModel)
           ];
   
         #
@@ -135,7 +149,7 @@
         #
           U:= [seq(
           u[i1], 
-            i1=1..NumOfDynEqns)
+            i1=1..NumOfEqnsOfModel)
           ]; 
   
           R:= [seq(
@@ -160,7 +174,7 @@
         #--------------------
           NewEquations:= [seq(
             0= rhs(DESys["ODEs"][i1]),
-            i1= 1..NumOfDynEqns
+            i1= 1..nops(DESys["ODEs"])
           )];
   
           NewVariables:= DESys["DynVars"];
@@ -170,18 +184,44 @@
           #
             ExtendedSystemEquations:= NewEquations;
             ExtendedSystemVariables:= NewVariables; 
+        
+        #----------------------------------------------
+        #
+        # model algebraic equations g = 0
+        #
+        #----------------------------------------------
+          NewEquations:= [seq(
+            0= rhs(DESys["AEs"][i1]),
+            i1= 1..nops(DESys["AEs"])
+          )];
+  
+          NewVariables:= DESys["AlgVars"];
+
+          #
+          # ExtendedSystem with NewEquations, NewVariables
+          #
+
+            ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            op(NewEquations)                    
+          ];
+  
+          ExtendedSystemVariables:= [
+            op(ExtendedSystemVariables),
+            op(NewVariables)
+          ];
 
         #----------------------------------------
         #
-        # fx w1 - R w1 + sigma w2 =0
+        # fx w1 - R C w1 + sigma C w2 =0
         #
         #----------------------------------------
 
          NewEquations := LinearAlgebra[Multiply](f_x, convert(W1,Vector))
-         -LinearAlgebra[Multiply](radius, convert(W1,Vector))
-         +LinearAlgebra[Multiply](sigma, convert(W2,Vector));
+         -LinearAlgebra[Multiply](CMatr,LinearAlgebra[Multiply](radius, convert(W1,Vector)))
+         +LinearAlgebra[Multiply](CMatr,LinearAlgebra[Multiply](sigma, convert(W2,Vector)));
          
-         NewEquations:=[seq(0=NewEquations[i1],i1=1..NumOfDynEqns)];
+         NewEquations:=[seq(0=NewEquations[i1],i1=1..NumOfEqnsOfModel)];
 
          NewVariables:=[sigma,op(W1),op(W2)];
           
@@ -198,15 +238,15 @@
 
         #----------------------------------------
         #
-        # fx w2 - sigma w1 - R w2 =0
+        # fx w2 - sigma C w1 - R C w2 =0
         #
         #----------------------------------------
 
          NewEquations := LinearAlgebra[Multiply](f_x, convert(W2,Vector))
-         -LinearAlgebra[Multiply](sigma, convert(W1,Vector))
-         -LinearAlgebra[Multiply](radius, convert(W2,Vector));
+         -LinearAlgebra[Multiply](CMatr,LinearAlgebra[Multiply](sigma, convert(W1,Vector)))
+         -LinearAlgebra[Multiply](CMatr,LinearAlgebra[Multiply](radius, convert(W2,Vector)));
 
-        NewEquations:=[seq(0=NewEquations[i1],i1=1..NumOfDynEqns)];
+        NewEquations:=[seq(0=NewEquations[i1],i1=1..NumOfEqnsOfModel)];
 
         ExtendedSystemEquations:= [
             op(ExtendedSystemEquations),   
@@ -247,17 +287,17 @@
 
         #----------------------------------------
         #
-        # fxT v1 -R v1 - sigma v2 + g1 w1 - g2 w2 =0
+        # fxT v1 -R C v1 - sigma C v2 + g1 w1 - g2 w2 =0
         #
         #----------------------------------------
 
           NewEquations := LinearAlgebra[Multiply](f_xTransp, convert(V1,Vector))
-         -LinearAlgebra[Multiply](radius,convert(V1,Vector))
-         -LinearAlgebra[Multiply](sigma, convert(V2,Vector))
+         -LinearAlgebra[Multiply](CMatr,LinearAlgebra[Multiply](radius,convert(V1,Vector)))
+         -LinearAlgebra[Multiply](CMatr,LinearAlgebra[Multiply](sigma, convert(V2,Vector)))
          +LinearAlgebra[Multiply](convert(W1,Vector), g1)
          -LinearAlgebra[Multiply](convert(W2,Vector), g2);
          
-         NewEquations:=[seq(0=NewEquations[i1],i1=1..NumOfDynEqns)];
+         NewEquations:=[seq(0=NewEquations[i1],i1=1..NumOfEqnsOfModel)];
 
          NewVariables:=[op(V1),op(V2),g1,g2];
           
@@ -274,17 +314,17 @@
 
         #----------------------------------------
         #
-        # fxT v2 + sigma v1  - R v2  + g1 w2 - g2 w1 =0
+        # fxT v2 + sigma C v1  - R C v2  + g1 w2 - g2 w1 =0
         #
         #----------------------------------------
 
          NewEquations := LinearAlgebra[Multiply](f_xTransp, convert(V2,Vector))
-         +LinearAlgebra[Multiply](sigma, convert(V1,Vector))
-         -LinearAlgebra[Multiply](radius, convert(V2,Vector))
+         +LinearAlgebra[Multiply](CMatr,LinearAlgebra[Multiply](sigma, convert(V1,Vector)))
+         -LinearAlgebra[Multiply](CMatr,LinearAlgebra[Multiply](radius, convert(V2,Vector)))
          +LinearAlgebra[Multiply](convert(W2,Vector), g1)
          +LinearAlgebra[Multiply](convert(W1,Vector), g2);
 
-        NewEquations:=[seq(0=NewEquations[i1],i1=1..NumOfDynEqns)];
+        NewEquations:=[seq(0=NewEquations[i1],i1=1..NumOfEqnsOfModel)];
 
         ExtendedSystemEquations:= [
             op(ExtendedSystemEquations),   
@@ -311,13 +351,13 @@
 
         #----------------------------------------
         #
-        # v1T w2 -v2T w1 =0
+        # v1T C w2 -v2T C w1 =0
         #
         #----------------------------------------
        
 
-        NewEquations := LinearAlgebra[Multiply](LinearAlgebra[Transpose](convert(V1,Vector)), convert(W2,Vector))
-                         -LinearAlgebra[Multiply](LinearAlgebra[Transpose](convert(V2,Vector)), convert(W1,Vector));
+        NewEquations := LinearAlgebra[Multiply](LinearAlgebra[Transpose](convert(V1,Vector)), LinearAlgebra[Multiply](CMatr,convert(W2,Vector)))
+                         -LinearAlgebra[Multiply](LinearAlgebra[Transpose](convert(V2,Vector)), LinearAlgebra[Multiply](CMatr,convert(W1,Vector)));
 
         ExtendedSystemEquations:= [
             op(ExtendedSystemEquations),   
@@ -349,7 +389,7 @@
           +convert(v1_fxx_w1,Vector)
           +convert(v2_fxx_w2,Vector);
 
-          NewEquations:=[seq(0=NewEquations[i1],i1=1..NumOfDynEqns)];
+          NewEquations:=[seq(0=NewEquations[i1],i1=1..NumOfEqnsOfModel)];
              
           NewVariables:= U;
           
@@ -419,7 +459,7 @@
       # apart from vars listed explicitly, the following vars
       # are passed on to template:
       #   f_x -> Jac
-      #   NumOfDynEqns -> NumDynEqns
+      #   NumOfEqnsOfModel -> NumDynEqns
       #
         ExtendedSysToBeSubs:= table();
         ExtendedSysToBeSubs["Equations"]:= ExtendedSystemEquations;
