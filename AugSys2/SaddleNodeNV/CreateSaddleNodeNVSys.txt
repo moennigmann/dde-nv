@@ -1,6 +1,6 @@
 ##########################################################################
 # 
-# @path AugSys2/SaddleNodeNV/CreateSaddleNodeNvSys.txt
+# @path AugSys2/SaddleNodeNV/CreateSaddleNodeNVSys.txt
 #
 # @brief Creates an augmented NV system for DAESys without algebraic equations 
 #        for critical boundaries which consist of saddle-node bifurcations 
@@ -15,6 +15,7 @@
 #   optional argument: a negative bound on eigenvalues
 #
 # @revision
+# 2010-02-18 Added possibility of gereralized eigen vectors, i.e. systems with AEs, by dka  
 # 2009-07-24 Created by dka
 # 
 ##########################################################################
@@ -29,8 +30,10 @@
 	ExtendedSystemParameters, DESys, NumOfDynEqns, f_x, f_xTransp,
 	V, R, NewVariables, NewEquations, 
         f_alpha, f_alphaTransp, radius,
-        NumNVparamsToBeSubs, ParsOfModel, VarsOfModel, result, NumOfDynEqnsInModule;
-        
+        NumNVparamsToBeSubs, ParsOfModel, VarsOfModel, result, NumOfDynEqnsInModule,
+        AlgEqnsOfModel, AlgVarsOfModel, DynEqnsOfModel, CMatr, i2;
+       
+    
       #
       # extract optional arguments
       #
@@ -69,19 +72,22 @@
         DESys := Aux:-SystemClasses:-subsExplicitAEsIntoDAESys(aSys); 
         
 
-        NumOfDynEqns:= nops(DESys["ODEs"]);
+        DynEqnsOfModel:= DESys["ODEs"]; 
         VarsOfModel:= DESys["DynVars"];
-        ParsOfModel:= DESys["Parameters"]; 
+        ParsOfModel:= DESys["Parameters"];
+        AlgEqnsOfModel := DESys["AEs"]; 
+        AlgVarsOfModel:= DESys["AlgVars"];
+        NumOfDynEqns:= nops(DynEqnsOfModel)+nops(AlgEqnsOfModel);
   
         f_x:= Aux:-Derivs:-f_x(
-          DESys["ODEs"],
-          DESys["DynVars"]
+          [op(DynEqnsOfModel),op(AlgEqnsOfModel)],
+          [op(VarsOfModel),op(AlgVarsOfModel)]
         );
 
         f_xTransp:= LinearAlgebra[Transpose](f_x); 
 
         f_alpha:= Aux:-Derivs:-f_p(
-          DESys["ODEs"],
+          [op(DynEqnsOfModel),op(AlgEqnsOfModel)],
           ListOfNVparams
         );
 
@@ -89,7 +95,17 @@
           f_alpha
         ); 
 
-  
+        #
+        # introducing the matrix C for the generalized eigenvalues definition
+        #
+
+         CMatr:= Matrix(NumOfDynEqns);
+
+         for i2 from 1 to nops(DESys["ODEs"]) do
+         CMatr[i2,i2]:=1;
+	 end do; 
+
+
       #------------------------------------------------------------
       #
       # start construction of normal vector system
@@ -125,7 +141,7 @@
         #--------------------
           NewEquations:= [seq(
             0= rhs(DESys["ODEs"][i1]),
-            i1= 1..NumOfDynEqns
+            i1= 1..nops(DESys["ODEs"])
           )];
   
           NewVariables:= DESys["DynVars"];
@@ -136,13 +152,42 @@
             ExtendedSystemEquations:= NewEquations;
             ExtendedSystemVariables:= NewVariables; 
 
+            
+        #--------------------------------------------
+        #
+        # model algebraic equations g = 0
+        #
+        #--------------------------------------------
+
+          NewEquations:= [seq(
+            0= rhs(AlgEqnsOfModel[i1]),
+            i1= 1..nops(AlgEqnsOfModel)
+          )];
+  
+          NewVariables:= DESys["AlgVars"];
+
+          #
+          # ExtendedSystem with NewEquations, NewVariables
+          #
+
+            ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            op(NewEquations)                    
+          ];
+  
+          ExtendedSystemVariables:= [
+            op(ExtendedSystemVariables),
+            op(NewVariables)
+          ];
+  
         #----------------------------------------
         #
-        # fxT v - radius v= 0
+        # fxT v - radius C v= 0
         #
         #----------------------------------------
 
-         NewEquations := LinearAlgebra[Multiply](f_xTransp, convert(V,Vector)) - LinearAlgebra[Multiply](radius,convert(V,Vector));
+         NewEquations := LinearAlgebra[Multiply](f_xTransp, convert(V,Vector)) 
+                         - LinearAlgebra[Multiply](CMatr,LinearAlgebra[Multiply](radius,convert(V,Vector)));
          
          NewEquations:=[seq(0=NewEquations[i1],i1=1..NumOfDynEqns)];
 
