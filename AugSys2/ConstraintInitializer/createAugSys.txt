@@ -104,7 +104,7 @@
     augSysInModule:= augSys;
     isAugSysCreatedInModule:=true;
     listOfNVParamsInModule:= listOfNVparams;
-    listOfDynVarsInModule:= aSys["DynVars"];
+    listOfDynVarsInModule:= [op(aSys["DynVars"]),op(aSys["AlgVars"])];
  
     return (eval(augSys));
 
