@@ -16,14 +16,20 @@ Scale:= module()
     calcc,
     calcD,
     CreateInstanceForNLP,
+    CreateInstanceForSys2,
     createSubsLists,
-    replaceInfiniteRangesByTrivialRanges; 
+    extendRangesByTrivialRanges,
+    replaceInfiniteRangesByTrivialRanges,
+    SubsIntoTemplateModule2; 
 
 $include <NLP/Scale/calcc.txt>
 $include <NLP/Scale/calcD.txt>
 $include <NLP/Scale/CreateInstanceForNLP.txt>
+$include <NLP/Scale/CreateInstanceForSys2.txt>
 $include <NLP/Scale/createSubsLists.txt>
+$include <NLP/Scale/extendRangesByTrivialRanges.txt>
 $include <NLP/Scale/replaceInfiniteRangesByTrivialRanges.txt>
+$include <NLP/Scale/SubsIntoTemplateModule2.txt>
 
 end module; 
  

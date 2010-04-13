@@ -38,12 +38,14 @@ Aux:= module()
   option package;
   
  global
+    `type/AESys`,
     `type/EvalsToFloat`,
     `type/NLP`,
     `type/BCNLP`,
     `type/term`,
     `type/DTASys`,
-    `type/DAESys`;
+    `type/DAESys`,
+    `type/ExtAESys`;
 
   export
     BoxOperations, 

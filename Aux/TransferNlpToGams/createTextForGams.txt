@@ -173,16 +173,19 @@ createTextForGams:= proc(aNLPpar::NLP,modelName::string)
    
    for i from 1 to nops(mapleConstraints) do
       signOfConstraint:=" =e= ";
-      iflessConstrLhs := convert(mapleConstraints[i], string);
-      iflessConstrRhs := convert(lhs(mapleConstraints[i]) < rhs(mapleConstraints[1]), string);
-      iflessOrEqConstrRhs := convert(lhs(mapleConstraints[i]) <= rhs(mapleConstraints[1]), string);
-      if (StringTools[Compare](iflessConstrLhs,iflessConstrRhs) or StringTools[Compare](iflessConstrLhs,iflessOrEqConstrRhs) )
+      iflessConstrLhs := StringTools[SubstituteAll](convert(mapleConstraints[i], string)," ","");
+
+      iflessConstrRhs := StringTools[SubstituteAll](StringTools[Join]([convert(lhs(mapleConstraints[i]),string),"<", convert(rhs(mapleConstraints[i]),string)],"")," ","");
+      iflessOrEqConstrRhs := StringTools[SubstituteAll](StringTools[Join]([convert(lhs(mapleConstraints[i]),string),"<=", convert(rhs(mapleConstraints[i]),string)],"")," ","");
+     
+      if ((iflessConstrLhs=iflessConstrRhs) or (iflessConstrLhs=iflessOrEqConstrRhs) )
                then signOfConstraint:=" =l= ";
       end if;  
 
-      ifGraterConstrRhs := convert(lhs(mapleConstraints[i]) > rhs(mapleConstraints[1]), string);
-      ifGraterOrEqConstrRhs := convert(lhs(mapleConstraints[i]) >= rhs(mapleConstraints[1]), string);
-      if (StringTools[Compare](iflessConstrLhs,ifGraterConstrRhs) or StringTools[Compare](iflessConstrLhs,ifGraterOrEqConstrRhs) )
+      ifGraterConstrRhs :=StringTools[SubstituteAll](StringTools[Join]([convert(lhs(mapleConstraints[i]),string),">", convert(rhs(mapleConstraints[i]),string)],"")," ","");
+      ifGraterOrEqConstrRhs :=StringTools[SubstituteAll](StringTools[Join]([convert(lhs(mapleConstraints[i]),string),">=", convert(rhs(mapleConstraints[i]),string)],"")," ","");
+    
+      if ((iflessConstrLhs=ifGraterConstrRhs) or (iflessConstrLhs=ifGraterOrEqConstrRhs) )
                then signOfConstraint:=" =g= ";
       end if;  
       currentGamsConstraintLine:=StringTools[Join](["EquationN",convert(i,string)," .. ",

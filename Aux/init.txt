@@ -50,6 +50,24 @@ init:= proc()
     end if; 
   end proc; # type/DAESys
 
+  
+`type/AESys`:= proc(aSystem::table)
+      if Aux:-SystemClasses:-listOfErrorsInAESys(aSystem)= [] then
+        RETURN(true);
+      else
+        RETURN(false);
+      end if; 
+  end proc;
+
+
+`type/ExtAESys`:= proc(aSystem::table)
+      if  Aux:-SystemClasses:-listOfErrorsInExtAESys(aSystem)= [] then
+        RETURN(true);
+      else
+        RETURN(false);
+      end if; 
+  end proc;
+
 
   `type/EvalsToFloat` := proc(
     a::anything

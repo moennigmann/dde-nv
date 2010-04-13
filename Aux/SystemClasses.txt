@@ -7,6 +7,7 @@
 # @authors mmo, dka
 #
 # @revision
+# 2010-03-08 added listOfErrorsInExtAESysPart2, listOfErrorsInExtAESys from ModelPack
 # 2008-05-15 added listOfErrorsInDAESys, listOfErrorsInDAESysPart2, 
 #             noNameConflictsInUnitsInDAESys, subsExplicitAEsIntoDAESys from ModelPack
 # 2008-03-05 copied from ModelPack listOfErrorsInEAEs, listOfErrorsInNlpPart2,
@@ -22,33 +23,44 @@ SystemClasses:= module()
 export
     exportDTASysToCLMatContM,
     exportDTASysToMatCont,
+    listOfErrorsInAESysPart2,
+    listOfErrorsInAESys,
     listOfErrorsInDAESys,
     listOfErrorsInDAESysPart2,
     listOfErrorsInDTASys,
     listOfErrorsInDTASysPart2,
     listOfErrorsInEAEs,
+    listOfErrorsInExtAESysPart2,
+    listOfErrorsInExtAESys,
     listOfErrorsInNlpPart2,
     listOfErrorsInNLP,
     noNameConflictsInUnitsInDAESys,
     noNameConflictsInUnitsInDTASys,
+    parToLastVarInExtAESys,
     subsExplicitAEsIntoDAESys,
-    subsExplicitAlgEqnsIntoDTASys; 
+    subsExplicitAlgEqnsIntoDTASys,
+    subsStandardNotationIntoExtAESys; 
 
 
 $include <SystemClasses/exportDTASysToCLMatContM.txt>
 $include <SystemClasses/exportDTASysToMatCont.txt>
+$include <SystemClasses/listOfErrorsInAESysPart2.txt>
+$include <SystemClasses/listOfErrorsInAESys.txt>
 $include <SystemClasses/listOfErrorsInDAESys.txt>
 $include <SystemClasses/listOfErrorsInDAESysPart2.txt>
 $include <SystemClasses/listOfErrorsInDTASys.txt>
 $include <SystemClasses/listOfErrorsInDTASysPart2.txt>
 $include <SystemClasses/listOfErrorsInEAEs.txt>
+$include <SystemClasses/listOfErrorsInExtAESysPart2.txt>
+$include <SystemClasses/listOfErrorsInExtAESys.txt>
 $include <SystemClasses/listOfErrorsInNlpPart2.txt>
 $include <SystemClasses/listOfErrorsInNLP.txt>
 $include <SystemClasses/noNameConflictsInUnitsInDAESys.txt>
 $include <SystemClasses/noNameConflictsInUnitsInDTASys.txt>
+$include <SystemClasses/parToLastVarInExtAESys.txt>
 $include <SystemClasses/subsExplicitAEsIntoDAESys.txt>
 $include <SystemClasses/subsExplicitAlgEqnsIntoDTASys.txt>
-
+$include <SystemClasses/subsStandardNotationIntoExtAESys.txt>
 
 
 end module; 
