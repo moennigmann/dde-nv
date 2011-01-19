@@ -1,0 +1,294 @@
+######################################################################
+#
+#procedure TestCalculateIntResultsVarInput.txt
+#
+#description: Test if DDASPKSen works with variable input. 
+#	      _EnvWorkingDir and _EnvModuleDir has to be set in the
+#	      calling sheet.
+#
+#input: none
+#
+#output: (1) boolean: true => test was succesful; false => test has failed
+#	 (2) numerical integration solution (curve); for display in sheet.  
+#	 (3) analytical integration solution (curve); for display in sheet.
+#commet: needs the old collection of procedures VariableInputSysIdent.txt
+#
+#to do: (1) display does not work, output to file does not work. This
+#	    is only a cosmetical problem.
+#
+#revision history:
+#080515 removed init(); this is done implicitly in CalculateIntResults, tqu	  
+#080506 created by tqu
+#######################################################################
+
+TestCalculateIntResultsVarInput := proc()
+
+  local 
+   aDAESys,
+   x1Data, 
+   x2Data, 
+   timePoints,
+   test1Suceeded,
+   test2Suceeded,
+   actResults,
+   initialVars,
+   initialTime,
+   DDASPKprocNum1,
+   DDASPKprocNum2,
+   DglSys,
+   sol,	
+   initConds0,
+   pars0,
+   sol0,
+   tableOfSolution,
+   tableOfDiffs,
+   tableOfAnalyticalValues,
+   parsNames,
+   senName,
+   p,
+   actVar,
+   parameter,
+   actDiff,
+   subsedDiff,
+   subsedVar,
+   allIndices,
+   numResults,
+   name,
+   actNumValues,
+   actAnalyticalValues,
+   i,
+   numValue,
+   analyticalValue,
+   analResults,
+   inputTable,
+   nrDataPoints,
+   otherData,
+   curveTest1,
+   curveTest2,
+   DDASPKprocAnal1,
+   DDASPKprocAnal2,
+   DDASPKprocSysIdent,
+   sysIdentResults,
+   names,
+   numError,
+   numPlotOptions,
+   entry,
+   inputTest1,
+   inputTest2;
+
+   test1Suceeded := true;
+   test2Suceeded := true;
+   
+  #
+  #read modules needed
+  #
+   read(cat(_EnvModulesDir, "ModelPack/source/ModelPack.mpl")):
+   read(cat(_EnvModulesDir, "DDASPKSen/source/DDASPKSen.mpl")):
+   read(cat(_EnvModulesDir, "Adifor/source/ADIFOR.mpl")):
+   read(cat(_EnvModulesDir, "DDASPKSen/source/Tests/VariableInputSysIdent.txt")):
+
+
+  #
+  #define simple test systen
+  #
+   aDAESys:=ModelPack:-NewDAESys():
+   aDAESys[ODEs] := [
+     `x1'` =a1*x1+input,
+     `x2'` =a2*x2
+   ];
+   aDAESys[Parameters] := [a1=-1, a2=-2, input=0];
+   aDAESys[DynVars] := [x1, x2];
+   aDAESys[AEs] := [];
+   aDAESys[AlgVars] := [];
+   initialVars:=[2,1];
+   initialTime:=0;
+  
+  #
+  #ckeck if three directories (tmp1, tmp2, tmp3,tmp4) needed for calculation already exists
+  #	
+   if
+     ModelPack:-DirExists("tmp1") or ModelPack:-DirExists("tmp2") 
+     or ModelPack:-DirExists("tmp3") or ModelPack:-DirExists("tmp4") 
+   then
+     error("temporary directory ./tmp1, ./tmp2, ./tmp3, /tmp4  needed to run test already exists")
+   else  
+       mkdir("tmp1"); mkdir("tmp2"); mkdir("tmp3");mkdir("tmp4");
+   end if;
+
+  #--------------------------------------------------------------------------------
+  #
+  #test1: compare analytical with numerical solution
+  #
+  #--------------------------------------------------------------------------------
+
+   #
+   #create instance of DDASPKsen for numerical solution
+   #
+    DDASPKprocNum1 := DDASPKSen:-CreateInstance(aDAESys, "./tmp1", [a1, a2], 'adifor'):
+
+   #	      
+   #set initial values, initial time, and parameter values and initialize DDASPKproc
+   #
+    DDASPKprocNum1 :-SetVars(initialVars);
+    DDASPKprocNum1:-SetInitialTime(initialTime);
+   #DDASPKprocNum1:-Init();
+
+   #	
+   #define the input Curve for the test1
+   # 
+    inputTest1:= [[2,7],[2.5,-1],[3,3],[3.3,0],[4,2]];
+    inputTable:=table();
+    inputTable[time]:=array([seq(inputTest1[i,1], i=1..nops(inputTest1))]);
+    inputTable[input]:=array([seq(inputTest1[i,2], i=1..nops(inputTest1))]);
+    nrDataPoints:= nops(convert(
+     eval(inputTable[time]), 
+      list)
+    );
+    otherData := ['NumPoints'= nrDataPoints, Parameters= [], SpecialVarNames=[]];
+    curveTest1 := ModelPack:-CreateCurve(inputTable,otherData);
+
+   #
+   #set input
+   #
+   DDASPKprocNum1:-SetInput(curveTest1);  
+
+   #
+   #create Results with CalculateIntResults.txt
+   # 
+    timePoints:= [seq(i, i=0..5,0.1)];
+    numResults:= DDASPKprocNum1:-CalculateIntResults(timePoints[2..-1]);
+
+   #
+   #calculate Analytical solution
+   #
+     DDASPKprocAnal1 := DDASPKSen:-CreateInstance(aDAESys, "./tmp2", [a1, a2], 'adifor'):
+     analResults:= SysIdent:-CreateODESolSenAnal(DDASPKprocAnal1,
+       500,	 #DDASPKSen repeats
+       5,		 #endTime
+       0.1,	 #intervalTime
+       initialTime,#initTime
+       initialVars, 
+       [[2,7],[2.5,-1],[3,3],[3.3,0],[4,2]]);
+     analResults:= analResults[1];  
+
+  #
+  #do comparison of all values between analytical and numerical results.
+  #   
+   allIndices:= indices(eval(numResults:-GetData()));
+   allIndices:=map(op,[allIndices]);
+   timePoints:= convert(numResults:-GetAllValuesOfVariable(time),list);
+
+   for names in allIndices do:
+     actNumValues:= numResults:-GetAllValuesOfVariable(names);
+     actAnalyticalValues:= analResults:-GetAllValuesOfVariable(names);
+
+     for i from 1 to nops(timePoints)do:
+       numValue:= actNumValues[i];
+       analyticalValue:= actAnalyticalValues[i];
+       numError:=abs(numValue - analyticalValue);
+       if
+	 (numError > 0.0001) 
+	then
+	 test1Suceeded := false;
+	 print("Warning(Test1): failed", numValue, analyticalValue);
+       end if;
+     end do:
+
+   end do:
+
+  #--------------------------------------------------------------------------------
+  #
+  #test2: test if input at time points different to integration times is calculated
+  #	  correctly. Numerical results with interval 1 calculated, whereas
+  #	  analytical result is calculated with interval 0.1 => if at points at
+  #	  [seq(i,i=1..5)], the values are equal, even when input times not at 
+  #	  integer timepoints the test has suceeded.
+  #
+  #--------------------------------------------------------------------------------
+
+    #
+    #create instance of DDASPKsen
+    #
+     DDASPKprocNum2 := DDASPKSen:-CreateInstance(aDAESys, "./tmp3", [a1, a2], 'adifor'):
+
+    #	      
+    #set initial values, initial time, and parameter values and initialize DDASPKproc
+    #
+     DDASPKprocNum2 :-SetVars(initialVars);
+     DDASPKprocNum2:-SetInitialTime(initialTime);
+     DDASPKprocNum2:-Init();
+
+    #	
+    #define the input Curve for the test2
+    # 
+     inputTest2:= [[2,7],[2.5,-1],[3,3],[3.3,0],[4,2]];
+     inputTable:=table();
+     inputTable[time]:=array([seq(inputTest2[i,1], i=1..nops(inputTest2))]);
+     inputTable[input]:=array([seq(inputTest1[i,2], i=1..nops(inputTest2))]);
+     nrDataPoints:= nops(convert(
+      eval(inputTable[time]), 
+       list)
+     );
+     otherData := ['NumPoints'= nrDataPoints, Parameters= [], SpecialVarNames=[]];
+     curveTest2 := ModelPack:-CreateCurve(inputTable,otherData);
+
+    #
+    #set input
+    #
+    DDASPKprocNum2:-SetInput(curveTest2);  
+
+    #
+    #create Results with CalculateIntResults.txt
+    # 
+     timePoints:= [seq(i, i=0..5,1)];
+     numResults:= DDASPKprocNum2:-CalculateIntResults(timePoints[2..-1]);
+
+    #
+    #calculate Analytical solution
+    #
+      DDASPKprocAnal2 := DDASPKSen:-CreateInstance(aDAESys, "./tmp4", [a1, a2], 'adifor'):
+      analResults:= SysIdent:-CreateODESolSenAnal(DDASPKprocAnal2,
+	500,	 #DDASPKSen repeats
+	5,		 #endTime
+	0.1,	 #intervalTime
+	initialTime,#initTime
+	initialVars, 
+	inputTest2
+      );
+      analResults:= analResults[1];  
+
+     allIndices:= indices(eval(numResults:-GetData()));
+     allIndices:=map(op,[allIndices]);
+     timePoints:= convert(numResults:-GetAllValuesOfVariable(time),list);
+
+     for names in allIndices do:
+       actNumValues:= numResults:-GetAllValuesOfVariable(names);
+       actAnalyticalValues:= analResults:-GetAllValuesOfVariable(names);
+     
+       for i from 1 to nops(timePoints)do:
+	 numValue:= actNumValues[i];
+	 analyticalValue:= actAnalyticalValues[1+(i-1)*10];
+	 numError:=abs(numValue - analyticalValue);
+	 if
+	   (numError > 0.0001) 
+	  then
+	   test2Suceeded := false;
+	   print("Warning(Test2): failed", numValue, analyticalValue);
+	 end if;
+       end do:
+
+     end do:
+
+
+  #clean up created tmp-directories
+  
+   try:
+     system("rm -r tmp1");
+     system("rm -r tmp2");
+     system("rm -r tmp3");
+     system("rm -r tmp4");
+   end:
+
+  return(evalb(test1Suceeded and test2Suceeded),numResults, analResults);
+    
+end proc; #TestCalculateIntResultsVarInput

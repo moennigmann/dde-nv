@@ -1,0 +1,26 @@
+######################################################################
+#
+# @path DDASPKSen/SubsIntoSimpleWrapper/SimpleWrapper/setEndTime.txt
+#
+# @brief set end time for integration
+#
+# @param none
+#
+# @return none 
+#
+# @notes sets end time for integration tout_vec
+#
+# @revision
+# 020725 written by mmo
+#
+######################################################################
+      setEndTime:= proc(
+        EndTime::EvalsToFloat
+      )
+
+        tout_vec:= eval(EndTime);
+        
+        return();
+
+      end proc; # setEndTime
+

@@ -1,0 +1,358 @@
+######################################################################
+#
+# @path DDASPKSen/SubsIntoSimpleWrapper/SimpleWrapper/integrateAtSpecificTimePoints.txt
+#
+# @brief Calculate results for integration and sensitivity
+#	      analysis at sepcific time points. Start from initial 
+#	      point, set by functions SetVariables and SetParameters
+#	      and SetInitialTime(). The problem already has to be
+#	      initialized wiht Init().The input timePoints, spezifies,
+#	      several TOUTS for the integration, at which data
+#	      is collected. Input cannot be changed at the initial time;
+#	      here the input should already be set with SetParameters()	   
+#   
+# @param a list of time points, at which integration should be done
+#	(optional) boolean printInfo: true(default) => printouts of status and progress of
+#				    integration is prompted
+#			    false => printouts are supressed	    
+# 
+#
+# @return curve object containing the integration results and the
+#	 sensitivities at the input-specified TOUTs (including
+#	 the initial time) for all variables. The names of the 
+#	 dynamic and algebraic variables are stored in the curve
+#	 object as SpecialVarNames and can be revieved by 
+#	 GetSpecialVarNames(); this considerably simplifies 
+#	 distinguishing between dynamic variables and sensitivity
+#	  information.
+#
+# @todo   (1) for time reason exchange RunInt against DoIntStep()
+#
+# @notes keep in mind, that this version is more accurate than the
+#	  former one CreateODESolSen, since the inputs are set at
+#	  exact time points, rather than approximately. 
+#
+# @revision
+# 2010-08-26 exchanged ussage of ModelPack to Aux - dka
+# 091019 added resetting of the sensitivity part of y_vec,
+#	after applying variable input. Consistent values are
+#	computed by ddaspk; added missing local variable names tqu. 
+# 090305 added optional argument for printout of status and progress
+#	 of integration, tqu.
+# 080905 renamed procedure; previously called CalculateIntResults.txt.
+#	Integrate is used instead of RunInt. 
+# 080709 modified entries in OtherData: SenPars= list(name=numeric),
+#	Parameters= list(name=numeric)
+# 080525 removed SpecialVarNames replaced with following additional
+#	entries in OtherData: DynVars =list(name), SenPars=list(name), 
+#	AlgVars = list(name),  ExplicitAEs = list(name).
+# 080524 debugged SpecialVarNames feature in OtherData of the 
+#	output curve, tqu
+# 080521 changed SetParameters() against SetSpecificParameters(); 
+#	set the actual input position in the inscance;
+#	taken care that only those input values are considered,
+#	that are smaller than the last time point for integration;
+#	outsourced check if first argument is correct => added
+#	CheckInputForCalculateIntResults tqu
+# 080517 for input handling: changed list of timePoints 
+#	(integration and input change) against a table construct;
+#	added INFO_vec[1] := 0 for initialization of DDASPKSen; tqu
+# 080513 added call for CalculateYPRIME() during initialization to
+#	guarantee consistent starting values; tqu	  
+# 080426 created by tqu
+#
+######################################################################
+integrateAtSpecificTimePoints:= proc(timePoints::list(numeric)
+#  printInfo::boolean  
+)
+  local intiY, initTime, initPoint, timeIsOrdered, senNames, varNames, resultTable, results, 
+    nrTimePoints,actData, actName, actTOUT, actResult,statusInt,lastPosition, otherData,
+    curve, valuesExplicitVars, i, inputTimes, inputValues, intAndInputTimes, k, initY, 
+    positionJustSmallerThanEnd, entriesSmallerLastTimePoint, printInfo, endTime, sysVarNames, 
+    timeTable, inputTable, integrationTime, actInputIndex, evalbList, actInputValue, allTimePoints, 
+    integrationCounter, numberOfVariables;
+
+  #
+  #set default value of and check for optional argument
+  #
+   printInfo:= true;
+
+  if
+    nargs = 2
+  then
+    printInfo:= args[2]:
+    if not
+      hastype(printInfo, boolean)
+    then
+      error("Optional input argument has to be of type boolean. You have inserted %1.", printInfo);
+    end if:
+  elif
+    nargs > 2
+  then
+    error("Too many optional arguments. Only one optional argument is allowed!");
+  end if:
+   
+
+  #
+  #introduce necessary variables
+  #  
+   nrTimePoints:= nops(timePoints);
+   endTime:= timePoints[-1];
+   initY:= getY();
+   initTime:=getT();
+   valuesExplicitVars:= map(evalf,
+     map(rhs, getExplicitAEs())
+   );
+
+  #---------------------------------------------------------------------------------------------------------------------
+  #
+  #check input and status of DDASPKSen
+  #
+  #---------------------------------------------------------------------------------------------------------------------
+
+    checkInputForCalculateIntResults(timePoints, initTime); 
+    
+    #	
+    #check if variables has been initialized
+    #
+     if
+       not type(initY,list(numeric))
+     then
+       error("Initial values for variables have not been set. Call SetVariables()."); 
+     end if:
+
+  #---------------------------------------------------------------------------------------------------------------------
+  #
+  #Initialize integration procedure; initialize storing table
+  #
+  #---------------------------------------------------------------------------------------------------------------------
+    #
+    # set YPRIME such that Y, YPRIME are consistent. 
+    # Tell DDASPKSen that the first step is an initialization step
+    #
+     calculateYPRIME();
+     INFO_vec[1] := 0;
+
+    #	
+    #create sensitivity names
+    #
+     senNames:=map(
+       op,
+       [seq([
+	  seq(
+	    convert(cat(
+	    d,convert(Sys["DynVars"][i2],string),
+	    d,convert(lhs(Sys["SenPars"][i1]),string)),
+	    name),
+	    i2=1..nops(Sys["DynVars"])
+	  ),
+	  seq(
+	    convert(cat(
+	      d,convert(Sys["AlgVars"][i2],string),
+	      d,convert(lhs(Sys["SenPars"][i1]),string)),
+	      name
+	    ),
+	    i2=1..nops(Sys["AlgVars"]))
+	  ],
+	i1=1..nops(Sys["SenPars"]))]
+     );
+     
+    #
+    #collect Names, 
+    # 
+     sysVarNames:= [	
+	op(Sys["DynVars"]),
+	op(Sys["AlgVars"])
+      ];
+
+     varNames:= [	
+       op(sysVarNames),
+       op(senNames),
+       op(map(lhs, Sys["ExplicitAEs"]))
+     ]; 
+
+    #
+    #initialize the table resultTable that stores all sensitivity and integration data
+    #
+     resultTable := table();
+     resultTable[time] := array(1..nrTimePoints+1); #+1 since initial value is stored, too.
+     resultTable[time][1]:=initTime;
+
+    #
+    #initialize the trajectorie part of table resultTable
+    #
+     initPoint:= [
+       op(initY),
+       op(valuesExplicitVars)
+     ]; 
+     for i from 1 to nops(varNames) do:
+       actName :=  varNames[i];
+       resultTable[actName] :=  array(1..nrTimePoints+1);
+       resultTable[actName][1]:=initPoint[i];
+      end do:
+
+  #---------------------------------------------------------------------------------------------------------------------
+  #
+  #check if variable input is used; if yes create a table containing all timepoints and an index from {1,2,3},
+  #with 1 => only integration is done, 2 => only input is set, ignore the integration results, 3 => set input, and
+  #store integration results
+  #
+  #---------------------------------------------------------------------------------------------------------------------
+
+   #
+   #timeTable will contain as indices timepoints. All entries from {1,2,3}. 1 => integration, 2 => input, 3 => both
+   #
+    timeTable:=table( [seq(evalf(timePoints[i])=1,i=1..nops(timePoints))] );
+		          
+    if not
+      SysInput=[]
+    then
+      #
+      #remember that inputTimes is an strictly ascending list
+      #
+       inputTimes:=SysInput:-getAllValuesOfVariable(time);
+       inputValues:=SysInput:-getAllValuesOfVariable(NameInputParameter);
+
+      #
+      #only consider inputTime < last timepoint in the first argument of this procedure
+      # 
+       entriesSmallerLastTimePoint := select(
+         `<`, 
+	 convert(inputTimes, list), 
+	 endTime
+       );
+      
+       positionJustSmallerThanEnd:= ListTools[BinarySearch](convert(inputTimes,list),
+         entriesSmallerLastTimePoint[-1] 
+       );
+      
+      #
+      #save the actual input position in the instance of DDASPKSen
+      # 
+       SetActInputPosition(positionJustSmallerThanEnd +1);
+
+       inputTable:= table( [seq(evalf(inputTimes[i])=inputValues[i],i=1..positionJustSmallerThanEnd) ] );
+      
+      #
+      #fill timeTable with input times and the corresponding entries element {2,3}; 
+      #
+       integrationTime:= [indices(timeTable, nolist)];
+       for actInputIndex in indices(inputTable, nolist) do:
+
+
+ 	  #cannot use "in", "member" or "has" functionality, since they distinguish e.g. between 2.0,2.00 ... and 2.
+	  evalbList:=map(evalb, [seq(
+		       actInputIndex = integrationTime[i], 
+		       i=1..nops(integrationTime)) ]
+	   );
+	  if
+	    member(true,evalbList, 'indexTrue')  
+	  then
+	    #
+	    #take the index already used as index for the timeTable
+	    #
+	     timeTable[integrationTime[indexTrue]]:= 3;
+	     
+	    #	
+	    #for consistency of keys between inputTable and timeTable, change entry of inputTable
+	    # 
+	     actInputValue:=inputTable[actInputIndex];
+	     inputTable[actInputIndex]:='inputTable[%]':
+	     inputTable[integrationTime[indexTrue]]:=actInputValue:
+	  else
+
+	    #
+	    #here we can use the new index of inputTable
+	    #
+	     timeTable[actInputIndex]:= 2;
+	  end if:
+	  	  
+       end do:
+    
+    #
+    #make sure allTimePoints is an strictly ascending list
+    #  
+     allTimePoints:=sort( [indices(timeTable,nolist)] );      
+
+    else:
+      allTimePoints:=timePoints
+    end if:
+
+  #---------------------------------------------------------------------------------------------------------------------
+  #
+  #do repeated integration; collect data at the specified timepoints
+  #
+  #---------------------------------------------------------------------------------------------------------------------
+    integrationCounter:=0;
+    for k from 1 to nops(allTimePoints) do:
+	actTOUT:= allTimePoints[k];
+	setEndTime(actTOUT);
+
+	#	
+	#Run Integration and check wether RunInt was succesful; get IDID value of DDASPKSen;
+	#if IDID value = 3 Integration was succesfull. For details see
+	#documentation of DDASPKSen
+	#
+ 	 actResult:= integrate(printInfo);
+	 statusInt:=actResult[2];
+	 if
+	   not statusInt=3
+	 then
+	   error("Integrating to TOUT=%1 was not succesfull. DDASPKSen terminated with IDID = %2", actTOUT, statusInt);
+	 end if;
+
+	#reset parameters if input is changed
+	if  
+	  timeTable[actTOUT]=2 or timeTable[actTOUT]=3
+	then
+	  setSpecificParameters([NameInputParameter= inputTable[actTOUT]]);
+					     
+	  #when parameters are changed, DDASPKSen needs to now, that the problem has changed
+	  #=> this is done by setting INFO_vec[1]=0
+	  # initialise Vector
+	   calculateYPRIME();
+	  #Reinitialize the sensitivity part of y_vec to zero. Consistent values are calculated by ddaspk
+	   numberOfVariables:= nops([ op(Sys[AlgVars]), op(Sys[DynVars])]);
+	   for i from numberOfVariables+1 to NEQ do:
+	     y_vec[i]:= 0;	       
+	   end do:  
+           INFO_vec[1] := 0;
+	end if:
+
+	#
+	#only store values if integration is demanded for these points
+	# 
+	 if not
+	   timeTable[actTOUT]=2
+	 then 
+	   integrationCounter:= integrationCounter +1;   
+	    resultTable[time][integrationCounter+1]:=actTOUT;
+	    actData:= actResult[1]:		       
+
+	   #	
+	   #insert trajectory and sensitivity data in resultTable
+	   #
+	    for item in varNames do:
+	      resultTable[item][integrationCounter+1]:=actData[item];
+	    end do:
+
+	 end if: 			
+
+    end do:
+    
+  #
+  #create Curve, store names of differential variables, sensitivity parameters, algebraic variables
+  #and explicit variables in other data
+  #  
+   otherData := ['NumPoints'= nrTimePoints+1, 
+     Parameters= Sys["Parameters"], 
+     DynVars = Sys["DynVars"], 
+     SenPars=Sys["SenPars"], 
+     AlgVars = Sys["AlgVars"],
+     ExplicitAEs = Sys["ExplicitAEs"]     
+   ];
+   curve := Aux:-CreateCurve(resultTable,otherData);
+
+  return(eval(curve));
+  
+end proc: #IntegrateAtSpecificTimePoints

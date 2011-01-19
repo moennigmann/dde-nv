@@ -1,0 +1,31 @@
+######################################################################
+#
+# @path DDASPKSen/SubsIntoSimpleWrapper/SimpleWrapper/evalExplicitAEsInDAESys.txt
+#
+# @brief 
+# applies ModelPack:-EvalExplicitAEsInDAESys
+# to current parameters and variables in instance of
+# SimpleWrapper; 
+#
+# @revision
+# 2010-08-26 exchanged ussage of ModelPack to Aux - dka
+# 040210 added sensitivity parameters -jge
+# 020414 written by mmo
+#
+######################################################################
+      evalExplicitAEsInDAESys:= proc()
+      
+        local SubsList;
+      
+        SubsList:= Aux:-SystemClasses:-evalExplicitAEsInDAESys(
+          getSys(),
+          [op(getParameters()),
+           op(getSenParameters()),
+           op(getVariables())
+          ]
+        );
+      
+        return(SubsList);
+      
+      end proc; # EvalExplicitAEsInDAESys
+

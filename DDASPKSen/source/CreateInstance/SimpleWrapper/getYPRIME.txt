@@ -1,0 +1,10 @@
+###------------------------------------------------------------------------
+#
+# @path DDASPKSen/CreateInstance/SimpleWrapper/getYPRIME.txt
+#
+# @brief exported method getYPRIME
+#
+###------------------------------------------------------------------------
+    getYPRIME:= proc()
+      RETURN(yprime_vec);
+    end proc;  # GetYPRIME

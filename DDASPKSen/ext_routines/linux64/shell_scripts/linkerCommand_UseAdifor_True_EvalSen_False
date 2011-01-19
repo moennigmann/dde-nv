@@ -1,0 +1,7 @@
+#!/bin/zsh
+
+gcc -shared -Xlinker -Bsymbolic -o6 -m64 ${1}DDASPKSen/ext_routines/f2c/shared_obj/ddaspk.so ${1}DDASPKSen/ext_routines/f2c/shared_obj/adf_dummy.o ${1}DDASPKSen/ext_routines/f2c/cwrap/psol_dummy.o ${1}DDASPKSen/ext_routines/f2c/cwrap/cwrap_ddaspk.o ${1}DDASPKSen/ext_routines/f2c/cwrap/g_res_dummy.o ./${2} ./${3} ./j${2} ${AD_LIB}/lib/ReqADIntrinsics-${AD_OS}_64.o ${AD_LIB}/lib/libADIntrinsics-${AD_OS}_64.a -lm -o ${4}
+
+exit "$?"
+
+

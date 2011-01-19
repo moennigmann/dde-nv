@@ -1,0 +1,11 @@
+######################################################################
+#
+# @path DDASPKSen/SubsIntoSimpleWrapper/SimpleWrapper/getT.txt
+#
+# @brief exported method getT
+#
+######################################################################
+        getT:= proc()
+	  RETURN(t_vec);
+	end proc;  # getT
+

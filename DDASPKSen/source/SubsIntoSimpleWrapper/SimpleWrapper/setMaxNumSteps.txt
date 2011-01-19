@@ -1,0 +1,20 @@
+######################################################################
+#
+# @path DDASPKSen/SubsIntoSimpleWrapper/SimpleWrapper/setMaxNumSteps.txt
+#
+# @brief exported procedure setMaxNumSteps
+#
+# @revision
+# 020725 written by mmo
+#
+######################################################################
+      setMaxNumSteps:= proc(
+        RequestedMaxNumSteps::posint
+      )
+
+        MaxNumSteps:= RequestedMaxNumSteps; 
+
+        return(); 
+
+      end proc; # SetMaxNumSteps
+

@@ -1,0 +1,60 @@
+######################################################################
+#
+#@path DDASPKSen/SubsIntoSimpleWrapper/SimpleWrapper/setParameters.txt
+#
+# @brief extracts parameters from named list and
+#   set them for future calculations
+#
+# @param list of substitutions, type name= EvalsToFloat
+#   list must contain values for all parameters, may contain
+#   other entries which will be ignored
+#
+# @return none, side effects only
+#
+# @notes set parameters in instance to requested values
+#
+# @revision
+# 020417 written by mmo
+#
+######################################################################
+      setParameters:= proc(
+        NewPars::list(name= EvalsToFloat)
+      )
+
+        local AssignedPars, MissingAssigns, ParNamesOfInstance,
+          ListOfParValues; 
+
+        #
+        # all parameters must be assinged by first argument
+        #
+          AssignedPars:= map(lhs, NewPars);
+          ParNamesOfInstance:= map(lhs, Sys["Parameters"]); 
+
+          MissingAssigns:= `minus`(
+            convert(ParNamesOfInstance, set),
+            convert(AssignedPars, set)
+          ); 
+
+          if not
+            MissingAssigns= {}
+          then
+            error(cat(
+              "all parameters must be assigned by first argument, "
+              "parameters %1 are missing", MissingAssigns
+            ));
+          end if;
+
+        #
+        # create a list of parameter values in the correct order and
+        # call SetPars to do the actual assignment
+        #         
+          ListOfParValues:= subs(
+            NewPars,
+            ParNamesOfInstance
+          ); 
+          setPars(ListOfParValues);
+        
+        return();
+
+      end proc; # SetParameters
+

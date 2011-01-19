@@ -1,0 +1,66 @@
+##############################################################################
+#
+# @path DDASPKSen/SubsIntoSimpleWrapper/SimpleWrapper/init.txt
+#
+# @brief  
+#   calculates derivatives at initial time, 
+#   tells DDASPK to initialize new run,
+#   tells DDASPK to return intermediate values, 
+#   calls DDASPK initialization routine 
+#
+# @param none
+#
+# @return returns value of status variable IDID 
+#   returned by DDASPK
+#
+# @notes 
+#   (1) calculates derivatives which are consistent with 
+#   current values in GetParameters(), GetVariables(),
+#   (2) calls DDASPK initialization which is needed before
+#   integration can be started
+#   (3) tells DDASPK to return intermediate values when
+#   integrating to tout
+#
+# @revision
+# 021213 removed obsolete warnings
+# 020725 see revision history in SimpleWrapper.txt for 
+#   more details on following changes: (i) changed 
+#   RunInt to DoIntStep; (ii) removed arguments t and
+#   tout which should be passed to SetInitialTime and
+#   SetEndTime;  
+# 020417 changes to input arguments: Init no longer accepts
+#   value for variables, but current values which user can
+#   set using SetVariables and check using GetVariables;
+#   same holds for Parameters, user can set and get parameter
+#   values using SetParameters and GetParameters; 
+# 02xxxx added automatic calculation of consistent values of
+#   YPRIME, note that YPRIME is calculated by evaluation of
+#   ODEs in maple rather than calling DDASPK to create 
+#   consistent initial conditions; 
+# 01xxxx first version by mkl and mmo
+#
+##############################################################################
+
+        init:= proc()
+
+	  #
+          # set YPRIME such that Y, YPRIME are consistent
+          #
+
+            calculateYPRIME(); 
+
+	  #
+          # be sure to restart the fortran code
+          #
+            INFO_vec[1] := 0; # tell DDASPK that this is an 
+                              # initialization call
+
+            INFO_vec[3] := 1; # return immediate values in 
+                              # between t and tout, too 
+          
+	    idid:= doIntStep();
+         
+	    RETURN(idid);
+
+	end proc;  # Init
+

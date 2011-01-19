@@ -1,0 +1,60 @@
+######################################################################
+#
+# @path DDASPKSen/SubsIntoSimpleWrapper/SimpleWrapper/getSensitivities.txt
+#
+# @brief exported proc SimpleWrapper:-getSensitivities
+#
+# @revision
+#   050915 added AlgVar entries
+#   041201 corrected indices
+#   040910 added eval in return command 
+#   040206 written by jge based on GetVariables
+#
+######################################################################
+      getSensitivities:= proc()
+        
+        local Y,SubsTable,i1,i2, Sens, AlgSensitivities, DynSensitivities,
+            NumDynVars,NumAlgVars,NumSenPars, SenDynNames, SenAlgNames;
+       
+        Y:= getY();
+        SubsTable:=table();
+        NumDynVars:=nops(Sys["DynVars"]);
+        NumAlgVars:=nops(Sys["AlgVars"]);
+        NumSenPars:=nops(Sys["SenPars"]);
+
+        Sens:=getS();
+
+        SenDynNames:=[seq(
+                         seq(
+                           convert(cat(
+                             d,convert(Sys["DynVars"][i2],string),
+			     d,convert(lhs(Sys["SenPars"][i1]),string)),
+                             name),
+                           i2=1..nops(Sys["DynVars"])),
+                         i1=1..nops(Sys["SenPars"]))
+                      ];
+
+        SenAlgNames:=[seq(
+                         seq(
+                           convert(cat(
+                             d,convert(Sys["AlgVars"][i2],string),
+			     d,convert(lhs(Sys["SenPars"][i1]),string)),
+                             name),
+                           i2=1..nops(Sys["AlgVars"])),
+                         i1=1..nops(Sys["SenPars"]))
+                      ];
+
+#  Sensitivities
+        DynSensitivities:=seq(
+	    seq(SenDynNames[i1+(i2-1)*nops(Sys["DynVars"])]=
+	      Sens[i1+(i2-1)*(nops(Sys["DynVars"])+nops(Sys["AlgVars"]))],i1=1..nops(Sys["DynVars"])),
+	      i2=1..nops(Sys["SenPars"]));
+
+        AlgSensitivities:=seq(
+	     seq(SenAlgNames[i1+(i2-1)*nops(Sys["AlgVars"])]=
+	      Sens[i1+nops(Sys["DynVars"])+(i2-1)*(nops(Sys["DynVars"])+nops(Sys["AlgVars"]))],i1=1..nops(Sys["AlgVars"])),
+	      i2=1..nops(Sys["SenPars"]));;
+
+        return([DynSensitivities,AlgSensitivities]); 
+
+      end proc; # getSensitivities

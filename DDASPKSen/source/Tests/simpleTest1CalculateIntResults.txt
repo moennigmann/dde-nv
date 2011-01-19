@@ -1,0 +1,201 @@
+######################################################################
+#
+# @path DDASPKSen/Tests/simpleTest1CalculateIntResults.txt
+#
+# @brief Test if DDASPKSen works with variable input. 
+#	      _EnvWorkingDir and _EnvModuleDir has to be set in the
+#	      calling sheet. 
+#
+# @param none
+#
+# @return true => test was succesful
+#	 false => test has failed
+#
+#
+# @revision
+# 2010-08-27 exchanged ussage of ModelPack to Aux - dka
+# 080521 added consistency test for DAESys, tqu
+# 080519 removed read() of modules, since multiple read of same module
+#	leads to errors. => modules need to be read in the calling
+#	sheet; improvised directory creation;  tqu
+# 080426 created by tqu
+#######################################################################
+
+simpleTest1CalculateIntResults := proc()
+
+  local 
+   aDAESys,
+   x1Data, 
+   x2Data, 
+   timePoints,
+   test1Suceeded,
+   test2Suceeded,
+   actResults,
+   initialVars,
+   initialTime,
+   DDASPKproc,
+   DglSys,
+   sol,	
+   initConds0,
+   pars0,
+   sol0,
+   tableOfSolution,
+   tableOfDiffs,
+   tableOfAnalyticalValues,
+   parsNames,
+   senName,
+   p,
+   actVar,
+   parameter,
+   actDiff,
+   subsedDiff,
+   subsedVar,
+   allIndices,
+   numResults,
+   name,
+   actNumValues,
+   actAnalyticalValues,
+   i,
+   numValue,
+   analyticalValue,
+   errList;
+
+  currentdir(_EnvWorkingDir):
+  test1Suceeded:=true:
+  initialVars:=[2,1];	
+  initialTime:=0;
+  
+  #
+  #ckeck if three directories (simple) needed for calculation already exists
+  #	
+   if
+     Aux:-FileOperations:-dirExists("simple") 
+   then
+     error("temporary directory ./simple needed to run test already exists")
+   else  
+       mkdir("simple");
+   end if;
+
+  #
+  #define simple test systen
+  #
+   aDAESys:=Aux:-SystemClasses:-newDAESys():
+   aDAESys["ODEs"] := [
+     `x1'` =a1*x1+input,
+     `x2'` =a2*x2
+   ];
+   aDAESys["Parameters"] := [a1=-1, a2=-2, input=0];
+   aDAESys["DynVars"] := [x1, x2];
+   aDAESys["AEs"] := [];
+   aDAESys["AlgVars"] := [];
+   
+  #
+  #check if aDAESys is correctly defined
+  #
+   errList:= Aux:-SystemClasses:-listOfErrorsInDAESys(aDAESys);
+   if not
+     errList=[]     
+   then
+     error(cat(" DAESys is not defined correctly. The following error/s occured ", convert(errList, string)));
+   end if:
+
+  #
+  #create instance of DDASPKsen
+  #
+   DDASPKproc := DDASPKSen:-CreateInstance(aDAESys, "./simple", [a1, a2], 'adifor'):
+
+  #	      
+  #set initial values, initial time, and parameter values and initialize DDASPKproc
+  #
+   DDASPKproc:-setVars(initialVars);
+   DDASPKproc:-setInitialTime(initialTime);
+   DDASPKproc:-init();
+
+   
+  #
+  #create Results with CalculateIntResults.txt
+  # 
+   timePoints:= [seq(i, i=0..5,0.1)];
+   numResults:= DDASPKproc:-calculateIntResults(timePoints[2..-1]);
+
+  #
+  #create analytical solution
+  #
+   DglSys:= {
+     diff(x1(t), t)= a1* x1(t),
+     diff(x2(t), t)= a2* x2(t),
+     x1(initialTime)= x10,
+     x2(initialTime)= x20
+   };
+   sol:= dsolve(
+     DglSys, 
+     {x1(t), x2(t)}
+   );
+   initConds0:= [
+     x10= initialVars[1],
+     x20= initialVars[2]
+   ];
+   pars0:= [
+     a1= -1,
+     a2= -2
+   ];
+   sol0:= subs(
+     initConds0,
+     sol
+   );
+   tableOfSolution:=table();
+   tableOfDiffs:=table();
+   tableOfAnalyticalValues:=table();
+   parsNames:=map(lhs,pars0):
+   
+   for p from 1 to nops(sol0) do :
+       actVar:=op(0,lhs(sol0[p]));
+       tableOfSolution[actVar]:=rhs(sol0[p]);
+              
+       #calculate sensitivities
+       for parameter in parsNames do:
+	 actDiff:=diff(tableOfSolution[actVar], parameter);
+         subsedDiff:= subs(pars0, initConds0, actDiff);
+	 senName:=cat('d',actVar,'d',parameter);
+	 tableOfDiffs[senName]:=subsedDiff;
+	 tableOfAnalyticalValues[senName]:= [seq(eval(subsedDiff), t=0..5, 0.1)];
+       end do:        
+       
+       #substitute values into analytical solution
+       subsedVar:= subs(pars0, initConds0, tableOfSolution[actVar]);
+
+       tableOfAnalyticalValues[actVar]:= [seq(eval(subsedVar), t=0..5, 0.1)];
+   end do:
+
+  #
+  #test if numerical results equal analytical ones
+  #
+   allIndices:= [indices(tableOfAnalyticalValues,nolist)];
+   for name in allIndices do:
+     actNumValues:=numResults:-getAllValuesOfVariable(name);
+     actAnalyticalValues:= tableOfAnalyticalValues[name];
+
+     for i from 1 to nops(timePoints)do:
+       numValue:= actNumValues[i];
+       analyticalValue:= evalf(subs(t=timePoints[i],actAnalyticalValues[i]));         
+       if 
+	 (abs(numValue - analyticalValue) > 0.0001) 
+       then
+	 test1Suceeded := false;
+	 print("Warning(Test1): failed");
+       end if;
+     end do:
+
+   end do:
+
+  #clean up created directories
+  
+   try:
+     system("rm -r simple");
+   end:
+
+   
+   return([test1Suceeded,numResults]);
+  
+
+end proc; #SimpleTest1CalculateIntResults

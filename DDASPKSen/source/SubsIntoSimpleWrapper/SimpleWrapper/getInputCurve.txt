@@ -1,0 +1,29 @@
+######################################################################
+#
+# @path DDASPKSen/SubsIntoSimpleWrapper/SimpleWrapper/getInputCurve.txt
+#
+# @brief exported procedure getInputCurve
+#
+# @param none
+#
+# @return returns the curve object,
+#	  describing the input changes
+#              
+# @revision
+# 080506 created by tqu
+#
+######################################################################
+getInputCurve := proc()
+  
+  if 
+    SysInput = []
+  then
+    error("Input is not set. This can be done with SetInput()");
+  else
+    return(eval(SysInput)):      
+  end if:
+  
+
+  
+    
+end proc; #GetInputCurve

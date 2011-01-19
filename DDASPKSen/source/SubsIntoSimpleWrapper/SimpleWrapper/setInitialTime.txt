@@ -1,0 +1,26 @@
+######################################################################
+#
+# @path DDASPKSen/SubsIntoSimpleWrapper/SimpleWrapper/setInitialTime.txt
+#
+# @brief set initial time for integration
+#
+# @param none
+#
+# @return none 
+#
+# @notes sets initial time for integration t_vec
+#
+# @revision
+# 020725 written by mmo
+#
+######################################################################
+      setInitialTime:= proc(
+        InitialTime::EvalsToFloat
+      )
+
+        t_vec:= eval(InitialTime);
+        
+        return();
+
+      end proc; # SetInitialTime
+

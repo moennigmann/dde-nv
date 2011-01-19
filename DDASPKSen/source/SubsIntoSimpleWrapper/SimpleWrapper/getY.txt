@@ -1,0 +1,11 @@
+######################################################################
+#
+# @path DDASPKSen/SubsIntoSimpleWrapper/SimpleWrapper/getY.txt
+#
+# @brief exported method getY
+#
+######################################################################
+        getY:= proc()
+	  RETURN(convert(y_vec, list));
+	end proc;  # getY
+

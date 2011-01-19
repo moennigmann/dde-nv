@@ -1,0 +1,5 @@
+#!/bin/zsh
+
+sed -e 's/j_res/jres/g' j_$1 > j$1 2> /dev/null
+
+exit "$?"

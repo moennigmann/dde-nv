@@ -1,0 +1,23 @@
+######################################################################
+#
+# @path DDASPKSen/SubsIntoSimpleWrapper/SimpleWrapper/getSPRIME.txt
+#
+# @brief exported proc SimpleWrapper:-getSPRIME
+#
+# @revision
+#   040921 written by jge based on GetYPRIME
+#
+######################################################################
+      getSPRIME:= proc()
+        
+        local YPrime,NumDynVars,NumAlgVars,NumSenPars;
+       
+        YPrime:= getYPRIME();
+        NumDynVars:=nops(Sys["DynVars"]);
+        NumAlgVars:=nops(Sys["AlgVars"]);
+        NumSenPars:=nops(Sys["SenPars"]);
+
+#  Sensitivities of DynVars
+        return(YPrime[NumDynVars+NumAlgVars+1..-1]); 
+
+      end proc; # getSPRIME

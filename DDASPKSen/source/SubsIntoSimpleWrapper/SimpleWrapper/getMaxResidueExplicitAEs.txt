@@ -1,0 +1,38 @@
+######################################################################
+# 
+# @path DDASPKSen/SubsIntoSimpleWrapper/SimpleWrapper/getMaxResidueExplicitAEs.txt
+#
+# @brief procedure evaluates ExplicitAEs at
+#   current solution which can be obtained by GetVariables
+#   for current parameters which can be obtained by
+#   GetParameters, returns max abs residues
+#
+# @revision
+# 2010-08-26 exchanged ussage of ModelPack to Aux - dka
+# 040210 added sen parameters -jge
+# 020414 written by mmo
+#
+######################################################################
+      getMaxResidueExplicitAEs:= proc()
+        
+        local Res, AbsRes, MaxAbsRes, SolIncludingEAEs;  
+  
+        SolIncludingEAEs:= Aux:-SystemClasses:-evalExplicitAEsInDAESys(
+          getSys(),
+          [op(getParameters()),
+           op(getSenParameters()),
+           op(getVariables())
+          ]
+        ); 
+
+        Res:= evalf(subs(
+          SolIncludingEAEs, 
+          map(lhs- rhs, getSys()["ExplicitAEs"])
+        ));
+
+        AbsRes:= map(abs, Res);
+        MaxAbsRes:= max(op(AbsRes));
+
+        return(MaxAbsRes); 
+
+      end proc; # GetMaxResiduesExplicitAEs

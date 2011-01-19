@@ -1,0 +1,414 @@
+#####################################################################
+#
+# @path DDASPKSen/createSharedObject.txt
+#
+# @revision
+#   2010-08-26 exchanged ussage of ModelPack to Aux - dka
+#   091019 added missing local variable names; tqu
+#   090304 moved debug printouts for linking command to
+#	   failure case, tqu
+#   090218 for running with qsub, added the total path to
+#	   the library definition of define_external and 
+#	   removed the WRAPPER option, tqu
+#   090108 added sh before linking command, tqu
+#   080305 removed options => only linux is considered, changed compiler
+#	   (g77 against gfortran) and flags
+#   050629 added option /nodefaultlib:libc to linker command -jge
+#   050217 List of source files is saved as FileListInstancecounter -jge
+#   041005 changed position of return command -jge
+#   040810 jac and res filenames could now include instancecounter -jge
+#   040809 added InterfaceKeyword as option, with 'NoInterface'
+#     only fortran files and object are created,
+#     define_external is not run,
+#     using now ddaspk.lib and ddaspk.dll for windows-jge
+#   040727 changed from gcc and f2c to compaq fortran compiler for
+#     windows as operating System -jge
+#   040220 renamed adifor file gres for jacobian to jres, gres
+#     is now the adifor file for sensitivities
+#   030916 added windows as OperatingSystemType -jge
+#   020816 changed linking of f2c/shared_obj/adf_dummy.o to
+#     shared_obj/adf_dummy.o in case Solaris+ Adifor
+#   020313 changed order of arguments in linux+adifor link command
+#   020311 (1) changes to allow for parameter passing via RPAR from
+#     maple to DDASPK: added argument NumParsInDAEsys to proc;
+#   020309 changed T, RPAR, IPAR in define_external from float[8]
+#     to REF(float[8]), since these must be input/output variables
+#   020301 added option adifor, note option is toggled by checking
+#   local variable UseAdifor of module DDASPK;
+#     (see PITCON:-CreateInstance for more detailed description of
+#     how to add adifor)
+#   020228 changes for maple7 and Solaris5.8:
+#     (1) changed linker command option from -lf77 to -lf77_mt
+#     (2) deleted options order= Fortran_order in define_external
+#     changed T::ARRAY(1..1, float[8]) to T::float[8],
+#     changed RTOL, ATOL, same as T,
+#     changed RPAR, IPAR, same as T (IPAR for integer[4]),
+#     changed IDID::REF(ARRAY(1..1, integer[4]), RETURN_ONLY) to
+#     IDID::REF(integer[4]),
+#     (3) added option wrapper in call to define_external
+#   011126 removed local var OperatingSystem, which is var of
+#     wrapping module DDASPK; renamed proc to CreateSharedObject;
+#     added f2c and compile command gcc for linux; added
+#     linker call for linux; removed try...end try around
+#     define_external command used by mkl because of nfs problems
+#     on windows machines
+#   010810 implementation of jac matrix
+#   010803 written by mkl and mmo
+#
+#####################################################################
+  createSharedObject:= proc(
+    NameOfRes::string,
+    resfun::procedure,
+    NameOfJac::string,
+    jacfun::procedure,
+    ddaspkDir::string,
+    aDAEsys, # of type DAESys, type has been checked by calling proc
+    InterfaceKeyword::name
+  )
+
+    local oldDir, LinkerCommand, ddaspk,
+      SharedObjectName, SharedObjectEnd, ObjectEnd, NumParsInDAEsys, NumSenParsInDAESys,
+      MaxNumIndependentVars, NameOfResFor, NameOfResObj, NameOfJacFor, NameOfJacObj, status, 
+      soName, Filelist;
+
+
+    SharedObjectEnd:=".so";
+    ObjectEnd:=".o";
+
+    NameOfResFor:=cat(NameOfRes,".f");
+    NameOfResObj:=cat(NameOfRes,ObjectEnd);
+    NameOfJacFor:=cat(NameOfJac,".f");
+    NameOfJacObj:=cat(NameOfJac,ObjectEnd);
+
+  #
+  # save directory in which proc was called and change to requested dir
+  #
+      oldDir:= currentdir():
+      currentdir(ddaspkDir):
+
+  #
+  # check for existing files
+  #
+    if
+	Aux:-FileOperations:-fileExists(NameOfResFor)
+    then
+	currentdir(oldDir);
+	error("routine %1 already exists in directory %2",NameOfResFor,ddaspkDir);
+    end if;
+
+    if
+	Aux:-FileOperations:-fileExists(NameOfJacFor)
+    then
+	currentdir(oldDir);
+	error("routine %1 already exists in directory %2",NameOfJacFor,ddaspkDir);
+    end if;
+
+  #
+  # extract some dimensions from aDAEsys
+  #
+    
+    NumParsInDAEsys:= nops(aDAEsys["Parameters"]);
+    NumSenParsInDAESys:=nops(aDAEsys["SenPars"]);
+    MaxNumIndependentVars:= 2*(nops(aDAEsys["DynVars"])+ nops(aDAEsys["AlgVars"]));
+
+  #-------------------------------------------------------------
+  #
+  # generate and compile fortran code for res-function
+  #
+  #------------------------------------------------------------
+    
+    codegen[fortran](resfun,filename= NameOfResFor,mode= double,precision= double);
+
+  #
+  # compile problem dependent file res.f
+  #
+    status:=ssystem(cat("gfortran -shared -fPIC -O0 -c ",NameOfResFor," -o ",NameOfResObj));
+    if status[1] <> 0 then
+      system(cat("gfortran -fPIC -O0 -c ",NameOfResFor," -o ",NameOfResObj));
+        error(" in \"../maple/DDASPKSen/source/CreateSharedObject.txt\" command: gfortran -fPIC -O0 -c [NameOfResFor] -o [NameOfResObj]\"");
+     
+    end if;
+    #------------------------------------------------------------
+    #
+    # generate and compile fortran code for Jacobian
+    # call adifor to generate gres.f if option adifor is requested
+    #
+    #-------------------------------------------------------------
+      #
+      # if adifor is requested, jacfun created by CreateExternalFunctions
+      # will contain a wrapper for adifor-generated Jacobian only
+      #
+        codegen[fortran](
+          jacfun,
+          filename="jac.f.tmp",
+          mode=double,
+          precision=double
+        );
+
+      #
+      # keep only nonzero Jacobian elements
+      #     
+        status:=ssystem(cat("sh ",_EnvModulesDir,"DDASPKSen/ext_routines/linux64/shell_scripts/sedScript1 ",NameOfJacFor));
+	if status[1] <> 0 then
+	   system(cat("sh ",_EnvModulesDir,"DDASPKSen/ext_routines/linux64/shell_scripts/sedScript1 ",NameOfJacFor));
+	   error(" in \"../maple/DDASPKSen/source/CreateSharedObject.txt\" command: \"sedScript1\""); 
+	end if;
+
+	status:=ssystem("rm -f jac.f.tmp");
+	if status[1] <> 0 then
+	   system("rm -f jac.f.tmp");	  
+	   error(" in \"../maple/DDASPKSen/source/CreateSharedObject.txt\" command: \"rm -f jac.f.tmp\"");
+        end if;
+
+      #
+      # if requested run adifor to create jacobian (with prefix j)
+      #
+      
+        if
+          UseAdifor= true
+        then
+
+	  #stopat(ADIFOR:-RunAD,16);
+
+          ADIFOR:-RunAD(
+            NameOfRes,               # proc res will be differentiated
+            ['y', 'yprime'],         # x in dy/dx
+            MaxNumIndependentVars,   # N in x[1..N]
+            'delta',                 # y in dy/dx
+            'dense',                 # sparsity keyword
+            '[]',                    # ExcludedProcs (empty list)
+            "j"                      # prefix of adifor created function
+          );
+          #
+          # we must avoid underscores on linux, do the same thing on Solaris
+          # in order to avoid having similar but confusingly different files
+          #
+          # note that sed command also changes occurence of 'j_res' in
+          # call ehsfid(g_ehfid, 'res', 'j_res.f') within the
+          # adifor-generated code
+          #
+	 status:=ssystem(
+	     cat("sh ",_EnvModulesDir,"DDASPKSen/ext_routines/linux64/shell_scripts/sedScript2 ",NameOfResFor)
+          );
+	 if status[1] <> 0 then
+	     system(cat("sh ",_EnvModulesDir,"DDASPKSen/ext_routines/linux64/shell_scripts/sedScript2 ",NameOfResFor));
+	     error(" in \"../maple/DDASPKSen/source/createSharedObject.txt\" command: \"sedScript2\"");
+	 end if;
+
+          status:=ssystem(cat("rm -f j_",NameOfResFor));
+	  if status[1] <> 0 then
+	     error(" in \"../maple/DDASPKSen/source/createSharedObject.txt\" command: \"rm -f j_[NameOfResFor]\"");
+	     system(cat("rm -f j_",NameOfResFor));
+	  end if;
+
+        end if;
+
+      #
+      # compile problem dependent file jac.f
+      #
+      
+      status:=ssystem(cat("gfortran -fPIC -O0 -c ",NameOfJacFor," -o ",NameOfJacObj));
+      if status[1] <> 0 then
+        system(cat("gfortran -fPIC -O0 -c ",NameOfJacFor," -o ",NameOfJacObj));
+	error(" in \"../maple/DDASPKSen/source/createSharedObject.txt\" command: \"gfortran -fPIC -O0 -c [NameOfJacFor] -o [NameOfJacObj]\""); 
+      end if;
+	
+	#----------------------------------------------------------------------------------------------------
+	#
+	#Hier fliegen wir raus. Overseen j before NameOfResFor. Added -c compiler flag
+	#
+	#----------------------------------------------------------------------------------------------------
+      if UseAdifor= true then
+        status:=ssystem(cat("gfortran -fPIC -O0 -c j",NameOfResFor," -o j",NameOfResObj));
+        if status[1] <> 0 then
+          system(cat("gfortran -fPIC -O0 -c j",NameOfResFor," -o j",NameOfResObj));
+          error(" in \"../maple/DDASPKSen/source/createSharedObject.txt\" command: \"gfortran -fPIC -O0 -c j[NameOfResFor] -o j[NameOfResObj]\"");
+        end if;
+      end if;
+
+
+    #----------------------------------------------------------------
+    #
+    # if sensitivities are requested run adifor to create gres.f
+    #
+    #----------------------------------------------------------------
+       if
+         EvalSen = true
+       then
+
+         ADIFOR:-RunAD(
+            NameOfRes,                  # proc res will be differentiated
+            ['y', 'yprime','senpar'],   # x in dy/dx
+            MaxNumIndependentVars+
+            NumSenParsInDAESys,      # N in x[1..N]
+            'delta'                  # y in dy/dx
+           );
+          #
+          # we must avoid underscores on linux, do the same thing on Solaris
+          # in order to avoid having similar but confusingly different files
+          #
+          # note that sed command also changes occurence of 'g_res' in
+          # call ehsfid(g_ehfid, 'res', 'g_res.f') within the
+          # adifor-generated code
+          #
+	    status:=ssystem(cat("sh ",_EnvModulesDir,"DDASPKSen/ext_routines/linux64/shell_scripts/sedScript3 ",NameOfResFor));            
+	    if status[1] <> 0 then
+	       system(cat("sh ",_EnvModulesDir,"DDASPKSen/ext_routines/linux64/shell_scripts/sedScript3 ",NameOfResFor));
+	       error(" in \"../maple/DDASPKSen/source/createSharedObject.txt\" command: \"sedScript3\"");
+	    end if;
+	    
+	    status:=ssystem(cat("rm -f g_",NameOfResFor));
+	    if status[1] <> 0 then
+	       system(cat("rm -f g_",NameOfResFor));
+	       error(" in \"../maple/DDASPKSen/source/createSharedObject.txt\" command: \"rm -f g_[NameOfResFor]\""); 
+            end if;
+      #
+      # compile problem dependent file gres.f
+      #
+         status:=ssystem(cat("gfortran -fPIC -O0 -c g",NameOfResFor," -o g",NameOfResObj));
+	 if status[1] <> 0 then
+	   system(cat("gfortran -fPIC -O0 -c g",NameOfResFor," -o g",NameOfResObj));
+	   error(" in \"../maple/DDASPKSen/source/createSharedObject.txt\" command: \"gfortran -fPIC -O0 -c g[NameOfResFor] -o g[NameOfResObj]\"");
+	 end if;  
+      
+       end if;
+       
+    #------------------------------------------------------------
+    #
+    # link problem dependent and problem independent files
+    #
+    #------------------------------------------------------------
+      if
+        InterfaceKeyword='BuildInterface'
+      then
+
+        SharedObjectName:= cat(
+          "cwrap_ddaspk", InstanceCounter, SharedObjectEnd
+        );
+
+	if
+          UseAdifor= false and EvalSen= false
+        then
+	    LinkerCommand:= cat("gcc -shared -Xlinker -Bsymbolic -m64 ",
+			    _EnvModulesDir, "DDASPKSen/ext_routines/f2c/shared_obj/ddaspk.so ",
+			    _EnvModulesDir, "DDASPKSen/ext_routines/f2c/shared_obj/adf_dummy.o ",
+			    _EnvModulesDir, "DDASPKSen/ext_routines/f2c/cwrap/g_res_dummy.o ",
+			    _EnvModulesDir, "DDASPKSen/ext_routines/f2c/cwrap/psol_dummy.o ",
+			    _EnvModulesDir, "DDASPKSen/ext_routines/f2c/cwrap/cwrap_ddaspk.o ",
+			    "./", NameOfResObj," ./", NameOfJacObj, " ",
+			    "-lm -o ",
+			    SharedObjectName
+			    );
+
+        elif
+          UseAdifor= true and EvalSen= false
+        then
+	    LinkerCommand:=cat("sh ",_EnvModulesDir,
+                           "DDASPKSen/ext_routines/linux64/shell_scripts/linkerCommand_UseAdifor_True_EvalSen_False ",
+                           _EnvModulesDir," ",NameOfResObj," ",NameOfJacObj," ",SharedObjectName
+                           );
+        elif
+          UseAdifor= true and EvalSen= true
+	then
+	    LinkerCommand:=cat("sh ",_EnvModulesDir,
+			   "DDASPKSen/ext_routines/linux64/shell_scripts/linkerCommand_UseAdifor_True_EvalSen_True ",
+                           _EnvModulesDir," ",NameOfResObj," ",NameOfJacObj," ",SharedObjectName
+                           );	
+        end if;
+	
+        status:=ssystem(eval(LinkerCommand));
+	if status[1] <> 0 then
+	  printf("------------------------------------------------------------------\n");
+          printf("%s\n",LinkerCommand);
+	  printf("------------------------------------------------------------------\n");
+
+	  error(" in \"../maple/DDASPKSen/source/CreateSharedObject.txt\" linking failed!");
+	end if;  
+	print(currentdir());
+    #------------------------------------------------------------
+    #
+    # create interface to DDASPK
+    #
+    # note that call to define_external in CreateSharedObject must be exactely
+    # the same; unfortunately there is no simple way to reflect this in
+    # the code, but consistency must be ensured by hand
+    #
+    #------------------------------------------------------------
+    soName:= cat(_EnvWorkingDir,"/", ddaspkDir,"/", SharedObjectName);
+   	ddaspk:= define_external(
+          'cwrapper_ddaspk',
+          NEQ::integer[4],                               #input
+          T::REF(float[8]),                              #input/output
+          Y::ARRAY(1..NEQ, float[8]),                    #input/output
+          YPRIME::ARRAY(1..NEQ, float[8]),               #input/output
+          tout::float[8],                                #input
+          INFO::ARRAY(1..30, integer[4]),                #input
+          RTOL::REF(float[8]),                           #input/output
+          ATOL::REF(float[8]),                           #input/output
+          IDID::REF(integer[4]),                         #output
+          RWORK::ARRAY(1..LENW, float[8]),               #work
+          LENW::integer[4],                              #input
+          IWORK::ARRAY(1..LENIW, integer[4]),            #work
+          LENIW::integer[4],                             #input
+          RPAR::ARRAY(1..NumParsInDAEsys, float[8]),     #input
+          IPAR::integer[4],                              #input
+          SENPAR::ARRAY(1..NumSenParsInDAESys, float[8]),#input
+          LIB=soName
+	  #LIB=SharedObjectName,                          #input
+          #WRAPPER
+        );
+    #
+    # Save Filelist
+    #
+       Filelist:=[convert(NameOfRes,name)=convert(NameOfResObj,name),
+                  convert(NameOfJac,name)=convert(NameOfJacObj,name)];
+       if
+         UseAdifor = true
+       then
+         if
+           EvalSen = true
+         then
+           Filelist:=[op(Filelist), cat(g,NameOfRes)=cat(g,NameOfResObj)];
+         end if;
+         Filelist:=[op(Filelist),cat(j,NameOfRes)=cat(j, NameOfResObj)];
+       end if;
+
+       save(Filelist,"Filelist.m");
+
+    #
+    # change back to directory of calling procedure
+    #
+       currentdir(oldDir);
+       return ddaspk;
+     else
+    #
+    # Save Filelist
+    #
+	
+       Filelist:=[convert(NameOfRes,name)=convert(NameOfResObj,name),
+                  convert(NameOfJac,name)=convert(NameOfJacObj,name)];
+     
+ 
+       if
+         UseAdifor = true
+       
+       then
+         if
+           EvalSen = true
+
+         then
+           Filelist:=[op(Filelist), cat(g,NameOfRes)=cat(g,NameOfResObj)];
+
+         end if;
+         Filelist:=[op(Filelist),cat(j,NameOfRes)=cat(j, NameOfResObj)];
+       end if;
+
+       save(Filelist,"Filelist.m");
+
+    #
+    # change to old directory and return nothing if no interface is requested
+    #
+       currentdir(oldDir);
+     end if;
+
+  end proc; # CreateDdaspkSharedObject

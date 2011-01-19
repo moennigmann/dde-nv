@@ -1,0 +1,28 @@
+######################################################################
+#
+# @path DDASPKSen/SubsIntoSimpleWrapper/SimpleWrapper/getVariables.txt
+#
+# @brief exported proc SimpleWrapper:-getVariables
+# 
+# @revision 
+#   031120 added AlgVars in the list
+#
+######################################################################
+      getVariables:= proc()
+        
+        local Y, SubsList;
+       
+        Y:= getY();
+ 
+        SubsList:= [seq(
+          Sys["DynVars"][i1]= Y[i1],
+          i1= 1..nops(Sys["DynVars"])
+          ),
+          seq(
+          Sys["AlgVars"][i1-nops(Sys["DynVars"])] = Y[i1],
+          i1= nops(Sys["DynVars"])+1..nops(Sys["DynVars"])+nops(Sys["AlgVars"])
+          )]:
+
+        return(SubsList); 
+
+      end proc; # getVariables

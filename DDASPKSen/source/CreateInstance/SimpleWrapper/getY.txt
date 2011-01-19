@@ -1,0 +1,10 @@
+###------------------------------------------------------------------------
+#
+# @path DDASPKSen/CreateInstance/SimpleWrapper/getY.txt
+#
+# @brief exported method getY
+#
+###------------------------------------------------------------------------
+    getY:= proc()
+      RETURN(y_vec);
+    end proc;  # GetY

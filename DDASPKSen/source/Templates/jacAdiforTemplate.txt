@@ -1,0 +1,171 @@
+###------------------------------------------------------------------------
+# @path DDASPKSen/Template/jacAdiforTemplate.txt
+#
+# @brief 
+# Template function jacAdiforTemplate, local to DDASPK;
+# In CreateDDASPKexternalFunctions actual information from an NLP is 
+#        substituted into this template
+#
+# @notes
+#   (1) Adifor-generated subroutine returns both function values and 
+#   derivative values; currently only derivatives are used and 
+#   function evaluation is called separately
+#   (2) remember that DDASPK has build in routines to call adifor-
+#   generated subroutines
+#   (3) Distinguish between cj in res and jac: In res and instances  
+#   of ResTemplate, cj is an argument which is never evaluated, see
+#   mysterious comment on use of cj in header of 
+#   ext_routines/shared_obj/ddaspk.f. This implies that cj is not
+#   evaluated in adifor-generated gres.f. It is, however, evaluated
+#   in instances of JacAdiforTemplate to obtain dG/dY+ CJ* dG/dYPRIME.
+#
+# @revision
+#   2006-08-24 Function no longer calls adifor error handler ehsup,
+#     since error handling is not supported under linux.
+#   040810 added InstanceCounter to call to adifor generated routine jres
+#   040805 added call proc ehsup(-1,UNIT-NUMBER) 
+#     which is responsible for redirceting the exception meassages
+#     of adifor to an output file -jge
+#   020318 written by mmo 
+#
+###------------------------------------------------------------------------
+    jacAdiforTemplate:= proc(
+      t::numeric,
+      y,			# type declared below
+      yprime,			# type declared below
+      pd,			# type declared below
+      cj::numeric,		# see notes in header
+      par,			# type declared below
+      ipar,			# type declared below, dummy
+      senpar,			# type declared below
+      ijac::integer
+    )
+      local UnitNumber, NumVarsTotal, NumEqnsTotal, ires, i1, i2, ySeedMatrix, 
+        yprimeSeedMatrix, gdelta, delta, ldg_y, ldg_yprime, ldg_delta,
+        g_p, ehsupPar;  
+
+      declare(
+        y = array(
+          1..(NumODEsToBeSubs+ NumAEsToBeSubs),
+          numeric
+        ),
+
+        yprime = array(
+          1..(NumODEsToBeSubs+ NumAEsToBeSubs),
+          numeric
+        ),
+
+        pd = array(
+          1..(NumODEsToBeSubs+ NumAEsToBeSubs),
+	  1..(NumDynVarsToBeSubs+ NumAlgVarsToBeSubs),
+          numeric
+        ),
+
+	par = array(		# dummy parameter
+          1..NumParsToBeSubs, 
+          numeric		#
+        ),
+
+	ipar = array(		# dummy parameter
+          1..1,			#
+          numeric		#
+        ),
+
+	senpar = array(		# dummy parameter
+          1..NumSenParsToBeSubs,			#
+          numeric		#
+        ),
+   
+        ires= integer,          # dummy parameter, inherited from res
+
+        ySeedMatrix= array(
+          1..(2* (NumDynVarsToBeSubs+ NumAlgVarsToBeSubs)), 
+          1..(NumDynVarsToBeSubs+ NumAlgVarsToBeSubs),
+          numeric
+        ),
+
+        yprimeSeedMatrix= array(
+          1..(2* (NumDynVarsToBeSubs+ NumAlgVarsToBeSubs)), 
+          1..(NumDynVarsToBeSubs+ NumAlgVarsToBeSubs),
+          numeric
+        ),
+
+        delta= array(
+          1..(NumODEsToBeSubs+ NumAEsToBeSubs),
+          numeric
+        ), 
+
+        gdelta= array(         
+          1..(2* (NumDynVarsToBeSubs+ NumAlgVarsToBeSubs)), 
+          1..(NumODEsToBeSubs+ NumAEsToBeSubs),   
+          numeric
+        )	
+      );
+
+      NumVarsTotal:= NumDynVarsToBeSubs+ NumAlgVarsToBeSubs;
+      NumEqnsTotal:= NumODEsToBeSubs+ NumAEsToBeSubs; 
+      UnitNumber:= UnitNumberToBeSubs;
+      ehsupPar:=-1;
+
+      # 
+      # set seed matrices
+      #
+      # remember y comprises both former DAESys[DynVars] and former
+      # DAESys[AlgVars], therefore loops have to run to NumVarsTotal
+      # remember yprime is at most as large as y
+      #
+        for i1 from 1 to NumVarsTotal do
+          for i2 from 1 to NumVarsTotal do
+            ySeedMatrix[i1, i2]:= 0.0;
+            ySeedMatrix[NumVarsTotal+ i1, i2]:= 0.0;
+            yprimeSeedMatrix[i1, i2]:= 0.0;
+            yprimeSeedMatrix[NumVarsTotal+ i1, i2]:= 0.0;
+          end do;
+          ySeedMatrix[i1, i1]:= 1.0;
+          yprimeSeedMatrix[NumVarsTotal+ i1, i1]:= 1.0; 
+        end do; 
+
+      #
+      # call adifor-generated routine
+      #
+        ldg_y:= 2* NumVarsTotal;
+        ldg_yprime:= 2* NumVarsTotal;
+        ldg_delta:= 2* NumVarsTotal;
+	g_p:= 2* NumVarsTotal; 
+
+        NameOfDerivateRoutineToBeSubs(
+          g_p,
+          t,          
+          y,          
+          ySeedMatrix,     # g_y
+          ldg_y,
+          yprime,
+          yprimeSeedMatrix,   
+          ldg_yprime,
+          cj,              # inherited from res, see notes in header
+          delta,
+          gdelta,
+          ldg_delta,       # remember adifor returns transposed
+                           # Jacobian, therefore NumVarsTotal is needed 
+                           # here rather than
+                           # NumEqnsTotal
+          ires,            # dummy, does not occur in adifor-generated code
+          par,    
+          ipar,            # dummy, does not occur in adifor-generated code
+          senpar           
+        ); 
+
+      #
+      # assign array of partial derivatives, pd of dimension
+      # NumEqnsTotal x NumVarsTotal
+      #
+      # remember that adifor returns transposed Jacobian
+      #
+        for i1 from 1 to NumEqnsTotal do
+          for i2 from 1 to NumVarsTotal do
+            pd[i1, i2]:= gdelta[i2, i1]+ cj* gdelta[i2+ NumVarsTotal, i1]; 
+          end do;
+        end do; 
+      RETURN();
+
+    end proc;    # JacAdiforTemplate

@@ -1,0 +1,182 @@
+###======================================================================
+#
+# @path DDASPKSen/createDDASPKexternalFunctions.txt
+#
+# @todo:
+# (1) creation of Jacobian with maple (rather than adifor) might be
+#   faster if substitution of ExplicitAEs before calculation of
+#   derivatives is avoided, see change (2) on 020319;
+#
+# @revision
+# 2010-08-26 exchanged ussage of ModelPack to Aux - dka
+# 080305 removed OperatingSystem specific setting of UnitNumber -tqu
+# 040810 added Name of adifor created derivative of res (jres) -jge
+# 040805 added UnitNumberToBeSubs as parameter for the creation of
+#   Jacobian Fortran Routine which uses ADIFOR, UnitNumber is 6 in case
+#   of unix or linux(=standard output) or 12 if windows -jge 
+# 020410 (1) added evalf to equations to be exported to fortran to avoid  
+#   numbers which look like integers in maple but are floats to be
+#   converted to integers in fortran; did the same to parameters in
+#   SubsIntoSimpleWrapper.txt; (2) due to error in loop over RhsODEs,
+#   yprime was only subtracted from 1st ODE whereas all other equations
+#   passed to DDASPK were erroneously independent of yprime; corrected
+#   this bug by looping to NumODEs rather than erroneous nops(<array>);  
+# 020319 (1) added check for standard names in ExplicitAEs; (2) removed
+#   SubsExplicitAEsIntoDAEsys and allowed for ExplicitAEs in 
+#   Templates/ResTemplate.txt; note that if linalg[maple] is used to
+#   calculate Jacobian, ExplicitAEs are substituted for the calculation 
+#   of derivatives, but res.f is still created without substituting 
+#   ExplicitAEs; (2) removed check for standard notation, since calling
+#   procedure CreateInstance substitutes standard notation; 
+# 020318 substitution of ExplicitAEs into ODEs and AEs is now performed
+#   by ModelPack:-SubsEqnListIntoEqn() rather than subs()
+# 020312 changed to allow user to pass parameters from maple to ddaspk:
+#   aDAESys[Parameters] are no longer substituted into ODEs and AEs, 
+#   but set by passing values in 'par' to instance of JacTemplate and
+#   instance of ResTemplate; 
+# 010510 written by mkl and mmo
+#
+###======================================================================
+  createExternalFunctions:= proc(
+    aDAESys::DAESys,
+    NameOfRes::name,
+    NameOfJac::name
+  )
+    local i1, ListListOfJacElements, Eqs, EqsAfterSubs, NameOfDerivativeRoutine,
+      RhsODEs, RhsAEs, NumExplicitAEs, ExplicitAEsPlusDummyForResTemplate,
+      NumODEs, NumAEs, NumDynVars, NumAlgVars, NumPars,NumSenPars, UnitNumber; 
+
+    #
+    # set unit number 
+    #
+     UnitNumber:=6;
+
+   #
+   # set NameOfDerivativeRoutine
+   #
+     NameOfDerivativeRoutine:=cat(j,NameOfRes);
+      #----------------------------------------------------------------------
+      #
+      # substitute information from actual DAESys into templates
+      #
+      #----------------------------------------------------------------------
+        NumODEs:= nops(aDAESys["ODEs"]); 
+        NumAEs:= nops(aDAESys["AEs"]); 
+        NumExplicitAEs:= nops(aDAESys["ExplicitAEs"]); 
+        NumDynVars:= nops(aDAESys["DynVars"]); 
+        NumAlgVars:= nops(aDAESys["AlgVars"]); 
+        NumPars:= max(1,nops(aDAESys["Parameters"]));
+        NumSenPars:=max(1,nops(aDAESys["SenPars"]));
+
+      #
+      # convert equations into form needed by DDASPK
+      #
+      # note that ODEs may be more general in DDASPK than they are
+      # in type DAESys
+      #
+        RhsODEs:= map(rhs, aDAESys["ODEs"]);
+        RhsODEs:= convert(RhsODEs, array); 
+        
+        #
+        # take yprime on lhs into account
+        #
+          for i1 from 1 to NumODEs do
+            RhsODEs[i1]:= RhsODEs[i1]- yprime[i1]; 
+          end do; 
+
+        RhsODEs:= convert(RhsODEs, list);
+        RhsODEs:= map(evalf, RhsODEs);  
+        RhsAEs:= map(rhs, aDAESys["AEs"]);
+        RhsAEs:= map(evalf, RhsAEs);  
+
+	Eqs:= [
+          op(RhsODEs),
+          op(RhsAEs)
+        ]; 
+	
+      #
+      # generate objfun by substituting values into ResTemplate
+      #
+        if
+          aDAESys["ExplicitAEs"]= []
+        then
+          ExplicitAEsPlusDummyForResTemplate:= [0.0];
+        else 
+          ExplicitAEsPlusDummyForResTemplate:= [
+            op(map(rhs, aDAESys["ExplicitAEs"])),
+            0.0
+          ]; 
+        end if; 
+
+        ExplicitAEsPlusDummyForResTemplate:= map(
+          evalf,
+          ExplicitAEsPlusDummyForResTemplate
+        ); 
+
+	NameOfRes:= subs(
+          NumODEsToBeSubs=        NumODEs, 
+          NumAEsToBeSubs=         NumAEs,
+          NumExplicitAEsToBeSubs= NumExplicitAEs, 
+          NumDynVarsToBeSubs=     NumDynVars,
+          NumAlgVarsToBeSubs=     NumAlgVars,
+          NumParsToBeSubs=        NumPars,
+          NumSenParsToBeSubs=     NumSenPars,
+          ExplicitAEsToBeSubs=    ExplicitAEsPlusDummyForResTemplate, 
+	  ResToBeSubs= Eqs,
+          eval(Templates:-resTemplate)
+        );
+
+      #
+      # generate Jacobian
+      #
+      # if adifor is requested, generated fortran file will only
+      # be a wrapper which calls adifor-generated routine
+      #
+        if 
+          UseAdifor= true
+        then
+	  NameOfJac:= subs(
+            NumODEsToBeSubs= NumODEs, 
+            NumAEsToBeSubs= NumAEs,
+            NumDynVarsToBeSubs= NumDynVars,
+            NumAlgVarsToBeSubs= NumAlgVars,
+            NumParsToBeSubs= NumPars,
+            NumSenParsToBeSubs= NumSenPars,
+            UnitNumberToBeSubs= UnitNumber,
+            NameOfDerivateRoutineToBeSubs= NameOfDerivativeRoutine,
+	    eval(Templates:-jacAdiforTemplate)
+	  );
+        else
+	  EqsAfterSubs:= [seq(
+            Aux:-ListOperations:-subsEqnListIntoEqn(
+              aDAESys["ExplicitAEs"],
+              0= Eqs[i1]
+            ),
+            i1= 1..(NumODEs+ NumAEs)
+          )];
+          EqsAfterSubs:= map(rhs, EqsAfterSubs); 
+
+  	  ListListOfJacElements:= [seq(
+	    [seq(
+	      diff(EqsAfterSubs[i1], y[i2])+ 
+                cj* diff(EqsAfterSubs[i1], yprime[i2]),
+	      i2= 1..(NumDynVars+ NumAlgVars)
+	    )],
+	    i1= 1..(NumODEs+ NumAEs)
+	  )];
+	  NameOfJac:= subs(
+            NumODEsToBeSubs= NumODEs, 
+            NumAEsToBeSubs= NumAEs,
+            NumDynVarsToBeSubs= NumDynVars,
+            NumAlgVarsToBeSubs= NumAlgVars,
+            NumParsToBeSubs= NumPars,
+            NumSenParsToBeSubs=NumSenPars,
+	    JacToBeSubs= ListListOfJacElements,
+	    eval(Templates:-jacTemplate)
+	  );
+        end if; 
+
+    RETURN();
+  
+  end proc; # CreateDDASPKexternalFunctions
+

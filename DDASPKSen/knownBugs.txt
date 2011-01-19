@@ -1,0 +1,17 @@
+When xmaple has crashed, then sometimes the following error occurs:
+ddaskp: call_external lower dimensions of ARRAY does not match (4709098098929, expected 1).
+
+I can't reproduce this error. It appears after maple has been forced to stop (killed or crashed).
+
+Remove files written after CreateInstance has been called from home directory, seems to work. I do not understand
+why those files are there anyway, since I specify a folder in the working directory, that should
+contain those files.
+
+Also starting xmaple directly from the WorkingDir folder.
+
+But I couldn't verify any of these tricks, since the error has not occured anymore and could not be
+reproduced.
+
+Maybe in the directory maple is called, there are some hidden files, that need to be removed.
+
+Restarting the system, didn't work.

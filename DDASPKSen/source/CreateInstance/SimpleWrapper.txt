@@ -1,0 +1,81 @@
+    ##############################################################################
+    #
+    # @path DDASPKSen/CreateInstance/SimpleWrapper.txt
+    #
+    # @brief template function
+    #
+    # @revision
+    #   020228 (1) in CreateSharedObject, interface created by define_external
+    #     was changed, here types of arguments are changed accordingly
+    #     vectors of length one are now integers/floats: idid, rtol, atol,
+    #     rpar_vec, ipar_vec, t_vec,
+    #     (2) removed option order= Fortran_order from Vector() everywhere
+    #     (3) removed quotes from variables in define_external acc. to rule
+    #     that only REF-variables are quoted:  t_vec, y, yprime_vec,
+    #     RWORK_vec, IWORK_vec
+    #   010510 written by M.Kluck
+    #
+    ##############################################################################
+    SimpleWrapper:= module()
+
+      local NEQ, LIW, LRW, DDASPK, INFO, N,
+            rtol, atol, rpar, ipar, senpar,
+            idid, t_vec, y_vec, yprime_vec, tout_vec,
+        INFO_vec, RWORK_vec, IWORK_vec, rtol_vec,
+            atol_vec, rpar_vec, ipar_vec,
+        senpar_vec;
+
+      export init, runInt, Sys, getY, getYPRIME, getT;
+
+      #--------------------
+      #
+      # receive some variables from constructor CreateDDASPKinstance
+      #
+      #--------------------
+        NEQ:= NEQtoBeSubs;
+        LRW:= LRWtoBeSubs;
+        LIW:= LIWtoBeSubs;
+        DDASPK:= DDASPKtoBeSubs;
+        Sys:= aDAESys;
+
+      #--------------------
+      #
+      # set local variables
+      #
+      #--------------------
+        idid:= 0;
+
+        N := 30;
+
+    INFO_vec := Vector(
+      1..N, [i->0], datatype = integer[4]
+    );
+
+        INFO_vec[3]:= 1;
+        INFO_vec[5]:= 1;
+
+    RWORK_vec := Vector(
+      1..LRW, fill=0, datatype = float[8]
+    );
+
+    IWORK_vec := Vector(
+      1..LIW, fill=0, datatype = integer[4]
+    );
+
+        rtol_vec:= 1.0e-6;
+
+        atol_vec:= 1.0e-6;
+
+        rpar_vec:= 0.0;
+
+        ipar_vec:= 0;
+
+        senpar_vec:= 0;
+
+$include <CreateInstance/SimpleWrapper/init.txt>
+$include <CreateInstance/SimpleWrapper/runInit.txt>
+$include <CreateInstance/SimpleWrapper/getY.txt>
+$include <CreateInstance/SimpleWrapper/getYPRIME.txt>
+$include <CreateInstance/SimpleWrapper/getT.txt>
+
+    end module; # SimpleWrapperTemplate

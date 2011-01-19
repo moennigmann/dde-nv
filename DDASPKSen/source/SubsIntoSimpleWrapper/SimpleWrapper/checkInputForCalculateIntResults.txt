@@ -1,0 +1,43 @@
+######################################################################
+# 
+# @path DDASPKSen/SubsIntoSimpleWrapper/SimpleWrapper/checkInputForCalculateIntResults.txt
+#
+# @brief checks if the list of time points for CalculateIntResults
+#	       is correct
+#
+# @param (1) a list of time points, at which integration should be done;
+#	 (2) the initial time of the DDASPKSen instance 
+#
+# @return throws errors if 1) first entry of list is not smaller
+#			      then initial time point
+#			   2) list is not strictly ascending
+#              
+# @revision
+# 091019 added missing local variable names, tqu
+# 080521 created by tqu
+#
+######################################################################
+checkInputForCalculateIntResults := proc(timePoints::list(numeric), initTime::numeric)
+  local timeIsOrdered;				 
+    #	
+    #first TOUT value in list timePoints has to be > than initTime
+    #		
+     if
+       not initTime < timePoints[1]
+     then
+       error("the first TOUT value in timePoints (%1) has to be smaller than initial time (%2)", 
+	 timePoints[1], initTime
+	 );
+     end:
+
+    #	
+    #timePoints has to be an  list with timevalues in strictly increasing order 	
+    #
+     timeIsOrdered:=ListTools[Sorted](timePoints,verify,less_than);
+     if
+       not timeIsOrdered
+     then
+       error("Input timePoints has to be a strictly ascending list. You have inserted: %1", timePoints);
+     end if: 
+  
+end proc; #CheckInputForCalculateIntResults

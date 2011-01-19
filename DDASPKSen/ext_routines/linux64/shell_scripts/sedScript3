@@ -1,0 +1,5 @@
+#!/bin/zsh
+
+sed -e 's/g_res/gres/g' g_$1 > g$1 2> /dev/null
+
+exit "$?"

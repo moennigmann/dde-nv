@@ -1,0 +1,39 @@
+######################################################################
+#
+# @path DDASPKSen/SubsIntoSimpleWrapper/SimpleWrapper/getParameters.txt
+#
+# @brief exported procedure getParameters
+#
+# @notes (1) differs from GetPars in that named list is
+#   returned here, while list of values is returned by GetPars
+#   (2) remember consistency of Sys[Parameters] and rpar_vec
+#   is ensured by SetPars, SetParameters
+#
+# @revision
+# 2010-08-26 exchanged ussage of ModelPack to Aux - dka
+# 020410 proc no longer returns Sys[Parameters], but
+#   constructs substitution list of type list(name= EvalsToFloat)
+#   from values in rpar_vec; this is done since entries of 
+#   rpar_vec are of type float(8) and therefore may differ 
+#   slighty from arbitrary precision values in Sys[Parameters]
+# 02xxxx written by mmo
+#
+######################################################################
+      getParameters:= proc()
+
+        local Pars, NamesOfPars, SubsList;
+
+        Pars:= getPars();
+        NamesOfPars:= Aux:-ListOperations:-getListOfLhsIn(
+          Sys["Parameters"]
+        );
+
+        SubsList:= [seq(
+          NamesOfPars[i1]= Pars[i1],
+          i1= 1..nops(Sys["Parameters"])
+        )];
+
+        return(SubsList); 
+
+      end proc; # GetParameters
+

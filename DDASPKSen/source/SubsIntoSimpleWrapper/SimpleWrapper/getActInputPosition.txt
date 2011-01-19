@@ -1,0 +1,26 @@
+######################################################################
+#
+# @path DDASPKSen/SubsIntoSimpleWrapper/SimpleWrapper/getActInputPosition .txt
+#
+# @brief exported procedure getActInputPosition
+#
+# @param none
+#
+# @return returns the position, where 
+#	  input is actually read.
+#              
+# @revision
+# 080506 created by tqu
+#
+######################################################################
+getActInputPosition := proc()
+  
+  if
+    ActInputPosition=0
+  then
+    Warning("Input has not yet been set. This can be done with setInput().");
+  else
+    return(ActInputPosition);
+  end if:
+  
+end proc; #GetActInputPosition

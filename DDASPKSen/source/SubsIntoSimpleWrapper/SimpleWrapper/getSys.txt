@@ -1,0 +1,11 @@
+######################################################################
+#
+# @path DDASPKSen/SubsIntoSimpleWrapper/SimpleWrapper/getSys.txt
+#
+# @brief exported procedure getSys
+#
+######################################################################
+      getSys:= proc()
+        return(eval(Sys)); 
+      end proc; # getSys
+

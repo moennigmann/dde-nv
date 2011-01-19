@@ -1,0 +1,86 @@
+############################################################
+#
+# @path DDASPKSen:-appendSenParsToDAESys
+#
+# @param 
+#    aDAESys, list of Sensitivity Parameters
+#    
+# @return
+#    NewDAESys with SenPars
+#
+# @revision
+#  2010-08-26 exchanged ussage of ModelPack to Aux by dka
+#  050217 allows now input without values
+#  040727 written by jge
+#
+############################################################
+
+appendSenParsToDAESys:=proc(
+     aDAESys::DAESys,
+     SensitivityPars::{name, list(name), name=EvalsToFloat, list(name = EvalsToFloat)}
+     )
+
+ local SenParsList,SetOfIndices,NewDAESys, SetOfCommonNames,i1;
+
+    NewDAESys:=copy(aDAESys);
+    
+ # Convert SenPars to list if of Type name or name=EvalsToFloat
+    if
+      (type(SensitivityPars,name=EvalsToFloat) or type(SensitivityPars,name))
+    then
+       SenParsList:=convert(SensitivityPars,list);
+    else
+       SenParsList:=SensitivityPars;
+    end if;
+
+ # If no values specified set rhs to values of parameters 
+   if
+     type(SenParsList,list(name))
+   then
+     SenParsList:=Aux:-ListOperations:-subsToCreateSubsList(NewDAESys["Parameters"],SenParsList);
+   end if;
+
+ # Check if entries in SenParsList already exist in SenPars
+    SetOfIndices:={indices(NewDAESys)};
+    if
+      member(["SenPars"],SetOfIndices)
+    then
+      SetOfCommonNames:=
+           map(lhs,convert(SenParsList,set)) intersect
+	   map(lhs,convert(NewDAESys["SenPars"],set));
+      if not
+        SetOfCommonNames = {}
+      then
+        printf("Warning: %q already in [SenPars]\n",op(SetOfCommonNames));
+        SenParsList:=Aux:-ListOperations:-removeItemFromList([op(SetOfCommonNames)],SenParsList);
+      end if;
+    else
+ # Create Index SenPars     
+      NewDAESys["SenPars"]:=[];    
+    end if;
+
+ # Check if members of SenParsList are also members in NewDAESys["Parameters"]
+    for i1 from 1 to nops(SenParsList) do
+      if
+        Aux:-ListOperations:-isLHSin(lhs(SenParsList[i1]),NewDAESys["Parameters"])
+      then
+         # Append SenPar to ["SenPars"]
+        NewDAESys["SenPars"]:=[op(NewDAESys["SenPars"]),SenParsList[i1]];          
+        NewDAESys["Parameters"]:=
+          Aux:-ListOperations:-removeItemFromList(lhs(SenParsList[i1]),NewDAESys["Parameters"]);
+      else
+        printf("WARNING: %s is not a parameter of the DAE system, \n",lhs(SenParsList[i1]));
+        printf("it will be ignored.");
+      end if;
+    end do;
+    
+    return(eval(NewDAESys));
+
+ end proc; #AppendSenParsToDAESys
+
+
+        
+
+
+         
+       

@@ -1,0 +1,182 @@
+######################################################################
+#
+#procedure TestCalculateIntResultsLipniacki.txt
+#
+#description: Test if DDASPKSen works with Lipniacki model. Since no 
+#	      analytical solution is available, results will be compared
+#	      with results achieved with old collection of procedures
+#	      VariableInputSysIden.txt that has been verified rigorously.
+#	      _EnvWorkingDir and _EnvModuleDir has to be set in the
+#	      calling sheet.
+#
+#input: none
+#
+#output: (1) boolean: true => test was succesful; false => test has failed
+#	 (2) numerical integration solution (curve); for display in sheet.  
+#	 (3) analytical integration solution (curve); for display in sheet.
+#
+#comment: needs the old collection of procedures VariableInputSysIdent.txt
+#
+#
+#revision history:
+#080512 created by tqu
+#######################################################################
+
+TestCalculateIntResultsLipniacki := proc()
+
+  local 
+   aDAESys,
+   x1Data, 
+   x2Data, 
+   timePoints,
+   test1Suceeded,
+   test2Suceeded,
+   actResults,
+   initialVars,
+   initialTime,
+   DDASPKprocNum1,
+   DDASPKprocNum2,
+   DglSys,
+   sol,	
+   initConds0,
+   pars0,
+   sol0,
+   tableOfSolution,
+   tableOfDiffs,
+   tableOfAnalyticalValues,
+   parsNames,
+   senName,
+   p,
+   actVar,
+   parameter,
+   actDiff,
+   subsedDiff,
+   subsedVar,
+   allIndices,
+   numResults,
+   name,
+   actNumValues,
+   actAnalyticalValues,
+   i,
+   numValue,
+   analyticalValue,
+   analResults,
+   inputTable,
+   nrDataPoints,
+   otherData,
+   curveTest1,
+   curveTest2,
+   DDASPKprocAnal1,
+   DDASPKprocAnal2,
+   DDASPKprocSysIdent,
+   sysIdentResults,
+   names,
+   numError,
+   numPlotOptions,
+   entry,
+   inputTest1,
+   inputTest2;
+
+   test1Suceeded := true;
+   test2Suceeded := true;
+   
+  #
+  #read modules needed
+  #
+   read(cat(_EnvModulesDir, "ModelPack/source/ModelPack.mpl")):
+   read(cat(_EnvModulesDir, "DDASPKSen/source/DDASPKSen.mpl")):
+   read(cat(_EnvModulesDir, "Adifor/source/ADIFOR.mpl")):
+   read(cat(_EnvModulesDir, "DDASPKSen/source/Tests/VariableInputSysIdent.txt")):
+   read(cat(_EnvModulesDir, "Ident/tests/CreateSampleSystem.mpl")):
+
+
+  #
+  #define Lipniacnki test systen
+  #
+   lipniackiSystem:=CreateSampleSystem("Lipniacki2004");
+   aDAESys:=lipniackiSystem:-getSys();
+   initialVars:= lipniackiSystem:-getInitCond();
+   initialTime:=0;
+   endTime:=100*3600;
+   interval:=360;
+  
+  #
+  #ckeck if three directories (lipniackiOld, LipniackiNew) needed for calculation already exists
+  #	
+   if
+     ModelPack:-DirExists("LipniackiOld") or ModelPack:-DirExists("LipniackiNew") 
+   then
+     error("temporary directory ./LipniackiOld and ./ LipniackiNew  needed to run test already exists")
+   else  
+       mkdir("LipniackiOld"); mkdir("LipniackiNew");
+   end if;
+
+  #--------------------------------------------------------------------------------
+  #
+  #test: compare old numerical with new numerical solution
+  #
+  #--------------------------------------------------------------------------------
+
+   #
+   #create instance of DDASPKsen for numerical solution
+   #
+    DDASPKprocNew := DDASPKSen:-CreateInstance(aDAESys, "./LipniackiNew", [a1, a2], 'adifor'):
+
+   #	      
+   #set initial values, initial time, and parameter values and initialize DDASPKproc
+   #
+    DDASPKprocNew :-SetVars(initialVars);
+    DDASPKprocNew:-SetInitialTime(initialTime);
+  #  DDASPKprocNew:-Init();
+
+   #
+   #create Results with CalculateIntResults.txt
+   # 
+    timePoints:= [seq(i, i=0..endTime,interval)];
+    newResults:= DDASPKprocNew:-CalculateIntResults(timePoints[2..-1]);
+
+   #
+   #calculate Old solution
+   #
+     DDASPKprocOld := DDASPKSen:-CreateInstance(aDAESys, "./LipniackiOld", [a1, a2], 'adifor'):
+     oldResults:= SysIdent:-CreateODESolSen(DDASPKprocOld,
+       1000,	 #DDASPKSen repeats
+       endTime,		 #endTime
+       interval,	 #intervalTime
+       initialTime,#initTime
+       initialVars,
+       'false'
+     ); 
+
+   allIndices:= indices(eval(newResults:-GetData()));
+   allIndices:=map(op,[allIndices]);
+   timePoints:= convert(newResults:-GetAllValuesOfVariable(time),list);
+
+   for names in allIndices do:
+     actNewValues:= newResults:-GetAllValuesOfVariable(names);
+     actOldValues:= oldResults:-GetAllValuesOfVariable(names);
+
+     for i from 1 to nops(timePoints)do:
+       newValue:= actNewValues[i];
+       oldValue:= actOldValues[i];
+       numError:=abs(newValue - oldValue);
+       if
+	 (numError > 0.0001) 
+	then
+	 test1Suceeded := false;
+	 print("Warning(Test1): failed", newValue, oldValue, i, timePoints[i], names);
+       end if;
+     end do:
+
+   end do:
+
+  #clean up created directories
+  
+   try:
+     system("rm -r LipniackiNew");
+     system("rm -r LipniackiOld");
+   end:
+
+  return(test1Suceeded,newResults, oldResults);
+    
+end proc; #TestCalculateIntResultsLipniacki

@@ -1,0 +1,34 @@
+######################################################################
+#
+# @path DDASPKSen/SubsIntoSimpleWrapper/SimpleWrapper/setVars.txt
+#
+# @brief exported procedure setVars
+#
+######################################################################
+      setVars:= proc(
+        NewVars::list(EvalsToFloat)
+      )
+
+        #
+        # make sure that correct number of parameters has been passed
+        #
+          if not
+            nops(NewVars)= nops(Sys["DynVars"])+nops(Sys["AlgVars"])
+          then
+            error("DAE system has %1 Variables",
+                  nops(Sys[DynVars])+nops(Sys[AlgVars]));
+          end if; 
+
+        #
+        # set variables to requested values and sensitivites to 0
+        #
+	    y_vec:= Vector(
+	      1..NEQ,
+              NewVars, datatype= float[8]
+	    );
+
+        return();
+            
+      end proc; # SetVars
+
+

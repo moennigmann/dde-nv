@@ -1,0 +1,11 @@
+######################################################################
+#
+# @path DDASPKSen/SubsIntoSimpleWrapper/SimpleWrapper/getPars.txt
+#
+# @brief exported procedure getPars
+#
+######################################################################
+      getPars:= proc()
+        return(convert(rpar_vec, list));
+      end proc; # getPars
+

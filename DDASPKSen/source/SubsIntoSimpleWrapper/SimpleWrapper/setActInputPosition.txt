@@ -1,0 +1,28 @@
+######################################################################
+#
+# @path DDASPKSen/SubsIntoSimpleWrapper/SimpleWrapper/setActInputPosition .txt
+#
+# @brief  procedure setActInputPosition 
+#
+# @param integer, representing new input position
+#
+# @return none
+#
+# @notes sets the ActInputPosition of 
+#		an DDASPKSen instance
+#              
+# @revision
+# 080521 created by tqu
+#
+######################################################################
+setActInputPosition := proc(aPosition::integer)
+  
+  if
+    ActInputPosition=0
+  then
+    Warning("Input has not yet been set.Therefore the ActInputPosition cannot be reset. Set the input with SetInput().");
+  else
+    ActInputPosition:= aPosition;
+  end if:
+  
+end proc; #SetActInputPosition

@@ -1,0 +1,143 @@
+###############################################################################
+#
+# @path DDASPKSen/SubsIntoSimpleWrapper.txt
+#
+# @param a DAESys and corresponding procedure created by define_external
+#
+# @return wrapper= instance of SimpleWrapper, see
+#   SubsIntoSimpleWrapper/SimpleWrapper.txt
+#
+# @revision
+#   080521 added variables to handel variable input, tqu
+#   040910 added some initialization values in case [AEs] is not [] -jge
+#   020410 (1) in CreateExternalFunctions, added evalf to equations to 
+#     be exported to fortran to avoid
+#     numbers which look like integers in maple but are floats to be
+#     converted to integers in fortran; did the same here to parameters; 
+#   020318 changes wrt. adifor option: adifor can be used, but DDASPK
+#     interface to adifor is not used, but if adifor is requested, a
+#     maple wrapper is used which calls adifor-generated derivatives;
+#   020311 changes to allow for parameter passing via RPAR between maple and
+#     DDASPK: added ParsInDAEsysToBeSubs
+#   020304 written by mmo
+#
+###############################################################################
+  SubsIntoSimpleWrapper:= proc(
+    aDAESys::DAESys,
+    DDASPKtoBeSubs::procedure
+  )
+
+    local NY, base, LRWtoBeSubs, LIWtoBeSubs, INFO5toBeSubs, INFO11toBeSubs,
+      INFO19toBeSubs, INFO20toBeSubs, INFO22toBeSubs, INFO23toBeSubs,
+      INFO24toBeSubs, INFO25toBeSubs, NEQtoBeSubs,
+      SimpleWrapper, ParsInDAEsysToBeSubs,SenParsInDAESysToBeSubs, IWORK38, ActInputPositionToBeSubs, 
+      SysInputToBeSubs, NameInputParameterToBeSubs;
+
+    #
+    # Initialize variables for stepwise continous input. Per default empty or null. 
+    # Variables are set SetInput().
+    #
+     ActInputPositionToBeSubs :=0;
+     SysInputToBeSubs :=[];
+     NameInputParameterToBeSubs :=0;
+; 
+
+    #----------------------------------------------------------------------
+    #
+    # extract necessary Parameters from aDAESys
+    #
+    #----------------------------------------------------------------------
+      NEQtoBeSubs := (nops(aDAESys["ODEs"])+ nops(aDAESys["AEs"]))*
+         (nops(aDAESys["SenPars"])+ 1);
+      NY := NEQtoBeSubs/(nops(aDAESys["SenPars"])+ 1);
+      ParsInDAEsysToBeSubs:= map(rhs, aDAESys["Parameters"]); 
+      ParsInDAEsysToBeSubs:= map(evalf, ParsInDAEsysToBeSubs); 
+      SenParsInDAESysToBeSubs:= map(rhs, aDAESys["SenPars"]); 
+      SenParsInDAESysToBeSubs:= map(evalf, SenParsInDAESysToBeSubs); 
+
+
+    #
+    # Set some Values of the INFO Vector (see DDASPK documentation)
+    #
+      if
+        UseAdifor= true
+      then
+        INFO5toBeSubs:= 1; # adifor, but do not use DDASPK interface, but maple
+                           # interface
+      else
+        INFO5toBeSubs:= 1; # provide derivatives in maple-generated code
+      end if; 
+
+    #
+    #   if Selectivity is requested set some values of INFO-vector 
+    #
+      if
+        EvalSen= true
+      then
+        INFO19toBeSubs:= nops(aDAESys["SenPars"]); #NP, where NP equals to the number of
+                                                # parameters involved in the system to be solved  
+        INFO20toBeSubs:= 3; # 0,1 finite difference approximation of derviates
+                            # 2  partial derivates included in function RES
+                            # 3  ADIFOR-generated g_res (dense) 
+                            # 4  ADIFOR-generated g_res (matrix-vector)
+                            # 5  ADFIOR-generated g_res (sparse option)
+        INFO22toBeSubs:= nops(aDAESys["SenPars"]); # Number of Parameters in senpar
+        INFO23toBeSubs:= 0; # Error control option for sensitivity variables
+        INFO24toBeSubs:= 0; # Sensitivity of a derived quantity
+        INFO25toBeSubs:= 0; # 0 simultaneous method option for sensitivity analysis
+                          # 1 Staggered method option for sensitivity analysis
+      else
+        INFO19toBeSubs:= 0;
+        INFO20toBeSubs:= 0;
+        INFO22toBeSubs:= 0; 
+        INFO23toBeSubs:= 0; 
+        INFO24toBeSubs:= 0; 
+        INFO25toBeSubs:= 0; 
+      end if;
+    #
+    # compute working space for RWORK, LRW 
+    # note: ENFORCE INFO(12)=0 (!) see documentation of DDASPK(fortran) 
+    #       for further details
+      base := 50 + 9 * NEQtoBeSubs;
+      base := base + NEQtoBeSubs;
+      base := base + NY*NY;
+
+    # additional workspace in case sensitivities INFO(19)>0 are calculated
+      base := base + INFO19toBeSubs*(2*NY+max(NY,INFO24toBeSubs)+INFO22toBeSubs);
+
+      LRWtoBeSubs := base;
+
+    #
+    # compute working space for IWORK, LIW
+    # note: ADIFOR option not yet available, see mmo's settings of INFO-field 
+    #       for further details
+    #
+      base := 40 + NY;
+      LIWtoBeSubs:= base;      
+    #
+    # set some more values in case [AEs] is not []
+    #
+     
+     if not
+       aDAESys["AEs"]=[]
+     then
+       #
+       # Set INFO[11] to 1 
+       #
+        INFO11toBeSubs:= 1; # 0 consistent initial conditions
+			    # 1 with given x, x' and y are calculated
+			    # 2 with given x', x and y are calculated
+			    # 3 some x and some x' are given
+       #
+       # set LIW to new value
+       #
+        LIWtoBeSubs:= 40+ 2*NEQtoBeSubs;
+         
+     end if;
+
+$include <SubsIntoSimpleWrapper/SimpleWrapper.txt>
+        
+    RETURN(eval(SimpleWrapper)); 
+
+  end proc; # SubsIntoSimpleWrapper
+

@@ -1,0 +1,21 @@
+######################################################################
+#
+# @path DDASPK:-Tests
+#
+# @revision
+#   011126 written by mmo
+#
+######################################################################
+  Tests:=module()
+  
+  export
+    all, 
+    simpleProblem1,
+    simpleProblem1WithAdifor; 
+
+$include <Tests/all.txt>
+$include <Tests/simpleProblem1.txt>
+$include <Tests/simpleProblem1WithAdifor.txt>
+    
+  end module; #Tests
+

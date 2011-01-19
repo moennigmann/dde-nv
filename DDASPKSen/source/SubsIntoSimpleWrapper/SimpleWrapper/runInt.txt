@@ -1,0 +1,209 @@
+######################################################################
+#
+# @path DDASPKSen/SubsIntoSimpleWrapper/SimpleWrapper/runInt.txt
+#
+# @brief run integration from given initial 
+#   point (set by SetVariables, SetParameters) for time
+#   from initial to end time (set by SetInitialTime, 
+#   SetEndTime), use at most number of points set by
+#   SetMaxNumPoints
+#
+# @param none
+#
+# @return variables as functions of t, as calculated by
+#   integration with RunInt; 
+#
+# @notes (i) former procedure RunInt is now called 
+#	  DoIntStep
+#	 (ii) RunInt does not allow for variable input. 
+#	 This feature is implemented in CalculateIntResults(), 
+#	 which replaces RunInt().
+#
+#  
+#
+# @todo
+#   (i) add option to tell code not to save values of 
+#   variables determined by ExplicitAEs, but to save 
+#   ExplicitAEs instead and teach data structure to calculate
+#   and return these values when requested;
+#
+# @revision
+# 2010-08-26 exchanged ussage of ModelPack to Aux - dka
+# 080523 added notes,tqu
+# 050916 added AlgVars to SenNames -jge
+# 050725 added SenParameters to OtherData -jge
+# 050418 added NumPoints to list of local variables -jge
+# 050406 current value of t are substituted into ExplicitAEs - jge
+# 050217 changed names of sensitivities
+# 041201 corrected indices for sensitivities
+# 040510 addded AlgVars to allow for integration of "real" DAE-Systems -jge 
+# 030424 added printf command which informs user about 
+#   every 100 integration steps; added Curve to local vars
+# 021126 changes due to changes to ModelPack:-CreateCurve:
+#   all non-point-like data is now passed in 2nd argument
+#   OtherData; 
+# 020726 calculated data is now returned in an object
+#   of type Curve (constructor ModelPack:-CreateCurve)
+# 020725 written by mmo
+#
+######################################################################
+        runInt:= proc()
+
+          local NumVarsInDAESys, Pars, ValuesExplicitVars, OtherData,
+            SenNames,Curve; 
+ 
+          #
+          # determine size of data table needed and call constructor
+          #
+            SenNames:=map(op,[seq([
+	                 seq(
+                           convert(cat(
+                             d,convert(Sys["DynVars"][i2],string),
+			     d,convert(lhs(Sys["SenPars"][i1]),string)),
+                             name),
+                           i2=1..nops(Sys["DynVars"])),
+                         seq(
+                           convert(cat(
+                             d,convert(Sys["AlgVars"][i2],string),
+			     d,convert(lhs(Sys["SenPars"][i1]),string)),
+                             name),
+                           i2=1..nops(Sys["AlgVars"]))
+                         ],i1=1..nops(Sys["SenPars"]))
+                      ]);
+
+            VarNames:= [
+              op(Sys["DynVars"]),
+	      op(Sys["AlgVars"]),
+              op(SenNames),
+              op(map(lhs, Sys["ExplicitAEs"]))
+            ]; 
+            NumVars:= nops(VarNames); 
+            data:= table(); 
+            for item in VarNames do
+              data[item]:= array(1..MaxNumSteps); 
+            end do;  
+          
+          #
+          # reserve array for time of integration points
+          #
+           if
+             member(t, VarNames)
+            then
+              error("name t must not be a variable names"); 
+            end if; 
+
+            data[t]:= array(1..MaxNumSteps); 
+	  
+          #
+          # loop to at most MaxNumSteps 
+          #
+            for i1 from 1 to MaxNumSteps do
+	      #DEBUG();
+	      #
+              # inform user about progress
+              #
+                if
+                  i1 mod 100= 0
+                then
+                  printf(
+                    "done with %d out of %d steps\n",
+                    i1, MaxNumSteps
+                  );
+                end if; 
+		
+
+              #
+              # do one integration step and extract current point
+              #
+                DdaspkStatus:= doIntStep();
+                ValuesExplicitVars:= map(evalf,
+                  map(rhs, getExplicitAEs())
+                );
+		
+		
+		#printf("\n\nTEST: %a\n\n",Sys[ExplicitAEs]);
+				
+	      #
+	      # subs current value of t into ExplicitAEs in case they depend on time
+	      #
+	        ValuesExplicitVars:=subs(t=getT(),ValuesExplicitVars);
+
+				###TMP###
+				#printf("ValuesExplicitVars %a \n",ValuesExplicitVars);
+              	#########
+
+                CurrentPoint:= [ 
+                  op(getY()),
+                  op(ValuesExplicitVars)
+                ]; 
+            
+				###TMP###
+				#printf("CurrentPoint %a \n",CurrentPoint);
+              	#########
+              #
+              # put data into table, note that fixed order is
+              # exploited
+              #
+                for i2 from 1 to nops(VarNames) do
+                  item:= VarNames[i2]; 
+                  data[item][i1]:= CurrentPoint[i2];
+                end do; 
+                data[t][i1]:= getT(); 
+				
+				###TMP###
+				#printf("data[t][i1] %a \n\n",data[t][i1]);
+              	#########
+              
+			  #
+              # break out of loop if DDASPK refuses to integrate 
+              # any further
+              #
+                if not
+                  DdaspkStatus= 1
+                then 
+                  break;
+                end if; 
+            end do; 
+            #
+            # save number of points which actually have been 
+            # calculated
+            #
+              OtherData:= [
+                'NumPoints'= i1- 1
+              ]; 
+
+            #
+            # save and print to screen status of DDASPK
+            # 
+              OtherData:= [
+                op(OtherData),
+                DDASPKstatus= DdaspkStatus
+              ]; 
+
+              #print("RunInt finishes with DDASPK status ", DdaspkStatus); 
+
+            #
+            # save parameter values in table data (as one named list)
+            #
+              OtherData:= [
+                op(OtherData),
+                Parameters= [
+		   op(getParameters()),
+		   op(getSenParameters())
+		  ]
+              ]; 
+
+            #
+            # call constructor for one-parametric curve
+            #
+              Curve:= Aux:-CreateCurve(
+                data,
+                OtherData
+              ); 
+
+	 return(Curve);
+	  
+	 end proc; # RunInt
+
+
+ #stopat(RunInt);

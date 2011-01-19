@@ -1,0 +1,93 @@
+######################################################################
+#
+# @path DDASPKSen/SubsIntoSimpleWrapper/SimpleWrapper/setInput.txt
+#
+# @brief exported procedure setInput 
+#
+# @param  curve object containing the 
+#	 stepwise input change for one
+#	 parameter. Two variables have
+#	 to be stored in the curve:
+#	 (1) time (2) parameter for the 
+#	 input.
+#
+# @return none, 
+#
+# @notes ActInputPosition, SysInput
+#	       and NameInputParameter are set.
+#	       See CreateInstance.txt.		
+# 
+# @revision
+# 080513 removed type check within this procedure by
+#	 adding new type definition type/Curve in init.txt
+#	 of ModelPack package; tqu
+# 080506 created by tqu
+#
+#----------------------------------------
+setInput := proc(inputCurve::Curve)
+  local inputVarNames, actParName,timePoints, timeIsOrdered, actTime, allPars;
+
+  inputVarNames:=inputCurve:-getVarNames();
+
+  #    
+  #print a warning if input has already been set and is about to be overwritten
+  # 
+   if not
+     (ActInputPosition=0 and SysInput=[] and NameInputParameter=0) 	
+   then
+     warning("Input has alread been set. Old settings are overwritten by new ones.")	 
+   end if:
+
+  #   
+  #test if 1) one of the variables of the inputCurve has the name time
+  #	   2) there are two variables specified in inputCurver
+  #
+   if not
+     time in inputVarNames
+   then
+     error("The inputCurve does not contain time as a variable");
+   elif not
+     nops(inputVarNames) = 2
+   then
+     error("The inputCurve has to contain two variables: time, and the parameter describing the input");
+   end if:
+
+    
+  #
+  #test if the input parameter is defined in the parameter of the DAESys
+  # 	 	 
+   actParName:=inputVarNames[-ListTools[Search](time, inputVarNames)];
+   allPars:= map(lhs, aDAESys["Parameters"]); 
+   if not
+     actParName in allPars
+   then
+     error("The input parameter \"%1\" has to be a parameter from the list of parameters specified in this DAE System \"%2\"", 
+       actParName, 
+       allPars
+     );
+   end if:
+
+  #    
+  #test wether the time data is ascending order and wether the first input time is <= the initial time
+  #
+   timePoints:=convert(inputCurve:-getAllValuesOfVariable(time),list);
+   timeIsOrdered:=ListTools[Sorted](timePoints,verify,less_than);
+   actTime:=getT();
+   if not 
+     timeIsOrdered
+   then
+     error("Input time points have to be strictly ascending. You have inserted: %1", timePoints)
+   elif not
+     timePoints[1]>=actTime
+   then
+     error("The first time point of the time series has to be >= the integration timepoint while SetInput() is envoked");
+   end if: 
+   	
+  #	
+  #set corresponding attributes of DDASPKSen instance
+  # 
+   SysInput:= inputCurve;
+   NameInputParameter:= actParName;
+   ActInputPosition:=1; 
+
+end proc; #SetInput

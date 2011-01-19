@@ -1,0 +1,30 @@
+###------------------------------------------------------------------------
+#
+# @path DDASPKSen/CreateInstance/SimpleWrapper/runInit.txt
+#
+# @brief exported procedure runInit
+#
+###------------------------------------------------------------------------
+     runInt:= proc()
+
+        DDASPK(
+              NEQ,
+              t_vec,
+              y_vec,
+              yprime_vec,
+              tout_vec,
+              INFO_vec,
+              rtol_vec,
+              atol_vec,
+          'idid',
+              RWORK_vec,
+              LRW,
+              IWORK_vec,
+              LIW,
+              rpar_vec,
+              ipar_vec,
+              senpar_vec
+            );
+
+      RETURN(idid);
+        end proc;
