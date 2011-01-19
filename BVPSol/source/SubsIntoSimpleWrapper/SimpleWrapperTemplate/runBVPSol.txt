@@ -1,0 +1,44 @@
+###############################################################################
+# 
+# @path NPSOL/source/Templates/SimpleWrapperTemplate/runBVPSol.txt
+#
+# @revision
+# 2011-01-18 written by mmo
+#
+###############################################################################
+runBVPSol:= proc()
+
+  local NextNumber, NextFileName, OldDir; 
+
+
+  #
+  # call external wrapper to bvpsol in working dir
+  #
+    OldDir:= currentdir();
+    currentdir(WorkingDir); 
+
+    bvpsolCwrapper(
+      N,       # numeber of variables
+      M,       # number of nodes
+      IPRINT,  # print option (by default = 0)
+      X0,      # initial guess
+      P,       # initial period
+      NPAR,    # number of paramaters
+      TRPAR,   # parameters
+      XT,      # output time nodes
+      Y,       # output trajectory
+      FM,      # output eigenvalues
+      JAC,     # output jacobian
+      'POUT',  # output period
+      'IFAIL', # output indication of calculation errors (if IFAIL<0 then calculation failed)
+      'ERRY',  # output variable if ERRY>0 then solution is not a constant
+      FAL,     # output derivative Falpha
+      FXAL,    # output derivative Fxalpha
+      FXX      # output derivative Fxx
+    );
+
+  currentdir(OldDir); 
+
+  return(); 
+
+end proc; 

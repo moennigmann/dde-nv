@@ -1,0 +1,16 @@
+###############################################################################
+#
+# @path BVPSOL/source/SimpleWrapperTemplate/getXT.txt
+# 
+# @brief Gets vector of time nodes
+#
+# @revision
+# 2011-01-19 written by dka
+#
+###############################################################################
+getXT:= proc()
+
+  return(eval(XT));
+
+end proc; 
+

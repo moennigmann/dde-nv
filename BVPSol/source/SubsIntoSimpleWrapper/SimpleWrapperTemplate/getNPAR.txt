@@ -1,0 +1,16 @@
+###############################################################################
+#
+# @path BVPSOL/source/SimpleWrapperTemplate/getNPAR.txt
+# 
+# @brief Gets number of parameters
+#
+# @revision
+# 2011-01-19 written by dka
+#
+###############################################################################
+getNPAR:= proc()
+
+  return(eval(NPAR));
+
+end proc; 
+

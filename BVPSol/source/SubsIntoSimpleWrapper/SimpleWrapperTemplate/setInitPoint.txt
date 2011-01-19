@@ -1,0 +1,52 @@
+###############################################################################
+#
+# @path BVPSOL/source/SimpleWrapperTemplate/setInitPoint.txt
+# 
+# @brief Sets the initial guess for init point
+# 
+# @param [variable1=value1,...] 
+#
+# @revision
+# 2011-01-18 written by dka
+#
+###############################################################################
+setInitPoint:= proc(
+  NewPars::list(name= EvalsToFloat)
+)
+
+  local NewValues, NewParsNames, Missing, Obsolete, i1, ParNames; 
+  
+  ParNames:=theBVPSys["DynVars"];
+
+  #
+  # make sure values for all parameters are given in 
+  # first input argument
+  #
+    NewParsNames:= map(lhs, NewPars); 
+    Missing, Obsolete:= Aux:-ListOperations:-getMissingAndObsoleteNames(
+      NewParsNames,
+      ParNames
+    );
+    if not
+      Missing= {}
+    then
+      error("assignments are missing for %1", Missing);
+    end if;
+
+  #
+  # assign values
+  #   
+    NewValues:= evalf(subs(
+      NewPars,
+      ParNames
+    ));
+
+
+      for i1 from 1 to nops(ParNames) do
+        X0[i1]:= NewValues[i1];
+      end do;
+
+      return();
+
+end proc; 
+

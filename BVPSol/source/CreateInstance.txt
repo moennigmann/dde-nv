@@ -1,0 +1,83 @@
+  ######################################################################
+  #
+  # @path BVPSOL/source/CreateInstance.txt 
+  #
+  # @param  DAESys,
+  #         WorkingDir, directory into which bvpsol files will be written
+  #                     when compiling and at runtime
+  #         nodes, number of nodes in multi-shooting procedure            
+  #
+  # @return  procedure which starts bvpsol
+  #
+  # @revision
+  #   2011-01-18 written by dka
+  #
+  ######################################################################
+  CreateInstance:=proc(anBVPSys::DAESys,
+                       WorkingDir::string,
+                       nodes::integer)
+
+    local bvpsol,BVPSolInstance; 
+    
+     #
+     # prepare working dir
+     # refuse to work if file cwrap_bvpsol1.so already exists
+     #
+        if Aux:-FileOperations:-fileExists(cat(WorkingDir, "/cwrap_bvpsol1.so"))
+        then
+          error(
+            "in working dir, %1, a maple wrapper file named "
+            "cwrap_bvpsol1.so already exists", WorkingDir
+          );
+        end if; 
+    
+    # 
+    # substiture explicit functions intro anBVPSys
+    #
+    anBVPSys := Aux:-SystemClasses:-subsExplicitAEsIntoDAESys(anBVPSys);
+     
+    #
+    # prepare interface to PERIOD
+    #
+
+      try:
+        bvpsol:= createSharedObject(
+          WorkingDir,
+          anBVPSys
+        );
+      catch:
+	printf("CreateSharedObject failed, \n");
+        printf("  error thrown was %q\n", lastexception);
+        printf("  attempting to continue CreateInstance\n");
+      end try; 
+
+
+    #
+    # create instance of simple wrapper
+    #
+
+      printf("creating instance of interface\n"); 
+      
+      try:
+        BVPSolInstance:= SubsIntoSimpleWrapper(
+          anBVPSys, 
+          bvpsol,
+          WorkingDir,
+          nodes
+	);
+      catch:
+	printf("SubsIntoSimpleWrapper failed, \n");
+        printf("  error thrown was %q\n", lastexception);
+        printf("  attempting to continue CreateInstance\n");      
+      end try;
+      
+
+    RETURN(eval(BVPSolInstance));
+
+  end proc; #CreateInstance
+
+
+
+
+
+

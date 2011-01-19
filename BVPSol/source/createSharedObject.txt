@@ -1,0 +1,82 @@
+  #############################################################
+  #
+  # BVPSol/source/createSharedObject.txt
+  #
+  # @brief Creates shared objects needed for call to define_external.
+  #
+  # @revision
+  # 2011-01-18 created by dka
+  #
+  #############################################################
+  createSharedObject:= proc(
+    bvpsolDir::string,
+    anBVPSys::DAESys
+  )
+
+    local oldDir, LinkerCommand, bvpsol, SharedObjectName,InstanceCounter; 
+
+    InstanceCounter:= 1; 
+    
+    #
+    # creates bvpsolDir
+    #
+      if not
+        Aux:-FileOperations:-dirExists(bvpsolDir)
+      then
+        mkdir(bvpsolDir);
+      end if;
+
+    #
+    # save directory in which proc was called and change to requested dir
+    #
+      oldDir:= currentdir():
+      currentdir(bvpsolDir): 
+      # currentdir creates error if bvpsolDir does not exist
+  
+    #
+    # create external Fortran function fortranrhs.f and fortranjac.f 
+    # with procedures FCN and DFDY
+    # 
+      createExternalFunctions(anBVPSys);
+        
+    # 
+    # compile fortranrhs.f and fortranjac.f 
+    #
+      system("gfortran -c -shared -O -fPIC fortranrhs.f -o fortranrhs.o"); 
+      system("gfortran -c -shared -O -fPIC fortranjac.f -o fortranjac.o"); 
+          
+
+    #----------------------------------------
+    # 
+    # link problem dependent and problem independent files
+    #
+    #----------------------------------------
+      SharedObjectName:= cat(
+        "cwrap_bvpsol", InstanceCounter, ".so"
+      );
+      
+        LinkerCommand:= cat(
+          `gcc -shared -Xlinker -Bsymbolic fortranrhs.o fortranjac.o `,
+          _ModulesDirectory, `/BVPSol/ext_routines/f2c/cwrap/bvpopen.o `,
+          _ModulesDirectory, `/BVPSol/ext_routines/f2c/cwrap/bvpclose.o `,
+          _ModulesDirectory, `/BVPSol/ext_routines/f2c/cwrap/cwrap_bvpsol.o `,
+          _ModulesDirectory, `/BVPSol/ext_routines/f2c/shared_obj/period.so `,
+          `-lf2c -lm -lgfortran -o `, 
+          SharedObjectName
+        );
+    
+      system(LinkerCommand);
+
+    # 
+    # create interface to NPSOL
+    #
+      bvpsol:= runDefineExternal(SharedObjectName);
+    
+      #
+      # change back to directory of calling procedure
+      #
+        currentdir(oldDir);
+  
+      RETURN(bvpsol);
+
+  end proc; # createSharedObject

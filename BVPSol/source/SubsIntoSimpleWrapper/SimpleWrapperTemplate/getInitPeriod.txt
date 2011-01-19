@@ -1,0 +1,16 @@
+###############################################################################
+#
+# @path BVPSOL/source/SimpleWrapperTemplate/getInitPeriod.txt
+# 
+# @brief Gets the starting guess for period
+#
+# @revision
+# 2011-01-19 written by dka
+#
+###############################################################################
+getInitPeriod:= proc()
+
+  return(eval(P));
+
+end proc; 
+

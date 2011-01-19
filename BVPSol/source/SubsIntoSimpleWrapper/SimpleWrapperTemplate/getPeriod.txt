@@ -1,0 +1,16 @@
+###############################################################################
+#
+# @path BVPSOL/source/SimpleWrapperTemplate/getPeriod.txt
+# 
+# @brief Gets period for solution trajectory
+#
+# @revision
+# 2011-01-19 written by dka
+#
+###############################################################################
+getPeriod:= proc()
+
+  return(eval(POUT));
+
+end proc; 
+

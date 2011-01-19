@@ -1,0 +1,16 @@
+###############################################################################
+#
+# @path BVPSOL/source/SimpleWrapperTemplate/getFalpha.txt
+# 
+# @brief Gets derivatives Matrix Falpha
+#
+# @revision
+# 2011-01-19 written by dka
+#
+###############################################################################
+getFalpha:= proc()
+
+  return(eval(FAL));
+
+end proc; 
+

@@ -1,0 +1,41 @@
+###############################################################################
+#
+# @path BVPSol/BVPSol.txt
+#
+# @brief Collects procedures that deal with solving boundary value problem for 
+#        ODE systems with periodical ordits 
+#
+# @authors dka
+# 
+# @todo Implement RestoreInstance
+#
+# @revision
+#   2011-01-14 Created by dka  
+#
+###############################################################################
+
+BVPSol:=module()
+
+  export
+    createExternalFunctions, 
+    CreateInstance,
+    createSharedObject,
+    runDefineExternal,
+    SubsIntoSimpleWrapper,
+    Tests; 
+
+$include <createExternalFunctions.txt>
+$include <CreateInstance.txt>
+$include <createSharedObject.txt>
+$include <runDefineExternal.txt>
+$include <SubsIntoSimpleWrapper.txt>
+$include <Tests.txt>
+  
+end module; # BVPSol
+
+save(BVPSol, "BVPSol.mpl");
+
+
+
+
+ 

@@ -1,0 +1,26 @@
+###############################################################################
+#
+# @path BVPSOL/source/SimpleWrapperTemplate/setIPRINT.txt
+# 
+# @brief Sets options for output into automatically generated text file bvp_output.txt
+# 
+# @notes  (1) IPRINT=-1 - no output
+#             IPRINT= 0 - standard output
+#             IPRINT= 2 - detailed output
+#         (2) By default IPRINT=0   
+#
+# @revision
+# 2011-01-19 written by dka
+#
+###############################################################################
+setIPRINT:= proc(valIPRINT::integer)
+
+  if(not ((valIPRINT=-1) or (valIPRINT=0) or (valIPRINT=1)))
+   then error("IRINT can be set only to -1, 0, or 1");
+  end if;
+  
+  IPRINT:=valIPRINT;
+  return();
+
+end proc; 
+

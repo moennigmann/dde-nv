@@ -1,0 +1,77 @@
+###############################################################################
+#
+# @path BVPSOL/source/SubsIntoSimpleWrapper  
+#
+# @revision
+# 2011-01-18 written by dka
+#
+###############################################################################
+SubsIntoSimpleWrapper:= proc(
+  anBVPSys::DAESys,
+  bvpsolCwrapper::procedure,
+  WorkingDir::string,
+  nodes::integer
+)
+      
+    local N, M, IPRINT, NPAR, X0, TRPAR, i, P,XT,Y,FM,JAC,POUT,
+          IFAIL,ERRY,FAL,FXAL,FXX,listForFXAL,listForFXX,
+          SimpleWrapperTemplate; 
+
+    #
+    # extract N, M, NPAR 
+    #
+      N:= nops(anBVPSys["ODEs"]);      
+      M:=nodes;
+      NPAR:=nops(anBVPSys["Parameters"]);
+      
+    #
+    # IPRINT by defaults setted to 0
+    #
+      IPRINT:= 0; 
+    
+    #
+    # extract X0 and TRPAR
+    #
+     X0:=Vector(N,datatype= float[8],order= C_order);
+     TRPAR:=Vector(NPAR,datatype= float[8],order= C_order);
+     
+    #
+    # extract P
+    # 
+      P:=0;
+      
+     
+    #
+    # XT,Y,FM,JAC
+    # 
+      XT:=Vector(M, datatype = float[8], order = C_order);
+      Y:=Matrix(M, N, datatype = float[8], order = C_order);
+      FM := Matrix(2, N, datatype = float[8], order = C_order);
+      JAC:=Matrix(N, N, datatype = float[8], order = C_order);
+    
+    #
+    # FAL,FXAL,FXX
+    #  
+      FAL:=Matrix(N, NPAR, datatype = float[8], order = C_order);
+     
+      listForFXAL:=[];
+      for i from 1 to N do
+      listForFXAL:=[op(listForFXAL),convert(Matrix(N, NPAR), listlist)];
+      end do; 
+      FXAL:=Array(listForFXAL,datatype = float[8], order = C_order);
+     
+      listForFXX:=[];
+      for i from 1 to N do
+      listForFXX:=[op(listForFXX),convert(Matrix(N, N), listlist)];
+      end do; 
+      FXX:=Array(listForFXX,datatype = float[8], order = C_order);
+     
+
+$include<SubsIntoSimpleWrapper/SimpleWrapperTemplate.txt>
+
+
+  return(eval(SimpleWrapperTemplate)); 
+
+end proc; 
+
+
