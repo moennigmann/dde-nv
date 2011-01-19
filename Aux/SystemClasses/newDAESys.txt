@@ -1,0 +1,26 @@
+##############################################################################
+#
+# @path Aux/SystemClasses/newDAESys.txt
+#
+# @brief Procedure newDAESys
+#
+# @param none
+#
+# @return table of empty lists which are mandatory for DDASPK 
+#
+##############################################################################
+newDAESys:= proc()
+
+  local aSys;
+
+  aSys:= table(); 
+  aSys["ODEs"]:= [];
+  aSys["AEs"]:= [];
+  aSys["ExplicitAEs"]:= [];
+  aSys["DynVars"]:= [];
+  aSys["AlgVars"]:= [];
+  aSys["Parameters"]:= [];
+
+  return(eval(aSys));
+
+end proc; #NewDAESys

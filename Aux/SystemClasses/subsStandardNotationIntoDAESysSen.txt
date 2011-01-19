@@ -1,0 +1,229 @@
+##############################################################################
+#
+# @path Aux/SystemClasses/subsStandardNotationIntoDAESysSen.txt
+#
+# @param
+#   DAESys
+#
+# @return
+#   DAESys in which Variables and Parameters have been replaced by
+#     standard names y[i], par[i], i=1..?; list Substitutions contains
+#     list of substitutions in the form list(FomerName= StandardName)
+#
+# @todo
+#   (1) make sure that standard names y, z, par do not occur in DAESys
+#   before substitution of standard names;
+#   (2) remove NewSystem:= copy(aSystem) for faster execution; note
+#   that all entries of aSystem must be copied (e.g. aSystem[Substitutions])
+#   (3) use CreateStandardNotationForDAESys to create substitution
+#   lists
+#
+# @revision
+#   050217 double entries in lhs of EAEs are only named once  
+#   040310 copy from SubsStandardNotationIntoDAESys which considers [SenPars]
+#     entry as well -jge
+#
+##############################################################################
+subsStandardNotationIntoDAESysSen:= proc(
+  aSystem::DAESys,
+  ReqDynVarSymbol::name
+)
+
+  local NumOfDynVars, NumOfAlgVars, NumOfPars, NumOfSenPars,ListOfDynVarsSubst,
+    ListOfDynVarsDerivSubst,  NumOfExplicitAEs, ListOfAlgVarsSubst,
+    ListOfVarsSubst, ListOfVarsSubstForEAEs, ListOfParsSubst,
+    ListOfSenParsSubst, NewSystem, ListOfExplicitAEsSubst,NewExplicitAEs,
+    ListOfSingleExplicitAEsSubst, NamesEAEs, NamesPars, NamesSenPars,y,
+    RepeatedEntries, NamesOfRepeatedEntries, AllIndicesOfEAEs, item, i1;
+
+  #
+  # 2nd arg may not be equal to names 'z','par','senpar'
+  #
+      if
+        ReqDynVarSymbol= 'z' or ReqDynVarSymbol= 'par' or ReqDynVarSymbol= 'senpar'
+      then
+        error("dynamic variables must not be called 'z' or 'par' as these names are reserved for algebraic variables and parameters"); 
+      end if; 
+
+      y:= ReqDynVarSymbol;
+
+  #
+  # create lists of substitutions
+  #
+    NumOfDynVars:= nops(aSystem["DynVars"]);
+    NumOfAlgVars:= nops(aSystem["AlgVars"]);
+    NumOfExplicitAEs:= nops(aSystem["ExplicitAEs"]); 
+    NumOfPars:= nops(aSystem["Parameters"]);
+
+    if member(["SenPars"],{indices(aSystem)})
+    then
+      NumOfSenPars:=nops(aSystem["SenPars"]);
+    else
+      NumOfSenPars:=0;
+    end if;
+
+    NamesEAEs:= map(lhs, aSystem["ExplicitAEs"]); 
+
+   #		
+   # Find repeated entries that occur in ExplicitAEs
+   #
+    RepeatedEntries:=eval(Aux:-ListOperations:-getIndicesOfRepeatedEntries(NamesEAEs));
+    
+    NamesOfRepeatedEntries:=map(op,[indices(RepeatedEntries)]);    
+
+    ListOfExplicitAEsSubst:= [seq(
+      NamesEAEs[i1]= z[i1],
+      i1= 1..NumOfExplicitAEs
+    )];
+
+    ListOfSingleExplicitAEsSubst:=Aux:-ListOperations:-removeItemFromList(
+        NamesOfRepeatedEntries,ListOfExplicitAEsSubst
+     );
+
+    ListOfDynVarsSubst := [seq(
+      aSystem["DynVars"][i1]= y[i1],
+      i1= 1..NumOfDynVars
+    )];
+
+    ListOfDynVarsDerivSubst := [seq(
+      convert(
+        cat(convert(aSystem["DynVars"][i],string),"'"),
+          symbol) = 
+      convert(
+        cat(convert(y[i],string),"'"),
+          symbol)
+	,i=1..NumOfDynVars)
+      ];
+
+    ListOfAlgVarsSubst := [seq(
+      aSystem["AlgVars"][i1-NumOfDynVars]= y[i1],
+      i1= NumOfDynVars+1..NumOfDynVars+NumOfAlgVars)
+    ];
+
+    ListOfVarsSubst := [
+      op(ListOfExplicitAEsSubst), 
+      op(ListOfDynVarsSubst), 
+      op(ListOfAlgVarsSubst),
+      op(ListOfDynVarsDerivSubst)
+    ];
+
+    NamesPars:= map(lhs, aSystem["Parameters"]); 
+    ListOfParsSubst:= [seq(
+      NamesPars[i1]= par[i1],
+      i1= 1..NumOfPars
+    )];          # should work fine with NumOfPars = 0, too.
+
+
+    if member(["SenPars"],{indices(aSystem)})
+    then
+       NamesSenPars:= map(lhs, aSystem["SenPars"]); 
+       ListOfSenParsSubst:= [seq(
+       NamesSenPars[i1]= senpar[i1],
+        i1= 1..NumOfSenPars
+       )];          # should work fine with NumOfSenPars = 0, too.
+    else
+       ListOfSenParsSubst:=[];
+    end if;
+
+    #
+    # create new system of equations
+    #
+      NewSystem:= copy(aSystem);
+
+      NewSystem["ODEs"]:= subs(
+        ListOfVarsSubst,
+        ListOfParsSubst,
+        ListOfSenParsSubst,
+        aSystem["ODEs"]
+      );
+
+      NewSystem["AEs"]:=subs(
+        ListOfVarsSubst,
+        ListOfParsSubst,
+        ListOfSenParsSubst,
+        aSystem["AEs"]
+      );
+
+      NewSystem["DynVars"]:=subs(
+        ListOfVarsSubst,
+        ListOfParsSubst,
+        ListOfSenParsSubst,
+        aSystem["DynVars"]
+      );
+
+      NewSystem["Parameters"]:= subs(
+          ListOfParsSubst,
+          aSystem["Parameters"]
+        );
+
+      NewSystem["SenPars"]:= subs(
+          ListOfSenParsSubst,
+          aSystem["SenPars"]
+        );
+
+      NewSystem["AlgVars"]:= subs(
+        ListOfVarsSubst,
+        ListOfParsSubst,
+        ListOfSenParsSubst,
+        aSystem["AlgVars"]
+      );
+
+   #
+   # for explicit aes double entries have to be considered
+   #
+      ListOfVarsSubstForEAEs:=[
+        op(ListOfSingleExplicitAEsSubst), 
+        op(ListOfDynVarsSubst), 
+        op(ListOfAlgVarsSubst),
+        op(ListOfDynVarsDerivSubst)
+      ];
+
+      NewSystem["ExplicitAEs"]:= subs(
+        ListOfVarsSubstForEAEs,
+        ListOfParsSubst,
+        ListOfSenParsSubst,
+        aSystem["ExplicitAEs"]
+      );
+    #
+    # now substitute the double entries of the EAEs
+    #
+
+    #
+    # Loop over double entries
+    #
+     for item in NamesOfRepeatedEntries do
+     #
+     # Loop over indices of each of the double entries
+     #
+       NewExplicitAEs:=NewSystem["ExplicitAEs"][1..RepeatedEntries[item][1]-1];
+       for i1 from 1 to nops(RepeatedEntries[item])-1 do         
+         NewExplicitAEs:=[
+	   op(NewExplicitAEs),
+	   op(subs(
+             item=z[RepeatedEntries[item][i1]],
+             NewSystem["ExplicitAEs"][
+               RepeatedEntries[item][i1]..
+               RepeatedEntries[item][i1+1]-1]))
+           ];
+        end do;
+        NewExplicitAEs:=[
+	  op(NewExplicitAEs),
+	  op(subs(
+            item=z[RepeatedEntries[item][nops(RepeatedEntries[item])]],
+            NewSystem["ExplicitAEs"][
+              RepeatedEntries[item][nops(RepeatedEntries[item])]..-1]))
+          ];
+	NewSystem["ExplicitAEs"]:=NewExplicitAEs;
+      end do;
+
+
+      NewSystem["Substitutions"]:= [
+        op(ListOfVarsSubst),
+        op(ListOfParsSubst),
+        op(ListOfSenParsSubst)
+      ];
+
+  return(eval(NewSystem));
+
+end proc; #SubsStandardNotationIntoDAESys
+

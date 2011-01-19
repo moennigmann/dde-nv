@@ -1,0 +1,92 @@
+##############################################################################
+#
+# @path Aux/SysstemClasses/evalODEsInDAESys.txt
+#
+# @brief procedure evalODEsInDAESys
+#
+# @param
+#   (1) a DAESys
+#   (2) a list of substitutions which obeys rules listed in header
+#     of EvalExplicitAEsInDAESys
+#
+# @return
+#   values of l.h.s. of ODEs
+#
+# @revision
+#   020318 added map(evalf, ...) to result
+#   020306 written by mmo
+#
+##############################################################################
+evalODEsInDAESys:= proc(
+  aDAEsys, #::DAESys,
+  SubsList::list(name= EvalsToFloat)
+  # optional arg NameForResidues::name, to which list of residues of alg
+  # eqns is assinged
+)
+
+  local ExtendedSubsList, Residues, LhsODEs, MaxAbsResidue;
+
+  #
+  # evaluate ExplicitAEs
+  #
+    ExtendedSubsList:= evalExplicitAEsInDAESys(
+      aDAEsys,
+      SubsList
+    );
+
+  #
+  # evaluate AEs, warn about largest residue,
+  # error if too large
+  #
+    if not
+      aDAEsys["AEs"]= []
+    then
+      Residues:= subs(
+        ExtendedSubsList,
+        map(rhs, aDAEsys["AEs"])
+      );
+   
+      MaxAbsResidue:= max(
+        op(map(abs, Residues))
+      );
+  
+      WARNING(
+        "largest absolute residue of algebraic equations: %1", 
+        MaxAbsResidue
+      );
+      
+      if 
+        MaxAbsResidue>1.0e-3
+      then
+        error(
+          "largest absolute residue of algebraic equations: %1", 
+          MaxAbsResidue
+        );
+      end if; 
+
+    #
+    # assign residues of AEs to optional 3rd argument
+    #
+      if 
+        nargs>2 
+      then
+        if 
+          type(args[3], name)
+        then
+          assign(args[3], Residues);
+        end if;
+      end if; 
+
+    end if; #not aDAEsys[AEs]= []
+
+  #
+  # evaluate ODEs
+  #
+    LhsODEs:= map(evalf, subs(
+      ExtendedSubsList,
+      map(rhs, aDAEsys["ODEs"])
+    )); 
+
+  return(LhsODEs); 
+  
+end proc: # EvalODEsInDAESys

@@ -1,0 +1,155 @@
+#############################################################
+#
+# @path Aux/SystemClasses/listOfErrorsInExtAESys
+#
+# @param  table of type ExtAESys
+#
+# @return list of errors found in anExtAESys
+#
+# @notes: (i) ListOfErrorsInExtAESys is used in init to
+#   define type/ExtAESys
+# (ii) ExtAESys differs from AESys in that ExplicitAEs may
+#   exist in ExtAESys
+#
+# @revision
+# 021006 written by mmo, starting from corr. DAESys proc.
+#
+#############################################################
+listOfErrorsInExtAESys:= proc(
+  anExtAESys
+)
+
+  local ListOfErrors, SetOfIndices;
+
+  #
+  # shortcut to false if anExtAESys is not of type table
+  #
+    if not
+      type(anExtAESys, table)
+    then
+      return(false);
+    end if; 
+
+  ListOfErrors:= [];
+
+  #------------------------------------------------------------
+  #
+  # check whether lists ExplicitAEs, Equations, Variables,
+  #   Parameters exist
+  #
+  #------------------------------------------------------------
+   SetOfIndices:= {
+     indices(anExtAESys)
+   };
+
+   #
+   # check existence and type of anExtAESys["ExplicitAEs"]
+   #
+     if not(
+       member(["ExplicitAEs"], SetOfIndices))
+     then
+       ListOfErrors:= [op(ListOfErrors),
+         "entry ExplicitAEs missing"
+       ];
+       RETURN(ListOfErrors);
+     elif not(
+       type(anExtAESys["ExplicitAEs"], list(equation)))
+     then
+       ListOfErrors:=[op(ListOfErrors),
+       "entry ExplicitAEs must be a list of equations"
+       ];
+       RETURN(ListOfErrors);
+     end if;
+
+   #
+   # check existence and type of anExtAESys["Equations"]
+   #
+     if not(
+       member(["Equations"], SetOfIndices))
+     then
+       ListOfErrors:= [op(ListOfErrors),
+         "entry Equations missing"
+       ];
+       RETURN(ListOfErrors);
+     elif not(
+       type(anExtAESys["Equations"], list(equation)))
+     then
+       ListOfErrors:=[op(ListOfErrors),
+       "entry Equations must be a list of equations"
+       ];
+       RETURN(ListOfErrors);
+     end if;
+
+   #
+   # check existence and type of anExtAESys["Parameters"]
+   #
+     if not(
+       member(["Parameters"], SetOfIndices))
+     then
+       ListOfErrors:= [op(ListOfErrors),
+         "entry Parameters missing"
+       ];
+       RETURN(ListOfErrors);
+     elif not(
+       type(anExtAESys["Parameters"], list(name= EvalsToFloat)))
+     then
+       ListOfErrors:= [op(ListOfErrors),
+         "entry Parameters must be a list of name= EvalsToFloat"
+       ];
+       RETURN(ListOfErrors);
+     end if;
+
+   #
+   # check existence and type of anExtAESys["Variables"]
+   #
+     if not(
+       member(["Variables"], SetOfIndices))
+     then
+       ListOfErrors:= [op(ListOfErrors),
+         "entry Variables must be a list"
+       ];
+       RETURN(ListOfErrors);
+     elif not(
+       type(anExtAESys["Variables"], list))
+     then
+       ListOfErrors:= [op(ListOfErrors),
+         "entry Variables must be a list"
+       ];
+       RETURN(ListOfErrors);
+     end if;
+
+  #------------------------------------------------------------  
+  #
+  # if errors were found, return them even if 
+  # ListOfErrorsInAESysPart2 was requested
+  #
+  #------------------------------------------------------------
+    if not
+      ListOfErrors= []
+    then
+      return(ListOfErrors);
+    end if; 
+
+  #------------------------------------------------------------
+  #
+  # if optional argument 'long', 'all', 'strict' was given,
+  # call ListOfErrorsInAESysPart2
+  #
+  #------------------------------------------------------------
+    if 
+      nargs>1
+    then
+      if 
+        args[2]= 'long' or
+        args[2]= 'all' or
+        args[2]= 'strict'
+      then
+        ListOfErrors:= listOfErrorsInExtAESysPart2(anExtAESys); 
+      end if;
+    end if; 
+
+  return(ListOfErrors);
+
+end proc; # ListOfErrorsInExtAESys
+
+

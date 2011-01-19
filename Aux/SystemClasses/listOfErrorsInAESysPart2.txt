@@ -1,0 +1,150 @@
+##############################################################################
+#
+# @path Aux/SystemClasses/listOfErrorsInAESys
+#
+# @param  table
+# @return  list of errors in table with respect to AESys definition
+#
+# @notes 
+# uses GetObsolExprInAESys
+# AESys definition:
+#   table must contain entries Equations, Parameters, Variables
+#   entries must be of type list(equation), list({name=EvalsToFloat, name}), 
+#     list
+#   symbols which occur must not be Parameter and Variable
+#     at the same time
+#   entries in Equations must be of form 0=...
+#   entries in Equations must be well defined: no indets apart from
+#     Parameters, Variables must occur in equations
+#   warning printed to screen if obsolete expressions exist
+#
+# @revision
+# 2010-03-09 moved from ModelPack by dka
+# 020613 written by mmo; procedure used to be part of
+#   ListOfErrorsInAESys, which was split into two procedures to allow for
+#   execution of fast type checks in ListOfErrorsInAESys and more 
+#   elaborate but time-consuming checks here; 
+#
+##############################################################################
+listOfErrorsInAESysPart2:= proc(
+  aSystem::table
+)
+
+  local i1, ListOfErrors, ParsAndVars, SetOfValidExpr,
+    NumberOfEquations, ListOfUndefExpr, ObsolExpr, ParAndVar, i2,
+    ListOfRHS, ListOfValidExpr, item, ListOfParameterNames, 
+    ListOfErrorsInAESys, UnassignedPars;   
+  
+  ListOfErrors:= [];
+
+  #----------------------------------------------------
+  #
+  # check whether Equations are well defined
+  #
+  #----------------------------------------------------
+   SetOfValidExpr:=
+     GetSetOfValidExprIn(aSystem["Parameters"]) union
+     GetSetOfValidExprIn(aSystem["Variables"]);
+
+   ListOfValidExpr:= convert(SetOfValidExpr, list);
+
+   NumberOfEquations:= nops(aSystem["Equations"]);
+
+   #
+   # loop over aSystem["Equations"][i1]
+   #
+     for i1 from 1 to NumberOfEquations do
+
+       #
+       # check whether aSystem["Equations"][i1] is well
+       # defined
+       #
+         ListOfUndefExpr:= GetListOfUndefExprIn(
+           aSystem["Equations"][i1],
+           ListOfValidExpr
+         );
+      
+       #
+       # append errors to list, add a comment
+       #
+         if not(ListOfUndefExpr= []) then
+           ListOfErrors:= [op(ListOfErrors),
+             cat("expression(s) ",
+               op(
+                 map(convert, ListOfUndefExpr, string)
+               ),
+               " undefined in equation number ", i1,
+               " of AESys[\"Equations\"]"
+             )
+           ];
+         end if;
+
+      end do; #end loop over aSystem["Equations"][i1]
+
+  #--------------------------------------------------
+  #
+  # check for obsolete expressions in aSystem
+  #
+  #--------------------------------------------------
+    ObsolExpr:=GetObsolExprInAESys(aSystem);
+    if
+      not(ObsolExpr=[])
+    then
+      WARNING("%1 is an obsolete expression", op(ObsolExpr));
+    end if;
+
+  #----------------------------------------------------------
+  #
+  # check if lists Parameters and Variables have common entries
+  #
+  #----------------------------------------------------------
+    #
+    # extract names of parameters from aSystem["Parameters"]
+    # remember unassigned pars for next check
+    #
+      ListOfParameterNames:=[];
+      UnassignedPars:= []; 
+      for item in aSystem["Parameters"] do
+        if
+          type(item, equation)
+        then
+          ListOfParameterNames:= [
+            op(ListOfParameterNames),
+            lhs(item)
+          ];
+        else
+          ListOfParameterNames:= [
+            op(ListOfParameterNames),
+            item
+          ];
+          UnassignedPars:= [op(UnassignedPars), item]; 
+        end if;
+      end do; 
+        
+    ParAndVar:=map(has, ListOfParameterNames, aSystem["Variables"]);
+    if
+      (member(true, ParAndVar, 'i2'))
+    then
+      ListOfErrors:= [op(ListOfErrors),
+     cat(
+       aSystem["Parameters"][i2],
+       ` is declared both, parameter and variable `
+     )
+       ];
+     end if;
+
+  #------------------------------------------------------------
+  #
+  # check for unassinged parameters
+  #
+  #------------------------------------------------------------
+    if not
+      UnassignedPars= []
+    then
+      WARNING("unassigned parameters exist: %1", UnassignedPars);
+    end if; 
+
+  return(ListOfErrors); 
+
+end proc; # ListOfErrorsInAESysPart2
+

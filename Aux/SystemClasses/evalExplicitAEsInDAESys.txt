@@ -1,0 +1,246 @@
+##############################################################################
+#
+# @path Aux/SysstemClasses/evalExplicitAEsInDAESys.txt 
+#
+# @brief procedure evalExplicitAEsInDAESys
+#
+# @param
+#   (1) a DAESys
+#   (2) a list of substitutions which obeys following rules:
+#     DAESys[DynVars] must be assigned
+#     DAESys[AlgVars] must be assigned
+#     DAESys[Parameters] may be assigned, assignments in SubsList have
+#       precedence over assignments in DAESys[Parameters]
+#     l.h.s. of DAESys[ExplicitAEs] may be assigned, assignments in 
+#       SubsList have precedence over result from evaluation of 
+#       DAESys[ExplicitAEs]
+#
+# @return
+#   SubsList appended by 
+#     (1) values for l.h.s. of aDAEsys[ExplicitAEs] if not set by SubsList
+#     (2) values of aDAEsys[Parameters] if not set by SubsList
+#   rule of thumb: output everything needed to evaluate ODEs
+#
+# @todo
+#   look for "warn if an lhs of ExplicitAEs is assigned" below
+#
+# @revision
+#   2010-08-26 copied from Modelpack by dka
+#   030109 added local var decl for LhsEAEs;
+#   020913 corrected typo aDAESys to aDAEsys
+#   020912 added option EvalEAEs which deletes values for EAEs from
+#     2nd arg and enfoces evaluation of EAEs in 1st arg; 
+#   020816 added missing local variables
+#   020805 added check for repeated entries in 2nd argument
+#   020306 written by mmo
+#
+##############################################################################
+evalExplicitAEsInDAESys:= proc(
+  aDAEsys::DAESys,
+  ReqSubsList::list(name= EvalsToFloat)
+  # optional arg "EvalEAEs"
+)
+
+  local VarsActuallyAssigned, VarsToBeAssigned, MissingAssigns,
+    ObsoleteAssigns, DoubleParAssigns, ExtendedSubsList,
+    item, NewResult, AssignedExplicitAEs, LhsExtendedSubsList,
+    NamesInSubsList, i1, SubsList, LhsEAEs; 
+
+  #
+  # treat opt arg EvalEAEs
+  #
+    SubsList:= ReqSubsList; 
+    if 
+      args[-1]= 'EvalEAEs'
+    then 
+      LhsEAEs:= map(lhs, aDAEsys["ExplicitAEs"]);
+      NamesInSubsList:= map(lhs, ReqSubsList); 
+      for item in LhsEAEs do
+        if 
+          member(item, NamesInSubsList)
+        then 
+          SubsList:= Aux:-ListOperations:-removeItemFromList(
+            item,
+            SubsList
+          ); 
+        end if;
+      end do; 
+    end if; 
+
+  #----------------------------------------------------------------------
+  # 
+  # DynVars, AlgVars must be assigned by SubsList 
+  # 
+  #----------------------------------------------------------------------
+  
+    VarsActuallyAssigned:= {
+      op(map(lhs, SubsList))
+    }; 
+  
+    VarsToBeAssigned:= {
+      op(aDAEsys["AlgVars"]),
+      op(aDAEsys["DynVars"])
+    };
+  
+    #
+    # error if mandatory assignments are missing
+    #
+      MissingAssigns:= VarsToBeAssigned minus VarsActuallyAssigned;
+    
+      if not
+        MissingAssigns= {}
+      then
+        error("there are assignments missing for %1", MissingAssigns);
+      end if;
+
+    #
+    # error if items occur more than once in 2nd argument
+    #
+      NamesInSubsList:= map(lhs, SubsList); 
+      for i1 from 2 to nops(NamesInSubsList) do
+        item:= NamesInSubsList[i1];
+        if 
+          member(item, NamesInSubsList[1..(i1-1)])
+        then
+          error(
+            "symbol %1 occurs more than once in 2nd argument",
+            item
+          );
+        end if; 
+      end do; 
+
+    #
+    # warning if there are obsolete assignments
+    #  
+      ObsoleteAssigns:= `minus`(
+        VarsActuallyAssigned,
+        VarsToBeAssigned
+      );
+      ObsoleteAssigns:= `minus`( 
+        ObsoleteAssigns,
+        convert(map(lhs, aDAEsys["Parameters"]), set)
+      );
+      ObsoleteAssigns:= `minus`(
+        ObsoleteAssigns,
+        convert(map(lhs, aDAEsys["ExplicitAEs"]), set)
+      ); 
+      if not
+        ObsoleteAssigns= {}
+      then
+        WARNING(
+          "there are obsolete assignments in second argument for %1", 
+          ObsoleteAssigns
+        );
+      end if;
+     
+    #
+    # warn if a par is assigned both in SubsList and in aDAEsys[Parameters]
+    #
+      DoubleParAssigns:= `intersect`(
+        VarsActuallyAssigned,
+        convert(map(lhs, aDAEsys["Parameters"]), set)
+      ); 
+      if not
+        DoubleParAssigns= {}
+      then
+        WARNING(
+          "assignment of parameters in second argument overrules assigments in list Parameters of DAE system for %1", 
+          DoubleParAssigns
+        );
+      end if;
+    
+    #
+    # warn if an lhs of ExplicitAEs is assigned
+    #
+    # note this can be done when recursively substituting into
+    # ExplicitAEs to save some time since information needed is
+    # accessible there anyhow
+    #
+      AssignedExplicitAEs:= `intersect`(
+        VarsActuallyAssigned,
+        convert(map(lhs, aDAEsys["ExplicitAEs"]), set)
+      );
+      if not
+        AssignedExplicitAEs= {}
+      then
+        WARNING(
+          "assignment of l.h.s. of ExplicitAEs in second argument overrules results of evaluation of ExplicitAEs for %1",
+          AssignedExplicitAEs
+        );
+      end if; 
+
+  #----------------------------------------------------------------------
+  #
+  # recursively substitute solution into ExplicitAEs
+  #
+  #----------------------------------------------------------------------
+     ExtendedSubsList:= SubsList;
+
+    for item in aDAEsys["Parameters"] do
+      #
+      # skip if parameter is already assigned in SubsList
+      #
+      # assignments in SubsList have precedence over
+      # evaluation of ExplicitAEs, see precedence rules in header
+      #
+      if
+        member(lhs(item), VarsActuallyAssigned)
+      then
+        next;
+      else
+        ExtendedSubsList:= [
+          op(ExtendedSubsList),
+          item
+        ];
+      end if; 
+    end do; 
+ 
+    for item in aDAEsys["ExplicitAEs"] do
+      #
+      # skip if lhs is already assigned in SubsList
+      #
+      # assignments in SubsList have precedence over
+      # evaluation of ExplicitAEs, see precedence rules in header
+      #
+        if 
+          member(lhs(item), VarsActuallyAssigned)
+        then
+          next;
+        end if;
+  
+      NewResult:= Aux:-ListOperations:-subsEqnListIntoEqn( #subs(
+        ExtendedSubsList,
+        item
+      );
+      ExtendedSubsList:= [
+        op(ExtendedSubsList), 
+        lhs(item)= evalf(rhs(NewResult))
+      ];
+    end do;      
+
+  #----------------------------------------------------------------------
+  #
+  # append assignment from aDAEsys[Parameters] for parameters which have
+  # not been assigned by SubsList
+  #
+  #----------------------------------------------------------------------
+    LhsExtendedSubsList:= convert(
+      map(lhs, ExtendedSubsList),
+      set
+    ); 
+
+    for item in aDAEsys["Parameters"] do
+      if not
+        member(lhs(item), LhsExtendedSubsList)
+      then
+        ExtendedSubsList:= [
+          op(ExtendedSubsList),
+          item
+        ];
+      end if;
+    end do; 
+  
+  return(ExtendedSubsList); 
+
+end proc: # EvalExplicitAEsInDAESys
+

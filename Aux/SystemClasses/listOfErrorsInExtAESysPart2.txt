@@ -1,0 +1,199 @@
+#############################################################
+#
+# @path Aux/SystemClasses/listOfErrorsInExtAESysPart2
+#
+# @param table of type ExtAESys
+#
+# @return list of errors found in anExtAESys
+#
+# @revision
+# 021006 written by mmo, starting from corr. DAESys proc
+#
+#############################################################
+listOfErrorsInExtAESysPart2:= proc(
+  anExtAESys
+)
+
+  local ListOfErrors, ParsAndIndependents, NumberOfExplicitAEs,
+    SetOfValidExpr, i1, ListOfUndefExpr, ParAndVar, ParAndExplAE,
+    VarAndExplAE;
+
+  ListOfErrors:= []:
+
+  #----------------------------------------------------------
+  #
+  # Check whether anExtAESys["ExplicitAEs"] are well defined:
+  #
+  # Are indeterminants in anExtAESys["ExplicetAEs"][i1] either
+  # independent variable, parameter, or defined in previous
+  # equations anExtAESys["ExplicitAEs"][1..(i1- 1)]?
+  #
+  #----------------------------------------------------------
+
+      ParsAndIndependents:=
+        Aux:-ListOperations:-getSetOfValidExprIn(anExtAESys["Parameters"]) union
+        Aux:-ListOperations:-getSetOfValidExprIn(anExtAESys["Variables"]); 
+
+      NumberOfExplicitAEs:= nops(anExtAESys["ExplicitAEs"]);
+
+      SetOfValidExpr:= ParsAndIndependents;
+
+      #
+      # loop over ExtAESys["ExplicitAEs"][i1]
+      #
+
+      for i1 from 1 to NumberOfExplicitAEs do
+        
+         #
+         # check whether anExtAESys["ExplicitAEs"][i1] is well
+         # defined
+         #
+                
+         ListOfUndefExpr:= Aux:-ListOperations:-getListOfUndefExprIn(
+           anExtAESys["ExplicitAEs"][i1],
+           convert(SetOfValidExpr, list)
+         );
+        
+         #
+         # append errors to list, add a comment
+         #
+        
+         if not(ListOfUndefExpr= []) then
+           ListOfErrors:= [op(ListOfErrors),
+             cat(
+               ListOfUndefExpr,
+               ` in equation `,
+               anExtAESys["ExplicitAEs"][i1],
+               ` of ExplicitAEs undefined.`
+             )
+           ];
+         end if; 
+        
+         #
+         # add lhs of anExtAESys["ExplicitAEs"][i1] to
+         # SetOfValidExpr
+         #
+        
+         SetOfValidExpr:= SetOfValidExpr union
+           {op(1, anExtAESys["ExplicitAEs"][i1])}
+        
+      end do;  #end loop over ExtAESys["ExplicitAEs"][i1]
+        
+  #----------------------------------------------------------
+  #
+  # Check whether anExtAESys["Equations"] are well defined:
+  #
+  # Are indeterminants in anExtAESys["Equations"] either
+  # independent variables, parameters, or defined in
+  # equations anExtAESys["ExplicitAEs"]?
+  #
+  # Note that SetOfValidExpr comprises DynVars,
+  # Parameters and lhs of ExplicitAEs after execution
+  # of preceding block.
+  #----------------------------------------------------------
+
+      #
+      # loop over ExtAESys["Equations"][1..i1]
+      #
+
+      for i1 from 1 to nops(anExtAESys["Equations"]) do
+
+        #
+        # check whether anExtAESys["Equations"][i1] is well
+        # defined
+        #
+       
+        ListOfUndefExpr:= Aux:-ListOperations:-getListOfUndefExprIn(
+          anExtAESys["Equations"][i1],
+          convert(SetOfValidExpr, list)
+        );
+       
+        #
+        # append errors to list, add a comment
+        #
+       
+        if not(ListOfUndefExpr= []) then
+          ListOfErrors:= [op(ListOfErrors),
+            cat(
+              ListOfUndefExpr,
+              ` in equation `,
+              anExtAESys["Equations"][i1],
+              ` of Equations undefined.`
+            )
+          ];
+        end if; 
+
+      end do;  #end loop over ExtAESys["Equations"][i1]
+
+  #----------------------------------------------------------
+  #
+  # check if lists Parameters and Variables have common entries
+  #
+  #----------------------------------------------------------
+    ParAndVar:=map(
+      has,
+      anExtAESys["Parameters"],
+      anExtAESys["Variables"]
+    );
+
+    if
+      (member(true, ParAndVar, 'i2'))
+    then
+      ListOfErrors := [op(ListOfErrors),
+     cat(
+       anExtAESys["Parameters"][i2],
+       ` is declared both parameter and variable `
+     )
+      ];
+    end if; 
+
+  #------------------------------------------------------------
+  #
+  # lists Parameters and lhs in ExplicitAEs must not have common
+  #   entries
+  #
+  #------------------------------------------------------------
+    ParAndExplAE:= map(
+      has,
+      anExtAESys["Parameters"],
+      map(lhs, anExtAESys["ExplicitAEs"])
+    );
+
+    if
+      (member(true, ParAndExplAE, 'i2'))
+    then
+      ListOfErrors := [op(ListOfErrors),
+     cat(
+       anExtAESys["Parameters"][i2],
+       ` occurs both in Parameters and lhs of ExplicitAEs `
+     )
+      ];
+    end if; 
+
+  #------------------------------------------------------------
+  #
+  # lists Variables and lhs in ExplicitAEs must not have common
+  #   entries
+  #
+  #------------------------------------------------------------
+    VarAndExplAE:= map(
+      has,
+      anExtAESys["Variables"],
+      map(lhs, anExtAESys["ExplicitAEs"])
+    );
+
+    if
+      (member(true, VarAndExplAE, 'i2'))
+    then
+      ListOfErrors := [op(ListOfErrors),
+     cat(
+       anExtAESys["Variables"][i2],
+       ` occurs both in Parameters and lhs of ExplicitAEs `
+     )
+      ];
+    end if; 
+
+  return(ListOfErrors); 
+
+end proc; # ListOfErrorsInExtAESysPart2
+

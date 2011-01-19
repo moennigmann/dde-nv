@@ -1,0 +1,155 @@
+##############################################################################
+#
+# @path Aux/SystemClasses/listOfErrorsInAESys
+#
+# @param  table
+# @return  list of errors in table with respect to AESys definition
+#
+# @notes
+# uses GetObsolExprInAESys
+# AESys definition:
+#   table must contain entries Equations, Parameters, Variables
+#   entries must be of type list(equation), list({name=EvalsToFloat, name}), 
+#     list
+#   symbols which occur must not be Parameter and Variable
+#     at the same time
+#   entries in Equations must be of form 0=...
+#   entries in Equations must be well defined: no indets apart from
+#     Parameters, Variables must occur in equations
+#   warning printed to screen if obsolete expressions exist
+#
+# @revision
+# 2010-03-09 moved from ModelPack by dka
+#   020613 Split procedure into two parts: Part 1 (here) only checks
+#     for existence and rough type of mandatory lists. Part 1 is fast.
+#     Part 2 (in local procedure ListOfErrorsInAESysPart2) checks whether
+#     equations are well defined. Part 2 is slow. Part 2 is called if
+#     present procedure is called with any of optional keywords 
+#     'long', 'strict', 'all'. 
+#   010815: removed bug in conversion of ListOfUndefExpr to list of strings
+#   010529: entry Parameters now may be
+#     list({name= EvalsToFloat, name}) (instead of list(equation)) - mmo
+##############################################################################
+listOfErrorsInAESys:= proc(
+  aSystem::table
+)
+
+  local ListOfErrors, SetOfIndices, i1; 
+
+  ListOfErrors:= [];
+
+  #------------------------------------------------------------
+  #
+  # check whether lists Equations, Parameters, Variables exist
+  #
+  #------------------------------------------------------------
+   SetOfIndices:= {
+     indices(aSystem)
+   };
+
+   #
+   # check existence and type of aSystem["Equations"]
+   #
+     if not(
+       member(["Equations"], SetOfIndices))
+     then
+       ListOfErrors:= [op(ListOfErrors),
+         "entry Equations missing"
+       ];
+       RETURN(ListOfErrors);
+     elif not(
+       type(aSystem["Equations"], list(equation)))
+     then
+       ListOfErrors:=[op(ListOfErrors),
+         "entry Equations must be a list of equations"
+       ];
+       RETURN(ListOfErrors);
+     end if;
+
+   #
+   # check existence and type of aSystem["Parameters"]
+   #
+     if not(
+       member(["Parameters"], SetOfIndices))
+     then
+       ListOfErrors:= [op(ListOfErrors),
+       "entry Parameters missing"
+     ];
+       RETURN(ListOfErrors);
+     elif not(
+       type(aSystem["Parameters"], list({name= EvalsToFloat, name})))
+     then
+       ListOfErrors:= [op(ListOfErrors),
+         "entry Parameters must be a list, entries of list must be "
+         "of type name or type name= EvalsToFloat"
+       ];
+       RETURN(ListOfErrors);
+     end if;
+
+   #
+   # check existence and type of aSystem["Variables"]
+   #
+     if not(
+       member(["Variables"], SetOfIndices))
+     then
+       ListOfErrors:= [op(ListOfErrors),
+         "entry Variables must be a list"
+       ];
+       RETURN(ListOfErrors);
+     elif not(
+       type(aSystem["Variables"], list))
+     then
+       ListOfErrors:= [op(ListOfErrors),
+         "entry Variables must be a list"
+       ];
+       RETURN(ListOfErrors);
+     end if;
+
+  #----------------------------------------------------
+  #
+  # equations in entry Equations must be of the form
+  # 0=...
+  #
+  #----------------------------------------------------
+   for i1 in aSystem["Equations"] do
+     if not(
+       lhs(i1)= 0)
+     then
+       ListOfErrors:= [op(ListOfErrors),
+         cat(
+           "equation ", i1, " must be of form 0=... "
+         )
+       ];
+     end if;
+   end do;
+
+  #
+  # if errors were found, return them even if 
+  # ListOfErrorsInAESysPart2 was requested
+  #
+    if not
+      ListOfErrors= []
+    then
+      return(ListOfErrors);
+    end if; 
+
+  #
+  # if optional argument 'long', 'all', 'strict' was given,
+  # call ListOfErrorsInAESysPart2
+  #
+    if 
+      nargs>1
+    then
+      if 
+        args[2]= 'long' or
+        args[2]= 'all' or
+        args[2]= 'strict'
+      then
+        ListOfErrors:= listOfErrorsInAESysPart2(aSystem); 
+      end if;
+    end if; 
+
+  return(ListOfErrors);
+
+end proc; #ListOfErrorsInAESys
+

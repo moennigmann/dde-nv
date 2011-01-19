@@ -1,0 +1,139 @@
+##############################################################################
+#
+# @path Aux/SystemClasses/subsStandardNotationIntoExtAESys.txt
+#
+# @param
+#   ExtAESys
+#
+# @return
+#   ExtAESys in which Variables and Parameters have been replaced by
+#     standard names y[i], par[i], i=1..?; list Substitutions contains
+#     list of substitutions in the form list(FomerName= StandardName)
+#
+# @todo
+#   (1) make sure that standard names y, z, par do not occur in ExtAESys
+#   before substitution of standard names;
+#   (2) remove NewSystem:= copy(aSystem) for faster execution; note
+#   that all entries of aSystem must be copied (e.g. aSystem[Substitutions])
+#
+# @revision
+#   2010-03-09 moved from ModelPack by dka
+#   040326 now accepts ExtAESys without entries ExtAESys[AlgVars] -jge
+#   021017 introduced NamesEAEs, NamesPars to avoid repeated access
+#     of type lhs(aSystem[ExplicitAE][i1]); 
+#   021006 written by mmo starting from corr. DAESys proc
+#
+##############################################################################
+subsStandardNotationIntoExtAESys:= proc(
+  aSystem::ExtAESys
+  # optional argument ReqDynVarSymbol
+)
+
+  local y, NumOfVariables, NumOfExplicitAEs, NumOfPars,
+    ListOfExplicitAEsSubst, ListOfVariablesSubst, ListOfAllVarsSubst,
+    ListOfParsSubst, NewSystem, NamesPars, NamesEAEs; 
+
+  #
+  # check if system has entry ["AlgVars"]
+  # and refuse to work on system with algebraic equations
+  #
+    if
+      {["AlgVars"]} minus {indices(aSystem)} = {}
+    then
+      if not
+        aSystem["AlgVars"]= []
+      then
+        error("procedure can currently only be applied to systems without algebraic equations");
+      end if;
+    end if;
+
+  #
+  # treat optional third argument
+  #
+    if 
+      nargs> 1
+    then
+      if not
+        type(args[2], name)
+      then
+        error("optional 2nd argument, requested name for dynamic variables, must be of type name"); 
+      end if;
+
+      if
+        args[2]= 'z' or args[2]= 'par'
+      then
+        error("dynamic variables must not be called 'z' or 'par' as these names are reserved for algebraic variables and parameters"); 
+      end if; 
+
+      y:= args[2];
+
+    else
+      y:= 'y';
+    end if; 
+    
+  #
+  # create lists of substitutions
+  #
+    NumOfVariables:= nops(aSystem["Variables"]);
+    NumOfExplicitAEs:= nops(aSystem["ExplicitAEs"]); 
+    NumOfPars:= nops(aSystem["Parameters"]);
+
+    NamesEAEs:= map(lhs, aSystem["ExplicitAEs"]);
+    ListOfExplicitAEsSubst:= [seq(
+      NamesEAEs[i1]= z[i1],
+      i1= 1..NumOfExplicitAEs
+    )]; 
+
+    ListOfVariablesSubst := [seq(
+      aSystem["Variables"][i1]= y[i1],
+      i1= 1..NumOfVariables
+    )];
+
+    ListOfAllVarsSubst := [
+      op(ListOfExplicitAEsSubst),
+      op(ListOfVariablesSubst)
+    ];
+
+    NamesPars:= map(lhs, aSystem["Parameters"]); 
+    ListOfParsSubst:= [seq(
+      NamesPars[i1]= par[i1],
+      i1= 1..NumOfPars
+    )];          # should work fine with NumOfPars = 0, too.
+
+    #
+    # create new system of equations
+    #
+      NewSystem:= copy(aSystem);
+
+      NewSystem["Equations"]:= subs(
+        ListOfAllVarsSubst,
+        ListOfParsSubst,
+        aSystem["Equations"]
+      );
+
+      NewSystem["Variables"]:=subs(
+        ListOfAllVarsSubst,
+        ListOfParsSubst,
+        aSystem["Variables"]
+      );
+
+      NewSystem["Parameters"]:= subs(
+          ListOfParsSubst,
+          aSystem["Parameters"]
+        );
+
+      NewSystem["ExplicitAEs"]:= subs(
+        ListOfAllVarsSubst,
+        ListOfParsSubst,
+        aSystem["ExplicitAEs"]
+      );
+
+      NewSystem["Substitutions"]:= [
+        op(ListOfAllVarsSubst),
+        op(ListOfParsSubst)
+      ];
+
+  return(eval(NewSystem));
+
+end proc; #SubsStandardNotationIntoExtAESys
+

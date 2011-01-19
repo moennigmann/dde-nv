@@ -1,0 +1,90 @@
+###############################################################################
+#
+# @path Aux/SystemClasses/ParToLastVarInExtAESys.txt
+#
+# @param 
+#   (1) a parameter, a list of parameters to be moved from
+#   AESys[Parameters] to AESys[Variables] in second argument
+#   (2) an AESys
+#
+# @returm
+#   an AESys in which requested parameters have become variables
+#
+# @revision
+# 2010-03-09 Moved from ModelPack by dka
+# 021022 changed order of new variables: in contrast to
+#   ParToVarInAESys, parameters are now *appended* to list of existing
+#   vars; 
+# 021022 copy of ParToVarInAESys.txt
+#
+###############################################################################
+parToLastVarInExtAESys:= proc(
+  ReqPars::{name, list(name)},
+  Sys::{AESys, ExtAESys}
+)
+
+  local ListOfParamNames,item, item2, ListOfPars, NewAESys;
+
+  #
+  # turn 1st argument into standard type list(name) (call result ListOfPars)
+  #
+   if type(ReqPars, name) then
+     ListOfPars:= [ReqPars];
+   else
+     ListOfPars:= ReqPars;
+   end if;
+
+  #
+  # error if entries in ListOfPars are not in Sys["Parameters"]
+  #
+      ListOfParamNames:= [];
+ 
+          for item in Sys["Parameters"] do
+              if 
+                   type(item, equation) 
+              then
+                   ListOfParamNames:= [
+                           op(ListOfParamNames),
+                           lhs(item)
+                        ];
+              else
+                   ListOfParamNames:= [
+                           op(ListOfParamNames),
+                           item
+                        ];
+              end if;       
+          end do;
+
+  
+    #
+    #check wheter item occurs in Parameters, else error
+    #
+   for item2 in ListOfPars do
+     if not
+       member(item2, ListOfParamNames)
+     then
+       error("element %1 of 1st argument does not exist in AEsys", item2);
+     end if;
+
+   end do;
+
+  #
+  # loop over entries of ListOfPars, work on NewAESys
+  #
+   NewAESys:= copy(Sys);
+   NewAESys["Variables"]:=[
+     op(Sys["Variables"]), op(ListOfPars)
+   ];
+
+  #
+  # Remove ListOfPars from AESys["Parameters"]
+  #
+
+  NewAESys["Parameters"]:= Aux:-ListOperations:-removeItemFromList(
+    ListOfPars, Sys["Parameters"]);
+
+  return(eval(NewAESys));
+  
+end proc; # ParToLastVarInExtAESys
+
+
