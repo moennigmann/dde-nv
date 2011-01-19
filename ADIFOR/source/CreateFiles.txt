@@ -1,0 +1,234 @@
+  ######################################################################
+  #
+  # @path Adifor:-CreateFiles
+  #
+  # @param
+  #   ProcsToBeDiffed, name of file to be differentiated without
+  #     file extension, or list thereof, first item in list
+  #     is considered to be top-level file derivatives of which are
+  #     needed
+  #   IndependentVar, x in dy/dx
+  #   NumIndependentVars, N in x[1..N]
+  #   DependentVar, y in dy/dx
+  #
+  # @return true on success, error thrown otherwise
+  #
+  # @notes side effects: 
+  #   creates files needed to call adifor,
+  #   File.cmp, File.adf, where File is replaced by name/string
+  #   given in first argument
+  #
+  # @revision
+  # 090204 ADIFOR cannot be started from $TMP anymore, but can be started
+  #	   in the actual WorkingDir, tqu
+  # 040805 Exception Handler mode is set to "counting" by default now
+  #     this was necessary because of access violation error in case of  
+  #     exceptional conditions of the derivatives and default value
+  #     report_once -jge
+  # 040626 changed the adifor command for windows as operating system
+  #   from adifor2.1 to adifor21 -jge
+  # 040220 added PrefixLetter to option file
+  #    (if e.g. same procedure is dervied twice) -jge
+  # 030319 now accepts list of procs to be excluded from differentiation
+  # 030310 added sparse option, simplified header
+  # 030116 maple.adf is now called after top level file 
+  # 030116 1st arg may now be list of files rather than single file
+  #   only
+  # 030116 added AD_EXCLUDE_PROCS line
+  # 02xxxx written by mmo
+  #
+  ######################################################################
+  CreateFiles:= proc(
+    ReqProcsToBeDiffed::{string, list(string)}, 
+    ReqIndependentVar::{name, list(name)}, 
+    NumIndependentVars::posint,
+    DependentVar::name,
+    SparsityKeyword::name, # optionally specify 'sparse'
+    ReqExcludedProcs::{[], list(name)},  # optionally specify procs 
+                                         # not to be diffed
+    PrefixLetter::string
+  )
+  
+    local FileId, AdfString, IndependentVar, ProcsToBeDiffed, item,
+      Sparsity, ExcludedProcs, status, ADIFOR_DIR; 
+  
+    #
+    # convert 1st argument to standard form
+    #
+      ProcsToBeDiffed:= convert(ReqProcsToBeDiffed, list); 
+
+    #
+    # convert 2nd argument to standard form
+    #
+    # note seq is somewhat complicated to avoid string to end in ","
+    #
+      if
+        type(ReqIndependentVar, name)
+      then
+        IndependentVar:= ReqIndependentVar;
+      else
+        IndependentVar:= 
+          seq(
+            cat(
+              convert(ReqIndependentVar[i1], string),
+              ", "
+            ),
+            i1= 1..(nops(ReqIndependentVar)-1)
+          ),
+          convert(ReqIndependentVar[-1], string); 
+      end if; 
+
+    #
+    # create .cmp File
+    #
+      FileId:= fopen(
+        cat("./", ProcsToBeDiffed[1], ".cmp"),
+        WRITE,
+        TEXT
+      );
+    
+      for item in ProcsToBeDiffed do
+        fprintf(
+          FileId,
+          cat(item, ".f\n")
+        );
+      end do; 
+  
+      fclose(FileId);
+  
+    #
+    # create .adf File
+    #
+      #
+      # build list of excluded procedures
+      #
+        ExcludedProcs:= "ehsfid,ehfid,ehbfdo,ehufdo";
+        if 
+          nargs> 5 and not ReqExcludedProcs= []
+        then
+          ExcludedProcs:= cat(
+            ExcludedProcs, 
+            seq(
+              cat(
+                ",", convert(ReqExcludedProcs[i1], string)
+              ),
+              i1= 1..nops(ReqExcludedProcs)
+            )
+          ); 
+        end if;     
+
+      AdfString:= cat(
+        "AD_TOP=        ", ProcsToBeDiffed[1],         "\n",
+        "AD_PMAX=       ", NumIndependentVars,         "\n",
+        "AD_IVARS=      ", IndependentVar,             "\n",
+        "AD_DVARS=      ", DependentVar,               "\n",
+        "AD_PROG=       ", ProcsToBeDiffed[1],     ".cmp\n",
+        "AD_EXCLUDE_PROCS= ", ExcludedProcs,           "\n",
+        "AD_OUTPUT_DIR= .",                            "\n",
+     #
+     #  Exception Handler mode is set to "counting" 
+     # this was necessary because of access violation error in case of  
+     # exceptional conditions of the derivatives and default value
+     # report_once
+     #
+        "AD_EXCEPTION_FLAVOR= performance         \n"
+      );
+
+      #
+      # if sparsity was requested, add corresponding lines
+      #
+        if
+          nargs>4 and SparsityKeyword= 'sparse'
+        then
+          AdfString:= cat(
+            AdfString,
+            "AD_NUM_RHS_VARS= 5\n",
+            "AD_FLAVOR= sparse\n"
+          );
+        end if;
+     #
+     # if PrefixLetter is not 'g' set ADPREFIX
+     #
+        if
+          nargs>6 
+        then
+          AdfString:= cat(
+            AdfString,
+            "AD_PREFIX=", PrefixLetter,"\n"
+          );
+        end if;
+
+
+      FileId:= fopen(
+        cat("./", ProcsToBeDiffed[1], ".adf"), 
+        WRITE,
+        TEXT
+      );
+    
+      fprintf(
+        FileId,
+        AdfString      
+      );
+  
+      fclose(FileId);
+  
+    #
+    # create trivial shell script for call to adifor
+    #
+    # Note shell script is necessary to allow for #!/bin/tcsh. If adifor is
+    # called directly in system command, automatically called command 
+    # /opt/adifor/bin/purse is not found, since shell opened by maple
+    # does not know all environment variables set in ~/.cshrc or
+    # ~/.bashrc and in particular does not know path to /opt/bin/adifor/
+    # in case of winodws as operating sysetm use Adifor21 as command
+      
+      
+      ################################################################################
+      #!!!!!!  �nderung wegen ADIFOR Problem: ADIFOR l�uft nur unter $TMP Verzeichnis#
+      #
+      #
+      #AdfString:= cat(
+       # "#!/bin/tcsh \n",
+       # "cd $TMP\n",
+       #"cp $1/",ProcsToBeDiffed[1],".* ./\n", 
+      #  "Adifor2.1 AD_SCRIPT=", ProcsToBeDiffed[1], ".adf"#, \n",
+       #"cp ./*_",ProcsToBeDiffed[1],".f $1\n",
+       #"cd $1"
+      #);
+      #										     #
+      ################################################################################
+
+      AdfString:= cat( "Adifor2.1 AD_SCRIPT=", ProcsToBeDiffed[1], ".adf" );
+
+      if
+        _EnvOperatingSystemType="windows"
+      then
+        AdfString:=cat(
+          "#!/bin/tcsh \n",
+          "Adifor21 AD_SCRIPT=", ProcsToBeDiffed[1], ".adf \n"
+        );
+      end if;
+     
+      FileId:= fopen(
+        "RunAdifor",
+        WRITE,
+        TEXT
+      );
+    
+      fprintf(
+        FileId,
+        AdfString      
+      );
+  
+      fclose(FileId);
+  
+      status:=ssystem("chmod a+x RunAdifor");
+      if status[1] <> 0 
+      then
+	system("chmod a+x RunAdifor");
+	error(" in \".../maple/ADIFOR/source/CreateFiles.txt\" command:\"chmod a+x RunAdifor\"");
+      end if;
+
+      return(true); 
+  
+  end proc; # Adifor:-CreateFiles

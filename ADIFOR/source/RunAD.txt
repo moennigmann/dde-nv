@@ -1,0 +1,148 @@
+  ######################################################################
+  #
+  # @path Adifor:-RunAD;
+  #
+  # runs AD on subroutines given in first arg 
+  # runs AD in current directory
+  #
+  # @param
+  #   ProcsToBeDiffed, name or list of names of 
+  #     files to be differentiated without file extension, first file
+  #     is assumed to be top-level file of which derivatives are required
+  #   IndependentVar, x in dy/dx
+  #   NumIndependentVars, N in x[1..N]
+  #   DependentVar, y in dy/dx
+  #
+  # @return true on success, error thrown otherwise
+  # 
+  #  @notes
+  # (1) side effects: 
+  #   creates files needed to call adifor,
+  #   File.cmp, File.adf, where File is replaced by name/string
+  #   given in first argument
+  # (2) notes see notes in header of CreateFiles
+  #
+  # @todo see todos in header of CreateFiles
+  #
+  # @revision
+  # 040219 added Optional Argument for prefix letter 
+  # 030820 added IF statement in system command calling script RunAdifor
+  # 030819 changed command for execution of script RunAdifor
+  #    to sh RunAdifor -jge
+  # 030319 now optionally accepts list of procs to be excluded from
+  #   differentiation
+  # 030310 added sparsity option
+  # 030127 removed bug in converting first argument to standard type
+  #   list
+  # 030116 1st argument may now be a list of files to be differentiated,
+  #   first file is assumed to contain top-level subroutine of which
+  #   derivatives are to be computed; 
+  # 020318 procedure now accepts 2nd argument of type list(name)
+  # 020311 written by mmo
+  #
+  ######################################################################
+  RunAD:= proc(
+    ReqProcsToBeDiffed::{list({name, string}), name, string}, 
+    IndependentVar::{name, list(name)},
+    NumIndependentVars::posint,
+    DependentVar::name,
+    ReqSparsityKeyword::name, # optional 'sparse' is passed to CreateFiles
+    ReqExcludedProcs::list(name), # optional, passed to CreateFiles
+    ReqPrefixLetter::{name,string}
+  )
+  
+    local SystemCommand, ProcsToBeDiffed, SparsityKeyword,
+      ExcludedProcs,PrefixLetter,status; 
+
+    #
+    # treat optional ReqSparsityKeyword
+    #
+      if
+        nargs>4 and ReqSparsityKeyword= 'sparse'
+      then
+        SparsityKeyword:= 'sparse';
+      else
+        SparsityKeyword:= 'dense';
+      end if;
+
+    #
+    # treat optional ReqExcludedProcs
+    #
+      if 
+        nargs> 5
+      then
+        ExcludedProcs:= ReqExcludedProcs;
+      else
+        ExcludedProcs:= [];
+      end if; 
+    #
+    # treat optional ReqPrefixLetter
+    #
+      if
+        nargs> 6
+      then
+        PrefixLetter:= ReqPrefixLetter;
+      else
+        PrefixLetter:="g";
+      end if;
+      PrefixLetter:=convert(PrefixLetter,string);
+    #
+    # change first argument to standard type
+    #
+      if not
+        type(ReqProcsToBeDiffed, list)
+      then
+# output: module with methods which call npsol
+#
+        ProcsToBeDiffed:= [ReqProcsToBeDiffed];
+      else
+        ProcsToBeDiffed:= ReqProcsToBeDiffed;
+      end if; 
+
+      ProcsToBeDiffed:= map(convert, ProcsToBeDiffed, string); 
+
+    #
+    # create adifor control files
+    #
+	
+      CreateFiles(
+        ProcsToBeDiffed,
+        IndependentVar,
+        NumIndependentVars,
+        DependentVar,
+        SparsityKeyword,
+        ExcludedProcs,
+        PrefixLetter
+      );
+  
+    #
+    # call adifor with directly calling ./RunADifor (Linux,Solaris)
+    # and with sh RunAdifor   
+
+
+      ################################################################################
+      #!!!!!!  �nderung wegen ADIFOR Problem: ADIFOR l�uft nur unter $TMP Verzeichnis#
+
+      status:=ssystem(cat("sh ./RunAdifor ",currentdir()));
+      if status[1] <> 0 
+      then
+	system(cat("sh ./RunAdifor ",currentdir()));
+	error(" in \".../maple/ADIFOR/source/RunAD.txt\" command:\"sh ./RunAdifor \",currentdir()\"");
+      end if; 
+
+      #SystemCommand:= cat("sh ./RunAdifor");
+      #
+      #status:=ssystem(SystemCommand);
+      #
+      #if status[1] <> 0 
+      #then
+      #	system(SystemCommand);
+      #	error("call to adifor not successful");
+      #end if;
+
+      #	   									     #
+      ################################################################################
+      
+   return(true); 
+  
+  end proc; # RunAD
