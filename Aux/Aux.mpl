@@ -1,60 +1,75 @@
 Aux := module () export BoxOperations, CreateCurve, Derivs, FileOperations, 
 equalWithinRelErr, equalWithinFudgedRelErr, getAbsErr, getFudgedRelErr, 
-getRelErr, init, IntervalArithmetics, LinearAlgebra, LinearEqns, 
+getRelErr, init, isCurve, IntervalArithmetics, LinearAlgebra, LinearEqns, 
 ListOperations, NLP, Other, Parsers, Programming, SystemClasses, TensProd, 
 TransferNlpToGams; global `type/AESys`, `type/EvalsToFloat`, `type/NLP`, 
-`type/BCNLP`, `type/term`, `type/DTASys`, `type/DAESys`, `type/ExtAESys`; 
-option package; BoxOperations := module () export getIndexToLongestAxis; 
-getIndexToLongestAxis := proc (box::list([numeric, numeric])) local i, width,
-spaceDimension, indexToMax, maxWidth; spaceDimension := nops(box); maxWidth :=
-box[1][2]-box[1][1]; indexToMax := 1; for i from 2 to spaceDimension do width
-:= box[i][2]-box[i][1]; if maxWidth < width then maxWidth := width; indexToMax
-:= i end if end do; return indexToMax end proc; end module; CreateCurve := 
-proc (PointLikeData::table, OtherData::list(name = anything)) local item, 
-MandatoryEntries, ExistingEntries, NumDataPointsInConstr, VarNamesInConstr, 
-SubsListParsInConstr, TemplateModule; MandatoryEntries := [Parameters, 
-NumPoints]; ExistingEntries := map(lhs,OtherData); for item in 
-MandatoryEntries while true do if not member(item,ExistingEntries) then error
-"second argument must have entry %1", item end if end do; SubsListParsInConstr
-:= Aux:-ListOperations:-getRHSofIn(Parameters,OtherData); if not type(
-SubsListParsInConstr,{list(name = EvalsToFloat), []}) then error "entry Parame\
-ters in second argument is expected to be of type {[], list(name= EvalsToFloat\
-)}" end if; NumDataPointsInConstr := Aux:-ListOperations:-getRHSofIn('
-NumPoints',OtherData); VarNamesInConstr := map(op,[indices(PointLikeData)]); 
-for item in VarNamesInConstr while true do if not type(PointLikeData[item],
-array) then error "all entries in 1st argument except Parameters and NumPoints\
- must be arrays, check failed for %1", item end if end do; TemplateModule := 
-module () local Indices, NumDataPoints, VarNames, data, ParNames, 
-getSinglePlot, SubsListPars, ExtraData; export createPS, extendCurveByEAEs, 
-getData, getNonTableData, getNumPoints, getParameters, getParNames, 
-getSinglePlotForFunction, getSinglePlotForFunction3d, getVariables, 
-getVarNames, getPoint, getPlot, joinCurve, splitCurve; VarNames := 
-VarNamesInConstr; NumDataPoints := NumDataPointsInConstr; data := copy(
-PointLikeData); ExtraData := OtherData; SubsListPars := SubsListParsInConstr;
-ParNames := map(lhs,Aux:-ListOperations:-getRHSofIn(Parameters,ExtraData)); 
-getData := proc () return eval(PointLikeData) end proc; getParameters := proc
-() local Pars; Pars := Aux:-ListOperations:-getRHSofIn(Parameters,ExtraData);
-return Pars end proc; getPlot := proc (xName::name, yName::{name, term, list(
-name)}) local Result, i1, PlotOpts, LegendString, xNameString; xNameString :=
-convert(xName,string); PlotOpts := [style = line]; if type(yName,list(name)) 
-then LegendString := map(convert,yName,string); Result := [seq(getSinglePlot(
-xName,yName[i1],op(PlotOpts),linestyle = i1,labels = [xNameString, ""],legend
-= LegendString[i1],args[3 .. -1]),i1 = 1 .. nops(yName))] elif type(yName,name
-) then LegendString := convert(yName,string); Result := getSinglePlot(xName,
-yName,op(PlotOpts),linestyle = 1,args[3 .. -1]) elif type(yName,term) then 
-Result := getSinglePlotForFunction(xName,yName,op(PlotOpts),linestyle = 1,args
-[3 .. -1]) end if; return Result end proc; getSinglePlot := proc (xName::name,
-yName::name) local points, ListOfPoints, ListOfPlots, PlotObj; if not member(
-xName,{`#`, op(VarNames)}) then error "%1 must be a variable or #", xName end
-if; if not member(yName,VarNames) then error "%1 is not a variable", yName end
-if; if not xName = `#` then points := [seq([PointLikeData[xName][i1], 
-PointLikeData[yName][i1]],i1 = 0 .. NumDataPoints)] else points := [seq([i1, 
-PointLikeData[yName][i1]],i1 = 0 .. NumDataPoints)] end if; PlotObj := plots[
-pointplot](points,args[3 .. -1]); return PlotObj end proc; 
-getSinglePlotForFunction := proc (xName::name, yName::term) local points, 
-ListOfPoints, ListOfPlots, PlotObj, ListOfIndets, item, AllNames, i1, i2, 
-NewPoint, NumIndets, VarsInIndets, ParsInIndets, NumVarsInIndets, SubsListPars
-, SubsList, xValue; if not member(xName,{`#`, op(VarNames)}) then error 
+`type/BCNLP`, `type/term`, `type/DTASys`, `type/DAESys`, `type/ExtAESys`, 
+`type/Curve`; option package; BoxOperations := module () export 
+getIndexToLongestAxis; getIndexToLongestAxis := proc (box::list([numeric, 
+numeric])) local i, width, spaceDimension, indexToMax, maxWidth; 
+spaceDimension := nops(box); maxWidth := box[1][2]-box[1][1]; indexToMax := 1;
+for i from 2 to spaceDimension do width := box[i][2]-box[i][1]; if maxWidth <
+width then maxWidth := width; indexToMax := i end if end do; return indexToMax
+end proc; end module; CreateCurve := proc (PointLikeData::table, OtherData::
+list(name = anything)) local item, MandatoryEntries, ExistingEntries, 
+NumDataPointsInConstr, VarNamesInConstr, SubsListParsInConstr, TemplateModule;
+MandatoryEntries := [Parameters, NumPoints]; ExistingEntries := map(lhs,
+OtherData); for item in MandatoryEntries while true do if not member(item,
+ExistingEntries) then error "second argument must have entry %1", item end if
+end do; SubsListParsInConstr := Aux:-ListOperations:-getRHSofIn(Parameters,
+OtherData); if not type(SubsListParsInConstr,{list(name = EvalsToFloat), []})
+then error "entry Parameters in second argument is expected to be of type {[],\
+ list(name= EvalsToFloat)}" end if; NumDataPointsInConstr := Aux:-
+ListOperations:-getRHSofIn('NumPoints',OtherData); VarNamesInConstr := map(op,
+[indices(PointLikeData)]); for item in VarNamesInConstr while true do if not 
+type(PointLikeData[item],array) then error "all entries in 1st argument except\
+ Parameters and NumPoints must be arrays, check failed for %1", item end if 
+end do; TemplateModule := module () local Indices, NumDataPoints, VarNames, 
+data, ParNames, getSinglePlot, SubsListPars, ExtraData; export createPS, 
+exportCurve, extendCurveByEAEs, getAllValuesOfVariable, getData, 
+getNonTableData, getNumPoints, getParameters, getParNames, 
+getSinglePlotForFunction, getSinglePlotForFunction3d, getSpecialVarNames, 
+getSpecificValues, getVariables, getVarNames, getPoint, getPlot, joinCurve, 
+splitCurve; VarNames := VarNamesInConstr; NumDataPoints := 
+NumDataPointsInConstr; data := copy(PointLikeData); ExtraData := OtherData; 
+SubsListPars := SubsListParsInConstr; ParNames := map(lhs,Aux:-ListOperations
+:-getRHSofIn(Parameters,ExtraData)); getData := proc () return eval(
+PointLikeData) end proc; exportCurve := proc (fileName::string) local 
+pointData, fd, allKeys, actEntry, actNrEntries, actLine, valueAsString, i, key
+; if FileTools[Exists](fileName) then error "File %1 already exists." end if;
+fd := fopen(fileName,WRITE); pointData := getData(); allKeys := [indices(
+pointData,'nolist')]; for key in allKeys while true do actEntry := eval(
+pointData[key]); actNrEntries := rhs(op(2,eval(pointData[key]))); actLine := 
+convert(key,string); for i to actNrEntries do valueAsString := convert(
+actEntry[i],string); actLine := cat(actLine," ",valueAsString) end do; 
+writeline(fileName,actLine) end do; fclose(fd) end proc; 
+getAllValuesOfVariable := proc (selectedVar::name) local thisVars, 
+selectedVarsSet, allValues; thisVars := convert(VarNames,set); if not member(
+selectedVar,thisVars) then error "%1  not specified in this curve", 
+selectedVar end if; allValues := data[selectedVar]; return eval(allValues) end
+proc; getParameters := proc () local Pars; Pars := Aux:-ListOperations:-
+getRHSofIn(Parameters,ExtraData); return Pars end proc; getPlot := proc (xName
+::name, yName::{name, term, list(name)}) local Result, i1, PlotOpts, 
+LegendString, xNameString; xNameString := convert(xName,string); PlotOpts := [
+style = line]; if type(yName,list(name)) then LegendString := map(convert,
+yName,string); Result := [seq(getSinglePlot(xName,yName[i1],op(PlotOpts),
+linestyle = i1,labels = [xNameString, ""],legend = LegendString[i1],args[3 ..
+-1]),i1 = 1 .. nops(yName))] elif type(yName,name) then LegendString := 
+convert(yName,string); Result := getSinglePlot(xName,yName,op(PlotOpts),
+linestyle = 1,args[3 .. -1]) elif type(yName,term) then Result := 
+getSinglePlotForFunction(xName,yName,op(PlotOpts),linestyle = 1,args[3 .. -1])
+end if; return Result end proc; getSinglePlot := proc (xName::name, yName::
+name) local points, ListOfPoints, ListOfPlots, PlotObj; if not member(xName,{
+`#`, op(VarNames)}) then error "%1 must be a variable or #", xName end if; if
+not member(yName,VarNames) then error "%1 is not a variable", yName end if; if
+not xName = `#` then points := [seq([PointLikeData[xName][i1], PointLikeData[
+yName][i1]],i1 = 0 .. NumDataPoints)] else points := [seq([i1, PointLikeData[
+yName][i1]],i1 = 0 .. NumDataPoints)] end if; PlotObj := plots[pointplot](
+points,args[3 .. -1]); return PlotObj end proc; getSinglePlotForFunction := 
+proc (xName::name, yName::term) local points, ListOfPoints, ListOfPlots, 
+PlotObj, ListOfIndets, item, AllNames, i1, i2, NewPoint, NumIndets, 
+VarsInIndets, ParsInIndets, NumVarsInIndets, SubsListPars, SubsList, xValue; 
+if not member(xName,{`#`, op(VarNames)}) then error 
 "%1 must be a variable or #", xName end if; ListOfIndets := Aux:-
 ListOperations:-getListOfIndetsIn(yName); NumIndets := nops(ListOfIndets); 
 AllNames := [op(VarNames), op(ParNames)]; for item in ListOfIndets while true
@@ -151,15 +166,24 @@ array(1 .. NumPointsCurve2); for i1 to NumPointsCurve2 do DataCurve2[item][i1]
 ListCurve2 := Aux:-ListOperations:-setRHSofInTo(NumPoints,ListCurve2,
 NumPointsCurve2); NewCurve1 := Aux:-CreateCurve(DataCurve1,ListCurve1); 
 NewCurve2 := Aux:-CreateCurve(DataCurve2,ListCurve2); return [NewCurve1, 
-NewCurve2] end proc; getVariables := proc (ReqNum::posint) local i1, point; if
-not ReqNum <= NumDataPoints then error "only %1 points are available", 
-NumDataPoints end if; point := [seq(VarNames[i1] = data[VarNames[i1]][ReqNum],
-i1 = 1 .. nops(VarNames))]; return point end proc; extendCurveByEAEs := proc (
-Sys::{DAESys, ExtAESys, NLP}, WorkingDir::string) local ListOfErrs, LhsEqns, 
-NumEAEs, ErrPars, ErrVars, EAEsNamesInEAEs, NumEAEsNamesInEAEs, NumVarNames, 
-item, ValsPars, i1, ValsVars, AllVals, ValsEAEs, NewData, NewCurve, Eqns; Eqns
-:= Sys[ExplicitAEs]; LhsEqns := convert(map(lhs,Eqns),set); ErrPars := 
-`intersect`(LhsEqns,convert(ParNames,set)); if not ErrPars = {} then error 
+NewCurve2] end proc; getSpecialVarNames := proc () return SpecialVarNames end
+proc; getSpecificValues := proc (position::posint, selectedVars::list(name)) 
+local thisVars, selectedVarsSet, point; thisVars := convert(VarNames,set); 
+selectedVarsSet := convert(selectedVars,set); if not `subset`(selectedVarsSet,
+thisVars) then error "%1 contains variables not specified in this curve", 
+selectedVars end if; if NumDataPoints < position then error 
+"%1 is out of bound. It has to be <= %2", position, NumDataPoints end if; 
+point := [seq(selectedVars[i1] = data[selectedVars[i1]][position],i1 = 1 .. 
+nops(selectedVars))]; return point end proc; getVariables := proc (ReqNum::
+posint) local i1, point; if not ReqNum <= NumDataPoints then error 
+"only %1 points are available", NumDataPoints end if; point := [seq(VarNames[
+i1] = data[VarNames[i1]][ReqNum],i1 = 1 .. nops(VarNames))]; return point end
+proc; extendCurveByEAEs := proc (Sys::{DAESys, ExtAESys, NLP}, WorkingDir::
+string) local ListOfErrs, LhsEqns, NumEAEs, ErrPars, ErrVars, EAEsNamesInEAEs,
+NumEAEsNamesInEAEs, NumVarNames, item, ValsPars, i1, ValsVars, AllVals, 
+ValsEAEs, NewData, NewCurve, Eqns; Eqns := Sys[ExplicitAEs]; LhsEqns := 
+convert(map(lhs,Eqns),set); ErrPars := `intersect`(LhsEqns,convert(ParNames,
+set)); if not ErrPars = {} then error 
 "equations given contain lhs %1 which is parameter of curve", ErrPars end if;
 ErrVars := `intersect`(LhsEqns,convert(ParNames,set)); if not ErrVars = {} 
 then error "equations given contain lhs %1 which is variable of curve", 
@@ -271,9 +295,15 @@ proc (aSystem::table) if Aux:-SystemClasses:-listOfErrorsInExtAESys(aSystem) =
 proc (aSys) local ListOfErrors; ListOfErrors := Aux:-SystemClasses:-
 listOfErrorsInNLP(aSys); if ListOfErrors = [] then return true else return 
 false end if end proc; `type/BCNLP` := proc (aNLP::table) if type(eval(aNLP),
-NLP) and aNLP[Constraints] = [] and aNLP[LinearConstraints] = [] then return 
-true else return false end if end proc; `type/term` := {`*`, `+`, `^`, indexed
-, symbol, EvalsToFloat, function} end proc; IntervalArithmetics := module () 
+NLP) and aNLP["Constraints"] = [] and aNLP["LinearConstraints"] = [] then 
+return true else return false end if end proc; `type/term` := {`*`, `+`, `^`,
+indexed, symbol, EvalsToFloat, function}; `type/Curve` := proc (potentialCurve
+) return isCurve(potentialCurve) end proc end proc; isCurve := proc (
+curveToTest) local seqOfExports; seqOfExports := createPS, extendCurveByEAEs,
+getData, getNonTableData, getNumPoints, getParameters, getParNames, 
+getSinglePlotForFunction, getVariables, getVarNames, getPoint, getPlot, 
+joinCurve, splitCurve, getSpecificValues, getAllValuesOfVariable; return type(
+curveToTest,`module`(seqOfExports)) end proc; IntervalArithmetics := module ()
 export square; square := proc (Ix::[numeric, numeric]) local lowerBound, 
 upperBound, IxBoundsSquared; IxBoundsSquared := Ix[1]^2, Ix[2]^2; if Ix[1] <=
 0 and 0 <= Ix[2] then lowerBound := 0 else lowerBound := min(IxBoundsSquared)
@@ -306,20 +336,30 @@ if; if isLinearIn(ListOfRHS,Vars) then if 3 < nargs then A, b :=
 convertLinSysToStandardForm(ListOfRHS,Vars) elif 2 < nargs then WARNING(
 "expecting two optional arguments") end if; return true else return false end
 if end proc; end module; ListOperations := module () export 
-getIndexToMinElement, getIndexToMaxElement, getIndicesToAllMaxElements, 
-getIndicesToAllMinElements, getListOfIndetsIn, getListOfUndefExprIn, 
-getMissingAndObsoleteNames, getNameFromDerivSymbol, getObsolExprInDAESys, 
-getObsolExprInList, getPosOfLHSin, getPosOfObjectInList, getRHSofIn, 
-getSetOfValidExprIn, isLHSin, prettyPrintListToFile, removeItemFromList, 
-setRHSofInTo, subsEqnListIntoEqn, subsSubsList; getIndexToMinElement := proc (
-l::list(numeric)) local i, indexToMin; indexToMin := 1; for i to nops(l) do if
-l[i] < l[indexToMin] then indexToMin := i end if end do; return indexToMin end
-proc; getIndexToMaxElement := proc (l::list(numeric)) local i, indexToMax; 
+getIndexToMinElement, getIndexToMaxElement, getIndicesOfRepeatedEntries, 
+getIndicesToAllMaxElements, getIndicesToAllMinElements, getListOfIndetsIn, 
+getListOfLhsIn, getListOfUndefExprIn, getMissingAndObsoleteNames, 
+getNameFromDerivSymbol, getObsolExprInDAESys, getObsolExprInList, 
+getPosOfLHSin, getPosOfObjectInList, getRHSofIn, getSetOfValidExprIn, isLHSin,
+prettyPrintListToFile, removeItemFromList, setRHSofInTo, subsEqnListIntoEqn, 
+subsSubsList, subsToCreateSubsList; getIndexToMinElement := proc (l::list(
+numeric)) local i, indexToMin; indexToMin := 1; for i to nops(l) do if l[i] <
+l[indexToMin] then indexToMin := i end if end do; return indexToMin end proc;
+getIndexToMaxElement := proc (l::list(numeric)) local i, indexToMax; 
 indexToMax := 1; for i to nops(l) do if l[indexToMax] < l[i] then indexToMax 
-:= i end if end do; return indexToMax end proc; getIndicesToAllMaxElements :=
-proc (l::list(numeric)) local maxValue, i, indicesToMaximumElements, newIndex;
-maxValue := max(op(l)); indicesToMaximumElements := {}; for i to nops(l) do if
-l[i] = maxValue then newIndex := i; indicesToMaximumElements := `union`(
+:= i end if end do; return indexToMax end proc; getIndicesOfRepeatedEntries :=
+proc (L::list(name)) local NopsL, RepeatedEntries, i1, HashMapIndices, item, 
+CurrentInd, CurrentPos; NopsL := nops(L); RepeatedEntries := {}; for i1 to 
+nops(L) do if 1 < numboccur(L[i1],L) then RepeatedEntries := `union`(
+RepeatedEntries,{L[i1]}) end if end do; if RepeatedEntries = {} then return 
+table() end if; HashMapIndices := table(); for item in RepeatedEntries while 
+true do CurrentInd := []; CurrentPos := 0;  while member(item,L[CurrentPos+1 
+.. -1],'NewPos') do CurrentPos := CurrentPos+NewPos; CurrentInd := [op(
+CurrentInd), CurrentPos] end do; HashMapIndices[item] := CurrentInd end do; 
+return HashMapIndices end proc; getIndicesToAllMaxElements := proc (l::list(
+numeric)) local maxValue, i, indicesToMaximumElements, newIndex; maxValue := 
+max(op(l)); indicesToMaximumElements := {}; for i to nops(l) do if l[i] = 
+maxValue then newIndex := i; indicesToMaximumElements := `union`(
 indicesToMaximumElements,{newIndex}) end if end do; return 
 indicesToMaximumElements end proc; getIndicesToAllMinElements := proc (l::list
 (numeric)) local minValue, i, indicesToMinimumElements, newIndex; minValue :=
@@ -339,20 +379,23 @@ currentItemInList); newItemsOfList := [op(convert(indets(ArgumentOfFunction),
 list)), op(convert(indets(Exponent),list))] end if; if not newItemsOfList = []
 then listOfIndets := subsop(i1 = NULL,listOfIndets); listOfIndets := [op(
 listOfIndets), op(newItemsOfList)] else i1 := 1+i1 end if end do; listOfIndets
-:= convert(convert(listOfIndets,set),list) end proc; getListOfUndefExprIn := 
-proc (anEqn::{anything, equation}, aModelOrList::{list, list(equation)}) local
-listOfIndets, AllowedExpressions, UndefExpr, i1; listOfIndets := 
-getListOfIndetsIn(anEqn); AllowedExpressions := getSetOfValidExprIn(
-aModelOrList); UndefExpr := []; for i1 to nops(listOfIndets) do if not member(
-listOfIndets[i1],AllowedExpressions) then UndefExpr := [op(UndefExpr), 
-listOfIndets[i1]] end if end do; RETURN(UndefExpr) end proc; 
-getMissingAndObsoleteNames := proc (Names1::{list(name), list(string), set(
-name), set(string)}, Names2::{list(name), list(string), set(name), set(string)
-}) local SetNames1, SetNames2, Missing, Obsolete; SetNames1 := convert(Names1,
-set); SetNames2 := convert(Names2,set); Missing := `minus`(SetNames2,SetNames1
-); Obsolete := `minus`(SetNames1,SetNames2); return Missing, Obsolete end proc
-; getNameFromDerivSymbol := proc (d::symbol) local dString, NewName; dString 
-:= convert(d,string); if not dString[-1] = "'" then error 
+:= convert(convert(listOfIndets,set),list) end proc; getListOfLhsIn := proc (
+aList::list({name, name = anything})) local item, ListOfNames; ListOfNames :=
+[]; for item in aList while true do if type(item,equation) then ListOfNames :=
+[op(ListOfNames), lhs(item)] else ListOfNames := [op(ListOfNames), item] end 
+if end do; return ListOfNames end proc; getListOfUndefExprIn := proc (anEqn::{
+anything, equation}, aModelOrList::{list, list(equation)}) local listOfIndets,
+AllowedExpressions, UndefExpr, i1; listOfIndets := getListOfIndetsIn(anEqn); 
+AllowedExpressions := getSetOfValidExprIn(aModelOrList); UndefExpr := []; for
+i1 to nops(listOfIndets) do if not member(listOfIndets[i1],AllowedExpressions)
+then UndefExpr := [op(UndefExpr), listOfIndets[i1]] end if end do; RETURN(
+UndefExpr) end proc; getMissingAndObsoleteNames := proc (Names1::{list(name),
+list(string), set(name), set(string)}, Names2::{list(name), list(string), set(
+name), set(string)}) local SetNames1, SetNames2, Missing, Obsolete; SetNames1
+:= convert(Names1,set); SetNames2 := convert(Names2,set); Missing := `minus`(
+SetNames2,SetNames1); Obsolete := `minus`(SetNames1,SetNames2); return Missing
+, Obsolete end proc; getNameFromDerivSymbol := proc (d::symbol) local dString,
+NewName; dString := convert(d,string); if not dString[-1] = "'" then error 
 "expecting first argument to end with character '" end if; NewName := convert(
 dString[1 .. -2],name); return NewName end proc; getObsolExprInDAESys := proc
 (aDAESys::table) local ListOfEquations, ListOfNames, ObsolExpr; ListOfNames :=
@@ -453,32 +496,42 @@ NumberOfEqns),ListOfEqns[i2]); newList[i2] := newEqn end do; newList :=
 convert(newList,list); RETURN(eval(newList)) end if; false end proc; 
 subsSubsList := proc (subsList::list(equation), target) local res, numEntries,
 i; res := target; numEntries := nops(subsList); for i from numEntries by -1 to
-1 do res := subs(subsList[i],res) end do; return res end proc; end module; NLP
-:= module () export newNLP, parToVarInNLP, Scale, subsStandardNotationIntoNLP;
-newNLP := proc () local aSys; aSys := table(); aSys["LinearConstraints"] := []
-; aSys["Constraints"] := []; aSys["CostFunction"] := []; aSys["ExplicitAEs"] 
-:= []; aSys["Parameters"] := []; aSys["Variables"] := []; return eval(aSys) 
-end proc; parToVarInNLP := proc (ReqPars::list(name = EvalsToFloat .. 
-EvalsToFloat), Sys::NLP) local NewNLP, item, NewVarNames, NewConstr, 
-nNewConstr, NewLinConstr, nNewLinConstr, LinConstrForLinearityCheck, i1; 
-NewNLP := copy(Sys); for item in ReqPars while true do NewNLP["Parameters"] :=
-Aux:-ListOperations:-removeItemFromList(lhs(item),NewNLP["Parameters"]) end do
-; NewNLP["Variables"] := [op(NewNLP["Variables"]), op(ReqPars)]; NewVarNames 
-:= map(lhs,NewNLP["Variables"]); NewConstr := array(1 .. nops(Sys[
-"LinearConstraints"])+nops(Sys["Constraints"])); nNewConstr := 0; NewLinConstr
-:= array(1 .. nops(Sys["LinearConstraints"])); nNewLinConstr := 0; 
-LinConstrForLinearityCheck := Aux:-ListOperations:-subsEqnListIntoEqn(Sys[
-"ExplicitAEs"],Sys["LinearConstraints"]); for i1 to nops(Sys[
-"LinearConstraints"]) do item := Sys["LinearConstraints"][i1]; if Aux:-
-LinearEqns:-checkLinearityOfIn(LinConstrForLinearityCheck[i1],NewVarNames) 
-then nNewLinConstr := nNewLinConstr+1; NewLinConstr[nNewLinConstr] := item 
-else nNewConstr := nNewConstr+1; NewConstr[nNewConstr] := item end if end do;
-NewNLP["LinearConstraints"] := convert(NewLinConstr,list); NewNLP[
-"LinearConstraints"] := NewNLP["LinearConstraints"][1 .. nNewLinConstr]; 
-NewConstr := convert(NewConstr,list); NewNLP["Constraints"] := [op(Sys[
-"Constraints"]), op(NewConstr[1 .. nNewConstr])]; return eval(NewNLP) end proc
-; Scale := module () export calcc, calcD, CreateInstanceForNLP, 
-CreateInstanceForSys2, createSubsLists, extendRangesByTrivialRanges, 
+1 do res := subs(subsList[i],res) end do; return res end proc; 
+subsToCreateSubsList := proc (SubsList::list(name = anything), ListOfNames::
+list({name, term})) local NewSubsList, Err, nErr, i1, LhsInNewSubsList; 
+NewSubsList := [seq(ListOfNames[i1] = subs(SubsList,ListOfNames[i1]),i1 = 1 ..
+nops(ListOfNames))]; Err := array(1 .. nops(NewSubsList)); nErr := 0; for i1 
+to nops(NewSubsList) do if not type(rhs(NewSubsList[i1]),EvalsToFloat) then 
+nErr := nErr+1; Err[nErr] := i1 end if end do; if not nErr = 0 then Err := 
+convert(Err,list); Err := Err[1 .. nErr]; LhsInNewSubsList := map(lhs,
+NewSubsList); Err := [seq(LhsInNewSubsList[i1],i1 = Err)]; WARNING(
+"in SubsToCreateSubsList, the following entries do not evaluate to float: %1",
+Err) end if; return NewSubsList end proc; end module; NLP := module () export
+newNLP, parToVarInNLP, Scale, subsStandardNotationIntoNLP; newNLP := proc () 
+local aSys; aSys := table(); aSys["LinearConstraints"] := []; aSys[
+"Constraints"] := []; aSys["CostFunction"] := []; aSys["ExplicitAEs"] := []; 
+aSys["Parameters"] := []; aSys["Variables"] := []; return eval(aSys) end proc;
+parToVarInNLP := proc (ReqPars::list(name = EvalsToFloat .. EvalsToFloat), Sys
+::NLP) local NewNLP, item, NewVarNames, NewConstr, nNewConstr, NewLinConstr, 
+nNewLinConstr, LinConstrForLinearityCheck, i1; NewNLP := copy(Sys); for item 
+in ReqPars while true do NewNLP["Parameters"] := Aux:-ListOperations:-
+removeItemFromList(lhs(item),NewNLP["Parameters"]) end do; NewNLP["Variables"]
+:= [op(NewNLP["Variables"]), op(ReqPars)]; NewVarNames := map(lhs,NewNLP[
+"Variables"]); NewConstr := array(1 .. nops(Sys["LinearConstraints"])+nops(Sys
+["Constraints"])); nNewConstr := 0; NewLinConstr := array(1 .. nops(Sys[
+"LinearConstraints"])); nNewLinConstr := 0; LinConstrForLinearityCheck := Aux
+:-ListOperations:-subsEqnListIntoEqn(Sys["ExplicitAEs"],Sys[
+"LinearConstraints"]); for i1 to nops(Sys["LinearConstraints"]) do item := Sys
+["LinearConstraints"][i1]; if Aux:-LinearEqns:-checkLinearityOfIn(
+LinConstrForLinearityCheck[i1],NewVarNames) then nNewLinConstr := 
+nNewLinConstr+1; NewLinConstr[nNewLinConstr] := item else nNewConstr := 
+nNewConstr+1; NewConstr[nNewConstr] := item end if end do; NewNLP[
+"LinearConstraints"] := convert(NewLinConstr,list); NewNLP["LinearConstraints"
+] := NewNLP["LinearConstraints"][1 .. nNewLinConstr]; NewConstr := convert(
+NewConstr,list); NewNLP["Constraints"] := [op(Sys["Constraints"]), op(
+NewConstr[1 .. nNewConstr])]; return eval(NewNLP) end proc; Scale := module ()
+export calcc, calcD, CreateInstanceForNLP, CreateInstanceForSys2, 
+createSubsLists, extendRangesByTrivialRanges, 
 replaceInfiniteRangesByTrivialRanges, SubsIntoTemplateModule2; calcc := proc (
 Ranges::list(name = range)) local NumRanges, VarNames, a, b, c, i1; NumRanges
 := nops(Ranges); VarNames := map(lhs,Ranges); c := array(1 .. NumRanges); for
@@ -820,15 +873,64 @@ compileOptions:-LOBJ_FLAG); printf("compileOptions:-EXPORT_FLAG:=       %q\n",
 compileOptions:-EXPORT_FLAG); printf("compileOptions:-FUNCTION:=          %q\n\
 ",compileOptions:-FUNCTION); printf("compileOptions:-LINK_COMMAND:=      %q\n"
 ,compileOptions:-LINK_COMMAND); return end proc; end module; SystemClasses :=
-module () export exportDTASysToCLMatContM, exportDTASysToMatCont, 
-listOfErrorsInAESysPart2, listOfErrorsInAESys, listOfErrorsInDAESys, 
-listOfErrorsInDAESysPart2, listOfErrorsInDTASys, listOfErrorsInDTASysPart2, 
-listOfErrorsInEAEs, listOfErrorsInExtAESysPart2, listOfErrorsInExtAESys, 
-listOfErrorsInNlpPart2, listOfErrorsInNLP, noNameConflictsInUnitsInDAESys, 
+module () export evalExplicitAEsInDAESys, evalODEsInDAESys, 
+exportDTASysToCLMatContM, exportDTASysToMatCont, listOfErrorsInAESysPart2, 
+listOfErrorsInAESys, listOfErrorsInDAESys, listOfErrorsInDAESysPart2, 
+listOfErrorsInDTASys, listOfErrorsInDTASysPart2, listOfErrorsInEAEs, 
+listOfErrorsInExtAESysPart2, listOfErrorsInExtAESys, listOfErrorsInNlpPart2, 
+listOfErrorsInNLP, newDAESys, noNameConflictsInUnitsInDAESys, 
 noNameConflictsInUnitsInDTASys, parToLastVarInExtAESys, 
 subsExplicitAEsIntoDAESys, subsExplicitAlgEqnsIntoDTASys, 
-subsStandardNotationIntoExtAESys; exportDTASysToCLMatContM := proc (nameOfSys
-::string, aSys::table) local DESys, headOfFile, paramOfSys, strParam, 
+subsStandardNotationIntoDAESysSen, subsStandardNotationIntoExtAESys; 
+evalExplicitAEsInDAESys := proc (aDAEsys::DAESys, ReqSubsList::list(name = 
+EvalsToFloat)) local VarsActuallyAssigned, VarsToBeAssigned, MissingAssigns, 
+ObsoleteAssigns, DoubleParAssigns, ExtendedSubsList, item, NewResult, 
+AssignedExplicitAEs, LhsExtendedSubsList, NamesInSubsList, i1, SubsList, 
+LhsEAEs; SubsList := ReqSubsList; if args[-1] = ('EvalEAEs') then LhsEAEs := 
+map(lhs,aDAEsys["ExplicitAEs"]); NamesInSubsList := map(lhs,ReqSubsList); for
+item in LhsEAEs while true do if member(item,NamesInSubsList) then SubsList :=
+Aux:-ListOperations:-removeItemFromList(item,SubsList) end if end do end if; 
+VarsActuallyAssigned := {op(map(lhs,SubsList))}; VarsToBeAssigned := {op(
+aDAEsys["AlgVars"]), op(aDAEsys["DynVars"])}; MissingAssigns := `minus`(
+VarsToBeAssigned,VarsActuallyAssigned); if not MissingAssigns = {} then error
+"there are assignments missing for %1", MissingAssigns end if; NamesInSubsList
+:= map(lhs,SubsList); for i1 from 2 to nops(NamesInSubsList) do item := 
+NamesInSubsList[i1]; if member(item,NamesInSubsList[1 .. i1-1]) then error 
+"symbol %1 occurs more than once in 2nd argument", item end if end do; 
+ObsoleteAssigns := `minus`(VarsActuallyAssigned,VarsToBeAssigned); 
+ObsoleteAssigns := `minus`(ObsoleteAssigns,convert(map(lhs,aDAEsys[
+"Parameters"]),set)); ObsoleteAssigns := `minus`(ObsoleteAssigns,convert(map(
+lhs,aDAEsys["ExplicitAEs"]),set)); if not ObsoleteAssigns = {} then WARNING(
+"there are obsolete assignments in second argument for %1",ObsoleteAssigns) 
+end if; DoubleParAssigns := `intersect`(VarsActuallyAssigned,convert(map(lhs,
+aDAEsys["Parameters"]),set)); if not DoubleParAssigns = {} then WARNING("assig\
+nment of parameters in second argument overrules assigments in list Parameters\
+ of DAE system for %1",DoubleParAssigns) end if; AssignedExplicitAEs := 
+`intersect`(VarsActuallyAssigned,convert(map(lhs,aDAEsys["ExplicitAEs"]),set))
+; if not AssignedExplicitAEs = {} then WARNING("assignment of l.h.s. of Explic\
+itAEs in second argument overrules results of evaluation of ExplicitAEs for %1\
+",AssignedExplicitAEs) end if; ExtendedSubsList := SubsList; for item in 
+aDAEsys["Parameters"] while true do if member(lhs(item),VarsActuallyAssigned)
+then next else ExtendedSubsList := [op(ExtendedSubsList), item] end if end do;
+for item in aDAEsys["ExplicitAEs"] while true do if member(lhs(item),
+VarsActuallyAssigned) then next end if; NewResult := Aux:-ListOperations:-
+subsEqnListIntoEqn(ExtendedSubsList,item); ExtendedSubsList := [op(
+ExtendedSubsList), lhs(item) = evalf(rhs(NewResult))] end do; 
+LhsExtendedSubsList := convert(map(lhs,ExtendedSubsList),set); for item in 
+aDAEsys["Parameters"] while true do if not member(lhs(item),
+LhsExtendedSubsList) then ExtendedSubsList := [op(ExtendedSubsList), item] end
+if end do; return ExtendedSubsList end proc; evalODEsInDAESys := proc (aDAEsys
+, SubsList::list(name = EvalsToFloat)) local ExtendedSubsList, Residues, 
+LhsODEs, MaxAbsResidue; ExtendedSubsList := evalExplicitAEsInDAESys(aDAEsys,
+SubsList); if not aDAEsys["AEs"] = [] then Residues := subs(ExtendedSubsList,
+map(rhs,aDAEsys["AEs"])); MaxAbsResidue := max(op(map(abs,Residues))); WARNING
+("largest absolute residue of algebraic equations: %1",MaxAbsResidue); if .10e\
+-2 < MaxAbsResidue then error 
+"largest absolute residue of algebraic equations: %1", MaxAbsResidue end if; 
+if 2 < nargs then if type(args[3],name) then assign(args[3],Residues) end if 
+end if end if; LhsODEs := map(evalf,subs(ExtendedSubsList,map(rhs,aDAEsys[
+"ODEs"]))); return LhsODEs end proc; exportDTASysToCLMatContM := proc (
+nameOfSys::string, aSys::table) local DESys, headOfFile, paramOfSys, strParam,
 setForSubs, dynVars, i, i1, i2, dynEqns, strDynEqns, funcDyDtOfFile, y0, strY0
 , initOfFile, lastPartOfFile, finalText; DESys := Aux:-SystemClasses:-
 subsExplicitAlgEqnsIntoDTASys(aSys); headOfFile := StringTools[Join]([
@@ -1200,9 +1302,12 @@ if; if not type(Sys["Parameters"],list(name = EvalsToFloat)) then ListOfErrors
 if; if not ListOfErrors = [] then return ListOfErrors end if; if 1 < nargs 
 then if args[2] = ('long') or args[2] = ('all') or args[2] = ('strict') then 
 ListOfErrors := listOfErrorsInNlpPart2(Sys) end if end if; return ListOfErrors
-end proc; noNameConflictsInUnitsInDAESys := proc (aDAESys) local VarNames, 
-UnitNames, Conflicts; if not member("Units",map(op,[indices(aDAESys)])) then 
-error "entry Units must exist in DAESys" end if; UnitNames := map(ModelPack:-
+end proc; newDAESys := proc () local aSys; aSys := table(); aSys["ODEs"] := []
+; aSys["AEs"] := []; aSys["ExplicitAEs"] := []; aSys["DynVars"] := []; aSys[
+"AlgVars"] := []; aSys["Parameters"] := []; return eval(aSys) end proc; 
+noNameConflictsInUnitsInDAESys := proc (aDAESys) local VarNames, UnitNames, 
+Conflicts; if not member("Units",map(op,[indices(aDAESys)])) then error 
+"entry Units must exist in DAESys" end if; UnitNames := map(ModelPack:-
 GetListOfIndetsIn,aDAESys["Units"]); UnitNames := map(op,UnitNames); UnitNames
 := convert(UnitNames,set); VarNames := [op(map(lhs,aDAESys["Parameters"])), op
 (aDAESys["DynVars"]), op(aDAESys["AlgVars"]), op(map(lhs,aDAESys["ExplicitAEs"
@@ -1252,22 +1357,74 @@ NewDTASys["DynEqns"] := Aux:-ListOperations:-subsEqnListIntoEqn(aDTASys[
 "ExplicitAlgEqns"],aDTASys["DynEqns"]); NewDTASys["AlgEqns"] := Aux:-
 ListOperations:-subsEqnListIntoEqn(aDTASys["ExplicitAlgEqns"],aDTASys[
 "AlgEqns"]); RETURN(eval(NewDTASys)) end proc; 
-subsStandardNotationIntoExtAESys := proc (aSystem::ExtAESys) local y, 
-NumOfVariables, NumOfExplicitAEs, NumOfPars, ListOfExplicitAEsSubst, 
-ListOfVariablesSubst, ListOfAllVarsSubst, ListOfParsSubst, NewSystem, 
-NamesPars, NamesEAEs; if `minus`({["AlgVars"]},{indices(aSystem)}) = {} then 
-if not aSystem["AlgVars"] = [] then error "procedure can currently only be app\
-lied to systems without algebraic equations" end if end if; if 1 < nargs then
-if not type(args[2],name) then error "optional 2nd argument, requested name fo\
-r dynamic variables, must be of type name" end if; if args[2] = ('z') or args[
-2] = ('par') then error "dynamic variables must not be called 'z' or 'par' as \
-these names are reserved for algebraic variables and parameters" end if; y :=
-args[2] else y := 'y' end if; NumOfVariables := nops(aSystem["Variables"]); 
-NumOfExplicitAEs := nops(aSystem["ExplicitAEs"]); NumOfPars := nops(aSystem[
-"Parameters"]); NamesEAEs := map(lhs,aSystem["ExplicitAEs"]); 
+subsStandardNotationIntoDAESysSen := proc (aSystem::DAESys, ReqDynVarSymbol::
+name) local NumOfDynVars, NumOfAlgVars, NumOfPars, NumOfSenPars, 
+ListOfDynVarsSubst, ListOfDynVarsDerivSubst, NumOfExplicitAEs, 
+ListOfAlgVarsSubst, ListOfVarsSubst, ListOfVarsSubstForEAEs, ListOfParsSubst,
+ListOfSenParsSubst, NewSystem, ListOfExplicitAEsSubst, NewExplicitAEs, 
+ListOfSingleExplicitAEsSubst, NamesEAEs, NamesPars, NamesSenPars, y, 
+RepeatedEntries, NamesOfRepeatedEntries, AllIndicesOfEAEs, item, i1; if 
+ReqDynVarSymbol = ('z') or ReqDynVarSymbol = ('par') or ReqDynVarSymbol = ('
+senpar') then error "dynamic variables must not be called 'z' or 'par' as thes\
+e names are reserved for algebraic variables and parameters" end if; y := 
+ReqDynVarSymbol; NumOfDynVars := nops(aSystem["DynVars"]); NumOfAlgVars := 
+nops(aSystem["AlgVars"]); NumOfExplicitAEs := nops(aSystem["ExplicitAEs"]); 
+NumOfPars := nops(aSystem["Parameters"]); if member(["SenPars"],{indices(
+aSystem)}) then NumOfSenPars := nops(aSystem["SenPars"]) else NumOfSenPars :=
+0 end if; NamesEAEs := map(lhs,aSystem["ExplicitAEs"]); RepeatedEntries := 
+eval(Aux:-ListOperations:-getIndicesOfRepeatedEntries(NamesEAEs)); 
+NamesOfRepeatedEntries := map(op,[indices(RepeatedEntries)]); 
 ListOfExplicitAEsSubst := [seq(NamesEAEs[i1] = z[i1],i1 = 1 .. 
-NumOfExplicitAEs)]; ListOfVariablesSubst := [seq(aSystem["Variables"][i1] = y[
-i1],i1 = 1 .. NumOfVariables)]; ListOfAllVarsSubst := [op(
+NumOfExplicitAEs)]; ListOfSingleExplicitAEsSubst := Aux:-ListOperations:-
+removeItemFromList(NamesOfRepeatedEntries,ListOfExplicitAEsSubst); 
+ListOfDynVarsSubst := [seq(aSystem["DynVars"][i1] = y[i1],i1 = 1 .. 
+NumOfDynVars)]; ListOfDynVarsDerivSubst := [seq(convert(cat(convert(aSystem[
+"DynVars"][i],string),"'"),symbol) = convert(cat(convert(y[i],string),"'"),
+symbol),i = 1 .. NumOfDynVars)]; ListOfAlgVarsSubst := [seq(aSystem["AlgVars"]
+[i1-NumOfDynVars] = y[i1],i1 = NumOfDynVars+1 .. NumOfDynVars+NumOfAlgVars)];
+ListOfVarsSubst := [op(ListOfExplicitAEsSubst), op(ListOfDynVarsSubst), op(
+ListOfAlgVarsSubst), op(ListOfDynVarsDerivSubst)]; NamesPars := map(lhs,
+aSystem["Parameters"]); ListOfParsSubst := [seq(NamesPars[i1] = par[i1],i1 = 1
+.. NumOfPars)]; if member(["SenPars"],{indices(aSystem)}) then NamesSenPars :=
+map(lhs,aSystem["SenPars"]); ListOfSenParsSubst := [seq(NamesSenPars[i1] = 
+senpar[i1],i1 = 1 .. NumOfSenPars)] else ListOfSenParsSubst := [] end if; 
+NewSystem := copy(aSystem); NewSystem["ODEs"] := subs(ListOfVarsSubst,
+ListOfParsSubst,ListOfSenParsSubst,aSystem["ODEs"]); NewSystem["AEs"] := subs(
+ListOfVarsSubst,ListOfParsSubst,ListOfSenParsSubst,aSystem["AEs"]); NewSystem[
+"DynVars"] := subs(ListOfVarsSubst,ListOfParsSubst,ListOfSenParsSubst,aSystem[
+"DynVars"]); NewSystem["Parameters"] := subs(ListOfParsSubst,aSystem[
+"Parameters"]); NewSystem["SenPars"] := subs(ListOfSenParsSubst,aSystem[
+"SenPars"]); NewSystem["AlgVars"] := subs(ListOfVarsSubst,ListOfParsSubst,
+ListOfSenParsSubst,aSystem["AlgVars"]); ListOfVarsSubstForEAEs := [op(
+ListOfSingleExplicitAEsSubst), op(ListOfDynVarsSubst), op(ListOfAlgVarsSubst),
+op(ListOfDynVarsDerivSubst)]; NewSystem["ExplicitAEs"] := subs(
+ListOfVarsSubstForEAEs,ListOfParsSubst,ListOfSenParsSubst,aSystem[
+"ExplicitAEs"]); for item in NamesOfRepeatedEntries while true do 
+NewExplicitAEs := NewSystem["ExplicitAEs"][1 .. RepeatedEntries[item][1]-1]; 
+for i1 to nops(RepeatedEntries[item])-1 do NewExplicitAEs := [op(
+NewExplicitAEs), op(subs(item = z[RepeatedEntries[item][i1]],NewSystem[
+"ExplicitAEs"][RepeatedEntries[item][i1] .. RepeatedEntries[item][i1+1]-1]))]
+end do; NewExplicitAEs := [op(NewExplicitAEs), op(subs(item = z[
+RepeatedEntries[item][nops(RepeatedEntries[item])]],NewSystem["ExplicitAEs"][
+RepeatedEntries[item][nops(RepeatedEntries[item])] .. -1]))]; NewSystem[
+"ExplicitAEs"] := NewExplicitAEs end do; NewSystem["Substitutions"] := [op(
+ListOfVarsSubst), op(ListOfParsSubst), op(ListOfSenParsSubst)]; return eval(
+NewSystem) end proc; subsStandardNotationIntoExtAESys := proc (aSystem::
+ExtAESys) local y, NumOfVariables, NumOfExplicitAEs, NumOfPars, 
+ListOfExplicitAEsSubst, ListOfVariablesSubst, ListOfAllVarsSubst, 
+ListOfParsSubst, NewSystem, NamesPars, NamesEAEs; if `minus`({["AlgVars"]},{
+indices(aSystem)}) = {} then if not aSystem["AlgVars"] = [] then error "proced\
+ure can currently only be applied to systems without algebraic equations" end
+if end if; if 1 < nargs then if not type(args[2],name) then error "optional 2n\
+d argument, requested name for dynamic variables, must be of type name" end if
+; if args[2] = ('z') or args[2] = ('par') then error "dynamic variables must n\
+ot be called 'z' or 'par' as these names are reserved for algebraic variables \
+and parameters" end if; y := args[2] else y := 'y' end if; NumOfVariables := 
+nops(aSystem["Variables"]); NumOfExplicitAEs := nops(aSystem["ExplicitAEs"]);
+NumOfPars := nops(aSystem["Parameters"]); NamesEAEs := map(lhs,aSystem[
+"ExplicitAEs"]); ListOfExplicitAEsSubst := [seq(NamesEAEs[i1] = z[i1],i1 = 1 
+.. NumOfExplicitAEs)]; ListOfVariablesSubst := [seq(aSystem["Variables"][i1] =
+y[i1],i1 = 1 .. NumOfVariables)]; ListOfAllVarsSubst := [op(
 ListOfExplicitAEsSubst), op(ListOfVariablesSubst)]; NamesPars := map(lhs,
 aSystem["Parameters"]); ListOfParsSubst := [seq(NamesPars[i1] = par[i1],i1 = 1
 .. NumOfPars)]; NewSystem := copy(aSystem); NewSystem["Equations"] := subs(
@@ -1546,8 +1703,8 @@ renameIndexedNameForGams := proc (varToRename::name) local varToRenameAsString
 varToRenameAsString := StringTools[SubstituteAll](varToRenameAsString,"[","_")
 ; varToRenameAsString := StringTools[SubstituteAll](varToRenameAsString,"]",""
 ); varToRenameAsString := StringTools[SubstituteAll](varToRenameAsString,",",
-""); newVarName := convert(varToRenameAsString,symbol); RETURN(newVarName) end
-proc; renameIndexedParamsAndVarsInNLP := proc (aNLP::NLP) local 
+"_"); newVarName := convert(varToRenameAsString,symbol); RETURN(newVarName) 
+end proc; renameIndexedParamsAndVarsInNLP := proc (aNLP::NLP) local 
 mapleParameters, mapleVariables, mapleIntegerVariables, mapleBinaryVariables,
 hasIntegerVariables, hasBinaryVariables, varsAndPars, i, newVarName, 
 listOfNaamesForSubstitution, newParam, varToRename, newVars, newIntVars, 
