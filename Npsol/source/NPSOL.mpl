@@ -223,18 +223,20 @@ proc; createSharedObject := proc (NpsolConfun::name, NpsolObjfun::name,
 NpsolDir::string, StandardNLP) local oldDir, LinkerCommand, npsol, 
 systemsuccessful, N, NCLIN, NCNLN, NROWA, NROWJ, NROWR, A, BL, BU, INFORM, 
 ITER, ISTATE, C, CJAC, CLAMBDA, OBJF, GRAD, R, XVEC, LENIW, LENW, 
-systemsuccessful2, SharedObjectName; InstanceCounter := InstanceCounter+1; 
-oldDir := currentdir(); currentdir(NpsolDir); if Aux:-FileOperations:-
-fileExists("npsolconfun.f") then currentdir(oldDir); error 
+systemsuccessful2, SharedObjectName, fd1, fd2; InstanceCounter := 
+InstanceCounter+1; oldDir := currentdir(); currentdir(NpsolDir); if Aux:-
+FileOperations:-fileExists("npsolconfun.f") then currentdir(oldDir); error 
 "routine npsolconfun.f already exists in directory %1", NpsolDir end if; if 
 Aux:-FileOperations:-fileExists("npsolobjfun.f") then currentdir(oldDir); 
 error "routine npsolobjfun.f already exists in directory %1", NpsolDir end if;
 if not type(eval(NpsolConfun),name) then codegen[fortran](NpsolConfun,filename
 = "npsolconfun.f",precision = double); if UseAdifor = true then ADIFOR:-RunAD(
-"npsolconfun",['x'],nops(StandardNLP["Variables"]),'c'); system(`sed -e "s/g_n\
-psolconfun/gnpsolconfun/"                   g_npsolconfun.f > gnpsolconfun.f`)
-; system("rm -f g_npsolconfun.f") end if; if OperatingSystem = "linux" and 
-UseAdifor = false then system(
+"npsolconfun",['x'],nops(StandardNLP["Variables"]),'c'); fd1 := fopen(cat(
+"./sedcommandforconfun.txt"),WRITE,TEXT); fprintf(fd1,
+"sed -e 's/g_npsolconfun/gnpsolconfun/g' g_npsolconfun.f > gnpsolconfun.f"); 
+fclose(fd1); system("sh sedcommandforconfun.txt"); system(
+"rm -f sedcommandforconfun.txt"); system("rm -f g_npsolconfun.f") end if; if 
+OperatingSystem = "linux" and UseAdifor = false then system(
 "gfortran -c -fPIC npsolconfun.f -o npsolconfun.o") elif OperatingSystem = 
 "linux" and UseAdifor = true then system(
 "gfortran -c -fPIC gnpsolconfun.f -o gnpsolconfun.o") end if else if 
@@ -246,11 +248,14 @@ systemsuccessful = 0 then error "dummy file npsolconfun.o not found" end if;
 if not systemsuccessful2 = 0 then error "dummy file gnpsolconfun.o not found"
 end if end if; codegen[fortran](NpsolObjfun,filename = "npsolobjfun.f",
 precision = double); if UseAdifor = true then ADIFOR:-RunAD("npsolobjfun",['x'
-],nops(StandardNLP["Variables"]),'objf'); system(`sed -e "s/g_npsolobjfun/gnps\
-olobjfun/"               g_npsolobjfun.f > gnpsolobjfun.f`); system(
-"rm -f g_npsolobjfun.f") end if; if OperatingSystem = "linux" and UseAdifor =
-false then system("gfortran -c -fPIC npsolobjfun.f -o npsolobjfun.o") elif 
-OperatingSystem = "linux" and UseAdifor = true then system(
+],nops(StandardNLP["Variables"]),'objf'); fd2 := fopen(cat(
+"./sedcommandforobjfun.txt"),WRITE,TEXT); fprintf(fd2,
+"sed -e 's/g_npsolobjfun/gnpsolobjfun/g' g_npsolobjfun.f > gnpsolobjfun.f"); 
+fclose(fd2); system("sh sedcommandforobjfun.txt"); system(
+"rm -f sedcommandforobjfun.txt"); system("rm -f g_npsolobjfun.f") end if; if 
+OperatingSystem = "linux" and UseAdifor = false then system(
+"gfortran -c -fPIC npsolobjfun.f -o npsolobjfun.o") elif OperatingSystem = 
+"linux" and UseAdifor = true then system(
 "gfortran -c -fPIC gnpsolobjfun.f -o gnpsolobjfun.o") end if; SharedObjectName
 := cat("cwrap_npsol",InstanceCounter,".so"); if OperatingSystem = "linux" and
 UseAdifor = false then LinkerCommand := cat(
@@ -262,16 +267,16 @@ _ModulesDirectory,`/Npsol/ext_routines/f2c/cwrap/cwrap_npsol.o `,
 _ModulesDirectory,`/Npsol/ext_routines/f2c/shared_obj/npsol.so `,
 `-lf2c -lm -lgfortran -o `,SharedObjectName) elif OperatingSystem = "linux" 
 and UseAdifor = true then LinkerCommand := cat(
-`gcc -shared -Xlinker -Bsymbolic  gnpsolconfun.o gnpsolobjfun.o `,
+`gcc -shared -Xlinker -Bsymbolic gnpsolconfun.o gnpsolobjfun.o `,
 _ModulesDirectory,`/Npsol/ext_routines/f2c/cwrap/npsolconfunad.o `,
 _ModulesDirectory,`/Npsol/ext_routines/f2c/cwrap/npsolobjfunad.o `,
 _ModulesDirectory,`/Npsol/ext_routines/f2c/cwrap/npsol_open.o `,
 _ModulesDirectory,`/Npsol/ext_routines/f2c/cwrap/npsol_close.o `,
 _ModulesDirectory,`/Npsol/ext_routines/f2c/cwrap/set_params.o `,
 _ModulesDirectory,`/Npsol/ext_routines/f2c/cwrap/cwrap_npsol.o `,
-_ModulesDirectory,`/Npsol/ext_routines/f2c/shared_obj/npsol.so `,
-"$AD_LIB/lib/ReqADIntrinsics-$AD_OS.o ",
-"$AD_LIB/lib/libADIntrinsics-$AD_OS.a ",`-lf2c -lm -lgfortran -o `,
+_ModulesDirectory,`/Npsol/ext_routines/f2c/shared_obj/npsol.so `,_AD_LIB,
+`/lib/ReqADIntrinsics-Linux86_64.o `,_AD_LIB,
+`/lib/libADIntrinsics-Linux86_64.a `,`-lf2c -lm -lgfortran -o `,
 SharedObjectName) end if; system(LinkerCommand); npsol := runDefineExternal(
 SharedObjectName); currentdir(oldDir); RETURN(npsol) end proc; 
 createSharedObjectFromFilelist := proc (FileList::list({name, string}), 
@@ -620,87 +625,87 @@ seq(RequiredVars[ViolatedUpper[i1]],i1 = 1 .. nops(ViolatedUpper))] else
 VarNames := [] end if; return VarNames end proc end module; 
 SimpleWrapperTemplate:-createOptionsFile(); return eval(SimpleWrapperTemplate)
 end proc; Tests := module () export all, agrawal82, simpleProblem1, 
-simpleProblem2; all := proc () if SimpleProblem1() = true and SimpleProblem1(
-adifor) = true and SimpleProblem1(adifor,scale) = true and SimpleProblem2() =
-true and SimpleProblem2(adifor) = true and Agrawal82() = true and Agrawal82(
-adifor) = true and Agrawal82(adifor,scale) = true then return true else return
+simpleProblem2; all := proc () if simpleProblem1() = true and simpleProblem1(
+adifor) = true and simpleProblem1(adifor,scale) = true and simpleProblem2() =
+true and simpleProblem2(adifor) = true and agrawal82() = true and agrawal82(
+adifor) = true and agrawal82(adifor,scale) = true then return true else return
 false end if end proc; agrawal82 := proc () local anNLP, NPSOLproc, Sol1, 
 CalculatedOptimum, ExpectedOptimum, ExpectedObjVal, AcceptedRelErr, i1, RelErr
-, Objf; if Aux:-FileOperations:-dirExists("tmp") then error 
-"temporary directory ./tmp needed to run test already exists" else mkdir("tmp"
-) end if; anNLP := table(["ExplicitAEs" = [k = 1, K = .12, a = 5.4, b = 180, 
-c1 = 5, V = 51.3*Pi, mu = k*S*exp(-S/K), sigma = mu/(a+b*S), c2 = -70.3+270.3*
-SF], "Parameters" = [F = 3.0, SF = .3], "LinearConstraints" = [], 
-"Constraints" = [0 = -F/V*X+mu*X, 0 = F/V*(SF-S)-sigma*X], "Variables" = [X =
--infinity .. infinity, S = -infinity .. infinity], "CostFunction" = [c1*X*F-c2
-*F]]); anNLP := Aux:-NLP:-parToVarInNLP([F = 0 .. 10, SF = .3 .. 1],anNLP); 
-printf("\n"); if 0 < nargs then printf(
+, Objf; if Aux:-FileOperations:-dirExists("tmpAgrawal82") then error 
+"temporary directory ./tmpAgrawal82 needed to run test already exists" else 
+mkdir("tmpAgrawal82") end if; anNLP := table(["ExplicitAEs" = [k = 1, K = .12,
+a = 5.4, b = 180, c1 = 5, V = 51.3*Pi, mu = k*S*exp(-S/K), sigma = mu/(a+b*S),
+c2 = -70.3+270.3*SF], "Parameters" = [F = 3.0, SF = .3], "LinearConstraints" =
+[], "Constraints" = [0 = -F/V*X+mu*X, 0 = F/V*(SF-S)-sigma*X], "Variables" = [
+X = -infinity .. infinity, S = -infinity .. infinity], "CostFunction" = [c1*X*
+F-c2*F]]); anNLP := Aux:-NLP:-parToVarInNLP([F = 0 .. 10, SF = .3 .. 1],anNLP)
+; printf("\n"); if 0 < nargs then printf(
 "running Agrawal82 with optional argument %s to CreateInstance\n",args[1]); 
-NPSOLproc := CreateInstance(anNLP,"./tmp",args[1 .. -1]) else printf(
+NPSOLproc := CreateInstance(anNLP,"./tmpAgrawal82",args[1 .. -1]) else printf(
 "running Agrawal82 without option adifor\n"); NPSOLproc := CreateInstance(
-anNLP,"./tmp") end if; Sol1 := [F = 3, SF = .3, X = 2.6201, S = .22443e-1]; 
-NPSOLproc:-setVariables(Sol1); NPSOLproc:-runOpt(); Objf := NPSOLproc:-getObjf
-(); CalculatedOptimum := NPSOLproc:-getVariables(); dlclose("cwrap_npsol1.so")
-; Aux:-FileOperations:-removeAllFilesInDir("tmp"); rmdir("tmp"); 
-ExpectedOptimum := [X = 16.44085444, S = .6800249428e-1, F = 6.218460030, SF =
-.9999999997]; ExpectedObjVal := -732.508024836933600; AcceptedRelErr := .1e-2;
-for i1 to nops(ExpectedOptimum) do if not abs(2*evalf(rhs(CalculatedOptimum[i1
-])-rhs(ExpectedOptimum[i1]))/evalf(rhs(CalculatedOptimum[i1])+rhs(
-ExpectedOptimum[i1]))) < AcceptedRelErr then return false end if end do; 
-RelErr := abs(2*evalf(ExpectedObjVal-Objf)/evalf(ExpectedObjVal+Objf)); if not
-RelErr < AcceptedRelErr then return false end if; return true end proc; 
-simpleProblem1 := proc () local g, xRange, yRange, anNLP, StandardNLP, 
-NPSOLproc, Objf, OptPoint, ExpectedObjf, ExpectedOptPoint, Inform, i1, RelErr,
-rmv, argslist; argslist := [args]; if member(noremove,argslist) then rmv := 
-false; Aux:-ListOperations:-removeItemFromList(noremove,argslist) else rmv :=
-true end if; ExpectedObjf := 1.00000; ExpectedOptPoint := [1.0, 1.0]; if Aux:-
-FileOperations:-dirExists("tmp") then error 
-"temporary directory ./tmp needed to run test already exists" else mkdir("tmp"
-) end if; g := (x-2)^2+(y-1)^2; xRange := -infinity .. infinity; yRange := -
-infinity .. infinity; anNLP := Aux:-NLP:-newNLP(); anNLP["CostFunction"] := [
-eval(g)]; anNLP["Variables"] := [x = xRange, y = yRange]; anNLP["Constraints"]
-:= [0 < y-x^2]; anNLP["LinearConstraints"] := [0 < 2-x-y]; anNLP["ExplicitAEs"
-] := []; printf("\n"); printf("running SimpleProblem1\n"); if 0 < nargs then 
-NPSOLproc := NPSOL:-CreateInstance(anNLP,"./tmp",argslist[1 .. -1]) else 
-NPSOLproc := NPSOL:-CreateInstance(anNLP,"./tmp") end if; NPSOLproc:-setXVEC([
-0, 1]); NPSOLproc:-createDebugFiles(); NPSOLproc:-runOpt(); Objf := NPSOLproc
-:-getObjf(); OptPoint := NPSOLproc:-getXVEC(); Inform := NPSOLproc:-getInform(
-); for i1 to nops(anNLP["Variables"]) do RelErr := abs(2*evalf(
-ExpectedOptPoint[i1]-OptPoint[i1])/evalf(ExpectedOptPoint[i1]+OptPoint[i1]));
-if not RelErr < .1e-4 then return false end if end do; RelErr := abs(2*evalf(
-ExpectedObjf-Objf)/evalf(ExpectedObjf+Objf)); if not RelErr < .1e-2 then 
-return false end if; unassign('NPSOLproc'); NPSOLproc := RestoreInstance(
-"./tmp"); NPSOLproc:-setXVEC([0, 1]); NPSOLproc:-runOpt(); Objf := NPSOLproc:-
-getObjf(); OptPoint := NPSOLproc:-getXVEC(); Inform := NPSOLproc:-getInform();
-if rmv then dlclose("cwrap_npsol1.so"); Aux:-FileOperations:-
-removeAllFilesInDir("tmp"); rmdir("tmp") end if; for i1 to nops(anNLP[
-"Variables"]) do RelErr := abs(2*evalf(ExpectedOptPoint[i1]-OptPoint[i1])/
-evalf(ExpectedOptPoint[i1]+OptPoint[i1])); if not RelErr < .1e-4 then return 
-false end if end do; RelErr := abs(2*evalf(ExpectedObjf-Objf)/evalf(
-ExpectedObjf+Objf)); if not RelErr < .1e-2 then return false end if; return 
-true end proc; simpleProblem2 := proc () local g, xRange, yRange, anNLP, 
-StandardNLP, NPSOLproc, Objf, OptPoint, ExpectedObjf, ExpectedOptPoint, Inform
-, RelErr, i1, AbsErr; ExpectedObjf := 0.; ExpectedOptPoint := [1.0, 1.0]; if 
-Aux:-FileOperations:-dirExists("tmp") then error 
-"temporary directory ./tmp needed to run test already exists" else mkdir("tmp"
-) end if; CreateStandardOptionsFile("tmp"); g := 100*(y-x^2)^2+(1-x)^2; xRange
-:= -infinity .. infinity; yRange := -infinity .. infinity; anNLP := Aux:-NLP:-
+anNLP,"./tmpAgrawal82") end if; Sol1 := [F = 3, SF = .3, X = 2.6201, S = .\
+22443e-1]; NPSOLproc:-setVariables(Sol1); NPSOLproc:-runOpt(); Objf := 
+NPSOLproc:-getObjf(); CalculatedOptimum := NPSOLproc:-getVariables(); dlclose(
+"cwrap_npsol1.so"); system("rm -r tmpAgrawal82"); ExpectedOptimum := [X = 16.4\
+4085444, S = .6800249428e-1, F = 6.218460030, SF = .9999999997]; 
+ExpectedObjVal := -732.508024836933600; AcceptedRelErr := .1e-2; for i1 to 
+nops(ExpectedOptimum) do if not abs(2*evalf(rhs(CalculatedOptimum[i1])-rhs(
+ExpectedOptimum[i1]))/evalf(rhs(CalculatedOptimum[i1])+rhs(ExpectedOptimum[i1]
+))) < AcceptedRelErr then return false end if end do; RelErr := abs(2*evalf(
+ExpectedObjVal-Objf)/evalf(ExpectedObjVal+Objf)); if not RelErr < 
+AcceptedRelErr then return false end if; return true end proc; simpleProblem1
+:= proc () local g, xRange, yRange, anNLP, StandardNLP, NPSOLproc, Objf, 
+OptPoint, ExpectedObjf, ExpectedOptPoint, Inform, i1, RelErr, rmv, argslist; 
+argslist := [args]; if member(noremove,argslist) then rmv := false; Aux:-
+ListOperations:-removeItemFromList(noremove,argslist) else rmv := true end if;
+ExpectedObjf := 1.00000; ExpectedOptPoint := [1.0, 1.0]; if Aux:-
+FileOperations:-dirExists("tmpSimpleProblem1") then error 
+"temporary directory ./tmpSimpleProblem1 needed to run test already exists" 
+else mkdir("tmpSimpleProblem1") end if; g := (x-2)^2+(y-1)^2; xRange := -
+infinity .. infinity; yRange := -infinity .. infinity; anNLP := Aux:-NLP:-
 newNLP(); anNLP["CostFunction"] := [eval(g)]; anNLP["Variables"] := [x = 
-xRange, y = yRange]; anNLP["ExplicitAEs"] := []; printf("\n"); printf(
-"running SimpleProblem2\n"); if 0 < nargs then NPSOLproc := CreateInstance(
-anNLP,"./tmp",args[1 .. -1]) else printf(
-"running SimpleProblem2 without option adifor\n"); NPSOLproc := CreateInstance
-(anNLP,"./tmp") end if; NPSOLproc:-setXVEC([-1.2, 1.0]); NPSOLproc:-runOpt();
-Objf := NPSOLproc:-getObjf(); OptPoint := NPSOLproc:-getXVEC(); Inform := 
-NPSOLproc:-getInform(); for i1 to nops(anNLP["Variables"]) do RelErr := abs(2*
-evalf(ExpectedOptPoint[i1]-OptPoint[i1])/evalf(ExpectedOptPoint[i1]+OptPoint[
-i1])); if not RelErr < .1e-2 then return false end if end do; AbsErr := abs(
-ExpectedObjf-Objf); if not AbsErr < .1e-2 then return false end if; NPSOLproc
-:-setXVEC([-.3, .1]); NPSOLproc:-runOpt(); Objf := NPSOLproc:-getObjf(); 
-OptPoint := NPSOLproc:-getXVEC(); Inform := NPSOLproc:-getInform(); dlclose(
-"cwrap_npsol1.so"); Aux:-FileOperations:-removeAllFilesInDir("tmp"); rmdir(
-"tmp"); for i1 to nops(anNLP["Variables"]) do RelErr := abs(2*evalf(
-ExpectedOptPoint[i1]-OptPoint[i1])/evalf(ExpectedOptPoint[i1]+OptPoint[i1]));
-if not RelErr < .1e-2 then return false end if end do; RelErr := abs(
-ExpectedObjf-Objf); if not AbsErr < .1e-2 then return false end if; return 
-true end proc; end module; end module;
+xRange, y = yRange]; anNLP["Constraints"] := [0 < y-x^2]; anNLP[
+"LinearConstraints"] := [0 < 2-x-y]; anNLP["ExplicitAEs"] := []; printf("\n");
+printf("running SimpleProblem1\n"); if 0 < nargs then NPSOLproc := NPSOL:-
+CreateInstance(anNLP,"./tmpSimpleProblem1",op(argslist[1 .. -1])) else 
+NPSOLproc := NPSOL:-CreateInstance(anNLP,"./tmpSimpleProblem1") end if; 
+NPSOLproc:-setXVEC([0, 1]); NPSOLproc:-runOpt(); Objf := NPSOLproc:-getObjf();
+OptPoint := NPSOLproc:-getXVEC(); Inform := NPSOLproc:-getInform(); for i1 to
+nops(anNLP["Variables"]) do RelErr := abs(2*evalf(ExpectedOptPoint[i1]-
+OptPoint[i1])/evalf(ExpectedOptPoint[i1]+OptPoint[i1])); if not RelErr < .1e-4
+then return false end if end do; RelErr := abs(2*evalf(ExpectedObjf-Objf)/
+evalf(ExpectedObjf+Objf)); if not RelErr < .1e-2 then return false end if; 
+unassign('NPSOLproc'); NPSOLproc := RestoreInstance("./tmpSimpleProblem1"); 
+NPSOLproc:-setXVEC([0, 1]); NPSOLproc:-runOpt(); Objf := NPSOLproc:-getObjf();
+OptPoint := NPSOLproc:-getXVEC(); Inform := NPSOLproc:-getInform(); if rmv 
+then dlclose("cwrap_npsol1.so"); system("rm -r tmpSimpleProblem1") end if; for
+i1 to nops(anNLP["Variables"]) do RelErr := abs(2*evalf(ExpectedOptPoint[i1]-
+OptPoint[i1])/evalf(ExpectedOptPoint[i1]+OptPoint[i1])); if not RelErr < .1e-4
+then return false end if end do; RelErr := abs(2*evalf(ExpectedObjf-Objf)/
+evalf(ExpectedObjf+Objf)); if not RelErr < .1e-2 then return false end if; 
+return true end proc; simpleProblem2 := proc () local g, xRange, yRange, anNLP
+, StandardNLP, NPSOLproc, Objf, OptPoint, ExpectedObjf, ExpectedOptPoint, 
+Inform, RelErr, i1, AbsErr; ExpectedObjf := 0.; ExpectedOptPoint := [1.0, 1.0]
+; if Aux:-FileOperations:-dirExists("tmpSimpleProblem2") then error 
+"temporary directory ./tmpSimpleProblem2 needed to run test already exists" 
+else mkdir("tmpSimpleProblem2") end if; CreateStandardOptionsFile(
+"tmpSimpleProblem2"); g := 100*(y-x^2)^2+(1-x)^2; xRange := -infinity .. 
+infinity; yRange := -infinity .. infinity; anNLP := Aux:-NLP:-newNLP(); anNLP[
+"CostFunction"] := [eval(g)]; anNLP["Variables"] := [x = xRange, y = yRange];
+anNLP["ExplicitAEs"] := []; printf("\n"); printf("running SimpleProblem2\n");
+if 0 < nargs then NPSOLproc := CreateInstance(anNLP,"./tmpSimpleProblem2",args
+[1 .. -1]) else printf("running SimpleProblem2 without option adifor\n"); 
+NPSOLproc := CreateInstance(anNLP,"./tmpSimpleProblem2") end if; NPSOLproc:-
+setXVEC([-1.2, 1.0]); NPSOLproc:-runOpt(); Objf := NPSOLproc:-getObjf(); 
+OptPoint := NPSOLproc:-getXVEC(); Inform := NPSOLproc:-getInform(); for i1 to
+nops(anNLP["Variables"]) do RelErr := abs(2*evalf(ExpectedOptPoint[i1]-
+OptPoint[i1])/evalf(ExpectedOptPoint[i1]+OptPoint[i1])); if not RelErr < .1e-2
+then return false end if end do; AbsErr := abs(ExpectedObjf-Objf); if not 
+AbsErr < .1e-2 then return false end if; NPSOLproc:-setXVEC([-.3, .1]); 
+NPSOLproc:-runOpt(); Objf := NPSOLproc:-getObjf(); OptPoint := NPSOLproc:-
+getXVEC(); Inform := NPSOLproc:-getInform(); dlclose("cwrap_npsol1.so"); 
+system("rm -r tmpSimpleProblem2"); for i1 to nops(anNLP["Variables"]) do 
+RelErr := abs(2*evalf(ExpectedOptPoint[i1]-OptPoint[i1])/evalf(
+ExpectedOptPoint[i1]+OptPoint[i1])); if not RelErr < .1e-2 then return false 
+end if end do; RelErr := abs(ExpectedObjf-Objf); if not AbsErr < .1e-2 then 
+return false end if; return true end proc; end module; end module;

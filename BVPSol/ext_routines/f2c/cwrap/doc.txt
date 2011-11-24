@@ -1,0 +1,9 @@
+rename "dr_?.c" file to "calltides.c"
+ replace:
+ -"void main()" to "void calltides_(int *nvar1, int *npar1, double *p1, double *v1, double *xend, double *outvals)"
+ - first block with variables call
+ - block PARAMETERS VALUE, INITIAL VALUES, INTEGRATION POINTS
+ - block before fclose(fd) (rename _DataMatrix)
+ - replace "return 0;" with "return;"
+in Makefile: in entry olsen.o replaca "?.c" file name
+recompile BVPSol.mpl 

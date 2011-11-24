@@ -1,0 +1,21 @@
+###############################################################################
+#
+# @path BVPSOL/source/SimpleWrapperTemplate/setStepSize.txt
+# 
+# @brief Set the initial step size for finite difference method
+# 
+# @param stepH::float 
+#
+# @revision
+# 2011-02-03 written by dka
+#
+###############################################################################
+setStepSize:= proc(
+  stepH::EvalsToFloat
+)
+  HDIF:=stepH;
+
+  return();
+
+end proc; 
+
