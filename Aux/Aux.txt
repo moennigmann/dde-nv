@@ -9,6 +9,7 @@
 # @authors mmo, dka
 #
 # @revision
+# 2010-08-26 added isCurve from ModelPack
 # 2008-03-05 added by dka NLP, LinearEqns, getRelErr, 
 #            moved fileExists to FileOperations
 # 2008-02-28 added by dka fileExists
@@ -45,7 +46,8 @@ Aux:= module()
     `type/term`,
     `type/DTASys`,
     `type/DAESys`,
-    `type/ExtAESys`;
+    `type/ExtAESys`,
+    `type/Curve`;
 
   export
     BoxOperations, 
@@ -58,6 +60,7 @@ Aux:= module()
     getFudgedRelErr, 
     getRelErr,
     init,
+    isCurve,
     IntervalArithmetics, 
     LinearAlgebra, 
     LinearEqns, 
@@ -82,6 +85,7 @@ $include <getAbsErr.txt>
 $include <getFudgedRelErr.txt>
 $include <getRelErr.txt>
 $include <init.txt>
+$include <isCurve.txt>
 $include <IntervalArithmetics.txt>
 $include <LinearAlgebra.txt>
 $include <LinearEqns.txt>

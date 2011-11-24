@@ -10,11 +10,13 @@
 #   type/EvalsToFloat
 #   type/BCNLP based on type/NLP
 #   type/term
+#   type/Curve
 # when package is invoked
 #
 # @authors mmo, dka
 #
 # @revision
+# 2010-08-26 added type Curve from ModelPack
 # 2008-05-15 add type DAESys from ModelPack
 # 2008-03-05 Renamed procedure to listOfErrorsInDTASys
 #   with a lower case l. 
@@ -106,9 +108,9 @@ init:= proc()
     if
       type(eval(aNLP), NLP)
     and
-      aNLP[Constraints]=[]
+      aNLP["Constraints"]=[]
     and
-      aNLP[LinearConstraints]=[]
+      aNLP["LinearConstraints"]=[]
     then
       return(true);
     else
@@ -119,6 +121,14 @@ init:= proc()
 
 
   `type/term` := {`+`, `*`, `^`, EvalsToFloat, function, symbol, indexed};
+
+ 
+ `type/Curve`:= proc(potentialCurve)
+
+     return(isCurve(potentialCurve));
+  
+   end proc; # type/Curve
+
 
 end proc; # init
 

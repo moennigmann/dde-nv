@@ -7,6 +7,8 @@
 # @authors mmo, dka
 #
 # @revision
+# 2010-10-28 copied getListOfLhsIn from ModelPack - dka
+# 2010-08-26 copied getIndicesOfRepeatedEntries from ModelPack by dka 
 # 2008-10-01 Added prettyPrintListToFile - mmo
 # 2008-03-05 copied getMissingAndObsoleteNames, getNameFromDerivSymbol, 
 #            getObsolExprInDAESys from ModelPack by dka            
@@ -23,9 +25,11 @@ ListOperations:= module()
   export
     getIndexToMinElement, 
     getIndexToMaxElement,
+    getIndicesOfRepeatedEntries,  
     getIndicesToAllMaxElements,
-    getIndicesToAllMinElements,  
+    getIndicesToAllMinElements,
     getListOfIndetsIn,
+    getListOfLhsIn,
     getListOfUndefExprIn,
     getMissingAndObsoleteNames,
     getNameFromDerivSymbol,
@@ -40,13 +44,16 @@ ListOperations:= module()
     removeItemFromList,
     setRHSofInTo,
     subsEqnListIntoEqn,
-    subsSubsList; 
+    subsSubsList,
+    subsToCreateSubsList; 
 
 $include <ListOperations/getIndexToMinElement.txt>
 $include <ListOperations/getIndexToMaxElement.txt>
+$include <ListOperations/getIndicesOfRepeatedEntries.txt>
 $include <ListOperations/getIndicesToAllMaxElements.txt>
 $include <ListOperations/getIndicesToAllMinElements.txt>
 $include <ListOperations/getListOfIndetsIn.txt>
+$include <ListOperations/getListOfLhsIn.txt>
 $include <ListOperations/getListOfUndefExprIn.txt>
 $include <ListOperations/getMissingAndObsoleteNames.txt>
 $include <ListOperations/getNameFromDerivSymbol.txt>
@@ -61,6 +68,7 @@ $include <ListOperations/removeItemFromList.txt>
 $include <ListOperations/setRHSofInTo.txt>
 $include <ListOperations/subsEqnListIntoEqn.txt>
 $include <ListOperations/subsSubsList.txt>
+$include <ListOperations/subsToCreateSubsList.txt>
 $include <ListOperations/prettyPrintListToFile.txt>
 
 end module; 

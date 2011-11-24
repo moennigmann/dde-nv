@@ -6,7 +6,7 @@
 #
 # @return list of errors found in anExtAESys
 #
-# @notes: (i) ListOfErrorsInExtAESys is used in init to
+# @notes (i) ListOfErrorsInExtAESys is used in init to
 #   define type/ExtAESys
 # (ii) ExtAESys differs from AESys in that ExplicitAEs may
 #   exist in ExtAESys

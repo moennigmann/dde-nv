@@ -1,21 +1,25 @@
-#------------------------------------------------------------
+########################################################################
 #
 # @path Aux/CreateCurve/TemplateModule.txt
 #
 # @authors mmo, dka
 #
 # @revision
+# 2010-10-28 added getAllValuesOfVariable, exportCurve, getSpecialVarNames, 
+#            getSpecificValues from ModelPack by dka
 # 2008-01-22 copied from ModelPack by dka
 # 030109 added local var decl for SubsListPars, ExtraData; 
 # 030106 added ExtendCurveByEAEs
 # 021018 added GetNonTableData, GetVariables
 # 02xxxx written by mmo
-#------------------------------------------------------------
+########################################################################
 TemplateModule:= module()
 
    export
     createPS,
-    extendCurveByEAEs, 
+    exportCurve,
+    extendCurveByEAEs,
+    getAllValuesOfVariable, 
     getData,
     getNonTableData, 
     getNumPoints, 
@@ -23,6 +27,8 @@ TemplateModule:= module()
     getParNames,
     getSinglePlotForFunction, 
     getSinglePlotForFunction3d, 
+    getSpecialVarNames,
+    getSpecificValues,
     getVariables,   
     getVarNames,  
     getPoint,         # returns Parameters and Variables
@@ -58,6 +64,8 @@ TemplateModule:= module()
     ); 
 
 $include<CreateCurve/TemplateModule/getData.txt>
+$include<CreateCurve/TemplateModule/exportCurve.txt>
+$include<CreateCurve/TemplateModule/getAllValuesOfVariable.txt>
 $include<CreateCurve/TemplateModule/getParameters.txt>
 $include<CreateCurve/TemplateModule/getPlot.txt>
 $include<CreateCurve/TemplateModule/getSinglePlot.txt>
@@ -71,6 +79,8 @@ $include<CreateCurve/TemplateModule/getVarNames.txt>
 $include<CreateCurve/TemplateModule/getParNames.txt>
 $include<CreateCurve/TemplateModule/joinCurve.txt>
 $include<CreateCurve/TemplateModule/splitCurve.txt> 
+$include<CreateCurve/TemplateModule/getSpecialVarNames.txt>
+$include<CreateCurve/TemplateModule/getSpecificValues.txt>
 $include<CreateCurve/TemplateModule/getVariables.txt>
 $include<CreateCurve/TemplateModule/extendCurveByEAEs.txt>
 

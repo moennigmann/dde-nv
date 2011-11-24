@@ -22,13 +22,13 @@ renameIndexedNameForGams:= proc(varToRename::name)
 
    #
    # renames indexed names 
-   # (e.g. [v[1]=v_1, v[1,1]=v_11, v[1][1]=v_1_1, ...)
+   # (e.g. [v[1]=v_1, v[1,1]=v_1_1, v[1][1]=v_1_1, ...)
    #
    
    varToRenameAsString:=convert(varToRename,string);
    varToRenameAsString:=StringTools[SubstituteAll](varToRenameAsString,"[","_");
    varToRenameAsString:=StringTools[SubstituteAll](varToRenameAsString,"]","");
-   varToRenameAsString:=StringTools[SubstituteAll](varToRenameAsString,",","");
+   varToRenameAsString:=StringTools[SubstituteAll](varToRenameAsString,",","_");
    newVarName:= convert(varToRenameAsString,symbol);
    
    #

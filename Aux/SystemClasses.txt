@@ -7,6 +7,8 @@
 # @authors mmo, dka
 #
 # @revision
+# 2010-08-26 copied subsStandardNotationIntoDAESysSen, evalODEsInDAESys,
+#            evalExplicitAEsInDAESys, newDAESys from ModelPack by dka
 # 2010-03-08 added listOfErrorsInExtAESysPart2, listOfErrorsInExtAESys from ModelPack
 # 2008-05-15 added listOfErrorsInDAESys, listOfErrorsInDAESysPart2, 
 #             noNameConflictsInUnitsInDAESys, subsExplicitAEsIntoDAESys from ModelPack
@@ -21,6 +23,8 @@
 SystemClasses:= module()
 
 export
+    evalExplicitAEsInDAESys,
+    evalODEsInDAESys,
     exportDTASysToCLMatContM,
     exportDTASysToMatCont,
     listOfErrorsInAESysPart2,
@@ -34,14 +38,18 @@ export
     listOfErrorsInExtAESys,
     listOfErrorsInNlpPart2,
     listOfErrorsInNLP,
+    newDAESys,
     noNameConflictsInUnitsInDAESys,
     noNameConflictsInUnitsInDTASys,
     parToLastVarInExtAESys,
     subsExplicitAEsIntoDAESys,
     subsExplicitAlgEqnsIntoDTASys,
+    subsStandardNotationIntoDAESysSen,
     subsStandardNotationIntoExtAESys; 
 
 
+$include <SystemClasses/evalExplicitAEsInDAESys.txt>
+$include <SystemClasses/evalODEsInDAESys.txt>
 $include <SystemClasses/exportDTASysToCLMatContM.txt>
 $include <SystemClasses/exportDTASysToMatCont.txt>
 $include <SystemClasses/listOfErrorsInAESysPart2.txt>
@@ -55,11 +63,13 @@ $include <SystemClasses/listOfErrorsInExtAESysPart2.txt>
 $include <SystemClasses/listOfErrorsInExtAESys.txt>
 $include <SystemClasses/listOfErrorsInNlpPart2.txt>
 $include <SystemClasses/listOfErrorsInNLP.txt>
+$include <SystemClasses/newDAESys.txt>
 $include <SystemClasses/noNameConflictsInUnitsInDAESys.txt>
 $include <SystemClasses/noNameConflictsInUnitsInDTASys.txt>
 $include <SystemClasses/parToLastVarInExtAESys.txt>
 $include <SystemClasses/subsExplicitAEsIntoDAESys.txt>
 $include <SystemClasses/subsExplicitAlgEqnsIntoDTASys.txt>
+$include <SystemClasses/subsStandardNotationIntoDAESysSen.txt>
 $include <SystemClasses/subsStandardNotationIntoExtAESys.txt>
 
 

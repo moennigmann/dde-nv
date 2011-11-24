@@ -7,7 +7,7 @@
 #   AESys[Parameters] to AESys[Variables] in second argument
 #   (2) an AESys
 #
-# @returm
+# @return
 #   an AESys in which requested parameters have become variables
 #
 # @revision

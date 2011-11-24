@@ -1,6 +1,6 @@
 ###############################################################################
 #
-# @path Aux/ListOperations/GetMissingAndObsoleteNames.txt
+# @path Aux/ListOperations/getMissingAndObsoleteNames.txt
 #
 # @brief given two lists/sets of names, returns set of names which occur in
 # second but not in first ('Missing'), and set of names which occur in first
