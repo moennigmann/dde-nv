@@ -1,26 +1,33 @@
-###############################################################################
+#############################################################################
 #
 # BVPSol/ext_routines/f2c/cwrap/Makefile
 #
 ###############################################################################
 
-CCFLAGS= -c -shared -O -fPIC 
-FFFLAGS= -c -shared -O -fPIC
+CCFLAGS= -c -shared -fPIC -O2
+FFFLAGS= -c -shared -fPIC -O2
 CC= gcc
 FF= gfortran
+LIBS=-lTIDES -lm
 
-all: bvpopen.o bvpclose.o cwrap_bvpsol.o
+all: bvpopen.o bvpclose.o cwrap_bvpsol.o olsen.o calltides.o
 #
 # compile c and fortran files
-#
+# 
 bvpopen.o: bvpopen.f
-	${FF}  $(FFFLAGS) bvpopen.f -o bvpopen.o
+	${FF}  $(FFFLAGS) bvpopen.f ${LIBS} -o  bvpopen.o
 
 bvpclose.o: bvpclose.f
-	${FF}  $(FFFLAGS) bvpclose.f -o bvpclose.o
+	${FF}  $(FFFLAGS) bvpclose.f ${LIBS} -o bvpclose.o
 
 cwrap_bvpsol.o: cwrap_bvpsol.c
-	${CC}  $(CCFLAGS) cwrap_bvpsol.c -o cwrap_bvpsol.o
+	${CC} $(CCFLAGS) cwrap_bvpsol.c ${LIBS} -o cwrap_bvpsol.o
+
+olsen.o: scott.c
+	${CC} $(CCFLAGS) scott.c ${LIBS} -o olsen.o
+
+calltides.o: calltides.c
+	${CC} $(CCFLAGS) calltides.c ${LIBS} -o calltides.o
 
 clean: 
 	rm -f *.o *~

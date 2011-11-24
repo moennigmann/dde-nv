@@ -1,18 +1,18 @@
-  ###############################################################################
-  #
-  # @path BVPSol/source/createExternalFunctions.txt
-  #
-  # @brief create procedures which (1) contains RHS and
-  #         their Jacobian (FCN and DFDY) as needed by PERIOD
-  #
-  # @param anBVPSys: of type DAESys
-  #       
-  # @return files fortranrhs.f and fortranjac.f with procedures FCN and DFDY
-  #
-  # @revision
-  # 2011-01-17 written by dka
-  #
-  ###############################################################################
+###############################################################################
+#
+# @path BVPSol/source/createExternalFunctions.txt
+#
+# @brief create procedures which (1) contains RHS and
+#         their Jacobian (FCN and DFDY) as needed by PERIOD
+#
+# @param anBVPSys: of type DAESys
+#       
+# @return files fortranrhs.f and fortranjac.f with procedures FCN and DFDY
+#
+# @revision
+# 2011-01-17 written by dka
+#
+###############################################################################
   createExternalFunctions:= proc(anBVPSys::DAESys)
   
     local n,npars,rhsODEs,FCN,listOfSubs,i,rhsOfOdesWithSubs,st1,st2,st3,st4,stFCN,

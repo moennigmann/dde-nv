@@ -34,7 +34,9 @@ runBVPSol:= proc()
       'ERRY',  # output variable if ERRY>0 then solution is not a constant
       FAL,     # output derivative Falpha
       FXAL,    # output derivative Fxalpha
-      FXX      # output derivative Fxx
+      FXX,     # output derivative Fxx
+      FX,      # output derivative Fx
+      HDIF     # input spep size for finite difference method
     );
 
   currentdir(OldDir); 

@@ -1,13 +1,13 @@
-  #############################################################
-  #
-  # BVPSol/source/createSharedObject.txt
-  #
-  # @brief Creates shared objects needed for call to define_external.
-  #
-  # @revision
-  # 2011-01-18 created by dka
-  #
-  #############################################################
+#############################################################
+#
+# BVPSol/source/createSharedObject.txt
+#
+# @brief Creates shared objects needed for call to define_external.
+#
+# @revision
+# 2011-01-18 created by dka
+#
+#############################################################
   createSharedObject:= proc(
     bvpsolDir::string,
     anBVPSys::DAESys
@@ -60,8 +60,10 @@
           _ModulesDirectory, `/BVPSol/ext_routines/f2c/cwrap/bvpopen.o `,
           _ModulesDirectory, `/BVPSol/ext_routines/f2c/cwrap/bvpclose.o `,
           _ModulesDirectory, `/BVPSol/ext_routines/f2c/cwrap/cwrap_bvpsol.o `,
+          _ModulesDirectory, `/BVPSol/ext_routines/f2c/cwrap/olsen.o `,
+          _ModulesDirectory, `/BVPSol/ext_routines/f2c/cwrap/calltides.o `,
           _ModulesDirectory, `/BVPSol/ext_routines/f2c/shared_obj/period.so `,
-          `-lf2c -lm -lgfortran -o `, 
+          ` -lf2c -O2 -lm -lgfortran -lTIDES -o `, 
           SharedObjectName
         );
     

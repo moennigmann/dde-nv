@@ -13,6 +13,7 @@ SimpleWrapperTemplate:= module()
     getERRY,
     getFalpha,
     getFxalpha,
+    getFx,
     getFxx,
     getIFAIL,
     getInitPeriod,
@@ -25,12 +26,14 @@ SimpleWrapperTemplate:= module()
     getParams,
     getPeriod,
     getSol,
+    getStepSize,
     getXT,     
     runBVPSol,
     setInitPeriod,
     setInitPoint,
     setIPRINT,
-    setParams;
+    setParams,
+    setStepSize;
    
   local
     theBVPSys;
@@ -40,7 +43,8 @@ SimpleWrapperTemplate:= module()
 $include<SubsIntoSimpleWrapper/SimpleWrapperTemplate/getEigVals.txt> 
 $include<SubsIntoSimpleWrapper/SimpleWrapperTemplate/getERRY.txt> 
 $include<SubsIntoSimpleWrapper/SimpleWrapperTemplate/getFalpha.txt> 
-$include<SubsIntoSimpleWrapper/SimpleWrapperTemplate/getFxalpha.txt> 
+$include<SubsIntoSimpleWrapper/SimpleWrapperTemplate/getFxalpha.txt>
+$include<SubsIntoSimpleWrapper/SimpleWrapperTemplate/getFx.txt>  
 $include<SubsIntoSimpleWrapper/SimpleWrapperTemplate/getFxx.txt> 
 $include<SubsIntoSimpleWrapper/SimpleWrapperTemplate/getIFAIL.txt> 
 $include<SubsIntoSimpleWrapper/SimpleWrapperTemplate/getInitPeriod.txt> 
@@ -53,12 +57,14 @@ $include<SubsIntoSimpleWrapper/SimpleWrapperTemplate/getNPAR.txt>
 $include<SubsIntoSimpleWrapper/SimpleWrapperTemplate/getParams.txt> 
 $include<SubsIntoSimpleWrapper/SimpleWrapperTemplate/getPeriod.txt> 
 $include<SubsIntoSimpleWrapper/SimpleWrapperTemplate/getSol.txt> 
+$include<SubsIntoSimpleWrapper/SimpleWrapperTemplate/getStepSize.txt>
 $include<SubsIntoSimpleWrapper/SimpleWrapperTemplate/getXT.txt> 
 $include<SubsIntoSimpleWrapper/SimpleWrapperTemplate/runBVPSol.txt> 
 $include<SubsIntoSimpleWrapper/SimpleWrapperTemplate/setInitPeriod.txt>  
 $include<SubsIntoSimpleWrapper/SimpleWrapperTemplate/setInitPoint.txt> 
 $include<SubsIntoSimpleWrapper/SimpleWrapperTemplate/setIPRINT.txt>
 $include<SubsIntoSimpleWrapper/SimpleWrapperTemplate/setParams.txt>
+$include<SubsIntoSimpleWrapper/SimpleWrapperTemplate/setStepSize.txt>
 
 end module; # SimpleWrapperTemplate
 

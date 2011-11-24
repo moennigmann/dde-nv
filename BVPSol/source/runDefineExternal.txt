@@ -27,13 +27,15 @@ runDefineExternal:= proc(
        XT::(ARRAY(1 .. M, float[8])),                      #output
        Y::(ARRAY(1 .. M, 1 .. N, float[8])),               #output
        FM::(ARRAY(1 .. 2, 1 .. N, float[8])),              #output
-       JAC::(ARRAY(1 .. N, 1 .. N, float[8])),             #output
+       JAC::(ARRAY(1 .. N, 1 .. N, float[8], order=Fortran_order)),             #output
        POUT::(REF(float[8])),                              #output only
        IFAIL::(REF(integer[4])),                           #output only 
        ERRY::(REF(float[8])),                              #output only
-       FAL::(ARRAY(1 .. N, 1 .. NPAR, float[8])),          #output
-       FXAL::(ARRAY(1 .. N, 1 .. N, 1 .. NPAR, float[8])), #output
-       FXX::(ARRAY(1 .. N, 1 .. N, 1 .. N, float[8])),     #output 
+       FAL::(ARRAY(1 .. N, 1 .. NPAR, float[8], order=Fortran_order)),          #output
+       FXAL::(ARRAY(1 .. N, 1 .. N, 1 .. NPAR, float[8], order=Fortran_order)), #output
+       FXX::(ARRAY(1 .. N, 1 .. N, 1 .. N, float[8], order=Fortran_order)),     #output 
+       FX::(ARRAY(1 .. N, 1 .. N, float[8], order=Fortran_order)),     #output 
+       HDIF::(float[8]),                                  #input
        LIB = SharedObjectName);
   
   return(bvpsol);

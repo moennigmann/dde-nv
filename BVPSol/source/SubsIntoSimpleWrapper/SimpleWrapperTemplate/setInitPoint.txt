@@ -36,10 +36,10 @@ setInitPoint:= proc(
   #
   # assign values
   #   
-    NewValues:= evalf(subs(
+    NewValues:= subs(
       NewPars,
       ParNames
-    ));
+    );
 
 
       for i1 from 1 to nops(ParNames) do

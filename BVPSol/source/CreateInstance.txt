@@ -1,18 +1,18 @@
-  ######################################################################
-  #
-  # @path BVPSOL/source/CreateInstance.txt 
-  #
-  # @param  DAESys,
-  #         WorkingDir, directory into which bvpsol files will be written
-  #                     when compiling and at runtime
-  #         nodes, number of nodes in multi-shooting procedure            
-  #
-  # @return  procedure which starts bvpsol
-  #
-  # @revision
-  #   2011-01-18 written by dka
-  #
-  ######################################################################
+######################################################################
+#
+# @path BVPSOL/source/CreateInstance.txt 
+#
+# @param  DAESys,
+#         WorkingDir, directory into which bvpsol files will be written
+#                     when compiling and at runtime
+#         nodes, number of nodes in multi-shooting procedure            
+#
+# @return  procedure which starts bvpsol
+#
+# @revision
+#   2011-01-18 written by dka
+#
+######################################################################
   CreateInstance:=proc(anBVPSys::DAESys,
                        WorkingDir::string,
                        nodes::integer)

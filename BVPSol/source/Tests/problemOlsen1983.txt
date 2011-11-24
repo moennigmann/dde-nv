@@ -1,15 +1,15 @@
-    ########################################################################
-    #
-    # @path BVPSol/Tests/problemOlsen1983.txt
-    #
-    # @brief Finding periodic solution for the system from the article by 
-    #        Olsen L.F. "An enzyme reaction with a strange attractor". 
-    #        Physics Letters A. 1983, (94) 454-457.
-    #
-    # @revision
-    #   2011-01-19 written by dka
-    #
-    ########################################################################
+########################################################################
+#
+# @path BVPSol/Tests/problemOlsen1983.txt
+#
+# @brief Finding periodic solution for the system from the article by 
+#        Olsen L.F. "An enzyme reaction with a strange attractor". 
+#        Physics Letters A. 1983, (94) 454-457.
+#
+# @revision
+#   2011-01-19 written by dka
+#
+########################################################################
     problemOlsen1983:= proc()
     
       local expectedPeriod, aSys, BVPSOLproc, eigVals, period, nodes, sol,

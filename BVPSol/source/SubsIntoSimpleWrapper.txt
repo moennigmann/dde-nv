@@ -15,7 +15,7 @@ SubsIntoSimpleWrapper:= proc(
       
     local N, M, IPRINT, NPAR, X0, TRPAR, i, P,XT,Y,FM,JAC,POUT,
           IFAIL,ERRY,FAL,FXAL,FXX,listForFXAL,listForFXX,
-          SimpleWrapperTemplate; 
+          SimpleWrapperTemplate, FX, HDIF; 
 
     #
     # extract N, M, NPAR 
@@ -47,25 +47,31 @@ SubsIntoSimpleWrapper:= proc(
       XT:=Vector(M, datatype = float[8], order = C_order);
       Y:=Matrix(M, N, datatype = float[8], order = C_order);
       FM := Matrix(2, N, datatype = float[8], order = C_order);
-      JAC:=Matrix(N, N, datatype = float[8], order = C_order);
+      JAC:=Matrix(N, N, datatype = float[8], order = Fortran_order);
     
     #
     # FAL,FXAL,FXX
     #  
-      FAL:=Matrix(N, NPAR, datatype = float[8], order = C_order);
+      FAL:=Matrix(N, NPAR, datatype = float[8], order = Fortran_order);
      
       listForFXAL:=[];
       for i from 1 to N do
       listForFXAL:=[op(listForFXAL),convert(Matrix(N, NPAR), listlist)];
       end do; 
-      FXAL:=Array(listForFXAL,datatype = float[8], order = C_order);
+      FXAL:=Array(listForFXAL,datatype = float[8], order = Fortran_order);
      
       listForFXX:=[];
       for i from 1 to N do
       listForFXX:=[op(listForFXX),convert(Matrix(N, N), listlist)];
       end do; 
-      FXX:=Array(listForFXX,datatype = float[8], order = C_order);
-     
+      FXX:=Array(listForFXX,datatype = float[8], order = Fortran_order);
+
+      FX:=Matrix(N, N, datatype = float[8], order = Fortran_order);
+      
+  #
+  # HDIF
+  #    
+    HDIF:=0.001; 
 
 $include<SubsIntoSimpleWrapper/SimpleWrapperTemplate.txt>
 
