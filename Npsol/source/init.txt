@@ -1,23 +1,22 @@
-###======================================================================
+#########################################################################
 #
-# exported procedure init
+# @path exported procedure init
 #
-# input: none
+# @param none
 #
-# output: none, side-effects: sets InstanceCounter to zero
+# @return none, side-effects: sets InstanceCounter to zero
 #
-# notes:
+# @notes
 #   init is called when module is loaded from repository, cp. load
 #   option of module; furthermore, there is an explicit call to init
 #   at the end of the module which ensures that init is called if
 #   module is read from a text file.
 #
-# revision history
-#
+# @revision
 # 050919 added linux as OperatingSystemType -mho
 # 030916 added windows as OperatingSystemType -jge
 #
-###======================================================================
+#########################################################################
  init:= proc()
 
     local OperatingSystemTmp,OperatingSystemTmpSol,OperatingSystemTmpWin,OperatingSystemTmpLin;

@@ -1,8 +1,8 @@
 ###############################################################################
 #
-# NPSOL/source/CreateNumSysWrappers/numSysConfunTemplate.txt
+# @path NPSOL/source/CreateNumSysWrappers/numSysConfunTemplate.txt
 #
-# revision history:
+# @revision
 # 030317 written by mmo
 #
 ###############################################################################

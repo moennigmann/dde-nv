@@ -1,7 +1,8 @@
 ###############################################################################
 #
-# NPSOL/source/SimpleWrapperTemplate/setXVEC
+# @path NPSOL/source/SimpleWrapperTemplate/setXVEC
 #
+# @revision
 # 021210 rewritten for use with scaling 
 # 02xxxx written by mmo
 ###############################################################################

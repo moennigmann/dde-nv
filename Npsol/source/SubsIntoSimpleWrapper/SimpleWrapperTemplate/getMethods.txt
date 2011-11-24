@@ -1,11 +1,11 @@
 ###############################################################################
 #
-# NPSOL/source/SubsIntoSimpleWrapper/SimpleWrapperTemplate/getMethods
+# @path NPSOL/source/SubsIntoSimpleWrapper/SimpleWrapperTemplate/getMethods
 #
-# collection of very simple get methods, too tedious to 
+# @brief collection of very simple get methods, too tedious to 
 # place into a separate file each
 #
-# revision history:
+# @revision
 # 021210 commented GetOptPoint which used to have same purpose
 #   as GetXVEC
 # 02xxxx written by mmo

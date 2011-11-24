@@ -1,19 +1,19 @@
-    ###------------------------------------------------------------------------
-    #
-    # template function objfunTemplate, local to NPSOL
-    #
-    # below actual information from anNLP is substituted into
-    # this template
-    #
-    # revision history:
-    #   021217 introduced common block for parameters; deleted code
-    #     which assigned values to par; 
-    #   021127 introduced dummy explicit AE;
-    #   021124 introduced EAEs; 
-    #   010424 introduced dummy parameter which allows to use template
-    #     for nlps without any parameters - mmo 
-    #   0011xx written by mmo
-    ###------------------------------------------------------------------------
+###########################################################################
+#
+# @path template function objfunTemplate, local to NPSOL
+#
+# @brief below actual information from anNLP is substituted into
+# this template
+#
+# @revision
+#   021217 introduced common block for parameters; deleted code
+#     which assigned values to par; 
+#   021127 introduced dummy explicit AE;
+#   021124 introduced EAEs; 
+#   010424 introduced dummy parameter which allows to use template
+#     for nlps without any parameters - mmo 
+#   0011xx written by mmo
+###########################################################################
     objfunTemplate:= proc(
       mode::integer,
       n::integer,

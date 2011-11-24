@@ -1,24 +1,24 @@
-  ###=========================================================================
-  #
-  # procedure prepareDir
-  #
-  # input: 
-  #   name of directory NameOfDir in which npsol is to be used
-  #
-  # output: 
-  #   true if use of directory is possible, that is, if directory does
-  #     not yet exist, or if directory does exist and does not contain
-  #     any files mwrap*
-  #   false otherwise
-  #   as a side-effect, directory NameOfDir is created if it does
-  #     not yet exist
-  #
-  # revision history:
-  #   010529 split nested and sequenced if's into some blocks for
-  #     readability - mmo
-  #   010503 written by mho
-  #
-  ###========================================================================
+###########################################################################
+#
+# @path procedure prepareDir
+#
+# @param
+#   name of directory NameOfDir in which npsol is to be used
+#
+# @return
+#   true if use of directory is possible, that is, if directory does
+#     not yet exist, or if directory does exist and does not contain
+#     any files mwrap*
+#   false otherwise
+#   as a side-effect, directory NameOfDir is created if it does
+#     not yet exist
+#
+# @revision
+#   010529 split nested and sequenced if's into some blocks for
+#     readability - mmo
+#   010503 written by mho
+#
+###########################################################################
   prepareDir:= proc(
     NameOfDir::string
   )

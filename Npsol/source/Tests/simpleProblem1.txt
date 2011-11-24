@@ -1,34 +1,36 @@
-    ###------------------------------------------------------------------------
-    #
-    # Simple Test Problem 1
-    #
-    #   Cost Function: g:= (x-2)^2 + (y - 1)^2
-    #   Constraints: 0 < y - x^2
-    #                0 < 2 - x - y
-    #
-    # revision history:
-    #   2008-03-06  instead of aSys[...] using aSys["..."] by dka
-    #   051003 added option noremove to keep working directory contents
-    #   050927 added dlclose() to avoid error thrown due to existence 
-    #     of hidden system files in working directory
-    #   021210 replaced call to GetOptPoint by call to GetXVEC
-    #   021125 added empty anNLP[ExplicitAEs] to comply with new
-    #     ListOfErrorsInNLP(..., strict)
-    #   021122 added optional argument which is passed to
-    #     CreateInstance; allows to call same procedure with and without
-    #     option adifor; 
-    #   021120 added option 'adifor' to first call to CreateInstance
-    #   021107 added call to RestoreInstance
-    #   021105 adjustments after change of structure of module NPSOL:
-    #     removed call to CreateStandardOptionsFile, removed
-    #     substitution of standard notation, now use set/get methods
-    #     instead of optional arguments; 
-    #   010503 proc returns true of false, proc throws error if
-    #     directory tmp exists, creates temporary directory tmp and
-    #     removes it after completion - mmo
-    #   010425 written by mho
-    #
-    ###------------------------------------------------------------------------
+###########################################################################
+#
+# @path Simple Test Problem 1
+#
+# @brief Cost Function: g:= (x-2)^2 + (y - 1)^2
+#  	 Constraints: 0 < y - x^2
+#                0 < 2 - x - y
+#
+# @revision
+#   2010-11-29 arguments in the call of CreateInstance are used
+#              not in one list (function "op" is added) - dka
+#   2008-03-06 instead of aSys[...] using aSys["..."] by dka
+#   051003 added option noremove to keep working directory contents
+#   050927 added dlclose() to avoid error thrown due to existence 
+#     of hidden system files in working directory
+#   021210 replaced call to GetOptPoint by call to GetXVEC
+#   021125 added empty anNLP[ExplicitAEs] to comply with new
+#     ListOfErrorsInNLP(..., strict)
+#   021122 added optional argument which is passed to
+#     CreateInstance; allows to call same procedure with and without
+#     option adifor; 
+#   021120 added option 'adifor' to first call to CreateInstance
+#   021107 added call to RestoreInstance
+#   021105 adjustments after change of structure of module NPSOL:
+#     removed call to CreateStandardOptionsFile, removed
+#     substitution of standard notation, now use set/get methods
+#     instead of optional arguments; 
+#   010503 proc returns true of false, proc throws error if
+#     directory tmp exists, creates temporary directory tmp and
+#     removes it after completion - mmo
+#   010425 written by mho
+#
+###########################################################################
     simpleProblem1:= proc(
      # optional arguments are passed to CreateInstance
     )
@@ -50,11 +52,11 @@
       ExpectedOptPoint:= [1.0, 1.0];
 
       if
-        Aux:-FileOperations:-dirExists("tmp")
+        Aux:-FileOperations:-dirExists("tmpSimpleProblem1")
       then
-        error("temporary directory ./tmp needed to run test already exists")
+        error("temporary directory ./tmpSimpleProblem1 needed to run test already exists")
       else  
-          mkdir("tmp")
+          mkdir("tmpSimpleProblem1")
       end if;
 
       #
@@ -78,9 +80,9 @@
           if 
             nargs>0
           then
-            NPSOLproc:=NPSOL:-CreateInstance(anNLP, "./tmp", argslist[1..-1]);
+            NPSOLproc:=NPSOL:-CreateInstance(anNLP, "./tmpSimpleProblem1", op(argslist[1..-1]));
           else
-            NPSOLproc:=NPSOL:-CreateInstance(anNLP, "./tmp");
+            NPSOLproc:=NPSOL:-CreateInstance(anNLP, "./tmpSimpleProblem1");
           end if; 
 
       #
@@ -89,7 +91,7 @@
         NPSOLproc:-setXVEC(
           [0,1]
         ); 
-        NPSOLproc:-createDebugFiles();
+     #  NPSOLproc:-createDebugFiles();
         NPSOLproc:-runOpt();
 
       #
@@ -133,7 +135,7 @@
       #
       #------------------------------------------------------------
       unassign('NPSOLproc'); 
-      NPSOLproc:= RestoreInstance("./tmp");
+      NPSOLproc:= RestoreInstance("./tmpSimpleProblem1");
 
       #
       # execute NPSOL 
@@ -157,8 +159,9 @@
       if rmv then      
         dlclose("cwrap_npsol1.so");
       # dlclose("mwrap_cwrapper_npsol.so");
-        Aux:-FileOperations:-removeAllFilesInDir("tmp");
-        rmdir("tmp");
+      #  Aux:-FileOperations:-removeAllFilesInDir("tmpSimpleProblem1");
+      #  rmdir("tmpSimpleProblem1");
+         system("rm -r tmpSimpleProblem1")
       end if;
 
       #

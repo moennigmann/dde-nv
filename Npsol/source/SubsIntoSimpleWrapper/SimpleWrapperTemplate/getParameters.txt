@@ -1,8 +1,8 @@
 ###############################################################################
 #
-# NPSOL/source/SimpleWrapperTemplate/getParameters
+# @path NPSOL/source/SimpleWrapperTemplate/getParameters
 #
-# revision history:
+# @revision
 # 030319 added rescaling
 # 021217 now accesses local module variable Params, parameters can now
 #   be changed after instanciation

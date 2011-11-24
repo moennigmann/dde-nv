@@ -1,8 +1,8 @@
 ###############################################################################
 #
-# NPSOL/source/SimpleWrapperTemplate/createDebugFiles
+# @path NPSOL/source/SimpleWrapperTemplate/createDebugFiles
 #
-# revision history:
+# @revision
 # 030317 changed to ansi type comments /* */
 # 021217 added printing of number and values of parameters; print
 #   debug file directory to sheet; 

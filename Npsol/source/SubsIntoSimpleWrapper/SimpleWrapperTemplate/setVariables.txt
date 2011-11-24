@@ -1,8 +1,8 @@
 ###############################################################################
 #
-# NPSOL/source/SimpleWrapperTemplate/setVariables
+# @path NPSOL/source/SimpleWrapperTemplate/setVariables
 #
-# revision history:
+# @revision
 # 021210 replaced assignment of xvec_swnpsol by call to SetXVEC
 #   which takes care of scaling; 
 # 021125 replaced NtoBeSubs by N; 

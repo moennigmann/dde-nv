@@ -1,22 +1,22 @@
-  ###=====================================================================
-  #
-  # createStandardOptionsFile
-  #
-  #   input: subdirectory into which file will be written
-  #
-  #   output: writes npsol_options.txt into subdirectory ./NPSOL/
-  #     with following entries:
-  #begin
-  #  major output level 10
-  #end
-  #
-  # revision history:
-  #   021216 set major print level to 20
-  #   021121 added verify level 3
-  #   010426 added parameter dirname
-  #   010425 written by mho
-  #
-  ###=====================================================================
+########################################################################
+#
+# @path createStandardOptionsFile
+#
+# @param subdirectory into which file will be written
+#
+# @return writes npsol_options.txt into subdirectory ./NPSOL/
+#     with following entries:
+#  begin
+#   major output level 10
+#  end
+#
+# @revision
+#   021216 set major print level to 20
+#   021121 added verify level 3
+#   010426 added parameter dirname
+#   010425 written by mho
+#
+########################################################################
   createStandardOptionsFile:=proc(
     dirname::string
   )

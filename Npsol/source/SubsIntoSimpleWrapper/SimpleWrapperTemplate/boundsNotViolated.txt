@@ -1,11 +1,11 @@
 ###############################################################################
 #
-# boundsNotViolated
+# @path boundsNotViolated
 #
-# returns true if current point does not variable violate bounds, 
+# @brief returns true if current point does not variable violate bounds, 
 # false otherwise
 #
-# revision history:
+# @revision
 # 030109 proc now returns names rather than indices of violated
 #   variable bounds; 
 # 02xxxx written by mmo

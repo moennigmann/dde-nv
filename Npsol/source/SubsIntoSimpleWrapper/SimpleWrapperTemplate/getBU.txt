@@ -1,8 +1,9 @@
 ###############################################################################
 #
-# local procedure NPSOL/source/SimpleWrapperTemplate/getBU
+# @path local procedure NPSOL/source/SimpleWrapperTemplate/getBU
 #
-# 021210 written by mmo
+# @revision
+#  021210 written by mmo
 #
 ###############################################################################
 getBU:= proc()

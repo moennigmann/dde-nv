@@ -1,8 +1,8 @@
 ###############################################################################
 #
-# NPSOL/source/SimpleWrapperTemplate/getVariables
+# @path NPSOL/source/SimpleWrapperTemplate/getVariables
 #
-# revision history:
+# @revision
 # 021210 replaced call to GetOptPoint by call to GetXVEC
 # 021209 written by mmo
 #

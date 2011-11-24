@@ -1,11 +1,10 @@
 ###############################################################################
 #
-# exported procedure NPSOL/source/SubsIntoSimpleWrapper/SimpleWrapperTemplate/
-# getSys
+# @path exported procedure NPSOL/source/SubsIntoSimpleWrapper/SimpleWrapperTemplate/getSys
 #
-# returns NLP passed to constructor
+# @brief returns NLP passed to constructor
 #
-# revision history:
+# @revision
 # 021212 written by mmo
 #
 ###############################################################################

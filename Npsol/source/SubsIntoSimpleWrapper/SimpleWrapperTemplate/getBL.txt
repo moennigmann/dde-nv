@@ -1,8 +1,9 @@
 ###############################################################################
 #
-# local procedure NPSOL/source/SimpleWrapperTemplate/getBL
+# @path local procedure NPSOL/source/SimpleWrapperTemplate/getBL
 #
-# 021210 written by mmo
+# @revision
+#  021210 written by mmo
 #
 ###############################################################################
 getBL:= proc()

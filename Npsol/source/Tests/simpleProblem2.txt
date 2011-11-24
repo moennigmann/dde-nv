@@ -1,23 +1,23 @@
-    ###------------------------------------------------------------------------
-    #
-    # Simple Test Problem 2
-    #
-    #   Cost Function: g := 100*(y - x^2)^2 + (1 - x)^2
-    #   Constraints: none
-    #
-    # revision history:
-    # 2008-03-06  instead of anNLP[...] using anNLP["..."] by dka
-    # 021210 replaced call to GetOptPoint by call to GetXVEC
-    # 021125 added empty anNLP[ExplicitAEs] to comply with new
-    #   ListOfErrorsInNLP(..., strict)
-    # 021122 added optional argument which is passed to
-    #   CreateInstance; allows to call same procedure with and without
-    #   option adifor; 
-    # 021107 changed structure to work with NPSOLproc= object with
-    #   RunOpt, GetObjf, etc.= methods
-    # 010425 written by mho
-    #
-    ###------------------------------------------------------------------------
+###########################################################################
+#
+# @path Simple Test Problem 2
+#
+# @brief Cost Function: g := 100*(y - x^2)^2 + (1 - x)^2
+#   	Constraints: none
+#
+# @revision
+# 2008-03-06  instead of anNLP[...] using anNLP["..."] by dka
+# 021210 replaced call to GetOptPoint by call to GetXVEC
+# 021125 added empty anNLP[ExplicitAEs] to comply with new
+#   ListOfErrorsInNLP(..., strict)
+# 021122 added optional argument which is passed to
+#   CreateInstance; allows to call same procedure with and without
+#   option adifor; 
+# 021107 changed structure to work with NPSOLproc= object with
+#   RunOpt, GetObjf, etc.= methods
+# 010425 written by mho
+#
+###########################################################################
     simpleProblem2:= proc(
       # optional argument is passed to CreateInstance
     )
@@ -30,14 +30,14 @@
       ExpectedOptPoint := [1.0, 1.0];
 
       if
-        Aux:-FileOperations:-dirExists("tmp")
+        Aux:-FileOperations:-dirExists("tmpSimpleProblem2")
       then
-        error("temporary directory ./tmp needed to run test already exists")
+        error("temporary directory ./tmpSimpleProblem2 needed to run test already exists")
       else  
-          mkdir("tmp")
+          mkdir("tmpSimpleProblem2")
       end if;
 
-      CreateStandardOptionsFile("tmp");
+      CreateStandardOptionsFile("tmpSimpleProblem2");
 
       #
       # init Test-NLP with entries as described above
@@ -59,10 +59,10 @@
         if 
           nargs>0
         then
-          NPSOLproc:=CreateInstance(anNLP, "./tmp", args[1..-1]);
+          NPSOLproc:=CreateInstance(anNLP, "./tmpSimpleProblem2", args[1..-1]);
         else
 	  printf("running SimpleProblem2 without option adifor\n"); 
-          NPSOLproc:=CreateInstance(anNLP, "./tmp");
+          NPSOLproc:=CreateInstance(anNLP, "./tmpSimpleProblem2");
         end if; 
 
       #
@@ -121,8 +121,9 @@
 
         dlclose("cwrap_npsol1.so");
       # dlclose("mwrap_cwrapper_npsol.so");
-        Aux:-FileOperations:-removeAllFilesInDir("tmp");
-        rmdir("tmp");        
+      #  Aux:-FileOperations:-removeAllFilesInDir("tmpSimpleProblem2");
+      #  rmdir("tmpSimpleProblem2");
+         system("rm -r tmpSimpleProblem2");        
 
       #
       # compare results to expected results: solution point

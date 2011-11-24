@@ -1,17 +1,16 @@
 ###############################################################################
 #
-# NPSOL/source/SubsIntoSimpleWrapper/SimpleWrapper/
-#   getIndicesLinearInequalityConstraints
+# @path NPSOL/source/SubsIntoSimpleWrapper/SimpleWrapper/getIndicesLinearInequalityConstraints
 #
-# identifies inequality constraints by checking whether LowerBound<>
+# @brief identifies inequality constraints by checking whether LowerBound<>
 # UpperBound
 #
-# notes: (i) Since bounds can be checked after instanciation, equality
+# @notes (i) Since bounds can be checked after instanciation, equality
 #   constraints may become inequality constraints and vice versa. Thus
 #   it is not sufficient to determine which constraints are inequality
 #   constraints at time of instanciation.
 #
-# revision history:
+# @revision
 # 030108 written by mmo
 #
 ###############################################################################

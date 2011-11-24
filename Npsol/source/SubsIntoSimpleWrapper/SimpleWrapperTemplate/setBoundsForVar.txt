@@ -1,10 +1,10 @@
 ###############################################################################
 #
-# NPSOL/source/SubsIntoSimpleWrapper/SimpleWrapperTemplate/setBoundsForVar
+# @path NPSOL/source/SubsIntoSimpleWrapper/SimpleWrapperTemplate/setBoundsForVar
 #
-# returns current variable bounds in the form list(name= number..number)
+# @brief returns current variable bounds in the form list(name= number..number)
 #
-# revision history:
+# @revision
 # 030419 addec check for multiple entries in first argument
 # 030109 changes to take into account scaling of variables; user can now
 #   pass bounds in terms of physical variables; these are scaled if 

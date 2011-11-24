@@ -1,14 +1,14 @@
-###------------------------------------------------------------------------
+###########################################################################
 #
-# template function objfunAdiforTemplate, local to NPSOL
+# @path template function objfunAdiforTemplate, local to NPSOL
 #
-# revision history:
+# @revision
 # 021217 introduced common block for parameters; deleted code
 #   which assigned values to par; 
 # 021122 written by mmo starting from 
 #   NPSOL/source/Templates/ConfunAdiforTemplate
 #
-###------------------------------------------------------------------------
+###########################################################################
 objfunAdiforTemplate:= proc(
   x,                          # type declared below
   objf::float

@@ -1,14 +1,14 @@
-  ###==========================================================================
-  #
-  # module NPSOL:-Tests
-  #
-  # revision history:
-  #   021211 added Agrawal82
-  #   010504 added procedure all which runs all tests and returns true
-  #     if all tests returned true, returns false otherwise; 
-  #   0104xx written by mho
-  #
-  ###==========================================================================
+#############################################################################
+#
+# @path module NPSOL:-Tests
+#
+# @revision
+#   021211 added Agrawal82
+#   010504 added procedure all which runs all tests and returns true
+#     if all tests returned true, returns false otherwise; 
+#   0104xx written by mho
+#
+#############################################################################
   Tests:=module()
   
   export

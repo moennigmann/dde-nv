@@ -1,12 +1,12 @@
 ###############################################################################
 #
-# NPSOL/source/SimpleWrapperTemplate/setOption
+# @path NPSOL/source/SimpleWrapperTemplate/setOption
 #
-# notes: (i) no check whether requested rhs of option is reasonalbe,
+# @notes (i) no check whether requested rhs of option is reasonalbe,
 #   e.g. whether 'iteration limit' is set to an integer rather than
 #   a float
 #
-# revision history:
+# @revision
 # 021217 moved known options to KnownNpsolOptions defined in 
 #   SubsIntoSimpleWrapper; (ii) changed rhs of input arg to be of type
 #   EvalsToFloat; 

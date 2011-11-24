@@ -9,8 +9,8 @@
 #
 ###############################################################################
 
-CCFLAGS= -shared -O0 -fPIC 
-FFFLAGS= -C -shared -O0 -fPIC
+CCFLAGS= -c -shared -O -fPIC 
+FFFLAGS= -c -shared -O -fPIC
 CC= gcc
 FF= gfortran
 
@@ -21,22 +21,22 @@ all: npsol_open.o npsol_close.o cwrap_npsol.o npsolconfunad.o npsolobjfunad.o \
 # compile c and fortran files
 #
 npsol_open.o: npsol_open.f
-	${FF} -c $(FFFLAGS) npsol_open.f -o npsol_open.o
+	${FF}  $(FFFLAGS) npsol_open.f -o npsol_open.o
 
 npsol_close.o: npsol_close.f
-	${FF} -c $(FFFLAGS) npsol_close.f -o npsol_close.o
+	${FF}  $(FFFLAGS) npsol_close.f -o npsol_close.o
 
 set_params.o: set_params.f
-	${FF} -c $(FFFLAGS) set_params.f -o set_params.o
+	${FF}  $(FFFLAGS) set_params.f -o set_params.o
 
 cwrap_npsol.o: cwrap_npsol.c
-	${CC} -c $(CCFLAGS) cwrap_npsol.c -o cwrap_npsol.o
+	${CC}  $(CCFLAGS) cwrap_npsol.c -o cwrap_npsol.o
 
 npsolconfunad.o: npsolconfunad.c
-	${CC} -c $(CCFLAGS) npsolconfunad.c -o npsolconfunad.o 
+	${CC}  $(CCFLAGS) npsolconfunad.c -o npsolconfunad.o 
 
 npsolobjfunad.o: npsolobjfunad.c
-	${CC} -c $(CCFLAGS) npsolobjfunad.c -o npsolobjfunad.o 
+	${CC}  $(CCFLAGS) npsolobjfunad.c -o npsolobjfunad.o 
 
 clean: 
 	rm -f *.o *~

@@ -1,21 +1,21 @@
 ###############################################################################
 #
-# RestoreInstance
+# @path RestoreInstance
 #
-# input: 
+# @param 
 #   WorkingDir, directory in which instance created by 
 #     NPSOL:-CreateInstance is located
 #   
-# output:
+# @return
 #   instance of NPSOL interface
 #
-# notes:
+# @notes
 #   (1) Call to define_external in CreateSharedObject must be exactely 
 #   the same. Unfortunately, there is no simple way to reflect this in
 #   the code, but consistency with CreateSharedObject must be ensured by 
 #   hand. 
 #
-# revision history:
+# @revision
 # 2008-03-03 by dka, in the call of define_external put arguments 
 #            BL, BU, CLAMBDA and LENIW, LENW together
 # 021216 added NumParams and Params to create_external, necessary to 

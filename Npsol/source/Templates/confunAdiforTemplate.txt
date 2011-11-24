@@ -1,8 +1,8 @@
-###------------------------------------------------------------------------
+###############################################################
 #
-# template function confunAdiforTemplate, local to NPSOL
+# @path template function confunAdiforTemplate, local to NPSOL
 #
-# revision history:
+# @revision
 # 021216 moved par from local to global to have codegen create a common
 #   block, deleted code which assigned values to parameters; 
 # 021127 introduced dummy explicit AE;
@@ -11,7 +11,7 @@
 # 021120 written by mmo starting from 
 #   DDASPK/source/Templates/ConfunAdiforTemplate
 #
-###------------------------------------------------------------------------
+###############################################################
 confunAdiforTemplate:= proc(
   x,                          # type declared below
   c                           # type declared below

@@ -1,8 +1,8 @@
 ###############################################################################
 #
-# NPSOL/source/runDefineExternal
+# @path NPSOL/source/runDefineExternal
 #
-# revision history:
+# @revision
 # 2008-03-03 by dka, in the call of define_external put arguments 
 #            BL, BU, CLAMBDA and LENIW, LENW together
 # 030317 written by mmo, copying call from CreateSharedObject cvs 1.9

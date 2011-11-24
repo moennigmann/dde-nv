@@ -1,15 +1,14 @@
-    ###------------------------------------------------------------------------
-    #
-    # run optimization for Agrawal fermenter
-    #
-    # notes: (i) related sheet: 020911/NPSOL/ScaledAgrawal82Dimensional/
-    #   RunNPSOL2.mws
-    #
-    # revision history:
-    # 2008-03-06  instead of anNLP[...] using anNLP["..."] by dka
-    # 011210 written by mmo
-    #
-    ###------------------------------------------------------------------------
+###########################################################################
+#
+# @path agrawal82.txt
+# 
+# @brief run optimization for Agrawal fermenter
+#
+# @revision
+# 2008-03-06  instead of anNLP[...] using anNLP["..."] by dka
+# 011210 written by mmo
+#
+###########################################################################
     agrawal82:= proc(
      # optional arguments are passed to CreateInstance
     )
@@ -21,11 +20,11 @@
       # throw error if temporary directory already exists
       #
         if
-          Aux:-FileOperations:-dirExists("tmp")
+          Aux:-FileOperations:-dirExists("tmpAgrawal82")
         then
-          error("temporary directory ./tmp needed to run test already exists")
+          error("temporary directory ./tmpAgrawal82 needed to run test already exists")
         else  
-            mkdir("tmp")
+            mkdir("tmpAgrawal82")
         end if;
 
       #
@@ -59,10 +58,10 @@
           nargs>0
         then
           printf("running Agrawal82 with optional argument %s to CreateInstance\n", args[1]); 
-          NPSOLproc:=CreateInstance(anNLP, "./tmp", args[1..-1]);
+          NPSOLproc:=CreateInstance(anNLP, "./tmpAgrawal82", args[1..-1]);
         else
           printf("running Agrawal82 without option adifor\n"); 
-          NPSOLproc:=CreateInstance(anNLP, "./tmp");
+          NPSOLproc:=CreateInstance(anNLP, "./tmpAgrawal82");
         end if; 
 
       #------------------------------------------------------------
@@ -94,8 +93,9 @@
       #
         dlclose("cwrap_npsol1.so");
       # dlclose("mwrap_cwrapper_npsol.so");      
-        Aux:-FileOperations:-removeAllFilesInDir("tmp");
-        rmdir("tmp");
+      #  Aux:-FileOperations:-removeAllFilesInDir("tmpAgrawal82");
+      #  rmdir("tmpAgrawal82");
+        system("rm -r tmpAgrawal82");
 
       #
       # compare to expected result

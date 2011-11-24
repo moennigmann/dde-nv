@@ -1,3 +1,22 @@
+###############################################################################
+#
+# @path NPSOL/source/SubsIntoSimpleWrapper/SimpleWrapperTemplate/setMethods
+#
+# @brief collection of the methods:
+# 	setIstate
+# 	setCjac
+# 	setClambda
+# 	setR
+# 	setBL (sets bounds in interface to current values of LowerBoundsVars, LowerBoundsConstr)
+# 	setBu (sets bounds in interface to current values of UpperBoundsVars, UpperBoundsConstr)
+# 	setLowerBoundsConstr
+# 	setUpperBoundsVars
+#
+# @revision
+# xxxxxx written by mmo
+#
+###############################################################################
+
 setIstate:= proc(
   ReqVal::list(integer)
 )

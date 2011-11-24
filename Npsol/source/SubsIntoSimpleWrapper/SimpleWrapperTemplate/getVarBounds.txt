@@ -1,11 +1,11 @@
 ###############################################################################
 #
-# NPSOL/source/SubsIntoSimpleWrapper/SimpleWrapperTemplate/getVarBounds
+# @path NPSOL/source/SubsIntoSimpleWrapper/SimpleWrapperTemplate/getVarBounds
 #
-# returns current variable bounds in the form list(name= number..number)
+# @brief returns current variable bounds in the form list(name= number..number)
 # bounds are returned for physcial variables
 #
-# revision history:
+# @revision
 # 030109 changes to take scaling into account,
 #   procedure now returnes physical bounds
 # 030108 written by mmo

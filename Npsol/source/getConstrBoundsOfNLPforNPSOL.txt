@@ -1,31 +1,26 @@
-  ###============================================================
-  #
-  #
-  # proc NPSOL:-getConstrBoundsOfNLPforNPSOL
-  #
-  # input:
-  #   an nlp
-  #   bVEC as extracted from NLP by 
-  #     GetLinConstrOfNLPforNPSOL
-  #
-  # output:
-  #
-  # notes:
-  #   bounds are turned into following form for NPSOL:
-  #     0<Ax-b           becomes   b<= Ax<= infinity 
-  #     0=Ax-b           becomes   b<= Ax<=  b 
-  #     0= NonlinConstr  becomes   0<= NonlinConstr<= 0
-  #     0< NonlinConstr  becomes   0<= NonlinConstr<= -infinity
-  #
-  #   in type nlp, form of linear constraints is 
-  #     0= Ax+ b or 0< Ax+ b,
-  #     (not term=0, 0>term, term>0, term<0)
-  #
-  #   if no linear constraints exist for nlp, bVEC is a name,
-  #     while AMAT is a dummy matrix, 
-  #     see GetLinConstrOfNLPforNPSOL
-  #
-  ###============================================================
+###############################################################
+#
+# @path NPSOL:-getConstrBoundsOfNLPforNPSOL
+#
+# @param
+#   an nlp
+#   bVEC as extracted from NLP by 
+#     GetLinConstrOfNLPforNPSOL
+#
+# @notes
+#   bounds are turned into following form for NPSOL:
+#     	0<Ax-b           becomes   b<= Ax<= infinity 
+#     	0=Ax-b           becomes   b<= Ax<=  b 
+#     	0= NonlinConstr  becomes   0<= NonlinConstr<= 0
+#    	 0< NonlinConstr  becomes   0<= NonlinConstr<= -infinity
+#   in type nlp, form of linear constraints is 
+#    	 0= Ax+ b or 0< Ax+ b,
+#    	 (not term=0, 0>term, term>0, term<0)
+#   if no linear constraints exist for nlp, bVEC is a name,
+#     	while AMAT is a dummy matrix, 
+#    	 see GetLinConstrOfNLPforNPSOL
+#
+###############################################################
   getConstrBoundsOfNLPforNPSOL:= proc(
     anNLP::NLP,
     bVEC::{vector, name}, 

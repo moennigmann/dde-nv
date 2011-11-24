@@ -1,8 +1,8 @@
 ###############################################################################
 #
-# NPSOL/source/createNumSysForCostFunction
+# @path NPSOL/source/createNumSysForCostFunction
 #
-# revision history:
+# @revision
 # 2008-03-06  instead of anNLP[...] using anNLP["..."] by dka
 # 030319 added checking of cost function
 # 030318 written by mmo

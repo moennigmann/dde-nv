@@ -1,20 +1,22 @@
-  #############################################################
-  #
-  # NPSOL/source/createSharedObject.txt
-  #
-  # Creates shared objects needed for call to define_external.
-  #
-  # revision history:
-  # 2008-03-06  instead of anNLP[...] using anNLP["..."] by dka
-  # 2008-03-03 by dka, in the call of define_external put arguments 
-  #            BL, BU, CLAMBDA and LENIW, LENW together
-  # 2008-02-11 Removed -O and -m32 flags from compiler calls. 
-  # 2008-02-11 Renamed fortran compiler from g77 to gfortran. 
-  # 2008-02-11 Removed compiler and linker commands for solaris. 
-  # 2008-02-11 Started with copy /media/disk/Backup/FirewireDisk-2007-04-08/
-  # backup/2006-07-backup-with-cp/home/mmo/maple/npsol - mmo
-  #
-  #############################################################
+#############################################################
+#
+# @path NPSOL/source/createSharedObject.txt
+#
+# @brief Creates shared objects needed for call to define_external.
+#
+# @revision
+# 2010-11-29 replaced "sed -e" command with a sequence of command 
+#            because of probably a maple bag - dka 
+# 2008-03-06 instead of anNLP[...] using anNLP["..."] by dka
+# 2008-03-03 by dka, in the call of define_external put arguments 
+#            BL, BU, CLAMBDA and LENIW, LENW together
+# 2008-02-11 Removed -O and -m32 flags from compiler calls. 
+# 2008-02-11 Renamed fortran compiler from g77 to gfortran. 
+# 2008-02-11 Removed compiler and linker commands for solaris. 
+# 2008-02-11 Started with copy /media/disk/Backup/FirewireDisk-2007-04-08/
+# backup/2006-07-backup-with-cp/home/mmo/maple/npsol - mmo
+#
+#############################################################
   createSharedObject:= proc(
     NpsolConfun::name,
     NpsolObjfun::name,
@@ -26,7 +28,7 @@
       N, NCLIN, NCNLN, NROWA, NROWJ, NROWR, A, BL, BU, INFORM,
       ITER, ISTATE, C, CJAC, CLAMBDA, OBJF, GRAD, R, XVEC, LENIW,
       LENW, systemsuccessful2,
-      SharedObjectName; 
+      SharedObjectName, fd1, fd2; 
 
     InstanceCounter:= InstanceCounter+ 1; 
 
@@ -103,10 +105,16 @@
               # note that sed command also changes occurence of 'g_res' in
               # within adifor-generated code
               #
-                system(
-                  `sed -e "s/g_npsolconfun/gnpsolconfun/" \
-                  g_npsolconfun.f > gnpsolconfun.f`
-                ); 
+              #  system(
+              #        `sed -e "s/g_npsolconfun/gnpsolconfun/" \
+              #        g_npsolconfun.f > gnpsolconfun.f`
+              #      );  
+              #  
+                fd1 := fopen(cat("./sedcommandforconfun.txt"), WRITE, TEXT);
+                fprintf(fd1, "sed -e 's/g_npsolconfun/gnpsolconfun/g' g_npsolconfun.f > gnpsolconfun.f");
+                fclose(fd1);
+                system("sh sedcommandforconfun.txt");
+                system("rm -f sedcommandforconfun.txt");
                 system("rm -f g_npsolconfun.f");
         
             end if; # UseAdifor= true
@@ -192,11 +200,17 @@
           # note that sed command also changes occurence of 'g_res' in
           # within adifor-generated code
           #
-            system(
-              `sed -e "s/g_npsolobjfun/gnpsolobjfun/" \
-              g_npsolobjfun.f > gnpsolobjfun.f`
-                ); 
-            system("rm -f g_npsolobjfun.f");
+          #  system(
+          #    `sed -e "s/g_npsolobjfun/gnpsolobjfun/" \
+          #    g_npsolobjfun.f > gnpsolobjfun.f`
+          #      );  
+          #
+           fd2 := fopen(cat("./sedcommandforobjfun.txt"), WRITE, TEXT);
+           fprintf(fd2, "sed -e 's/g_npsolobjfun/gnpsolobjfun/g' g_npsolobjfun.f > gnpsolobjfun.f");
+           fclose(fd2);
+           system("sh sedcommandforobjfun.txt"); 
+           system("rm -f sedcommandforobjfun.txt"); 
+           system("rm -f g_npsolobjfun.f");
 
         end if; # UseAdifor= true
 
@@ -221,7 +235,7 @@
       SharedObjectName:= cat(
         "cwrap_npsol", InstanceCounter, ".so"
       );
-
+      
       if
         OperatingSystem= "linux" and UseAdifor= false
       then 
@@ -239,7 +253,7 @@
         OperatingSystem= "linux" and UseAdifor= true
       then 
         LinkerCommand:= cat(
-          `gcc -shared -Xlinker -Bsymbolic  gnpsolconfun.o gnpsolobjfun.o `,
+          `gcc -shared -Xlinker -Bsymbolic gnpsolconfun.o gnpsolobjfun.o `,
           _ModulesDirectory, `/Npsol/ext_routines/f2c/cwrap/npsolconfunad.o `,
           _ModulesDirectory, `/Npsol/ext_routines/f2c/cwrap/npsolobjfunad.o `,
           _ModulesDirectory, `/Npsol/ext_routines/f2c/cwrap/npsol_open.o `,
@@ -247,8 +261,10 @@
           _ModulesDirectory, `/Npsol/ext_routines/f2c/cwrap/set_params.o `,
           _ModulesDirectory, `/Npsol/ext_routines/f2c/cwrap/cwrap_npsol.o `,
           _ModulesDirectory, `/Npsol/ext_routines/f2c/shared_obj/npsol.so `,
-          "$AD_LIB/lib/ReqADIntrinsics-$AD_OS.o ",
-          "$AD_LIB/lib/libADIntrinsics-$AD_OS.a ",        
+          # `$AD_LIB/lib/ReqADIntrinsics-$AD_OS.o `,
+          # `$AD_LIB/lib/libADIntrinsics-$AD_OS.a `,   
+          _AD_LIB,`/lib/ReqADIntrinsics-Linux86_64.o `,
+          _AD_LIB,`/lib/libADIntrinsics-Linux86_64.a `,             
           `-lf2c -lm -lgfortran -o `, 
           SharedObjectName
         );

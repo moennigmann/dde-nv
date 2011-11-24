@@ -1,8 +1,8 @@
 ###############################################################################
 # 
-# NPSOL/source/Templates/SimpleWrapperTemplate/createOptionsFile
+# @path NPSOL/source/Templates/SimpleWrapperTemplate/createOptionsFile
 #
-# revision history:
+# @revision
 # 021217 written by mmo
 #
 ###############################################################################

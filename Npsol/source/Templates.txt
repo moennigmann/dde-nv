@@ -1,12 +1,12 @@
-  ###==========================================================================
-  #
-  # module Templates
-  #
-  # revision history:
-  # 030317 added NumSysObjfunTemplate, NumSysConfunTemplate
-  # 021105 moved SimpleWrapperTemplate to SubsIntoSimpleWrapper/
-  #
-  ###==========================================================================
+#############################################################################
+#
+# @path module Templates
+#
+# @revision
+# 030317 added NumSysObjfunTemplate, NumSysConfunTemplate
+# 021105 moved SimpleWrapperTemplate to SubsIntoSimpleWrapper/
+#
+#############################################################################
   Templates:=module()
   
   export  

@@ -1,8 +1,8 @@
 ###############################################################################
 #
-# NPSOL/source/Templates/numSysObjfunTemplate
+# @path NPSOL/source/Templates/numSysObjfunTemplate
 #
-# revision history:
+# @revision
 # 030317 written by mmo
 #
 ###############################################################################

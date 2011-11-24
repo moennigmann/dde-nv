@@ -1,46 +1,44 @@
-  ###============================================================
-  #
-  # local procedure getLinConstrOfNLPforNPSOL
-  #
-  # input:    
-  #   an NLP
-  #
-  # output:   
-  #   matrix of linear constraints assigned to name in 2nd arg
-  #   bounds of linear constraints assigned to name in 3rd arg
-  #   number of linear constraints assigned to name in 4th arg
-  #
-  # notes:
-  #   in type nlp, form of linear constraints is 
-  #     0= Ax+ b or 0< Ax+ b,
-  #     (not term=0, 0>term, term>0, term<0)
-  #     LinearEqns:-CheckLinearityOfIn converts this to forms
-  #     0< Ax+ b -> Ax+ b- 0>0 which must be treated as Ax> -b,
-  #       this in turn becomes -b<= Ax<= infinity for NPSOL
-  #     0= Ax+ b -> Ax+ b- 0=0 which must be treated as Ax= -b,
-  #       this in turn becomes -b<= Ax<= -b for NPSOL
-  #
-  #   form of nonlinear constraints is 0= NonlinConstr,
-  #     0< NonlinConstr, these become
-  #     0= NonlinConstr -> 0<= NonlinConstr<= 0
-  #     0< NonlinConstr -> 0<= NonlinConstr<= infinity
-  #     for NPSOL
-  #
-  #   parameters of NLP must be substituted into linear
-  #     constraints before AMAT, bVEC are extracted, since
-  #     otherwise AMAT, bVEC might contain entries which are
-  #     not of type EvalsToFloat;
-  #
-  # revision history:
-  # 2008-03-06  instead of anNLP[...] using anNLP["..."] by dka
-  #   021125 added warning about taking into account ExplcitAEs
-  #     when checking for linearity; 
-  #   010616 proc used to be part of CreateNPSOLinstance, 
-  #     moved from CreateNPSOLinstance to separate
-  #     procedure in order to allow code to be reused
-  #     when resetting linear bounds of relaxed BCNLPs - mmo
-  #
-  ###============================================================
+###############################################################
+#
+# @path local procedure getLinConstrOfNLPforNPSOL
+#
+# @param   
+#   an NLP
+#
+# @return   
+#   matrix of linear constraints assigned to name in 2nd arg
+#   bounds of linear constraints assigned to name in 3rd arg
+#   number of linear constraints assigned to name in 4th arg
+#
+# @notes
+#   in type nlp, form of linear constraints is 
+#     	0= Ax+ b or 0< Ax+ b,
+#    	 (not term=0, 0>term, term>0, term<0)
+#    	 LinearEqns:-CheckLinearityOfIn converts this to forms
+#    	 0< Ax+ b -> Ax+ b- 0>0 which must be treated as Ax> -b,
+#    	   this in turn becomes -b<= Ax<= infinity for NPSOL
+#   	  0= Ax+ b -> Ax+ b- 0=0 which must be treated as Ax= -b,
+#   	    this in turn becomes -b<= Ax<= -b for NPSOL
+#   form of nonlinear constraints is 0= NonlinConstr,
+# 	   0< NonlinConstr, these become
+#  	  0= NonlinConstr -> 0<= NonlinConstr<= 0
+#    	 0< NonlinConstr -> 0<= NonlinConstr<= infinity
+#    	 for NPSOL
+#   parameters of NLP must be substituted into linear
+#    	 constraints before AMAT, bVEC are extracted, since
+#    	 otherwise AMAT, bVEC might contain entries which are
+#    	 not of type EvalsToFloat;
+#
+# @revision
+# 2008-03-06  instead of anNLP[...] using anNLP["..."] by dka
+#   021125 added warning about taking into account ExplcitAEs
+#     when checking for linearity; 
+#   010616 proc used to be part of CreateNPSOLinstance, 
+#     moved from CreateNPSOLinstance to separate
+#     procedure in order to allow code to be reused
+#     when resetting linear bounds of relaxed BCNLPs - mmo
+#
+###############################################################
   getLinConstrOfNLPforNPSOL:= proc(
     anNLP::NLP,
     NameForAMAT::name,

@@ -1,10 +1,10 @@
 ###############################################################################
 #
-# module NPSOL
+# @path module NPSOL
 #
-# Provides interface to optimization software NPSOL. 
+# @brief Provides interface to optimization software NPSOL. 
 #
-# revision history:
+# @revision
 # 2008-02-11 Started with copy /media/disk/Backup/FirewireDisk-2007-04-08/
 # backup/2006-07-backup-with-cp/home/mmo/maple/npsol - mmo
 #

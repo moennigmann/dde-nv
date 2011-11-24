@@ -1,7 +1,8 @@
 ###############################################################################
 #
-# exported procedure NPSOL/source/SimpleWrapperTemplate/getXVEC
+# @path exported procedure NPSOL/source/SimpleWrapperTemplate/getXVEC
 #
+# @revision
 # 021210 added use of Scaling 
 # 02xxxx written by mmo
 #

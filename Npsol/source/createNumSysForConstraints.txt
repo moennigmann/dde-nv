@@ -1,8 +1,8 @@
 ###############################################################################
 #
-# NPSOL/source/createNumSysForConstraints
+# @path NPSOL/source/createNumSysForConstraints
 #
-# revision history:
+# @revision
 # 030423 changed messagnes in try..catch phrases
 # 030318 written by mmo
 #

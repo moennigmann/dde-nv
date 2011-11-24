@@ -1,8 +1,8 @@
 ###############################################################################
 #
-# NPSOL/source/SimpleWrapperTemplate/getOptions
+# @path NPSOL/source/SimpleWrapperTemplate/getOptions
 #
-# revision history:
+# @revision
 # 021217 written by mmo
 #
 ###############################################################################

@@ -1,8 +1,8 @@
 ###############################################################################
 # 
-# NPSOL/source/Templates/SimpleWrapperTemplate/runOpt
+# @path NPSOL/source/Templates/SimpleWrapperTemplate/runOpt
 #
-# revision history:
+# @revision
 # 2008-03-03 by dka, put arguments BL, BU, CLAMBDA and LENIW, LENW 
 #            together in the call of interface
 # 021216 added arguments NumParams and Params to call of interface

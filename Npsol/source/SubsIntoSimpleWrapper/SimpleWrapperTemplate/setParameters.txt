@@ -1,8 +1,8 @@
 ###############################################################################
 #
-# NPSOL/source/SimpleWrapperTemplate/setParameters
+# @path NPSOL/source/SimpleWrapperTemplate/setParameters
 #
-# revision history:
+# @revision
 # 021217 now accesses local module variable Params, parameters can now
 #   be changed after instanciation
 # 021209 written by mmo

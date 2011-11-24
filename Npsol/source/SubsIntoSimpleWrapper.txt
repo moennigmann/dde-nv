@@ -1,8 +1,8 @@
 ###############################################################################
 #
-# local procedure NPSOL/source/SubsIntoSimpleWrapper  
+# @path local procedure NPSOL/source/SubsIntoSimpleWrapper  
 #
-# revision history:
+# @revision
 # 2008-04-07 added in options file derivative level =2 if cost function empty
 # 2008-03-06 instead of anNLP[...] using anNLP["..."] by dka
 # 030319 added input argument for scaling of parameters

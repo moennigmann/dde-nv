@@ -1,19 +1,19 @@
-    ###------------------------------------------------------------------------
-    #
-    # template function confunTemplate, local to NPSOL
-    #
-    # In CreateNPSOLexternalFunctions actual information from anNLP is 
-    # substituted into this template
-    #
-    # revision history:
-    #   021217 introduced common block for parameters; deleted code
-    #     which assigned values to par; 
-    #   021127 introduced dummy explicit AE;
-    #   021125 template now receives explicit algebraic equations; 
-    #   010424 introduced dummy parameter which allows to use template
-    #     for nlps without any parameters - mmo 
-    #   0011xx written by mmo
-    ###------------------------------------------------------------------------
+###########################################################################
+#
+# @path template function confunTemplate, local to NPSOL
+#
+# @brief In CreateNPSOLexternalFunctions actual information from anNLP is 
+# substituted into this template
+#
+# @revision
+#   021217 introduced common block for parameters; deleted code
+#     which assigned values to par; 
+#   021127 introduced dummy explicit AE;
+#   021125 template now receives explicit algebraic equations; 
+#   010424 introduced dummy parameter which allows to use template
+#     for nlps without any parameters - mmo 
+#   0011xx written by mmo
+###########################################################################
     confunTemplate:= proc(
       mode::integer,
       ncnln::integer,

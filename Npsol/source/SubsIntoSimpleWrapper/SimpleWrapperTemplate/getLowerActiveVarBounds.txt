@@ -1,11 +1,11 @@
 ###############################################################################
 #
-# NPSOL/source/SubsIntoSimpleWrapper/SimpleWrapper/getLowerActiveVarBounds
+# @path NPSOL/source/SubsIntoSimpleWrapper/SimpleWrapper/getLowerActiveVarBounds
 #
-# return list of names of variables which are within relative error 
+# @brief return list of names of variables which are within relative error 
 # Eps of their lower bound; for Eps see ./GetIndicesActiveVarBounds.txt
 #
-# revision history:
+# @revision
 # 030108 written by mmo
 #
 ###############################################################################

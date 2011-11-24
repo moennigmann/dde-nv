@@ -1,15 +1,15 @@
 ###############################################################################
 #
-# NPSOL/source/createNumNLP
+# @path NPSOL/source/createNumNLP
 #
-# creates fortran implementation of NLP using NumSys, returns shared
+# @brief creates fortran implementation of NLP using NumSys, returns shared
 #   object (result of CreateSharedObjectFromFileList)
 #
-# notes: (i) may also return instances of NumSys:-AE which provide
+# @notes (i) may also return instances of NumSys:-AE which provide
 #   information such as their home directories and the files which
 #   they comprise
 #
-# revision history:
+# @revision
 # 2008-03-06  instead of anNLP[...] using anNLP["..."] by dka
 # 030324 added optional EAEsForObjf
 # 030320 removed some explicit currentdir("NewNpsol") and

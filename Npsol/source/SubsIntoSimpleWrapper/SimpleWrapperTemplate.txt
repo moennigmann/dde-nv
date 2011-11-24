@@ -1,15 +1,15 @@
-###--------------------------------------------------------------------
+#######################################################################
 #
-# NPSOL:-Templates:-SimpleWrapperTemplate
+# @path NPSOL:-Templates:-SimpleWrapperTemplate
 #
-# note:
+# @notes
 #   options SetLowerBoundsCons and SetUpperBoundsConstr are not
 #     npsol options. If given,
 #     they will overwrite the values extracted from NLP by
 #     CreateInstance at creation of the instance of
 #     SimpleWrapperNPSOL 
 #
-# revision history:
+# @revision
 #   030319 added ScalingPars, ScalingParsOn; 
 #   030108 added new methods
 #   021217 added SetParameters, CreateOptionsFile, SetOption, GetOptions
@@ -60,7 +60,7 @@
 #   010411 added options SetLowerBoundsConstr,
 #     SetUpperBoundsConstr - mho
 #    
-###--------------------------------------------------------------------
+#######################################################################
 SimpleWrapperTemplate:= module()
 
   export

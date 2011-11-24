@@ -1,58 +1,58 @@
-  ###====================================================================
-  #
-  # exported procedure NPSOL/source/CreateInstance 
-  #
-  # input: anNLP, Non Linear Program which contains
-  #          constraints of optimization and CostFunction
-  #        WorkingDir, directory into which npsol files will be written
-  #          when compiling and at runtime
-  #
-  # output: procedure which starts npsol and returns results of
-  #           optimization run, description of proc see
-  #           local proc template SimpleWrapperTemplate in
-  #           procedure CreateInstance
-  #
-  # output to WorkingDir: several files, most importantly
-  #         npsolconfun.f, contains fortran subroutine of constraints
-  #           and their jacobian
-  #         npsolobjfun.f, contains fortran subroutine of objective
-  #           and its gradient
-  #         cwrap_npsol.so, shared object which comprises npsol
-  #           subroutines and problem dependent subroutines from
-  #           npsolconfun.f, npsolobjfun.f
-  #
-  # notes: (i) as opposed to PITCON, DDASPK, ranges are not saved
-  #   to disk, since NLP as saved to disk already contains ranges in
-  #   its list [Variables]; 
-  # (ii) As opposed to PITCON, DDASPK, SubsIntoSimpleWrapper receives
-  #   scaled system. Necessary, since NPSOL:-SubsIntoSimpleWrapper
-  #   extracts information such as variable/constraints bounds from
-  #   NLP which must be NLP for which calculations are run= scaled
-  #   NLP. 
-  #
-  # revision history:
-  #   030401 added dummy argument to call to SubsIntoSimpleWrapper
-  #   030115 added try..end try around SubsIntoSimpleWrapper and
-  #     CreateExternalFunctions; 
-  #   030115 added try..end try around CreateSharedObject to make
-  #     sure to save NLP.m to disk anyhow
-  #   021216 made option adifor default and added warning about
-  #     this; 
-  #   021210 added optional argument 'scale' and corresponding
-  #     creation and use of instance of ModelPack:-LA:-Scale
-  #   021107 added saving of NLP for RestoreInstance
-  #   021107 added input argument to SubsIntoSimpleWrapper
-  #   010503: added call to PrepareDirFor which creates
-  #     WorkingDir automatically if it does not exist, and which
-  #     throws an error if WorkingDir exists and "mwrap*" exists in
-  #     it; 
-  #   010424: removed check for existence of cost function; if no
-  #     cost function is given in anNLP, zero is substituted;
-  #     if bounds on variables are +/-infinity, they are replaced
-  #     by +/-BigBoundNPSOL - mmo
-  #   0012xx: written by mmo
-  #
-  ###=====================================================================
+#######################################################################
+#
+# @path exported procedure NPSOL/source/CreateInstance 
+#
+# @param anNLP, Non Linear Program which contains
+#          constraints of optimization and CostFunction
+#        WorkingDir, directory into which npsol files will be written
+#          when compiling and at runtime
+#
+# @brief procedure which starts npsol and returns results of
+#           optimization run, description of proc see
+#           local proc template SimpleWrapperTemplate in
+#           procedure CreateInstance
+#
+# @return to WorkingDir: several files, most importantly
+#         npsolconfun.f, contains fortran subroutine of constraints
+#           and their jacobian
+#         npsolobjfun.f, contains fortran subroutine of objective
+#           and its gradient
+#         cwrap_npsol.so, shared object which comprises npsol
+#           subroutines and problem dependent subroutines from
+#           npsolconfun.f, npsolobjfun.f
+#
+# @notes (i) as opposed to PITCON, DDASPK, ranges are not saved
+#   to disk, since NLP as saved to disk already contains ranges in
+#   its list [Variables]; 
+# (ii) As opposed to PITCON, DDASPK, SubsIntoSimpleWrapper receives
+#   scaled system. Necessary, since NPSOL:-SubsIntoSimpleWrapper
+#   extracts information such as variable/constraints bounds from
+#   NLP which must be NLP for which calculations are run= scaled
+#   NLP. 
+#
+# @revision
+#   030401 added dummy argument to call to SubsIntoSimpleWrapper
+#   030115 added try..end try around SubsIntoSimpleWrapper and
+#     CreateExternalFunctions; 
+#   030115 added try..end try around CreateSharedObject to make
+#     sure to save NLP.m to disk anyhow
+#   021216 made option adifor default and added warning about
+#     this; 
+#   021210 added optional argument 'scale' and corresponding
+#     creation and use of instance of ModelPack:-LA:-Scale
+#   021107 added saving of NLP for RestoreInstance
+#   021107 added input argument to SubsIntoSimpleWrapper
+#   010503: added call to PrepareDirFor which creates
+#     WorkingDir automatically if it does not exist, and which
+#     throws an error if WorkingDir exists and "mwrap*" exists in
+#     it; 
+#   010424: removed check for existence of cost function; if no
+#     cost function is given in anNLP, zero is substituted;
+#     if bounds on variables are +/-infinity, they are replaced
+#     by +/-BigBoundNPSOL - mmo
+#   0012xx: written by mmo
+#
+########################################################################
   CreateInstance:=proc(
     anNLP::NLP,
     WorkingDir::string

@@ -1,10 +1,10 @@
 #######################################################################
 #
-# NPSOL/source/createSharedObjectFromFilelist
+# @path NPSOL/source/createSharedObjectFromFilelist
 #
-# link problem-dependent files and connect to maple via define_external
+# @brief link problem-dependent files and connect to maple via define_external
 #
-# revision history:
+# @revision
 # 2008-03-05 Change ModelPack calls to Aux by dka 
 # 2008-02-11 Removed compiler and linker commands for solaris. 
 # 2008-02-11 Started with copy /media/disk/Backup/FirewireDisk-2007-04-08/
