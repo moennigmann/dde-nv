@@ -1,0 +1,22 @@
+###############################################################################
+#
+# @path Models/source/Olsen1983.txt
+#
+# @brief Implements peroxidase-oxidase reaction from Olsen1983
+#
+# @authors dka
+#
+# @revision
+#  2011-11-24 Created by dka
+#
+###############################################################################
+Olsen1983:= module()
+
+  export
+    Sys;
+
+$include <source/Olsen1983/Sys.txt>
+
+end module; 
+
+

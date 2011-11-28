@@ -4,8 +4,10 @@
 #
 ###############################################################################
 
-all: 
-	maple < Models.txt > Models.mpl
+all: Models.mpl
+
+Models.mpl: *.txt
+	maple  < Models.txt 
 
 clean:
 	rm -f ./*~ Models.mpl

@@ -1,0 +1,22 @@
+###############################################################################
+#
+# @path Models/source/Disney2003.txt
+#
+# @brief Implements tree chelon supply chain model from Disney2003.
+#
+# @authors dka
+#
+# @revision
+#  2011-11-24 Created by dka
+#
+###############################################################################
+Disney2003:= module()
+
+  export
+    Sys;
+
+$include <source/Disney2003/Sys.txt>
+
+end module; 
+
+
