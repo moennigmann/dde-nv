@@ -1,0 +1,9 @@
+#####################################################
+# 
+# @path Curve:-getSpecialVarNames
+#
+#####################################################
+getSpecialVarNames:= proc()
+  return(SpecialVarNames); 
+end proc; 
+

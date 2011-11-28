@@ -1,0 +1,37 @@
+####################################################
+# 
+# @path Curve:-getAllValuesOfVariable
+#
+# @param name of a variable that is stored in this curve
+#
+# @return array containing all values of this variable
+#	  stored in this curve 
+#
+#              
+# @revision
+# 2010-10-28 copied from ModelPack by dka
+# 080428 created by tqu
+#
+####################################################
+  getAllValuesOfVariable:= proc(
+    selectedVar::name
+  )
+     local thisVars, selectedVarsSet, allValues;
+     
+    #
+    # check, whether selectedVar is specified in this curve object
+    #      
+     thisVars:= convert(VarNames, set);
+     if not
+       member(selectedVar, thisVars)
+     then
+       error("%1  not specified in this curve", selectedVar);
+     end if; 
+   
+    #
+    # create named list
+    #
+     allValues:=data[selectedVar];
+     return(eval(allValues)); 
+
+   end proc; # getAllValuesOfVariable 

@@ -1,0 +1,50 @@
+###############################################################################
+#
+# @path Aux/ListOperations/getIndicesOfRepeatedEntries.txt
+#
+# @revision
+# 030314 written by mmo
+#
+###############################################################################
+getIndicesOfRepeatedEntries:= proc(
+  L::list(name)
+)
+
+  local NopsL, RepeatedEntries, i1, HashMapIndices, 
+    item, CurrentInd, CurrentPos;
+
+  NopsL:= nops(L):
+  RepeatedEntries:= {}:
+  for i1 from 1 to nops(L) do
+    if
+      numboccur(L[i1], L)>1
+    then
+      RepeatedEntries:= RepeatedEntries union {L[i1]};
+    end if;
+  end do;
+
+  #
+  # if repeated entries exist, put them into a table
+  # which returns list of indices
+  #
+    if 
+      RepeatedEntries= {} 
+    then
+      return(table()):
+    end if;
+
+    HashMapIndices:= table():
+    for item in RepeatedEntries do
+      CurrentInd:= []:
+      CurrentPos:= 0:
+      while 
+        member(item, L[CurrentPos+1..-1], 'NewPos')
+      do
+        CurrentPos:= CurrentPos+ NewPos:
+        CurrentInd:= [op(CurrentInd), CurrentPos]:
+      end do;
+      HashMapIndices[item]:= CurrentInd:
+    end do;
+      
+  return(HashMapIndices); 
+end proc:

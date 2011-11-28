@@ -1,0 +1,30 @@
+######################################################################
+#
+# @path Aux/isCurve.txt
+#
+# @param anything		
+#
+# @return true if the module is a curve (constructor CreateCurve.txt);
+#	  false otherwise.
+#
+# @revision
+# 2010-08-26 copied from ModelPack
+# 080525 removed getSpecialVarNames, tqu
+# 080515 removed redundand export definition while calling type routine;
+#	 changed input from 'module' to 'anything'. tqu	 
+# 080508 added by tqu
+#######################################################################
+isCurve:=proc(curveToTest)
+  local seqOfExports;
+  
+  #
+  #copied from exports(aCurve)
+  #
+  seqOfExports:= createPS, extendCurveByEAEs, getData, getNonTableData, 
+    getNumPoints, getParameters, getParNames, getSinglePlotForFunction, 
+    getVariables, getVarNames, getPoint, getPlot, joinCurve, splitCurve, 
+    getSpecificValues,  getAllValuesOfVariable;	
+
+  return(type(curveToTest, `module`( seqOfExports)));		
+    
+end proc: #IsCurve

@@ -4,7 +4,7 @@
 #
 # @brief Generate text for a given NLP that can be solved by GAMS
 #
-# @param aNLP of type NLP, modelName of type string
+# @param aNLP of type NLP, initial point, modelName of type string
 #
 # @return text for copying to content of .txt file that can be called by GAMS
 #
@@ -13,10 +13,13 @@
 # @authors dka
 #
 # @revision
+# 2011-11-24 added initial point in file text explicitely - dka
 # 2009-12-14 written by dka
 #
 #############################################################
-createTextForGams:= proc(aNLPpar::NLP,modelName::string)
+createTextForGams:= proc(aNLPpar::NLP,
+			 initPoint::{list(name= EvalsToFloat)},
+			 modelName::string)
 
    local finalText, mapleParameters, i, textGamsParameters, newLineTextGamsParameters,
          mapleVariables, textGamsVariables, newLineTextGamsVariables, newLineTextLowerBound,
@@ -28,7 +31,7 @@ createTextForGams:= proc(aNLPpar::NLP,modelName::string)
          textGamsDeclarationEquations, currentGamsConstraintLine, textGamsConstraints, signOfConstraint,
          mapleObjFunc,textGamsForObjFuncConstraint, iflessConstrRhs, iflessOrEqConstrRhs, ifGraterConstrRhs, 
          ifGraterOrEqConstrRhs, iflessConstrLhs, textGamsModelName, textGamsSolverOption1,textGamsSolverOption2, 
-         textGamsSolveCommand,textGamsDisplayCommand, ifHasIntVariables, solverType, aNLP;
+         textGamsSolveCommand,textGamsDisplayCommand, ifHasIntVariables, solverType, aNLP, textInitPoint;
 
    #
    # we have to rename indexed names in NLP because for GAMS 
@@ -154,6 +157,12 @@ createTextForGams:= proc(aNLPpar::NLP,modelName::string)
    end if;
 
 
+   #
+   # add initial point data
+   #
+
+   textInitPoint:=Aux:-TransferNlpToGams:-createInitialPointTextForGams(initPoint);
+
 
    #
    # transfer maple constraints and objective function to GAMS
@@ -223,8 +232,11 @@ createTextForGams:= proc(aNLPpar::NLP,modelName::string)
 
    textGamsDisplayCommand:="display SlackVariableForMinimizing.l;";
 
-   finalText:=StringTools[Join]([textGamsParameters,"\n",textGamsVariables, textGamsIntegerVariables, textGamsBinaryVariables,"\n",
-                                 textGamsDeclarationEquations, "\n", textGamsConstraints, textGamsForObjFuncConstraint, "\n",
+   finalText:=StringTools[Join]([textGamsParameters,"\n",
+				 textGamsVariables, textGamsIntegerVariables, textGamsBinaryVariables,"\n",
+				 textInitPoint,"\n",
+                                 textGamsDeclarationEquations, "\n", 
+				 textGamsConstraints, textGamsForObjFuncConstraint, "\n",
                                  textGamsModelName,textGamsSolverOption1,textGamsSolverOption2,textGamsSolveCommand,textGamsDisplayCommand],"");
    RETURN(finalText);
 

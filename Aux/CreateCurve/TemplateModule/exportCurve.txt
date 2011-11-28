@@ -1,0 +1,52 @@
+######################################################################
+#
+# @path Aux/CreateCurve/TemplateModule/exportCurve.txt
+#
+# @brief exports point like data to a file. 
+#
+# @param name of a file to which the point like data should be exported
+#	
+# @return A file containing point like data from the curve object.
+#	  One line starts with the key of a table entry of the point
+#	  like data. The rest of the lines contains the values 
+#	  stored in the entry corresponding to the key. The values are
+#	  space seperated. Can be read back into a table by
+#	  ModelPack:-ImportTableForCurve().
+#
+# @revision
+# 2010-10-28 copied from ModelPack by dka
+# 080924 written by T.Quaiser
+#
+######################################################################
+exportCurve:= proc(fileName::string)
+  local pointData, fd, allKeys, actEntry, actNrEntries, actLine, valueAsString, i, key;
+
+  if
+    FileTools[Exists](fileName)	
+  then 
+    error("File %1 already exists.");
+  end if:
+
+  fd := fopen(fileName, WRITE);
+  pointData:= getData():
+  allKeys:= [indices(pointData, 'nolist')];   
+
+  #
+  #for each key in allKeys create one string and print this string to file
+  #
+  for key in allKeys do:
+    actEntry:= eval(pointData[key]);
+    actNrEntries:= rhs( op(2, eval(pointData[key])) );
+    actLine:= convert(key, string);
+    for i from 1 to actNrEntries do:
+      valueAsString:= convert(actEntry[i], string);
+      actLine:= cat(actLine, " ", valueAsString);	
+    end do:
+    writeline(fileName, actLine); 	    
+  end do:
+  
+  fclose(fd);
+
+
+end proc; 
+

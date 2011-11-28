@@ -1,0 +1,73 @@
+###############################################################################
+#
+# @path ModelPack:-SubsToCreateSubsList
+#
+# @brief from list L of names and list of substitutions create list of
+# substitutions which only contains names of L
+#
+# @param 
+#   substitution list, list of names
+#
+# @return
+#   substitution list which only contains substitutions for names
+#   given in first argument
+#
+# @revision
+# 2010-08-26 copied from old ModelPack code by dka
+# 030121 changed first parameter type from list(name= EvalsToFloat)
+#   to list(name= anything)
+# 030109 changes necessary to allow 2nd input argument to be of type
+#   term
+# 020702 written by mmo
+#
+###############################################################################
+subsToCreateSubsList:= proc(
+  SubsList::list(name= anything),
+  ListOfNames::list({name, term})
+)
+
+  local NewSubsList, Err, nErr, i1, LhsInNewSubsList; 
+
+  #
+  # create list
+  #
+    NewSubsList:= [seq(
+      ListOfNames[i1]= subs(
+        SubsList,
+        ListOfNames[i1]
+      ),
+     i1= 1..nops(ListOfNames)
+    )];
+
+  #
+  # warn if not all rhs in new list evaluate to float
+  #
+    Err:= array(1..nops(NewSubsList));
+    nErr:= 0;
+    for i1 from 1 to nops(NewSubsList) do
+      if not
+        type(rhs(NewSubsList[i1]), EvalsToFloat)
+      then
+        nErr:= nErr+ 1;
+        Err[nErr]:= i1;
+      end if;
+    end do;
+    if not
+      nErr= 0
+    then
+      Err:= convert(Err, list);
+      Err:= Err[1..nErr];
+      LhsInNewSubsList:= map(lhs, NewSubsList);
+      Err:= [seq(
+        LhsInNewSubsList[i1], i1= Err
+      )]; 
+      WARNING(
+        "in SubsToCreateSubsList, the following entries do not evaluate to float: %1", 
+        Err
+      );
+    end if; 
+ 
+    return(NewSubsList); 
+    
+end proc; # SubsToCreatSubsList
+

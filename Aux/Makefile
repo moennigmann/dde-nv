@@ -17,6 +17,6 @@ Aux.mpl: *.txt
 	mv -f tmp Aux.mpl 
 
 clean:
-	rm -f ./*~ ./BoxOperations/*~ ./CreateCurve/*~ ./FileOperations/*~ ./IntervalArithmetics/*~ ./LinearAlgebra/*~ ./LinearEqns/*~ ./ListOperations/*~ ./NLP/*~ ./Other/*~ ./Parsers/*~ ./Programming/*~./SystemClasses/*~
+	rm -f ./*~ ./BoxOperations/*~ ./CreateCurve/*~ ./FileOperations/*~ ./IntervalArithmetics/*~ ./LinearAlgebra/*~ ./LinearEqns/*~ ./ListOperations/*~ ./NLP/*~ ./Other/*~ ./Parsers/*~ ./Programming/*~ ./SystemClasses/*~ ./TransferNlpToGams/*~
 	rm -f Aux.mpl
  

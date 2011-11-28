@@ -1,0 +1,39 @@
+#############################################################
+#
+# @path Aux/FileOperations/deleteDirectory.txt
+#
+# @param aString, contains name of directory to be
+#   deleted
+#
+# @return none
+# 
+# @brief directory of name aString is removed,
+#   so are all files in it
+#
+# @authors dka
+#
+# @revision
+# 2011-11-24 created by dka
+#
+#############################################################
+deleteDirectory:= proc(
+   aString::string
+)
+
+  local SystemCommand;
+
+  #
+  # create unix command
+  #
+    SystemCommand:= cat(
+      "rm -rf ", aString);
+
+  SystemCommandOk:= system(SystemCommand);
+
+  if not
+    SystemCommandOk= 0 
+  then
+    error("removing directory %1 was not successful", aString);
+  end if; 
+  
+end proc; #deleteDirectory

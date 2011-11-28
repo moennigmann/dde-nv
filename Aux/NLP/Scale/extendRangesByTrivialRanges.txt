@@ -1,0 +1,60 @@
+###############################################################################
+#
+# @path Aux/NLP/Scale/extendRangesByTrivialRanges.txt
+#
+# @brief
+# given list of ranges list(name= range) and list of variables list(name)
+# sort ranges in order of variables, put in trivial range -1..1 for each
+# variable for which no range exists
+#
+# @return
+# returns set of variables for which ranges are missing, set of variables
+# for which obsolete ranges were given and new ranges which have been
+# sorted in order of names of second input argument and extend by trivial
+# ranges for missing ranges
+#
+# @revision
+# 2010-03-09 moved from ModelPack by dka
+# 021030 written by mmo
+#
+###############################################################################
+extendRangesByTrivialRanges:= proc(
+  Ranges::list(name= range),
+  Vars::list(name)
+)
+
+  local NamesInRanges, Missing, Obsolete, NumVars, item, i1, NewRanges;   
+
+  #
+  # determine missing and obsolete ranges
+  #
+    NamesInRanges:= map(lhs, Ranges); 
+    Missing, Obsolete:= Aux:-ListOperations:-getMissingAndObsoleteNames(
+      NamesInRanges,
+      Vars
+    );
+
+  #
+  # sort ranges into order of variables,
+  # extend Ranges by trivial ranges
+  #
+    NumVars:= nops(Vars); 
+    NewRanges:= array(1..NumVars);
+    for i1 from 1 to NumVars do
+      item:= Vars[i1]; 
+      if not
+        member(item, Missing)
+      then
+        NewRanges[i1]:= item= subs(
+          Ranges, item
+        );
+      else
+        NewRanges[i1]:= item= -1..1;
+      end if;
+    end do;
+    NewRanges:= convert(NewRanges, list); 
+
+  return(Missing, Obsolete, NewRanges);
+
+end proc; 
+

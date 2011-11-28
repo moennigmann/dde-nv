@@ -1,4 +1,4 @@
-#------------------------------------------------------------
+###################################################################
 #
 # @path Aux/FileOperations.txt
 #
@@ -7,12 +7,14 @@
 # @authors mmo, dka
 #
 # @revision
+# 2011-11-24 added procedure deleteDirectory - dka
 # 2008-03-05 created from ModelPack by dka 
 # 
-#------------------------------------------------------------
+###################################################################
 FileOperations:= module()
 
   export
+    deleteDirectory,
     dirExists,
     fileExists,
     findFirstSharedObject,
@@ -23,6 +25,7 @@ FileOperations:= module()
     runSystemCommandInDir,
     splitPathAndFile; 
 
+$include <FileOperations/deleteDirectory.txt>
 $include <FileOperations/dirExists.txt>
 $include <FileOperations/fileExists.txt>
 $include <FileOperations/findFirstSharedObject.txt>

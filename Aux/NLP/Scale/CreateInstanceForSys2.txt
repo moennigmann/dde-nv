@@ -1,0 +1,123 @@
+#####################################################################
+#
+# @path Aux/NLP/Scale/CreateInstanceForSys2.txt
+#
+# @brief
+# as opposed to CreateInstanceForExtAESys, two instances of TemplateModule
+#   are created here, one for variables, one for parameters; these are
+#   returned to calling routines separately
+#
+# @revision
+# 2010-03-09 moved from ModelPack by dka 
+# 040323 treats now DAESys with nonempty [AEs] -jge
+# 030224 renamed to CreateInstanceForSys2, treats both ExtAESys and DAESys
+# 030222 copy of LA/Scale/CreateInstanceForExtAESys
+# ------ revision history of LA/Scale/CreateInstanceForExtAESys
+# 030222 edited comments only 
+# 021030 added missing local var decl (none present before
+#   this change;
+# 021008 added carriage return to printf
+# 021008 written by mmo, reusing CreateInstanceForDAESys
+#
+#####################################################################
+CreateInstanceForSys2:= proc(
+  Sys::{DAESys, ExtAESys},
+  ReqRanges::list(name= range)
+) 
+
+  local Missing, Obsolete, ExtendedRangesVars, ExtendedRangesPars, 
+    InstanceVars, InstancePars, Vars, Pars; 
+
+  #------------------------------------------------------------
+  #
+  # extract used information from ExtAESys, DAESys: Vars, Pars
+  #
+  #------------------------------------------------------------
+    if
+      type(Sys, DAESys)
+    then
+      Vars:= [op(Sys["DynVars"]),op(Sys["AlgVars"])];
+      Pars:= map(lhs, Sys["Parameters"]); 
+#      if not
+#        Sys["AEs"]= []
+#      then
+#        error("cannot be applied to DAESys with nonempty AEs");
+#      end if; 
+    elif
+      type(Sys, ExtAESys)
+    then
+      Vars:= Sys["Variables"];
+      Pars:= map(lhs, Sys["Parameters"]); 
+    end if; 
+
+  #------------------------------------------------------------
+  #
+  # sort and extend ranges of Variables and Parameters
+  #
+  #------------------------------------------------------------
+    #
+    # extend Variables ranges by trivial ranges in case there are
+    # Variables for which no ranges have been specified
+    #
+      Missing, Obsolete, ExtendedRangesVars:= 
+        Aux:-NLP:-Scale:-extendRangesByTrivialRanges(
+        ReqRanges,
+        Vars
+      );
+      printf(
+        "scaling %d out of %d existing Variables\n",
+        nops(Vars)- nops(Missing), 
+        nops(Vars)
+      ); 
+
+    #
+    # same as above for Parameters
+    #
+      Missing, Obsolete, ExtendedRangesPars:= 
+        Aux:-NLP:-Scale:-extendRangesByTrivialRanges(
+        ReqRanges,
+        Pars
+      );
+      printf(
+        "scaling %d out of %d existing Parameters\n",
+        nops(Pars)- nops(Missing), 
+        nops(Pars)
+      ); 
+
+    #
+    # warn about obsolete ranges
+    #
+      Obsolete:= (convert(map(lhs, ReqRanges), set)  minus
+        convert(map(lhs, ExtendedRangesVars), set)
+      );
+      Obsolete:= (Obsolete minus
+        convert(map(lhs, ExtendedRangesPars), set)
+      ); 
+       if not
+        Obsolete= {}
+      then
+        WARNING("ignoring ranges for %1", Obsolete); 
+      end if; 
+
+  #------------------------------------------------------------
+  #
+  # create instance of TemplateModule2 for Variables
+  #
+  #------------------------------------------------------------
+    InstanceVars:= SubsIntoTemplateModule2(
+      ExtendedRangesVars
+    );
+
+  #------------------------------------------------------------
+  #
+  # create instance of TemplateModule2 for Parameters
+  #
+  #------------------------------------------------------------
+    InstancePars:= SubsIntoTemplateModule2(
+      ExtendedRangesPars
+    );
+
+  return(InstanceVars, InstancePars);
+
+end proc; 
+

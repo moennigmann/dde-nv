@@ -1,0 +1,39 @@
+###############################################################################
+#
+# @path Aux/ListOperations/getListOfLhsIn
+#
+# @brief Extract left hand sides from list which may contain both names
+#        and equations of type name= anything
+#
+# @param
+#   a list which contains names or equations with names on lhs
+#
+# @return
+#   list of names on lhs of entries in input list
+#
+# @revision
+# 020402 written by mmo
+#
+###############################################################################
+getListOfLhsIn:= proc(
+  aList::list({name, name= anything})
+)
+
+  local item, ListOfNames;
+
+  ListOfNames:= [];
+  for item in aList do
+    if 
+      type(item, equation)
+    then
+      ListOfNames:= [op(ListOfNames), lhs(item)];
+    else
+      ListOfNames:= [op(ListOfNames), item];
+    end if;
+  end do;
+
+  return(ListOfNames);
+
+end proc; # getListOfLhsIn
+
+

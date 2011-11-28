@@ -1,0 +1,62 @@
+####################################################
+# 
+# @path Curve:-getSpecificValues
+#
+# @param position -> integer; specifies the position in the list, stored in each entry of the table of the curve object. 
+#	 selectedVars -> list of names; specifies the indices of interest in the table of the curve object.
+#
+# @return list of the form: name = number; name corresponds to an entry of the input parameter selectedVars;
+#	  number contains the element of the list (indexed by name in the curve object) at a position, specified
+#	  by the first input parameter.
+#
+# @brief  Each curve object contains for each variable a list of values.
+#	       For a list of variables (each has to be an index in the table underlying curve object) and an integer (specifies a position of
+#	       the list)element of
+#	       the list)), this function
+#	       extracts, for each variable in the list its value at the datapoint specified by the integer (position).  
+#              
+# @revision
+# 2010-10-28 copied from ModelPack by dka
+# 060802 written by tqu
+#
+####################################################
+  getSpecificValues:= proc(
+    position::posint,
+    selectedVars::list(name)
+  )
+     local thisVars, selectedVarsSet, point;
+     
+    #
+    # check, whether the variables in selected Vars are specified in this curve object
+    #      
+    thisVars:= convert(VarNames, set);
+    selectedVarsSet:= convert(selectedVars, set);
+    if not
+      selectedVarsSet subset thisVars
+    then
+      error("%1 contains variables not specified in this curve", selectedVars);
+    end if; 
+    #
+    # check, whether position is <= the number of elements in this curve
+    #
+      if 
+        position > NumDataPoints 
+      then
+        error("%1 is out of bound. It has to be <= %2", position, NumDataPoints);
+      end if; 
+
+    #
+    # create named list
+    #
+      point:= [
+        seq(
+          selectedVars[i1]= data[selectedVars[i1]][position],
+          i1= 1..nops(selectedVars)
+        )
+      ]; 
+      
+
+     return(point); 
+
+   end proc; # getSpecificValues
+  

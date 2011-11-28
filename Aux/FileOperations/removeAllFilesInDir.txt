@@ -1,6 +1,6 @@
 #############################################################
 #
-# @path Aux/FileOperations/RemoveAllFilesInDir.txt
+# @path Aux/FileOperations/removeAllFilesInDir.txt
 #
 # @param aString, contains name of directory to be
 #   deleted

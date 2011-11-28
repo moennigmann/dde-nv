@@ -4,19 +4,24 @@
 #
 # @brief Generates file which contains text for a given NLP that can be solved by GAMS
 #
-# @param aNLP of type NLP, filepath of type string, modelName of type string (optional)
+# @param aNLP of type NLP, 
+#        initial point, 
+#        filepath of type string, 
+#        modelName of type string (optional)
 #
-# @return 
+# @return none
 #
 # @notes uses procedure createTextForGams
 #
 # @authors dka
 #
 # @revision
+# 2011-11-24 added initial point in file text explicitely - dka
 # 2009-12-17 written by dka
 #
 #############################################################
 createFileWithTextForGams:= proc(aNLP::NLP,
+                         initPoint::{list(name= EvalsToFloat)},
                          filePathGAMS::string
                           # optional modelName
                          )
@@ -27,9 +32,9 @@ createFileWithTextForGams:= proc(aNLP::NLP,
       # extract optional arguments
       #
         if 
-          nargs>2
+          nargs>3
         then 
-          modelName:= convert(args[3],string);
+          modelName:= convert(args[4],string);
         else
           #
           # set model name for Gams the same as the given file name 
@@ -39,7 +44,7 @@ createFileWithTextForGams:= proc(aNLP::NLP,
           modelName:=StringTools[Split](fileName,".")[1]; 
         end if; 
        
-    textForGAMS:=Aux:-TransferNlpToGams:-createTextForGams(aNLP, modelName);
+    textForGAMS:=Aux:-TransferNlpToGams:-createTextForGams(aNLP, initPoint, modelName);
        
     fd := fopen(
       filePathGAMS,

@@ -1,0 +1,49 @@
+###############################################################################
+#
+# @path Aux/NLP/Scale/SubsIntoTemplateModule2.txt
+#
+# @brief creates instance of Templates/TemplateModule2
+#
+# @revision
+# 2010-03-09 moved from ModelPack by dka
+# 030223 written by mmo
+#
+###############################################################################
+SubsIntoTemplateModule2:= proc(
+  ReqRanges::list(name= EvalsToFloat..EvalsToFloat)
+)
+
+  local DtoBeSubs, cToBeSubs, SubsLists, SubsListPhysToScaledToBeSubs, 
+    SubsListScaledToPhysToBeSubs, InvDtoBeSubs, i1, instance;  
+
+  #------------------------------------------------------------
+  #
+  # create matrix/vector for transformation and substitution lists
+  #
+  #------------------------------------------------------------
+    DtoBeSubs:= Aux:-NLP:-Scale:-calcD(ReqRanges);
+    cToBeSubs:= Aux:-NLP:-Scale:-calcc(ReqRanges);
+
+    SubsLists:= Aux:-NLP:-Scale:-createSubsLists(
+      map(lhs, ReqRanges),
+      DtoBeSubs, 
+      cToBeSubs
+    );
+
+    SubsListPhysToScaledToBeSubs:= SubsLists[1];
+    SubsListScaledToPhysToBeSubs:= SubsLists[2];
+
+    InvDtoBeSubs:= array(1..nops(ReqRanges));
+    for i1 from 1 to nops(ReqRanges) do
+      InvDtoBeSubs[i1]:= 1/DtoBeSubs[i1];
+    end do;
+
+  #------------------------------------------------------------
+  #
+  # substitute into template
+  #
+  #------------------------------------------------------------
+$include<NLP/Scale/SubsIntoTemplateModule2/TemplateModule2.txt>
+
+end proc; 
+
