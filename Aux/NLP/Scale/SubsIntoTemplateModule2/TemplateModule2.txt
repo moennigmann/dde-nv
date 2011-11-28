@@ -1,0 +1,80 @@
+####################################################################
+# @path Aux/NLP/Scale/Templates/TemplateModule2.txt
+#
+# @brief differs from CreateInstance/TemplateModule in that present
+#   file is much simpler; avoid complicated structure of TemplateModule
+#   which only arose in context of adifor-generated Hopf and SN systems
+#
+# @revision
+# 2010-03-09 moved from ModelPack by dka
+# 030225 added GetRanges
+# 030224 added MapPhysToScaled, MapScaledToPhys
+# 030223 copy of ModelPack/source/NLP/Scale/CreateInstance/TemplateModule
+# ------ revision history of 
+#   ModelPack/source/NLP/Scale/CreateInstance/TemplateModule
+# 030223 edited comments only 
+# 021209 added entries to list of commented list of
+#   received variables; (ii) added SubsIntoNLP
+# 021009 added GetInvD
+# 020930 added SubsIntoAESys
+# 0209xx written by mmo
+#
+####################################################################
+module()
+
+  export
+    getc,
+    getD, 
+    getInvD, 
+    getRanges, 
+    getSubsListPhysToScaled,
+    getSubsListScaledToPhys,
+    mapPhysToScaled, 
+    mapScaledToPhys, 
+    subsIntoSys; 
+    # for more procedures see CreateInstance/TemplateModule
+    # present template module has been created in order to simplify
+    # CreateInstance/TemplateModule, in particular, present module
+    # only contains one scaling, i.e. for Variables and Parameters
+    # of a, say, ExtAESys, two instances of the present module
+    # must be created instead of two instances of CreateInstance/
+    # TemplateModule
+
+   local 
+    subsIntoExtAESys,
+    subsIntoDAESys, 
+    SubsListPhysToScaled, 
+    SubsListScaledToPhys, D, c, InvD,
+    Ranges, RangesNames; 
+
+  #
+  # receive varialbes from constructor CreateInstanceForExtAESys2
+  #
+      SubsListPhysToScaled:= SubsListPhysToScaledToBeSubs; 
+      SubsListScaledToPhys:= SubsListScaledToPhysToBeSubs;
+      D:= copy(DtoBeSubs);
+      c:= copy(cToBeSubs); 
+      InvD:= copy(InvDtoBeSubs);
+      Ranges:= ReqRanges; 
+
+  #
+  # calculate some local variables
+  #
+    RangesNames:= map(lhs, Ranges); 
+
+$include<NLP/Scale/SubsIntoTemplateModule2/TemplateModule2/getc.txt>
+$include<NLP/Scale/SubsIntoTemplateModule2/TemplateModule2/getD.txt>
+$include<NLP/Scale/SubsIntoTemplateModule2/TemplateModule2/getInvD.txt>
+$include<NLP/Scale/SubsIntoTemplateModule2/TemplateModule2/getSubsListPhysToScaled.txt>
+$include<NLP/Scale/SubsIntoTemplateModule2/TemplateModule2/getSubsListScaledToPhys.txt>
+$include<NLP/Scale/SubsIntoTemplateModule2/TemplateModule2/subsIntoExtAESys.txt>
+$include<NLP/Scale/SubsIntoTemplateModule2/TemplateModule2/subsIntoDAESys.txt>
+$include<NLP/Scale/SubsIntoTemplateModule2/TemplateModule2/subsIntoSys.txt>
+$include<NLP/Scale/SubsIntoTemplateModule2/TemplateModule2/mapPhysToScaled.txt>
+$include<NLP/Scale/SubsIntoTemplateModule2/TemplateModule2/mapScaledToPhys.txt>
+$include<NLP/Scale/SubsIntoTemplateModule2/TemplateModule2/getRanges.txt>
+### see comment after 'export' on more methods
+
+    end module;
+ 
+
