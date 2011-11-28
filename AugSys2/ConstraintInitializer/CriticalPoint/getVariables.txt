@@ -5,6 +5,14 @@
 # @brief returns variables of augmented system
 #
 #------------------------------------------------------------
-    getVariables:= proc()
-       return(eval(criticalPointVariablesInModule)); 
-    end proc; # getVariables 
+getVariables:= proc()
+    
+# check if augmented system defined
+
+ if (isAugSysCreatedInModule <> true)
+  then error("first define augmented system with the procedure createAugSys");
+ end if;
+ 
+ return(eval(augSysInModule["Variables"])); 
+
+end proc; # getVariables 

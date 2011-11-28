@@ -1,11 +1,13 @@
 #------------------------------------------------------------
 #
-# @path AugSys2/ConstraintInitializer/FixPoint/getParameters.txt
+# @path AugSys2/ConstraintInitializer/FixPoint/getVariables.txt
 #
-# @brief Returns parameters of augmented system
+# @authors dka
+#
+# @brief Returns variables of augmented system
 #
 #------------------------------------------------------------
-    getParameters:= proc()
+    getVariables:= proc()
     
      # check if fixed point system defined
 
@@ -13,6 +15,6 @@
      then error("first define fixed point system with the procedure createFixedPointSys");
     end if;
     
-        return(eval(fixedPointSysInModule["Parameters"])); 
+        return(eval(fixedPointSysInModule["Variables"])); 
         
-    end proc; # getParameters 
+    end proc; # getVariables 

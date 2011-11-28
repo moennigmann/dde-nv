@@ -1,0 +1,27 @@
+###############################################################################
+#
+# @path AugSys2/ConstraintInitializer/NLP/addVars.txt
+#
+# @brief add list of variables to NLP
+#
+# @revision
+#  2008-03-18 written by dka
+#
+###############################################################################
+addVars:= proc(
+  NewVars::{list(name= EvalsToFloat..EvalsToFloat)}
+)
+
+  local i;
+  
+  for i from 1 to nops(NewVars) do
+    addVariable(NewVars[i]);
+  end do;
+ 
+  return();
+
+end proc; 
+
+ 
+ 
+ 

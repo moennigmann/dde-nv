@@ -27,19 +27,19 @@ numOfFixSystemEqns:=nops(listOfDynVarsInModule);
 augSysEqns:=augSysInModule["Equations"];
 
 if (isNSType=true)
-then newEquations:=[seq(augSysEqns[i1],i1=numOfFixSystemEqns+1..3*numOfFixSystemEqns+2)];
+then newEquations:=[seq(augSysEqns[i1],i1=1..3*numOfFixSystemEqns+2)];
 end if;
 
 if (isFlipOrFoldType=true)
-then newEquations:=[seq(augSysEqns[i1],i1=numOfFixSystemEqns+1..2*numOfFixSystemEqns+1)];
+then newEquations:=[seq(augSysEqns[i1],i1=1..2*numOfFixSystemEqns+1)];
 end if;
 
 if (isSaddleNodeType=true)
-then newEquations:=[seq(augSysEqns[i1],i1=numOfFixSystemEqns+1..2*numOfFixSystemEqns+1)];
+then newEquations:=[seq(augSysEqns[i1],i1=1..2*numOfFixSystemEqns+1)];
 end if;
 
 if (isHopfType=true)
-then newEquations:=[seq(augSysEqns[i1],i1=numOfFixSystemEqns+1..3*numOfFixSystemEqns+2)];
+then newEquations:=[seq(augSysEqns[i1],i1=1..3*numOfFixSystemEqns+2)];
 end if;
 
 

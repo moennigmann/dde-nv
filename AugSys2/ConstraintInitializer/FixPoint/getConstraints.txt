@@ -3,6 +3,8 @@
 # @path AugSys2/ConstraintInitializer/FixPoint/getConstraints.txt
 #
 # @brief Returns equations for defining a fix point
+# 
+# @param none
 #
 # @revision
 #    2008-03-12 Written by dka
@@ -10,24 +12,18 @@
 #------------------------------------------------------------
 getConstraints:= proc()
 
-local numOfFixSystemEqns, augSysEqns, newEquations;
+local fixedPointConstraints;
 
-# check if augmented system defined
+# check if fixed point system defined
 
- if (isAugSysCreatedInModule <> true)
-  then error("first define augmented system with the procedure createAugSys");
+ if (isFixedPointSysCreatedInModule <> true)
+  then error("first define fixed point system with the procedure createFixedPointSys");
  end if;
 
-# number of equations in FixPoint system
+fixedPointConstraints:=fixedPointSysInModule["Equations"];
 
-numOfFixSystemEqns:=nops(listOfDynVarsInModule);
 
-# take first n equations which defines fix point system
-
-augSysEqns:=augSysInModule["Equations"];
-newEquations:=[seq(augSysEqns[i1],i1=1..numOfFixSystemEqns)];
-
-return(eval(newEquations)); 
+return(eval(fixedPointConstraints)); 
 
 end proc; # getConstraints 
  

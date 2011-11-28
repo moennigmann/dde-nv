@@ -1,0 +1,49 @@
+###############################################################################
+#
+# @path AugSys2/ConstraintInitializer/NLP/changeVarsRange.txt
+#
+# @brief Changes range of existing variable in NLP
+#
+# @param List of variables with the range ([VarName=lowerborber..upperborder],...)
+#
+# @revision
+#  2008-03-13 written by dka
+#
+###############################################################################
+changeVarsRange:= proc(
+  NewVars::{list(name= EvalsToFloat..EvalsToFloat)}
+)
+  local oldVarsRanges, oldVarsNames, i, newVarName, j;
+  
+  # current variables and ranges in NLP
+  
+  oldVarsRanges:=NLPinModule["Variables"];
+  oldVarsNames:=map(lhs,oldVarsRanges);
+  
+  for i from 1 to nops(NewVars) do
+   # check if variables which ranges should be changed are defined in NLP
+     newVarName:=lhs(NewVars[i]);
+     if not member(newVarName,oldVarsNames)
+	 then
+	  error(
+	     "given variable \"%1\" is not defined in NLP",
+	      newVarName
+	    );
+     end if;
+  # replace current variables ranges with input parameters    
+     for j from 1 to nops(oldVarsNames) do
+	if(newVarName=oldVarsNames[j]) 
+	then oldVarsRanges[j]:=NewVars[i];
+	end if;
+     end do;
+  end do;
+  
+  # substitute in NLP updated renges of variables  
+  NLPinModule["Variables"]:=oldVarsRanges;
+
+  return();
+
+
+end proc; 
+
+ 

@@ -15,9 +15,11 @@ runOptForListStartPoints:= proc( NPSOLproc, ListOfStartingPoints, NumberParamToP
 
   local StrartingCriticalPoint, i, imform1, obj1, optVec1, numberStartPoints,
         bestObj, bestImform, bestNumber, bestOptVect, bestList, i2;
-  
+
 numberStartPoints:=nops(ListOfStartingPoints);
 bestObj:= infinity;
+
+# for every point from the list of given starting points calculates optimal point
 
 for i from 1 to numberStartPoints do
 AugSys2:-ConstraintInitializer:-CriticalPoint:-setStartingCriticalPoint(ListOfStartingPoints[i]);
@@ -34,6 +36,8 @@ printf("i=%d, inform=%d, obj=%f, opt=[",i,imform1,obj1);
 for i2 from 1 to NumberParamToPrint-1 do
 printf("%f, ",optVec1[i2]);
 end do;
+
+# remember the best archieved value of the objective function and corresponding optimal point
 
 if (bestObj>obj1)
 then bestObj:=obj1;

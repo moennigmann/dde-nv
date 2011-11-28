@@ -1,0 +1,11 @@
+#------------------------------------------------------------
+#
+# @path AugSys2/ConstraintInitializer/NLP/getStartingCriticalPoint.txt
+#
+# @brief returns starting point for an NLP
+#
+#------------------------------------------------------------
+    getStartingPoint:= proc()
+        return(eval(startingPointInModule)); 
+    end proc; # getStartingPoint 
+ 

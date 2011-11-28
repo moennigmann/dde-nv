@@ -1,0 +1,12 @@
+##############################################################
+#
+# @path AugSys2/ConstraintInitializer/getFixedPointSys.txt
+# 
+# @authors dka
+#
+# @brief Returns fixed point system
+#
+##############################################################
+    getFixedPointSys:= proc()
+        return(eval(fixedPointSysInModule)); 
+     end proc; # getFixedPontSys 

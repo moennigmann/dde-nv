@@ -5,6 +5,14 @@
 # @brief Returns parameters of augmented system
 #
 #------------------------------------------------------------
-    getParameters:= proc()
-       return(eval(criticalPointParametersInModule)); 
-    end proc; # getParameters 
+getParameters:= proc()
+ 
+ # check if augmented system defined
+
+ if (isAugSysCreatedInModule <> true)
+  then error("first define augmented system with the procedure createAugSys");
+ end if;
+ 
+ return(eval(augSysInModule["Parameters"])); 
+
+end proc; # getParameters 

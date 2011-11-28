@@ -12,19 +12,30 @@ addVariable:= proc(
   NewVar:: name=EvalsToFloat..EvalsToFloat
 )
 
-  local OldVars;
+  local oldVarsRanges, oldVarsNames;
  
-  OldVars:=NLPinModule["Variables"];
+  oldVarsRanges:=NLPinModule["Variables"];
+  oldVarsNames:=map(lhs,oldVarsRanges);
+  
    
   # make sure that Variables for NLP is already defined
      
      if not
-       type(OldVars, {[], list(name=EvalsToFloat..EvalsToFloat)})
+       type(oldVarsRanges, {[], list(name=EvalsToFloat..EvalsToFloat)})
      then
        error("\"Variables\" does not exist (before adding any Variable, \"Variables\" must exist even if it is empty) or it was defining wrong");
      end if;
+     
+   # check if new variable that should be added to the list is already defined
+     if member(lhs(NewVar),oldVarsNames)
+	 then
+	  error(
+	     "given variable \"%1\" is already defined in NLP",
+	      lhs(NewVar)
+	    );
+     end if;
 
-   NLPinModule["Variables"]:=[op(OldVars),NewVar];
+   NLPinModule["Variables"]:=[op(oldVarsRanges),NewVar];
  
    return();
 

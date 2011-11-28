@@ -42,7 +42,7 @@ setParameters:= proc(
 
   # set parameters
 
-   criticalPointParametersInModule:= NewPars;
+   augSysInModule["Parameters"]:= NewPars;
 
     return();
 

@@ -1,0 +1,28 @@
+###############################################################################
+#
+# @path AugSys2/ConstraintInitializer/NLP/addVarsWithoutRange.txt
+#
+# @brief add list of variables to NLP, where range of evety variable 
+#        will be set to (-infinity..infinity))
+#
+# @revision
+#  2008-03-18 written by dka
+#
+###############################################################################
+addVarsWithoutRange:= proc(
+  NewVars::{list(name)}
+)
+
+  local i;
+  
+  for i from 1 to nops(NewVars) do
+    addVariableWithoutRange(NewVars[i]);
+  end do;
+ 
+  return();
+
+end proc; 
+
+ 
+ 
+ 

@@ -16,18 +16,17 @@ setParameters:= proc(
 
   local NewParsNames, ParNames, Pars, Missing, Obsolete; 
 
-  # make sure that augemented system is already defined
+  # check if fixed point system defined
 
-  if (isAugSysCreatedInModule <> true)
-  then error("first define augmented system with the procedure createAugSys");
-  end if;
+    if (isFixedPointSysCreatedInModule <> true)
+     then error("first define fixed point system with the procedure createFixedPointSys");
+    end if;
 
   # make sure values for all parameters are given in input argument
   
     NewParsNames:= map(lhs, NewPars); 
-    NewParsNames:=[op(NewParsNames),op(listOfNVParamsInModule)];
 
-    Pars := augSysInModule["Parameters"];
+    Pars := fixedPointSysInModule["Parameters"];
     ParNames:= map(lhs, Pars);
  
     Missing, Obsolete:= Aux:-ListOperations:-getMissingAndObsoleteNames(
@@ -42,8 +41,7 @@ setParameters:= proc(
 
   # set parameters
 
-   fixPointParametersInModule:= NewPars;
-   isFixPointParamsInModule := true;
+   fixedPointSysInModule["Parameters"]:= NewPars;
 
     return();
 

@@ -1,0 +1,51 @@
+###############################################################################
+#
+# @path AugSys2/ConstraintInitializer/NLP/getVarsListForPoint.txt
+#
+# @brief for a given point (list of variables values) returns list of variables names
+#        with corresponding values 
+#
+# @revision
+#  2008-03-18 written by dka
+#
+###############################################################################
+getVarsListForPoint:= proc(
+  aPoint:: {list(EvalsToFloat)}
+)
+
+   local varsRanges, i, varsNames, listOfVarsWithValues;
+
+   # make sure that Variables for NLP is already defined
+    
+   varsRanges:=NLPinModule["Variables"];
+   if not
+     type(varsRanges, {[], list(name=EvalsToFloat..EvalsToFloat)})
+   then
+     error("\"Variables\" in NLP does not exist or it was defining wrong");
+   end if;
+
+   #make sure that order of variables in NLP is the same as order of input variables values   
+
+   if not (nops(varsRanges)=nops(aPoint))
+   then
+      error("The order of input variables values, which is %1, 
+             should be the same as the order variables in NLP, which is %2",
+             nops(aPoint),
+             nops(varsRanges));
+   end if;
+   
+   # return list of NLP variables names with corresponding values
+
+   varsNames:=map(lhs,varsRanges);
+   listOfVarsWithValues:=[];
+   for i from 1 to nops(varsNames) do
+      listOfVarsWithValues:=[op(listOfVarsWithValues),varsNames[i]=aPoint[i]];
+   end do:
+ 
+   return(listOfVarsWithValues);
+
+end proc; 
+
+ 
+ 
+ 

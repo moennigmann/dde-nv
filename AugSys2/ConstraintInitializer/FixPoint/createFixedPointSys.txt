@@ -1,0 +1,120 @@
+##################################################################
+# 
+# @path AugSys2/ConstraintInitializer/createFixedPointSys.txt
+#
+# @brief Creates system for calculation of fixed point for 
+#        a discrete time or continuous time system
+#
+# @param a model for which fixed point system should be stated,
+#        list of names of free parameters Alpha
+# 
+# @notes note that to all dynamical variables and uncertain parameters 
+#        names will be added "Star", because original names used for 
+#        augmented systems for ctitical points 
+#
+# @return system of equations that defines fix point 
+#
+# @revision
+# 2008-03-13 Written by dka
+# 
+##################################################################
+    createFixedPointSys:=proc(
+      aSys::{DTASys,DAESys},
+      listOfNVparams::list(name)
+    )
+
+    local DESys, NumOfDynEqns, VarsOfModel, ParsOfModel, NewEquations, NewVariables,
+          listVarsNamesWithStar, i,  varName, varNameStringWithStar, varNameWithStar,
+          fixedSys, listofNames, item, listOfNamesToBeChanged;
+
+
+# make sure entries of ListOfNVparams exist in first arg
+
+  listofNames:=map(lhs,aSys["Parameters"]);
+
+  for item in listOfNVparams do
+      if not member(item,listofNames)
+	 then
+	  error(
+	     "requested normal vector parameter %1 does not exist in model",
+	      item
+	    );
+	 end if;
+   end do; 
+
+
+# for discrete time systems create fixed point equations
+
+    if type(aSys, DTASys)
+    then
+     # substiture explicite algebraic equations
+      DESys := Aux:-SystemClasses:-subsExplicitAlgEqnsIntoDTASys(aSys);
+    
+      NumOfDynEqns:= nops(DESys["DynEqns"]);
+      VarsOfModel:= DESys["DynVars"];
+      ParsOfModel:= DESys["Parameters"]; 
+
+      # fixed point model equations f-x = 0
+
+      NewEquations:= [seq(
+		      0= rhs(DESys["DynEqns"][i1])-DESys["DynVars"][i1],
+		      i1= 1..NumOfDynEqns)];
+  
+      NewVariables:= DESys["DynVars"];
+
+      # add to the list algebraic equations and variables 
+   
+      NewEquations:=[op(NewEquations),op(DESys["AlgEqns"])];
+      NewVariables:=[op(NewVariables),op(DESys["AlgVars"])];
+    end if;  
+
+# for continuous time systems create steady state equations
+
+    if type(aSys, DAESys)
+    then
+     # substiture explicite algebraic equations
+      DESys := Aux:-SystemClasses:-subsExplicitAEsIntoDAESys(aSys);
+    
+      NumOfDynEqns:= nops(DESys["ODEs"]);
+            VarsOfModel:= DESys["DynVars"];
+      ParsOfModel:= DESys["Parameters"]; 
+
+      # steady state model equations f = 0
+
+      NewEquations:= [seq(
+		      0= rhs(DESys["ODEs"][i1]),
+		      i1= 1..NumOfDynEqns)];
+  
+      NewVariables:= DESys["DynVars"];
+
+      # add to the list algebraic equations and variables 
+   
+      NewEquations:=[op(NewEquations),op(DESys["AEs"])];
+      NewVariables:=[op(NewVariables),op(DESys["AlgVars"])];
+    end if;  
+
+# add to all variables names "Star" to the end  
+   
+   listOfNamesToBeChanged:=[op(NewVariables),op(listOfNVparams)];
+   listVarsNamesWithStar:=[];
+   for i from 1 to nops(listOfNamesToBeChanged) do
+      varName:=listOfNamesToBeChanged[i];
+      varNameStringWithStar := StringTools[Join]([convert(varName, string), "Star"], "");
+      varNameWithStar:=convert(varNameStringWithStar,name);
+      listVarsNamesWithStar:=[op(listVarsNamesWithStar),varName=varNameWithStar];
+   end do:
+
+#create system for fixed points calculation
+   
+   fixedSys:= table();
+   fixedSys["Equations"]:= subs(listVarsNamesWithStar,NewEquations);
+   fixedSys["Variables"]:= subs(listVarsNamesWithStar,NewVariables);
+   fixedSys["Parameters"]:= subs(listVarsNamesWithStar,DESys["Parameters"]);
+   
+
+    fixedPointSysInModule:= fixedSys;
+    isFixedPointSysCreatedInModule:=true;
+ 
+    return (eval(fixedSys));
+
+   end proc;  #createAugSys

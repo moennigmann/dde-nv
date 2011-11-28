@@ -56,8 +56,6 @@ addGeneralConstraints:= proc(
         addConstraint(listOfConstraints[i1]); 
       end if;
     end do;  
-
-
  
     return();
 

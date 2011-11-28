@@ -6,5 +6,12 @@
 #
 ##############################################################
     getAugSys:= proc()
+    
+    # check if augmented system defined
+
+     if (isAugSysCreatedInModule <> true)
+      then error("first define augmented system with the procedure createAugSys");
+     end if;
+ 
         return(eval(augSysInModule)); 
      end proc; # getAugSys 

@@ -9,23 +9,20 @@
 #
 # @revision
 #    2008-03-12 Written by dka
-#
 ##############################################################
   ConstraintInitializer:=module()
   
     export
-      calcClosestCriticalPoint,
-      calcOptPoint,
-      createAugSys,
       CriticalPoint,
       FixPoint,
-      getAugSys,
       getScaledDTASys,
       NLP,
       runOptForListStartPoints; 
 
    local augSysInModule, 
-         isAugSysCreatedInModule, 
+         isAugSysCreatedInModule,
+         isFixedPointSysCreatedInModule,
+         fixedPointSysInModule, 
          listOfNVParamsInModule,
          listOfDynVarsInModule,
          isNSType,
@@ -33,12 +30,8 @@
          isSaddleNodeType,
          isHopfType;
 
-$include <ConstraintInitializer/calcClosestCriticalPoint.txt>
-$include <ConstraintInitializer/calcOptPoint.txt>
-$include <ConstraintInitializer/createAugSys.txt>
 $include <ConstraintInitializer/CriticalPoint.txt>
 $include <ConstraintInitializer/FixPoint.txt>
-$include <ConstraintInitializer/getAugSys.txt>
 $include <ConstraintInitializer/getScaledDTASys.txt>
 $include <ConstraintInitializer/NLP.txt>
 $include <ConstraintInitializer/runOptForListStartPoints.txt>

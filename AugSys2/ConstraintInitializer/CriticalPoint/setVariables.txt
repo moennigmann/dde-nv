@@ -38,7 +38,7 @@ setVariables:= proc(
 
   # set parameters
 
-   criticalPointVariablesInModule:= NewVars;
+   augSysInModule["Variables"]:= NewVars;
 
     return();
 

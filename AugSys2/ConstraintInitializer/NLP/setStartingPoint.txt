@@ -1,14 +1,14 @@
 ###############################################################################
 #
-# @path AugSys2/ConstraintInitializer/CriticalPoint/setStartingCriticalPoint.txt
+# @path AugSys2/ConstraintInitializer/CriticalPoint/setStartingPoint.txt
 #
-# @brief Sets critical point on the boundary with which the optimization will start 
+# @brief Sets point with which the optimization will start 
 #
 # @revision
 #  2008-03-13 written by dka
 #
 ###############################################################################
-setStartingCriticalPoint:= proc(
+setStartingPoint:= proc(
   NewVars::{list(EvalsToFloat),list(name= EvalsToFloat)}
 )
 
@@ -40,7 +40,7 @@ setStartingCriticalPoint:= proc(
 
   if type(NewVars, list(EvalsToFloat))
   then 
-       startingCriticalPointInModule:= NewVars;
+       startingPointInModule:= NewVars;
   end if;
   
   #
@@ -80,7 +80,7 @@ setStartingCriticalPoint:= proc(
          end do;
        end do;
 
-       startingCriticalPointInModule:= convert(OrderedCriticalPoint,list);
+       startingPointInModule:= convert(OrderedCriticalPoint,list);
     
   end if;
 

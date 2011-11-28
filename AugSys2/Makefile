@@ -14,6 +14,7 @@ AugSys2.mpl: *.txt
 	maple  < AugSys2.txt 
 
 clean:
-	rm -f ./*~ ./NeimarkSackerNV/*~./FlipAndFoldNV/*~./ConstraintInitializer/*~
+	rm -f ./*~ ./NeimarkSackerNV/*~ ./FlipAndFoldNV/*~ ./ConstraintInitializer/*~
+	rm -f ./ConstraintInitializer/CriticalPoint*~ ./ConstraintInitializer/FixPoint*~
 	rm -f AugSys2.mpl
 

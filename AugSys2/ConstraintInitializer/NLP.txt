@@ -23,7 +23,10 @@
        addNVConstraints,
        addVariable,
        addVariableWithoutRange,
-       copyCriticalPointParamsToNLP,
+       addVars,
+       getVarsListForPoint,
+       addVarsWithoutRange,
+       changeVarsRange,
        createNewNLP,
        getConstraints,
        getCostFunction,
@@ -32,23 +35,22 @@
        getNLP,
        getObjfunTemplatePath,
        getParameters,
+       getStartingPoint,
        getVariables,
        setBinaryVariables,
        setConstraints,
-       setCostFunctionForClosestCP,
        setCostFunction,
        setExplicitAEs,
        setGeneralConstraints,
        setLinearConstraints,
        setObjfunTemplatePath,
-       setParametersForAugSys,
        setParameters,
+       setStartingPoint,
        setVariables,
-       setVarsForAugSysWithoutRange,
-       setVarsForClosestPontWithoutRange,
        setVarsWithoutRange; 
 
-   local NLPinModule;
+   local NLPinModule,
+         startingPointInModule;
 
 $include <ConstraintInitializer/NLP/addConstraint.txt>
 $include <ConstraintInitializer/NLP/addConstraints.txt>
@@ -61,7 +63,10 @@ $include <ConstraintInitializer/NLP/addNVConstraintsForTighterApprBox.txt>
 $include <ConstraintInitializer/NLP/addNVConstraints.txt>
 $include <ConstraintInitializer/NLP/addVariable.txt>
 $include <ConstraintInitializer/NLP/addVariableWithoutRange.txt>
-$include <ConstraintInitializer/NLP/copyCriticalPointParamsToNLP.txt>
+$include <ConstraintInitializer/NLP/addVars.txt>
+$include <ConstraintInitializer/NLP/getVarsListForPoint.txt>
+$include <ConstraintInitializer/NLP/addVarsWithoutRange.txt>
+$include <ConstraintInitializer/NLP/changeVarsRange.txt>
 $include <ConstraintInitializer/NLP/createNewNLP.txt>
 $include <ConstraintInitializer/NLP/getConstraints.txt>
 $include <ConstraintInitializer/NLP/getCostFunction.txt>
@@ -70,20 +75,18 @@ $include <ConstraintInitializer/NLP/getLinearConstraints.txt>
 $include <ConstraintInitializer/NLP/getNLP.txt>
 $include <ConstraintInitializer/NLP/getObjfunTemplatePath.txt>
 $include <ConstraintInitializer/NLP/getParameters.txt>
+$include <ConstraintInitializer/NLP/getStartingPoint.txt>
 $include <ConstraintInitializer/NLP/getVariables.txt>
 $include <ConstraintInitializer/NLP/setBinaryVariables.txt>
 $include <ConstraintInitializer/NLP/setConstraints.txt>
-$include <ConstraintInitializer/NLP/setCostFunctionForClosestCP.txt>
 $include <ConstraintInitializer/NLP/setCostFunction.txt>
 $include <ConstraintInitializer/NLP/setExplicitAEs.txt>
 $include <ConstraintInitializer/NLP/setGeneralConstraints.txt>
 $include <ConstraintInitializer/NLP/setLinearConstraints.txt>
 $include <ConstraintInitializer/NLP/setObjfunTemplatePath.txt>
-$include <ConstraintInitializer/NLP/setParametersForAugSys.txt>
 $include <ConstraintInitializer/NLP/setParameters.txt>
+$include <ConstraintInitializer/NLP/setStartingPoint.txt>
 $include <ConstraintInitializer/NLP/setVariables.txt>
-$include <ConstraintInitializer/NLP/setVarsForAugSysWithoutRange.txt>
-$include <ConstraintInitializer/NLP/setVarsForClosestPontWithoutRange.txt>
 $include <ConstraintInitializer/NLP/setVarsWithoutRange.txt>
 
 
