@@ -1,6 +1,6 @@
 #------------------------------------------------------------
 #
-# @path AugSys2/NeimarkSackerNV/CreateNeimarkSackerNVSys/TemplateModule/getSys.txt
+# @path AugSys2/DiscreteBif/NeimarkSackerNV/CreateNeimarkSackerNVSys/TemplateModule/getSys.txt
 #
 # @brief returns complete system
 #

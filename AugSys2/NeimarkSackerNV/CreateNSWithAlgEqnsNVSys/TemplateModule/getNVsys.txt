@@ -1,6 +1,6 @@
 #------------------------------------------------------------
 #
-# @path AugSys2/NeimarkSackerNV/CreateNSWithAlgEqnsNVSys/TemplateModule/getNVsys.txt
+# @path AugSys2/DiscreteBif/NeimarkSackerNV/CreateNSWithAlgEqnsNVSys/TemplateModule/getNVsys.txt
 #
 # @brief returns last block of system which defines u and r
 #        and block for finding v

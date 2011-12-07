@@ -1,6 +1,6 @@
 #############################################################
 #
-# @path AugSys2/NeimarkSackerNV/calculateNV.txt
+# @path AugSys2/DiscreteBif/NeimarkSackerNV/calculateNV.txt
 #
 # @brief Sabstitutes list of parameter values from the Neimark-Sacker critical boundary
 #        in the augmented NV system and compute normalized normal vector
@@ -25,7 +25,7 @@ local NVSysWithParam, solutionsNV, R, normOfR;
 
 # put into NV system values of parameters and eigenvalues
 
-NVSysWithParam := AugSys2:-NeimarkSackerNV:-getSysOfEqnsForNV(NVSys, NSeig, lineOfData);
+NVSysWithParam := getSysOfEqnsForNV(NVSys, NSeig, lineOfData);
 
 # solving NV system
 

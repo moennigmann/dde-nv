@@ -1,6 +1,6 @@
 ###############################################################################
 #
-# @path AugSys2/NeimarkSackerNV/normalizeVector.txt
+# @path AugSys2/DiscreteBif/NeimarkSackerNV/normalizeVector.txt
 #
 # @brief Rotates Re and Im parts of normal vector such that they are orthogonal 
 #

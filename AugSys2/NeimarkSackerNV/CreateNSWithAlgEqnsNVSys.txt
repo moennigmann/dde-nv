@@ -1,6 +1,6 @@
 ##################################################################################
 # 
-# @path AugSys2/NeimarkSackerNV/CreateNSWithAlgEqnsNVSys.txt
+# @path AugSys2/DiscreteBif/NeimarkSackerNV/CreateNSWithAlgEqnsNVSys.txt
 #
 # @brief Creates an augmented NV system for Neimark-Sacker critical boundaries
 #        for DTASys with or without algebraic equations
@@ -478,7 +478,7 @@
     
         NumNVparamsToBeSubs:= nops(ListOfNVparams); 
 
-$include <NeimarkSackerNV/CreateNSWithAlgEqnsNVSys/TemplateModule.txt>
+$include <DiscreteBif/NeimarkSackerNV/CreateNSWithAlgEqnsNVSys/TemplateModule.txt>
 
     return result;
 

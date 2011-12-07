@@ -1,6 +1,6 @@
 #############################################################
 #
-# @path AugSys2/NeimarkSackerNV/getSysOfEqnsForNV.txt
+# @path AugSys2/DiscreteBif/NeimarkSackerNV/getSysOfEqnsForNV.txt
 #
 # @brief Returns a system for Neimark-Sacker NV in which 
 #        unknown parameters are only the normal vectors (W1,W2)

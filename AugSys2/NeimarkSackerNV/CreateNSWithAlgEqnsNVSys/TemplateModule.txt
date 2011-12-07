@@ -1,6 +1,6 @@
 ###########################################################################
 # 
-# @path AugSys2/NeimarkSackerNV/CreateNSWithAlgEqnsNVSys/TemplateModule.txt 
+# @path AugSys2/DiscreteBif/NeimarkSackerNV/CreateNSWithAlgEqnsNVSys/TemplateModule.txt 
 #
 # @brief Template for the module CreateNSWithAlgEqnsNVSys
 #
@@ -43,11 +43,11 @@
           AlgVarsOfModelInModule:= AlgVarsOfModel;
           JacInModule:= copy(f_x); 
 
-$include <NeimarkSackerNV/CreateNSWithAlgEqnsNVSys/TemplateModule/getSys.txt>
-$include <NeimarkSackerNV/CreateNSWithAlgEqnsNVSys/TemplateModule/getJac.txt>
-$include <NeimarkSackerNV/CreateNSWithAlgEqnsNVSys/TemplateModule/getNVsys.txt>
-$include <NeimarkSackerNV/CreateNSWithAlgEqnsNVSys/TemplateModule/getNSEigenValueAndEigenVector.txt>
-$include <NeimarkSackerNV/CreateNSWithAlgEqnsNVSys/TemplateModule/getAugSys.txt>
+$include <DiscreteBif/NeimarkSackerNV/CreateNSWithAlgEqnsNVSys/TemplateModule/getSys.txt>
+$include <DiscreteBif/NeimarkSackerNV/CreateNSWithAlgEqnsNVSys/TemplateModule/getJac.txt>
+$include <DiscreteBif/NeimarkSackerNV/CreateNSWithAlgEqnsNVSys/TemplateModule/getNVsys.txt>
+$include <DiscreteBif/NeimarkSackerNV/CreateNSWithAlgEqnsNVSys/TemplateModule/getNSEigenValueAndEigenVector.txt>
+$include <DiscreteBif/NeimarkSackerNV/CreateNSWithAlgEqnsNVSys/TemplateModule/getAugSys.txt>
 
 
       end module; # Template

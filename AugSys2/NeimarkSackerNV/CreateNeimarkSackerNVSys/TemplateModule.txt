@@ -1,6 +1,6 @@
 ###########################################################################
 # 
-# @path AugSys2/NeimarkSackerNV/CreateNeimarkSackerNVSys/TemplateModule.txt 
+# @path AugSys2/DiscreteBif/NeimarkSackerNV/CreateNeimarkSackerNVSys/TemplateModule.txt 
 #
 # @brief Template for the module CreateNeimarkSackerNVSys
 #
@@ -40,11 +40,11 @@ result:=module() # Template
           ParsOfModelInModule:= ParsOfModel;
           JacInModule:= copy(f_x); 
 
-$include <NeimarkSackerNV/CreateNeimarkSackerNVSys/TemplateModule/getSys.txt>
-$include <NeimarkSackerNV/CreateNeimarkSackerNVSys/TemplateModule/getJac.txt>
-$include <NeimarkSackerNV/CreateNeimarkSackerNVSys/TemplateModule/getNVsys.txt>
-$include <NeimarkSackerNV/CreateNeimarkSackerNVSys/TemplateModule/getNSEigenValueAndEigenVector.txt>
-$include <NeimarkSackerNV/CreateNeimarkSackerNVSys/TemplateModule/getAugSys.txt>
+$include <DiscreteBif/NeimarkSackerNV/CreateNeimarkSackerNVSys/TemplateModule/getSys.txt>
+$include <DiscreteBif/NeimarkSackerNV/CreateNeimarkSackerNVSys/TemplateModule/getJac.txt>
+$include <DiscreteBif/NeimarkSackerNV/CreateNeimarkSackerNVSys/TemplateModule/getNVsys.txt>
+$include <DiscreteBif/NeimarkSackerNV/CreateNeimarkSackerNVSys/TemplateModule/getNSEigenValueAndEigenVector.txt>
+$include <DiscreteBif/NeimarkSackerNV/CreateNeimarkSackerNVSys/TemplateModule/getAugSys.txt>
 
 
       end module; # Template  

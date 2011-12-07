@@ -1,6 +1,6 @@
 #################################################################
 #
-# @path AugSys2/NeimarkSackerNV/CreateNeimarkSackerNVSys/TemplateModule/getAugSys.txt
+# @path AugSys2/DiscreteBif/NeimarkSackerNV/CreateNeimarkSackerNVSys/TemplateModule/getAugSys.txt
 #
 # @brief Returns first block of system which defines fixed point
 #        and block for finding Neimark-Sacker eigenvectors

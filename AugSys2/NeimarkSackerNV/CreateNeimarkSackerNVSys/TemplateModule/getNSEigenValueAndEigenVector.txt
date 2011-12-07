@@ -1,6 +1,6 @@
-#------------------------------------------------------------
+########################################################################################
 #
-# @path AugSys2/NeimarkSackerNV/CreateNeimarkSackerNVSys/TemplateModule/getNSEigenValueAndEigenVector.txt
+# @path AugSys2/DiscreteBif/NeimarkSackerNV/CreateNeimarkSackerNVSys/TemplateModule/getNSEigenValueAndEigenVector.txt
 #
 # @brief Computes Neimark-Sacker eigenvalue and eigenvector
 # 
@@ -9,7 +9,7 @@
 #        (2) a line of content data is a list of form 
 #            [param1=..., param2=..., ...]
 #
-#------------------------------------------------------------
+########################################################################################
         getNSEigenValueAndEigenVector:= proc(
           lineOfDataInit::list(name=EvalsToFloat)
           # optional radius
@@ -110,7 +110,7 @@
       # rotate eigenvector such way, that in additional holds the equation 
       # the transpose real part of it multiply by imaginary part = 0
 
-      naimarkSackerEigenVector := AugSys2:-NeimarkSackerNV:-normalizeVector(naimarkSackerEigenVector);
+      naimarkSackerEigenVector := AugSys2:-DiscreteBif:-NeimarkSackerNV:-normalizeVector(naimarkSackerEigenVector);
          
       
 	# result has form list([EigenValue, p, EigenVector])  
