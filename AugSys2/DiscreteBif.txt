@@ -1,0 +1,24 @@
+  ##############################################################
+  #
+  #  @path AugSys2/DiscreteBif.txt
+  #  
+  #  @brief collects procedures for obtaining normal vector systems
+  #         for discrete time systems
+  #
+  #  @authors dka
+  #
+  #  @revision
+  #  2008-01-09 Written by dka
+  #
+  ##############################################################
+  DiscreteBif:=module()
+  
+    export
+      FlipAndFoldNV,
+      NeimarkSackerNV; 
+
+$include <DiscreteBif/FlipAndFoldNV.txt>
+$include <DiscreteBif/NeimarkSackerNV.txt>
+
+
+  end module; # AugSys2:-DiscreteBif
