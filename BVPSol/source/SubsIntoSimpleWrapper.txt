@@ -13,9 +13,11 @@ SubsIntoSimpleWrapper:= proc(
   nodes::integer
 )
       
-    local N, M, IPRINT, NPAR, X0, TRPAR, i, P,XT,Y,FM,JAC,POUT,
+    local N, M, IPRINT, NPAR, X0, TRPAR, i, P,Y,FM,POUT,
           IFAIL,ERRY,FAL,FXAL,FXX,listForFXAL,listForFXX,
-          SimpleWrapperTemplate, FX, HDIF; 
+          SimpleWrapperTemplate, FX, HDIF,
+          FAlAl, FXXAl, FXAlAl, listForFXXPdim1, listForFXXPdim2,
+          listForFXPPdim1, listForFXPPdim2; 
 
     #
     # extract N, M, NPAR 
@@ -42,12 +44,10 @@ SubsIntoSimpleWrapper:= proc(
       
      
     #
-    # XT,Y,FM,JAC
+    # Y,FM
     # 
-      XT:=Vector(M, datatype = float[8], order = C_order);
       Y:=Matrix(M, N, datatype = float[8], order = C_order);
       FM := Matrix(2, N, datatype = float[8], order = C_order);
-      JAC:=Matrix(N, N, datatype = float[8], order = Fortran_order);
     
     #
     # FAL,FXAL,FXX
@@ -56,17 +56,44 @@ SubsIntoSimpleWrapper:= proc(
      
       listForFXAL:=[];
       for i from 1 to N do
-      listForFXAL:=[op(listForFXAL),convert(Matrix(N, NPAR), listlist)];
+        listForFXAL:=[op(listForFXAL),convert(Matrix(N, NPAR), listlist)];
       end do; 
       FXAL:=Array(listForFXAL,datatype = float[8], order = Fortran_order);
      
       listForFXX:=[];
       for i from 1 to N do
-      listForFXX:=[op(listForFXX),convert(Matrix(N, N), listlist)];
+        listForFXX:=[op(listForFXX),convert(Matrix(N, N), listlist)];
       end do; 
       FXX:=Array(listForFXX,datatype = float[8], order = Fortran_order);
 
       FX:=Matrix(N, N, datatype = float[8], order = Fortran_order);
+
+
+   #
+   # FAlAl, FXXAl, FXAlAl 
+   # third order derivatives, need only for internal optimization calculations
+   #
+     FAlAl:=Matrix(NPAR, NPAR, datatype = float[8], order = Fortran_order);
+     
+     listForFXXPdim1:=[];
+     for i from 1 to N do
+       listForFXXPdim1:=[op(listForFXXPdim1),convert(Matrix(N, NPAR), listlist)];
+     end do;
+     listForFXXPdim2 := []; 
+     for i to N do 
+       listForFXXPdim2 := [op(listForFXXPdim2), listForFXXPdim1];
+     end do; 
+     FXXAl:=Array(listForFXXPdim2,datatype = float[8], order = Fortran_order);
+
+     listForFXPPdim1:=[];
+     for i from 1 to N do
+       listForFXPPdim1:=[op(listForFXPPdim1),convert(Matrix(NPAR, NPAR), listlist)];
+     end do;
+     listForFXPPdim2 := []; 
+     for i to N do 
+       listForFXPPdim2 := [op(listForFXPPdim2), listForFXPPdim1];
+     end do; 
+     FXAlAl:=Array(listForFXPPdim2,datatype = float[8], order = Fortran_order);
       
   #
   # HDIF

@@ -5,9 +5,14 @@
 # @param  DAESys,
 #         WorkingDir, directory into which bvpsol files will be written
 #                     when compiling and at runtime
-#         nodes, number of nodes in multi-shooting procedure            
+#         nodes, number of nodes in multi-shooting procedure,
+#         list of compilled objects obtaned from TIDES            
 #
 # @return  procedure which starts bvpsol
+#
+# @notes list of compilled objects obtaned from TIDES should
+#        contain path to "calltides.o" and corresponding 
+#        system file, e.g., "scott.o"
 #
 # @revision
 #   2011-01-18 written by dka
@@ -15,7 +20,8 @@
 ######################################################################
   CreateInstance:=proc(anBVPSys::DAESys,
                        WorkingDir::string,
-                       nodes::integer)
+                       nodes::integer,
+                       objNames::list(string))
 
     local bvpsol,BVPSolInstance; 
     
@@ -43,7 +49,8 @@
       try:
         bvpsol:= createSharedObject(
           WorkingDir,
-          anBVPSys
+          anBVPSys,
+          objNames
         );
       catch:
 	printf("CreateSharedObject failed, \n");

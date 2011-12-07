@@ -10,7 +10,17 @@
 ###############################################################################
 getXT:= proc()
 
-  return(eval(XT));
+local i,XT;
+
+if ((POUT>=0) and (M>0))
+then 
+ XT:=Vector(M);
+ for i from 1 to M do
+   XT[i]:= POUT*(i-1)/M;
+ end do;
+end if;
+
+return(eval(XT));
 
 end proc; 
 

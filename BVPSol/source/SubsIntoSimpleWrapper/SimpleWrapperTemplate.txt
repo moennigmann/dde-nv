@@ -19,7 +19,6 @@ SimpleWrapperTemplate:= module()
     getInitPeriod,
     getInitPoint,
     getIPRINT,
-    getJac,
     getM,
     getN,
     getNPAR,
@@ -50,7 +49,6 @@ $include<SubsIntoSimpleWrapper/SimpleWrapperTemplate/getIFAIL.txt>
 $include<SubsIntoSimpleWrapper/SimpleWrapperTemplate/getInitPeriod.txt> 
 $include<SubsIntoSimpleWrapper/SimpleWrapperTemplate/getInitPont.txt> 
 $include<SubsIntoSimpleWrapper/SimpleWrapperTemplate/getIPRINT.txt> 
-$include<SubsIntoSimpleWrapper/SimpleWrapperTemplate/getJac.txt> 
 $include<SubsIntoSimpleWrapper/SimpleWrapperTemplate/getM.txt> 
 $include<SubsIntoSimpleWrapper/SimpleWrapperTemplate/getN.txt> 
 $include<SubsIntoSimpleWrapper/SimpleWrapperTemplate/getNPAR.txt> 

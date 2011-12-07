@@ -25,18 +25,19 @@ runBVPSol:= proc()
       P,       # initial period
       NPAR,    # number of paramaters
       TRPAR,   # parameters
-      XT,      # output time nodes
       Y,       # output trajectory
       FM,      # output eigenvalues
-      JAC,     # output jacobian
       'POUT',  # output period
       'IFAIL', # output indication of calculation errors (if IFAIL<0 then calculation failed)
       'ERRY',  # output variable if ERRY>0 then solution is not a constant
-      FAL,     # output derivative Falpha
-      FXAL,    # output derivative Fxalpha
-      FXX,     # output derivative Fxx
-      FX,      # output derivative Fx
-      HDIF     # input spep size for finite difference method
+      FAL,     # output derivative F_alpha
+      FXAL,    # output derivative F_x_alpha
+      FXX,     # output derivative F_x_x
+      FX,      # output derivative F_x
+      HDIF,    # input spep size for finite difference method
+      FAlAl,   # output derivative F_alpha_alpha
+      FXXAl,   # output derivative F_x_x_alpha
+      FXAlAl   # output derivative F_x_alpha_alpha
     );
 
   currentdir(OldDir); 

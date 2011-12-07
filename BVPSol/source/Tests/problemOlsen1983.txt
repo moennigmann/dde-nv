@@ -13,7 +13,7 @@
     problemOlsen1983:= proc()
     
       local expectedPeriod, aSys, BVPSOLproc, eigVals, period, nodes, sol,
-            succeeded;  
+            succeeded, listOfTIDESObj;  
 
       expectedPeriod:= 14.5391926329389083;
       
@@ -28,22 +28,16 @@
       #
       # init system of ODEs
       #
-        aSys := table():
-        aSys["ODEs"] := [`A'` = k7*(A0-A)-k3*A*B*Y, 
-                `B'` = k8-k1*B*X-k3*A*B*Y,
-                `X'` = k1*B*X-2*k2*X^2+3*k3*A*B*Y-k4*X+k6,
-                `Y'` = 2*k2*X^2-k5*Y-k3*A*B*Y];
-        aSys["DynVars"] := [A,B,X,Y];
-        aSys["ExplicitAEs"] := [k2=250,k4=20,k5=5.35,k6=10^(-5),k7=0.1,k8=0.825,A0=8];
-        aSys["Parameters"]:=[k1=0.1,k3=0.3];
-        aSys["AlgVars"] := []; 
-        aSys["AEs"] := [];
+        aSys := Models:-Olsen1983:-Sys:-getSys();
         
       #
       # create instance for bvpsol
       # number of nodes for multi-shooting method M=30 
       #  
-        BVPSOLproc := BVPSol:-CreateInstance(aSys, "./tmp", 30);
+        listOfTIDESObj:=[cat(_ModulesDirectory, "/BVPSol/ext_routines/f2c/cwrap/olsen/olsen.o"),
+                         cat(_ModulesDirectory, "/BVPSol/ext_routines/f2c/cwrap/olsen/calltides.o")];
+
+        BVPSOLproc := BVPSol:-CreateInstance(aSys, "./tmp", 30, listOfTIDESObj);
         
       #
       # pass initial values for bvpsol
