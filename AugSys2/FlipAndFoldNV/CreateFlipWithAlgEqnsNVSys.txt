@@ -1,6 +1,6 @@
 ###########################################################################
 # 
-# @path AugSys2/FlipAndFoldNV/CreateFlipWithAlgEqnsNVSys.txt
+# @path AugSys2/DiscreteBif/FlipAndFoldNV/CreateFlipWithAlgEqnsNVSys.txt
 #
 # @brief Creates an augmented NV system for Flip critical boundaries
 #        for DTASys with or without algebraic equations

@@ -1,6 +1,6 @@
 ##########################################################################
 # 
-# @path AugSys2/FlipAndFoldNV/CreateFlipOrFoldWithAlgEqnsNVSys.txt
+# @path AugSys2/DiscreteBif/FlipAndFoldNV/CreateFlipOrFoldWithAlgEqnsNVSys.txt
 #
 # @brief Creates an augmented NV system for Flip or Fold critical boundaries
 #        for DTASys with or without algebraic equations
@@ -391,7 +391,7 @@
     
         NumNVparamsToBeSubs:= nops(ListOfNVparams); 
 
-$include <FlipAndFoldNV/CreateFlipOrFoldWithAlgEqnsNVSys/TemplateModule.txt>
+$include <DiscreteBif/FlipAndFoldNV/CreateFlipOrFoldWithAlgEqnsNVSys/TemplateModule.txt>
 
 
     return result;

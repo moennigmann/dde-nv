@@ -1,6 +1,6 @@
 #------------------------------------------------------------
 #
-# @path AugSys2/FlipAndFoldNV/CreateFlipOrFoldWithAlgEqnsNVSys/TemplateModule/getSys.txt
+# @path AugSys2/DiscreteBif/FlipAndFoldNV/CreateFlipOrFoldWithAlgEqnsNVSys/TemplateModule/getSys.txt
 #
 # @brief returns complete system
 #

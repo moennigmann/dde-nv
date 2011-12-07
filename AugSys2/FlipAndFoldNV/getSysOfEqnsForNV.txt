@@ -1,6 +1,6 @@
 #############################################################
 #
-# @path AugSys2/FilpAndFoldNV/getSysOfEqnsForNV.txt
+# @path AugSys2/DiscreteBif/FilpAndFoldNV/getSysOfEqnsForNV.txt
 #
 # @brief Returns a system for flip or fold NV in which 
 #        unknown parameters are only the normal vector (W)

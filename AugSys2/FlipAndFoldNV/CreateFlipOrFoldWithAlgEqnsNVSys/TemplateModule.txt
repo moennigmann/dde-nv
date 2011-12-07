@@ -1,6 +1,6 @@
 ###########################################################################
 # 
-# @path AugSys2/FlipAndFoldNV/CreateFlipOrFoldWithAlgEqnsNVSys/TemplateModule.txt 
+# @path AugSys2/DiscreteBif/FlipAndFoldNV/CreateFlipOrFoldWithAlgEqnsNVSys/TemplateModule.txt 
 #
 # @brief Template for the module CreateFlipOrFoldWithAlgEqnsNVSys
 #
@@ -39,13 +39,13 @@
           AlgVarsOfModelInModule:= AlgVarsOfModel;
           JacInModule:= copy(f_x); 
 
-$include <FlipAndFoldNV/CreateFlipOrFoldWithAlgEqnsNVSys/TemplateModule/getSys.txt>
-$include <FlipAndFoldNV/CreateFlipOrFoldWithAlgEqnsNVSys/TemplateModule/getJac.txt>
-$include <FlipAndFoldNV/CreateFlipOrFoldWithAlgEqnsNVSys/TemplateModule/getNVsys.txt>
-$include <FlipAndFoldNV/CreateFlipOrFoldWithAlgEqnsNVSys/TemplateModule/getFlipOrFoldEigenVector.txt>
-$include <FlipAndFoldNV/CreateFlipOrFoldWithAlgEqnsNVSys/TemplateModule/getFlipEigenVector.txt>
-$include <FlipAndFoldNV/CreateFlipOrFoldWithAlgEqnsNVSys/TemplateModule/getFoldEigenVector.txt>
-$include <FlipAndFoldNV/CreateFlipOrFoldWithAlgEqnsNVSys/TemplateModule/getAugSys.txt>
+$include <DiscreteBif/FlipAndFoldNV/CreateFlipOrFoldWithAlgEqnsNVSys/TemplateModule/getSys.txt>
+$include <DiscreteBif/FlipAndFoldNV/CreateFlipOrFoldWithAlgEqnsNVSys/TemplateModule/getJac.txt>
+$include <DiscreteBif/FlipAndFoldNV/CreateFlipOrFoldWithAlgEqnsNVSys/TemplateModule/getNVsys.txt>
+$include <DiscreteBif/FlipAndFoldNV/CreateFlipOrFoldWithAlgEqnsNVSys/TemplateModule/getFlipOrFoldEigenVector.txt>
+$include <DiscreteBif/FlipAndFoldNV/CreateFlipOrFoldWithAlgEqnsNVSys/TemplateModule/getFlipEigenVector.txt>
+$include <DiscreteBif/FlipAndFoldNV/CreateFlipOrFoldWithAlgEqnsNVSys/TemplateModule/getFoldEigenVector.txt>
+$include <DiscreteBif/FlipAndFoldNV/CreateFlipOrFoldWithAlgEqnsNVSys/TemplateModule/getAugSys.txt>
 
 
       end module; # Template  

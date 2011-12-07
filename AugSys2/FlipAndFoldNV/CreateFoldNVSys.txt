@@ -1,6 +1,6 @@
 #########################################################################
 # 
-# @path AugSys2/FlipAndFoldNV/CreateFoldNVSys.txt
+# @path AugSys2/DiscreteBif/FlipAndFoldNV/CreateFoldNVSys.txt
 #
 # @brief Creates an augmented NV system for Fold critical boundaries
 #        for DTASys without algebraic equations

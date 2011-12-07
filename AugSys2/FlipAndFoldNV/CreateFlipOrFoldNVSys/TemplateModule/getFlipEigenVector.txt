@@ -1,6 +1,6 @@
 #------------------------------------------------------------
 #
-# @path AugSys2/FlipAndFoldNV/CreateFlipOrFoldNVSys/TemplateModule/getFlipEigenVector.txt
+# @path AugSys2/DiscreteBif/FlipAndFoldNV/CreateFlipOrFoldNVSys/TemplateModule/getFlipEigenVector.txt
 #
 # @brief Computes flip eigenvector
 # 

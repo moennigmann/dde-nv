@@ -1,6 +1,6 @@
 #####################################################################
 # 
-# exported procedure AugSys2:-FlipAndFoldNV:-CreateFoldWithAlgEqnsNVSys
+# exported procedure AugSys2:-DiscreteBif:-FlipAndFoldNV:-CreateFoldWithAlgEqnsNVSys
 #
 # @brief Creates an augmented NV system for Fold critical boundaries
 #        for DTASys with or without algebraic equations

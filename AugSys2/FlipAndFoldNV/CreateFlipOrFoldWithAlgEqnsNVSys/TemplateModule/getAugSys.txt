@@ -1,6 +1,6 @@
 #################################################################
 #
-# @path AugSys2/FlipAndFoldNV/CreateFlipOrFoldWithAlgEqnsNVSys/TemplateModule/getAugSys.txt
+# @path AugSys2/DiscreteBif/FlipAndFoldNV/CreateFlipOrFoldWithAlgEqnsNVSys/TemplateModule/getAugSys.txt
 #
 # @brief Returns first block of system which defines fixed point
 #        and block for generalized flip or fold eigenvectors
