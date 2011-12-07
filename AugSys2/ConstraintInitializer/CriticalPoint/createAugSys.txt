@@ -80,19 +80,19 @@
      isHopfType=false;       
 
      if ((keyword="Neimark-Sacker") or (keyword="NeimarkSacker") or (keyword="NS"))
-     then augSys:=AugSys2:-NeimarkSackerNV:-CreateNSWithAlgEqnsNVSys(aSys, listOfNVparams, radiusOfEig):-getSys();
+     then augSys:=AugSys2:-DiscreteBif:-NeimarkSackerNV:-CreateNSWithAlgEqnsNVSys(aSys, listOfNVparams, radiusOfEig):-getSys();
           isNSType:=true;
      else if ((keyword="Flip") or (keyword="flip"))
-          then augSys:=AugSys2:-FlipAndFoldNV:-CreateFlipWithAlgEqnsNVSys(aSys, listOfNVparams, radiusOfEig):-getSys();
+          then augSys:=AugSys2:-DiscreteBif:-FlipAndFoldNV:-CreateFlipWithAlgEqnsNVSys(aSys, listOfNVparams, radiusOfEig):-getSys();
                isFlipOrFoldType:=true; 
           else if ((keyword="Fold") or (keyword="fold"))
-               then augSys:=AugSys2:-FlipAndFoldNV:-CreateFoldWithAlgEqnsNVSys(aSys, listOfNVparams, radiusOfEig):-getSys();
+               then augSys:=AugSys2:-DiscreteBif:-FlipAndFoldNV:-CreateFoldWithAlgEqnsNVSys(aSys, listOfNVparams, radiusOfEig):-getSys();
                     isFlipOrFoldType:=true; 
                else if ((keyword="SaddleNode") or (keyword="saddleNode") or (keyword="Saddle") or (keyword="saddle")) 
-		    then augSys:=AugSys2:-SaddleNodeNV:-CreateSaddleNodeNVSys(aSys, listOfNVparams, radiusOfEig):-getSys();
+		    then augSys:=AugSys2:-ContBif:-SaddleNodeNV:-CreateSaddleNodeNVSys(aSys, listOfNVparams, radiusOfEig):-getSys();
 			 isSaddleNodeType:=true;
                     else if ((keyword="Hopf") or (keyword="hopf")) 
-			 then augSys:=AugSys2:-HopfNV:-CreateHopfNVSys(aSys, listOfNVparams, radiusOfEig):-getSys();
+			 then augSys:=AugSys2:-ContBif:-HopfNV:-CreateHopfNVSys(aSys, listOfNVparams, radiusOfEig):-getSys();
 			 isHopfType:=true;
 			 else error("The keyword has to be one of the folowing strings \"NS\",\"flip\",\"fold\",\"saddle\" or \"hopf\"");
 			 end if;   
