@@ -18,9 +18,9 @@
       expectedPeriod:= 14.5391926329389083;
       
       if
-        Aux:-FileOperations:-dirExists("tmp")
+        Aux:-FileOperations:-dirExists("tmpOlsen")
       then
-        error("temporary directory ./tmp needed to run test already exists")
+        error("temporary directory ./tmpOlsen needed to run test already exists")
       else  
         mkdir("tmp")
       end if;
@@ -34,10 +34,10 @@
       # create instance for bvpsol
       # number of nodes for multi-shooting method M=30 
       #  
-        listOfTIDESObj:=[cat(_ModulesDirectory, "/BVPSol/ext_routines/f2c/cwrap/olsen/olsen.o"),
-                         cat(_ModulesDirectory, "/BVPSol/ext_routines/f2c/cwrap/olsen/calltides.o")];
+        listOfTIDESObj:=[cat(_ModulesDirectory, "/BVPSol/demo/ext_routines/fromTIDES/olsen/olsen.o"),
+                         cat(_ModulesDirectory, "/BVPSol/demo/ext_routines/fromTIDES/olsen/calltides.o")];
 
-        BVPSOLproc := BVPSol:-CreateInstance(aSys, "./tmp", 30, listOfTIDESObj);
+        BVPSOLproc := BVPSol:-CreateInstance(aSys, "./tmpOlsen", 30, listOfTIDESObj);
         
       #
       # pass initial values for bvpsol

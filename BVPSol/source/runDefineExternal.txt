@@ -34,9 +34,6 @@ runDefineExternal:= proc(
        FXX::(ARRAY(1 .. N, 1 .. N, 1 .. N, float[8], order=Fortran_order)),     #output 
        FX::(ARRAY(1 .. N, 1 .. N, float[8], order=Fortran_order)),     #output 
        HDIF::(float[8]),                                  #input
-       FAlAl::(ARRAY(1 .. N, 1 .. NPAR, 1 .. NPAR, float[8], order=Fortran_order)),          #output
-       FXXAl::(ARRAY(1 .. N, 1 .. N, 1 .. N, 1 .. NPAR, float[8], order=Fortran_order)), #output
-       FXAlAl::(ARRAY(1 .. N, 1 .. N, 1 .. NPAR, 1 .. NPAR, float[8], order=Fortran_order)),     #output 
        LIB = SharedObjectName);
   
   return(bvpsol);

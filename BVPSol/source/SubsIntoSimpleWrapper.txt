@@ -50,7 +50,7 @@ SubsIntoSimpleWrapper:= proc(
       FM := Matrix(2, N, datatype = float[8], order = C_order);
     
     #
-    # FAL,FXAL,FXX
+    # FAL,FXAL,FXX,FX
     #  
       FAL:=Matrix(N, NPAR, datatype = float[8], order = Fortran_order);
      
@@ -67,33 +67,6 @@ SubsIntoSimpleWrapper:= proc(
       FXX:=Array(listForFXX,datatype = float[8], order = Fortran_order);
 
       FX:=Matrix(N, N, datatype = float[8], order = Fortran_order);
-
-
-   #
-   # FAlAl, FXXAl, FXAlAl 
-   # third order derivatives, need only for internal optimization calculations
-   #
-     FAlAl:=Matrix(NPAR, NPAR, datatype = float[8], order = Fortran_order);
-     
-     listForFXXPdim1:=[];
-     for i from 1 to N do
-       listForFXXPdim1:=[op(listForFXXPdim1),convert(Matrix(N, NPAR), listlist)];
-     end do;
-     listForFXXPdim2 := []; 
-     for i to N do 
-       listForFXXPdim2 := [op(listForFXXPdim2), listForFXXPdim1];
-     end do; 
-     FXXAl:=Array(listForFXXPdim2,datatype = float[8], order = Fortran_order);
-
-     listForFXPPdim1:=[];
-     for i from 1 to N do
-       listForFXPPdim1:=[op(listForFXPPdim1),convert(Matrix(NPAR, NPAR), listlist)];
-     end do;
-     listForFXPPdim2 := []; 
-     for i to N do 
-       listForFXPPdim2 := [op(listForFXPPdim2), listForFXPPdim1];
-     end do; 
-     FXAlAl:=Array(listForFXPPdim2,datatype = float[8], order = Fortran_order);
       
   #
   # HDIF
