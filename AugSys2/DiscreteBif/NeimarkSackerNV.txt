@@ -1,0 +1,37 @@
+##############################################################
+#
+# @path AugSys2/DiscreteBif/NeimarkSackerNV.txt
+#
+# @brief collects procedures for augmenting Neimark-Sacker critical boundaries
+#        by normal vector system 
+#
+# @notes:
+#    (1) module uses name convention: 
+#    components of eigenvectors are called W1, W2, V1, V2
+#
+# @authors dka
+#
+# @revision
+#    2008-10-29 Add by dka CreateNSWithAlgEqnsNVSys
+#    2008-03-06 Rename procedure starting with lower case letters  
+#    2008-01-28 Add by dka CreateNVSysForComplexEigVal    
+#    2007-12-04 Written by dka
+#
+##############################################################
+  NeimarkSackerNV:=module()
+  
+    export
+      calculateNV,
+      CreateNeimarkSackerNVSys,
+      CreateNSWithAlgEqnsNVSys,
+      getSysOfEqnsForNV,
+      normalizeVector; 
+
+$include <DiscreteBif/NeimarkSackerNV/calculateNV.txt>
+$include <DiscreteBif/NeimarkSackerNV/CreateNeimarkSackerNVSys.txt>
+$include <DiscreteBif/NeimarkSackerNV/CreateNSWithAlgEqnsNVSys.txt>
+$include <DiscreteBif/NeimarkSackerNV/getSysOfEqnsForNV.txt>
+$include <DiscreteBif/NeimarkSackerNV/normalizeVector.txt>
+
+
+  end module; # AugSys2:-NeimarkSackerNV 

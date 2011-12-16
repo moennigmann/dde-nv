@@ -8,6 +8,7 @@
 # @authors dka
 #
 # @revision
+#   2011-12-07 Added PeriodicBif
 #   2009-12-22 Added SaddleNodeNV, HopfNV
 #   2008-07-09 Added Discretization
 #   2008-03-13 Added ConstraintInitializer
@@ -20,18 +21,16 @@ AugSys2:=module()
 
   export 
     ConstraintInitializer,
+    ContBif,
     Discretization,
-    FlipAndFoldNV,
-    HopfNV,
-    NeimarkSackerNV,
-    SaddleNodeNV; 
+    DiscreteBif,
+    PeriodicBif; 
 
 $include <ConstraintInitializer.txt>
+$include <ContBif.txt>
 $include <Discretization.txt>
-$include <FlipAndFoldNV.txt>
-$include <HopfNV.txt>
-$include <NeimarkSackerNV.txt>
-$include <SaddleNodeNV.txt>
+$include <DiscreteBif.txt>
+$include <PeriodicBif.txt>
   
 end module; # AugSys
 

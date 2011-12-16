@@ -1,0 +1,24 @@
+  ##############################################################
+  #
+  #  @path AugSys2/ContBif.txt
+  #  
+  #  @brief collects procedures for obtaining normal vector systems
+  #         for continuous DAE systems
+  #
+  #  @authors mmo, dka
+  #
+  #  @revision
+  #  2009-12-22 Moved from AugSys and apdated by dka
+  #
+  ##############################################################
+  ContBif:=module()
+  
+    export
+      HopfNV,
+      SaddleNodeNV; 
+
+$include <ContBif/HopfNV.txt>
+$include <ContBif/SaddleNodeNV.txt>
+
+
+  end module; # AugSys2:-ContBif
