@@ -11,10 +11,11 @@
 
 
 extern void callperiod_(int *,int *,int *,double *,double *,
-                        int *,double *,double *,double *,
-                        double *,double *,double *,int *,
+                        int *,double *,double *,
+                        double *,double *,int *,
                         double *,double *,double *,double *, 
-                        double *, double *);
+                        double *, double *,double *,double *, 
+                        double *);
                         
 extern void bvpopen_();                        
 
@@ -25,19 +26,27 @@ extern void bvpclose_();
   and in turn calls fortran subroutine callperiod__
   **********************************************************************/
 void cwrapper_bvpsol(int NN, int M, int IPRINT,double *X0, double P,
-                     int NPAR, double *TRPAR, double *XT,double *Y,
-                     double *FM, double *HES, double *POUT, int *IFAIL, 
+                     int NPAR, double *TRPAR, double *Y,
+                     double *FM, double *POUT, int *IFAIL, 
                      double *ERRY,double *FAL,double *FXAL,double *FXX, 
                      double *FX, double HDIF)
 {
  
+   double *FPP;
+   double *FXXP;
+   double *FXPP;
+   
+   FPP= (double *) malloc(NN*NPAR*NPAR*sizeof(double));
+   FXXP= (double *) malloc(NN*NN*NN*NPAR*sizeof(double));
+   FXPP= (double *) malloc(NN*NN*NPAR*NPAR*sizeof(double));
+   
    bvpopen_();
    
    callperiod_(&NN, &M, &IPRINT, X0, &P,
-	      &NPAR, TRPAR, XT, Y,
-	      FM, HES, POUT, IFAIL, 
+	      &NPAR, TRPAR, Y,
+	      FM, POUT, IFAIL, 
 	      ERRY, FAL, FXAL, FXX, 
-	      FX, &HDIF);
+	      FX, &HDIF, FPP, FXXP, FXPP);
 	      
    bvpclose_();
 	      

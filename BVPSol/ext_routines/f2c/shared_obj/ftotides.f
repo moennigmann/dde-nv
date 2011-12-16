@@ -16,19 +16,6 @@
       NPAR1=NPAR
       call calltides(NN1,NPAR1,PAR,XST,P,OUTM)
 
-c     PROVE IF INTEGRATION WITH TIDES RETURNS PERIODIC ORBIT
-      EPS=1.D-8
-
-      DO 2 I1=1,NN1
-      COMR=ABS(OUTM(I1+1)-XST(I1))
-
-      IF (COMR.GT.EPS) THEN
-      PRINT *,'Integration with TIDES failed'
-      PRINT *, COMR
-      ENDIF
-
-2     CONTINUE
-
 C     EXTRACT FROM OUTM MATRIX FX
       NOFF=1+NN1
       I2=0
