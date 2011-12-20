@@ -9,10 +9,9 @@
 #
 #############################################################
 
-all: ADIFOR AugSys2 Aux BVPSol Models Npsol BVPOpt
+all: AugSys2 Aux BVPSol Models Npsol BVPOpt
  
 clean:
-	rm -rf ./ADIFOR
 	rm -rf ./AugSys2
 	rm -rf ./Aux
 	rm -rf ./BVPSol
@@ -20,8 +19,6 @@ clean:
 	rm -rf ./Npsol
 	rm -rf ./BVPOpt
 
-ADIFOR:
-	java -jar ./mapledoc.jar ./../ADIFOR/source/ADIFOR.txt ./ADIFOR/ADIFOR.html
 
 AugSys2:
 	java -jar ./mapledoc.jar ./../AugSys2/AugSys2.txt ./AugSys2/AugSys2.html
