@@ -1,0 +1,274 @@
+##########################################################################
+# 
+# @path AugSys2/ContBif/SaddleNodeNV/CreateSaddleNodeNVSys.txt
+#
+# @brief Creates an augmented NV system for DAESys without algebraic equations 
+#        for critical boundaries which consist of saddle-node bifurcations 
+#
+# @param  
+#   a model to be augmented by system for finding normal vectors to a saddle-node critical boundary,
+#   list of names of free parameters Alpha
+#
+# @return 
+#   an Sys, first part is the result from converting ODEs by substituting to it algebraic equations, 
+#   2nd part is a system for finding normal vertors
+#   optional argument: a negative bound on eigenvalues
+#
+# @revision
+# 2010-02-18 Added possibility of gereralized eigen vectors, i.e. systems with AEs, by dka  
+# 2009-07-24 Created by dka
+# 
+##########################################################################
+    CreateSaddleNodeNVSys:=proc(
+      aSys::DAESys,
+      ListOfNVparams::list(name)
+      # optional radius
+    )
+
+      local ListofNames, item, ComplexRightEigSys, ExtendedSysToBeSubs,
+     	ExtendedSystemEquations, ExtendedSystemVariables,
+	ExtendedSystemParameters, DESys, NumOfDynEqns, f_x, f_xTransp,
+	V, R, NewVariables, NewEquations, 
+        f_alpha, f_alphaTransp, radius,
+        NumNVparamsToBeSubs, ParsOfModel, VarsOfModel, result, NumOfDynEqnsInModule,
+        AlgEqnsOfModel, AlgVarsOfModel, DynEqnsOfModel, CMatr, i2;
+       
+    
+      #
+      # extract optional arguments
+      #
+        if 
+          nargs>2
+        then 
+          radius:= args[3];
+          if (radius>0)
+  	  then error("The given baund on eigenvalues should be negative");
+   	  end if;
+        else
+          radius:=0; 
+        end if; 
+
+
+       #
+       # make sure entries of ListOfNVparams exist in first arg
+       #
+
+        ListofNames:=map(lhs,aSys["Parameters"]);
+
+        for item in ListOfNVparams do
+          if not member(item,ListofNames)
+	  then
+	    error(
+	      "requested normal vector parameter %1 does not exist in model",
+	      item
+	    );
+	  end if;
+	end do; 
+
+      #
+      # substitude into DynEqns AlgEqns, prepare some variables
+      # 
+       
+        DESys := Aux:-SystemClasses:-subsExplicitAEsIntoDAESys(aSys); 
+        
+
+        DynEqnsOfModel:= DESys["ODEs"]; 
+        VarsOfModel:= DESys["DynVars"];
+        ParsOfModel:= DESys["Parameters"];
+        AlgEqnsOfModel := DESys["AEs"]; 
+        AlgVarsOfModel:= DESys["AlgVars"];
+        NumOfDynEqns:= nops(DynEqnsOfModel)+nops(AlgEqnsOfModel);
+  
+        f_x:= Aux:-Derivs:-f_x(
+          [op(DynEqnsOfModel),op(AlgEqnsOfModel)],
+          [op(VarsOfModel),op(AlgVarsOfModel)]
+        );
+
+        f_xTransp:= LinearAlgebra[Transpose](f_x); 
+
+        f_alpha:= Aux:-Derivs:-f_p(
+          [op(DynEqnsOfModel),op(AlgEqnsOfModel)],
+          ListOfNVparams
+        );
+
+        f_alphaTransp:= LinearAlgebra[Transpose](
+          f_alpha
+        ); 
+
+        #
+        # introducing the matrix C for the generalized eigenvalues definition
+        #
+
+         CMatr:= Matrix(NumOfDynEqns);
+
+         for i2 from 1 to nops(DESys["ODEs"]) do
+         CMatr[i2,i2]:=1;
+	 end do; 
+
+
+      #------------------------------------------------------------
+      #
+      # start construction of normal vector system
+      #
+      #------------------------------------------------------------
+        #
+        # v and r
+        #
+          V:= [seq(
+            v[i1], 
+            i1=1..NumOfDynEqns)
+          ]; 
+  
+  
+          R:= [seq(
+          r[i1], 
+            i1=1..nops(ListOfNVparams))
+          ]; 
+  
+          NewVariables:= [ 
+            op(R)
+          ];
+
+      # augmented system will be in ExtendedSystemEquations, 
+      # ExtendedSystemVariables etc., 
+      # lists NewEquations, NewVariables are used to build next block 
+      #
+
+        #--------------------
+        #
+        # model equations f= 0
+        #
+        #--------------------
+          NewEquations:= [seq(
+            0= rhs(DESys["ODEs"][i1]),
+            i1= 1..nops(DESys["ODEs"])
+          )];
+  
+          NewVariables:= DESys["DynVars"];
+
+          #
+          # ExtendedSystem with NewEquations, NewVariables
+          #
+            ExtendedSystemEquations:= NewEquations;
+            ExtendedSystemVariables:= NewVariables; 
+
+            
+        #--------------------------------------------
+        #
+        # model algebraic equations g = 0
+        #
+        #--------------------------------------------
+
+          NewEquations:= [seq(
+            0= rhs(AlgEqnsOfModel[i1]),
+            i1= 1..nops(AlgEqnsOfModel)
+          )];
+  
+          NewVariables:= DESys["AlgVars"];
+
+          #
+          # ExtendedSystem with NewEquations, NewVariables
+          #
+
+            ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            op(NewEquations)                    
+          ];
+  
+          ExtendedSystemVariables:= [
+            op(ExtendedSystemVariables),
+            op(NewVariables)
+          ];
+  
+        #----------------------------------------
+        #
+        # fxT v - radius C v= 0
+        #
+        #----------------------------------------
+
+         NewEquations := LinearAlgebra[Multiply](f_xTransp, convert(V,Vector)) 
+                         - LinearAlgebra[Multiply](CMatr,LinearAlgebra[Multiply](radius,convert(V,Vector)));
+         
+         NewEquations:=[seq(0=NewEquations[i1],i1=1..NumOfDynEqns)];
+
+         NewVariables:=[op(V)];
+          
+          ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            op(NewEquations)                    
+          ];
+  
+          ExtendedSystemVariables:= [
+            op(ExtendedSystemVariables),
+            op(NewVariables)
+          ];
+
+        #----------------------------------------
+        #
+        # vT v -1 = 0
+        #
+        #----------------------------------------
+
+        
+
+       NewEquations := LinearAlgebra[Multiply](LinearAlgebra[Transpose](convert(V,Vector)), convert(V,Vector))-1; 
+
+       ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            0=NewEquations                    
+          ];
+
+
+        #----------------------------------------
+        #
+        # f_alphaT v - r = 0
+        #
+        #----------------------------------------
+       
+          NewEquations:= LinearAlgebra[Multiply](
+              f_alphaTransp,
+              convert(V,Vector))-convert(R,Vector);
+
+
+          NewEquations:=[seq(
+            0=NewEquations[i1],
+            i1=1..nops(ListOfNVparams)
+          )];
+
+          NewVariables:= R;
+   
+          ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            op(NewEquations)                    
+          ];
+         
+           ExtendedSystemVariables:= [
+            op(ExtendedSystemVariables),
+            op(NewVariables)
+          ];
+  
+      #------------------------------------------------------------
+      #
+      # build table for augmented system from lists
+      #
+      #------------------------------------------------------------
+      
+      #
+      # apart from vars listed explicitly, the following vars
+      # are passed on to template:
+      #   f_x -> Jac
+      #   NumOfDynEqns -> NumDynEqns
+      #
+        ExtendedSysToBeSubs:= table();
+        ExtendedSysToBeSubs["Equations"]:= ExtendedSystemEquations;
+        ExtendedSysToBeSubs["Variables"]:= ExtendedSystemVariables;
+        ExtendedSysToBeSubs["Parameters"]:= DESys["Parameters"];
+    
+        NumNVparamsToBeSubs:= nops(ListOfNVparams); 
+
+$include <ContBif/SaddleNodeNV/CreateSaddleNodeNVSys/TemplateModule.txt>
+
+
+    return result;
+
+       end proc;  #AugSys2:-SaddleNodeNV:-CreateSaddleNodeNVSys
