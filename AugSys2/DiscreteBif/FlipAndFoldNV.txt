@@ -1,0 +1,39 @@
+##############################################################
+#
+# @path AugSys2/DiscreteBif/FlipAndFoldNV.txt
+#
+# @brief collects procedures for augmenting Flip or Fold critical boundaries
+#        by normal vector system 
+#
+# @authors dka
+#
+# @revision
+#    2008-10-30 Add CreateFlipOrFoldWithAlgEqnsNVSys, CreateFlipWithAlgEqnsNVSys, CreateFoldWithAlgEqnsNVSys
+#    2008-03-06 Rename procedure starting with lower case letters  
+#    2008-02-28 Sorted procedures alphabetically
+#    2008-01-09 Written by dka
+#
+##############################################################
+  FlipAndFoldNV:=module()
+  
+    export
+      calculateNV,
+      CreateFlipNVSys,
+      CreateFlipOrFoldNVSys,
+      CreateFlipOrFoldWithAlgEqnsNVSys,
+      CreateFlipWithAlgEqnsNVSys,
+      CreateFoldNVSys,
+      CreateFoldWithAlgEqnsNVSys,
+      getSysOfEqnsForNV; 
+
+$include <DiscreteBif/FlipAndFoldNV/calculateNV.txt>
+$include <DiscreteBif/FlipAndFoldNV/CreateFlipNVSys.txt>
+$include <DiscreteBif/FlipAndFoldNV/CreateFlipOrFoldNVSys.txt>
+$include <DiscreteBif/FlipAndFoldNV/CreateFlipOrFoldWithAlgEqnsNVSys.txt>
+$include <DiscreteBif/FlipAndFoldNV/CreateFlipWithAlgEqnsNVSys.txt>
+$include <DiscreteBif/FlipAndFoldNV/CreateFoldNVSys.txt>
+$include <DiscreteBif/FlipAndFoldNV/CreateFoldWithAlgEqnsNVSys.txt>
+$include <DiscreteBif/FlipAndFoldNV/getSysOfEqnsForNV.txt>
+
+  end module; # AugSys2:-FlipAndFoldNV 
+ 

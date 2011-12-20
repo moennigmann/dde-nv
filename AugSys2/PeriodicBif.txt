@@ -1,0 +1,23 @@
+  ##############################################################
+  #
+  #  @path AugSys2/PeriodicBif.txt
+  #  
+  #  @brief collects procedures for obtaining normal vector systems
+  #         for periodic solutions of ODE systems
+  #
+  #  @authors dka
+  #
+  #  @revision
+  #  2011-11-07 Written by dka
+  #
+  ##############################################################
+  PeriodicBif:=module()
+  
+    export
+      FlipAndFoldNV,
+      NeimarkSackerNV;
+
+$include <PeriodicBif/FlipAndFoldNV.txt>
+$include <PeriodicBif/NeimarkSackerNV.txt>
+
+  end module; # AugSys2:-PeriodicBif

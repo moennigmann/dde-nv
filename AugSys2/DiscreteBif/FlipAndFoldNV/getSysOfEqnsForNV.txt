@@ -1,0 +1,44 @@
+#############################################################
+#
+# @path AugSys2/DiscreteBif/FilpAndFoldNV/getSysOfEqnsForNV.txt
+#
+# @brief Returns a system for flip or fold NV in which 
+#        unknown parameters are only the normal vector (W)
+#  
+# @param  FlipOrFlopNVSys,
+#         FlipOrFlopEigenVector,
+#         a line of content data from file of parameters
+#
+# @return system for finding normal vector
+#
+# @revision
+# 2008-03-06  instead of aSys[...] using aSys["..."] 
+# 2008-01-10  Written by dka
+#
+#############################################################         
+
+getSysOfEqnsForNV:= proc( FlipOrFlopNVSys::table, FlipOrFlopEigenVector::Vector, lineOfData::list(name=EvalsToFloat))
+
+local NVSys2, WParam, i1, listW, NVSys3;
+
+# put into NV system the line of content data from file of parameters
+
+NVSys2 := subs(lineOfData, FlipOrFlopNVSys["Equations"]);
+
+# put into NV system W
+
+WParam := Vector(LinearAlgebra[Dimension](FlipOrFlopEigenVector), symbol = w); 
+
+listW := []; 
+for i1 from 1 to LinearAlgebra[Dimension](FlipOrFlopEigenVector) do 
+ listW := [op(listW), WParam[i1] = FlipOrFlopEigenVector[i1]];
+end do; 
+
+NVSys3 := subs(listW, NVSys2);
+
+# return NV system
+
+return(eval(NVSys3));
+
+end proc; # getSysOfEqnsForNV 
+ 

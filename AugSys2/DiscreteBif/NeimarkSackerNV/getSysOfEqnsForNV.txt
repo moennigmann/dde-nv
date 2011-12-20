@@ -1,0 +1,57 @@
+#############################################################
+#
+# @path AugSys2/DiscreteBif/NeimarkSackerNV/getSysOfEqnsForNV.txt
+#
+# @brief Returns a system for Neimark-Sacker NV in which 
+#        unknown parameters are only the normal vectors (W1,W2)
+#        
+# @param  NeimarkSackerNVSys,
+#         NSEigenValueAndEigenVector,
+#         a line of content data from file of parameters
+#
+# @return system for finding normal vector
+#
+# @revision
+# 2008-03-06  instead of aSys[...] using aSys["..."] 
+# 2008-01-08  Written by dka
+#
+#############################################################         
+
+getSysOfEqnsForNV:= proc( NVSys::table, NSeig::list, lineOfData::list(name=EvalsToFloat))
+
+local W1, W2, NVSys2, W1Param, W2Param, i1, i2, listW, NVSys3, NVSys4;
+
+# from input NSEigenValueAndEigenVector get W1 and W2
+
+W1 := map(Re, NSeig[3]); 
+W2 := map(Im, NSeig[3]);
+
+# put into NV system the line of content data from file of parameters
+
+NVSys2 := subs(lineOfData, NVSys["Equations"]);
+
+# put into NV system W1 and W2
+
+W1Param := Vector(LinearAlgebra[Dimension](W1), symbol = w1); 
+W2Param := Vector(LinearAlgebra[Dimension](W2), symbol = w2);
+
+listW := []; 
+for i1 from 1 to LinearAlgebra[Dimension](W1) do 
+ listW := [op(listW), W1Param[i1] = W1[i1]];
+end do; 
+for i2 from 1 to LinearAlgebra[Dimension](W2) do 
+ listW := [op(listW), W2Param[i2] = W2[i2]];
+end do;
+
+NVSys3 := subs(listW, NVSys2);
+
+# put into NV system phi
+
+NVSys4 := subs(p=NSeig[2], NVSys3);
+
+# return NV system
+
+return(eval(NVSys4));
+
+end proc; # getSysOfEqnsForNV 
+ 

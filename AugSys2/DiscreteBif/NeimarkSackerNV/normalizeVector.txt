@@ -1,0 +1,65 @@
+###############################################################################
+#
+# @path AugSys2/DiscreteBif/NeimarkSackerNV/normalizeVector.txt
+#
+# @brief Rotates Re and Im parts of normal vector such that they are orthogonal 
+#
+# @param
+#   complex vector
+# 
+# @return
+#   complex, vector, normalized to length 1 and real part orthogonal imag part
+#
+# @revision
+# 2007-12-03 renamed by dka from NormVec to NormalizeVector
+# 030208 extended for use on type Vector
+# 01xxxx written by mmo
+#
+###############################################################################
+normalizeVector:= proc(
+  ReqaVec::{vector(complex), Vector(datatype= complex[8])}
+)
+  
+  local NormalizedVec, w1, w2, NewVec, f, x0, aVec;
+  
+  #
+  # convert to standard type Vector
+  #
+    if
+      type(ReqaVec, vector)
+    then
+      aVec:= convert(ReqaVec, Vector);
+    else
+      aVec:= copy(ReqaVec); 
+    end if;  
+
+  #
+  # bring to length 1 first
+  #
+    NormalizedVec:= LinearAlgebra[Normalize](
+      aVec,
+      Euclidean
+    ); 
+  
+  #
+  # split into real and imag part
+  #  
+    w1:= map(Re, NormalizedVec);
+    w2:= map(Im, NormalizedVec);
+
+  #
+  # turn vector by exp(I*x), x real
+  #
+    f:= cos(x)* sin(x)* (
+      LinearAlgebra[DotProduct](w1, w1)-
+      LinearAlgebra[DotProduct](w2, w2)
+    )+(cos(x)^2- sin(x)^2)*LinearAlgebra[DotProduct](w1, w2);
+    
+    x0:= fsolve(f, x=0..Pi);
+  
+    NewVec:= LinearAlgebra[ScalarMultiply](NormalizedVec, exp(I*x0));
+
+  return(NewVec);
+
+end proc; # normalizeVector
+
