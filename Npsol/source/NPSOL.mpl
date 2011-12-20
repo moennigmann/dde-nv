@@ -84,9 +84,9 @@ end do; NameOfObjfun := subs(ParsToBeSubs = op(Pars),ObjToBeSubs = evalf(
 CostFunc),GradToBeSubs = eval(GradOfCostFunc),EAEsToBeSubs = op(map(evalf,EAEs
 )),NumParsToBeSubs = NumParsOfNLP,NumVarsToBeSubs = NumVarsOfNLP,
 NumEAEsToBeSubs = NumEAEsOfNLP,eval(Templates:-objfunTemplate)) else 
-pathTemplate := anNLP["ObjfunTemplatePath"]; if not Aux:-FileOperations:-
+pathTemplate := op(anNLP["ObjfunTemplatePath"]); if not Aux:-FileOperations:-
 fileExists(pathTemplate) then error "CostFunction in NLP must be not empty or \
-ObjfunTemplatePath did not define correct" else read pathTemplate; 
+ObjfunTemplatePath was not defined correctly" else read pathTemplate; 
 NameOfObjfun := subs(ParsToBeSubs = op(Pars),ObjToBeSubs = evalf(CostFunc),
 GradToBeSubs = eval(GradOfCostFunc),EAEsToBeSubs = op(map(evalf,EAEs)),
 NumParsToBeSubs = NumParsOfNLP,NumVarsToBeSubs = NumVarsOfNLP,NumEAEsToBeSubs
