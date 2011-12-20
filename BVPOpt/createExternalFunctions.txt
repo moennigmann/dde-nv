@@ -1,0 +1,270 @@
+#########################################################################
+#
+# @path BVPOpt/createExternalFunctions.txt
+#
+# @brief creates npsolconfun.f and npsolobjfun.f that use BVP solution of TIDES
+#
+# @param  anBVPSys, an ODE system for which BVP solution has to be found
+#         anNLP, an NLP which has internal variables to be defined from TIDEs,
+#         initX0, initial guess for the first point for BVP solution trajectory,
+#         initP, initial guess for the period BVP solution trajectory,
+#         nodes, number of nodes in which BVP solution is calculated
+#
+# @revision
+# 2011-12-11 written by dka
+#########################################################################
+  createExternalFunctions:= proc(
+    anBVPSys::DAESys,
+    anNLP::NLP,
+    initX0::list(EvalsToFloat),
+    initP::EvalsToFloat,
+    nodes::integer
+  )
+    local Cons, Pars, Vars, CostFunc,
+      NumConsOfNLP, NumParsOfNLP, NumVarsOfNLP,
+      ListListOfJacElements, GradOfCostFunc, confun, objfun, i1,
+      ListOfDefExpr, UndefExpr, NumEAEsOfNLP, EAEs,
+      ConsAfterEAEsSubs, CostFuncAfterEAEsSubs, pathTemplate,
+      npsolconfun, npsolobjfun, NumDynVars, NumCritPars,
+      counter1, indexListOfCritVarsSubs, CritParsNames, indexOfCritVars,
+      derivNamesSubstitutions, ConsFortran, varsNamesSubstitutions,
+      JacConsFortran, counter2, oldJacVar, newJacVar, indexListOfCritVars,
+      CostFuncFortran, GradOfCostFuncFortran, indexOfObjVar,
+      indexListOfObjVarsInNLP, indexOfObjPar, objParsNamesInNLP; 
+
+    #----------------------------------------------------------------------
+    #
+    # substitute information from actual AESys into templates
+    #
+    #----------------------------------------------------------------------    
+    #
+    # extract information from AESys
+    #
+      Cons := map(rhs,anNLP["Constraints"]);
+      Vars:= map(lhs, anNLP["Variables"]);
+      Pars:= map(rhs, anNLP["Parameters"]); 
+      EAEs:= map(rhs, anNLP["ExplicitAEs"]); 
+
+      NumConsOfNLP:= nops(Cons);
+      NumVarsOfNLP:= nops(Vars);
+      NumParsOfNLP:= nops(Pars);
+      NumEAEsOfNLP:= nops(EAEs); 
+      
+    #
+    # extract information from DAESys
+    # 
+      NumDynVars:=nops(anBVPSys["ODEs"]);
+      NumCritPars:=nops(anBVPSys["Parameters"]);
+      CritParsNames:= map(lhs,anBVPSys["Parameters"]);
+   
+   #
+   # list of variables in NLP that corresponds to critical parameters
+   #    
+      indexListOfCritVarsSubs:=[]:
+      indexListOfCritVars:=[];
+      for counter1 from 1 to nops(CritParsNames) do
+	member(CritParsNames[counter1], Vars, 'indexOfCritVars');
+	indexListOfCritVars:=[op(indexListOfCritVars),indexOfCritVars];
+	indexListOfCritVarsSubs:=[op(indexListOfCritVarsSubs),x[indexOfCritVars]];
+      end do:
+   
+   #
+   # replace derivarives maple names for partial derivatives 
+   # to used in templates fortran names
+   #     
+     derivNamesSubstitutions:=BVPOpt:-InternalNVVars:-getVarsForFortranTemplate(anBVPSys);
+     
+   # substitute NLP variable names with x
+     varsNamesSubstitutions:=[];
+     for counter1 from 1 to nops (Vars) do
+	varsNamesSubstitutions:=[op(varsNamesSubstitutions),Vars[counter1]=x[counter1]];
+     end do;       
+
+
+    #
+    # if nonlinear constraints exist, create procedure which contains
+    #   nonlinear constraints to be exported to fortran
+    #
+      if 
+        not Cons= []
+      then
+         
+        #
+        # calculate derivatives of constraints
+        #
+        # note: for some reason substitution of the jacobian contained
+        #   in an array does not work with codegen/fortran, see
+        #   comment in template
+        #
+          ConsAfterEAEsSubs:= Aux:-ListOperations:-subsEqnListIntoEqn( 
+            anNLP["ExplicitAEs"],
+            anNLP["Constraints"]
+          ); 
+          ConsAfterEAEsSubs:= map(rhs, ConsAfterEAEsSubs); 
+          
+          ListListOfJacElements:= [seq(
+            [seq(
+              diff(ConsAfterEAEsSubs[i1], Vars[i2]),
+              i2= 1..NumVarsOfNLP
+            )],
+            i1= 1..NumConsOfNLP
+          )];
+        
+        #
+        # for derivatives with respect to critical parameters
+        # derivatives of internal derivatives variables should be used 
+        # 
+        for counter1 from 1 to nops(indexListOfCritVars) do
+	  for counter2 from 1 to NumConsOfNLP do
+	     oldJacVar:=ListListOfJacElements[counter2,indexListOfCritVars[counter1]];
+	     newJacVar:=BVPOpt:-InternalNVVars:-calcDerForCritParamFortran(ConsAfterEAEsSubs[counter2],
+	                                                            counter1,
+	                                                            map(lhs,derivNamesSubstitutions),
+	                                                            NumDynVars, NumCritPars);
+	     ListListOfJacElements[counter2,indexListOfCritVars[counter1]]:=oldJacVar+newJacVar;
+          end do;
+	end do;  
+        
+        ConsFortran:=subs(derivNamesSubstitutions,Cons);
+        ConsFortran:=subs(varsNamesSubstitutions,ConsFortran);
+        
+        JacConsFortran:=subs(derivNamesSubstitutions,ListListOfJacElements);
+        JacConsFortran:=subs(varsNamesSubstitutions,JacConsFortran);
+  
+        #
+        # generate confun by substituting values into ConfunTemplate
+        #
+
+          npsolconfun:= subs(
+        
+            ParsToBeSubs=        op(Pars),        # subs exprseq, see template 
+            ConstraintsToBeSubs= map(evalf, ConsFortran),# only non-linear Constraints
+            EAEsToBeSubs=        op(map(evalf, EAEs)), 
+            NumParsToBeSubs=     NumParsOfNLP, 
+            NumVarsToBeSubs=     NumVarsOfNLP,
+            NumConsToBeSubs=     NumConsOfNLP,
+            NumEAEsToBeSubs=     NumEAEsOfNLP, 
+            ListListToBeSubs=    JacConsFortran,
+            NumDynVarsToBeSubs=  NumDynVars,
+            initX0ToBeSubs=      initX0,
+            initPToBeSubs= 	 initP,
+            NumCritParsToBeSubs= NumCritPars,
+            indsCritVarsToBeSubs=indexListOfCritVarsSubs,
+            NumOfNodesToBeSubs=  nodes,
+             
+            eval(Templates:-confunTemplate)
+          );
+
+      end if; # not Cons= []
+
+    #
+    # if a cost function exists in nlp, generate procedure which
+    # contains cost function to be exported to fortran
+    # otherwise use the template for objfunc from NLP["ObjfunTemplatePath"]
+    #
+
+
+      if not anNLP["CostFunction"]= [] 
+      then CostFunc:= op(anNLP["CostFunction"]);
+      #
+      # calculate derivatives of constraints
+      #
+        GradOfCostFunc:= [];
+        CostFuncAfterEAEsSubs:= Aux:-ListOperations:-subsEqnListIntoEqn(
+          anNLP["ExplicitAEs"],
+          CostFunc
+        ); 
+        for i1 from 1 to NumVarsOfNLP do
+          GradOfCostFunc:= [
+            op(GradOfCostFunc),
+            diff(
+              CostFuncAfterEAEsSubs, 
+              Vars[i1]
+            )
+           ];
+        end do;
+
+      #
+      # generate objfun by substituting values into ObjfunTemplate
+      #
+      
+        CostFuncFortran:=subs(varsNamesSubstitutions,CostFunc);
+        GradOfCostFuncFortran:=subs(varsNamesSubstitutions,GradOfCostFunc);
+        npsolobjfun:= subs(
+    
+          ParsToBeSubs=    op(Pars), # subs exprseq, see template
+          ObjToBeSubs=     CostFuncFortran, 
+          GradToBeSubs=    GradOfCostFuncFortran,
+          EAEsToBeSubs=    op(map(evalf, EAEs)), 
+          NumParsToBeSubs= NumParsOfNLP, 
+          NumVarsToBeSubs= NumVarsOfNLP,
+          NumEAEsToBeSubs= NumEAEsOfNLP,
+    
+          eval(Templates:-objfunTemplate)
+        );
+        else 
+             pathTemplate:=op(anNLP["ObjfunTemplatePath"]);
+             if not Aux:-FileOperations:-fileExists(pathTemplate)
+             then error("CostFunction in NLP must be not empty or ObjfunTemplatePath was not defined correctly");
+             else
+             
+             # if index of objective variable is given, then extract it from the list
+             if type(anNLP["IndexOfObjVariable"],list(integer))
+		then indexOfObjVar:=anNLP["IndexOfObjVariable"][1];
+		else indexOfObjVar:=1;
+             end if;
+             
+             # if objective function parameters is given, then extract it from the list
+             indexListOfObjVarsInNLP:=[]; 
+             if type(anNLP["ObjFunParameters"],list(name))
+		then 
+		     objParsNamesInNLP:=anNLP["ObjFunParameters"];
+		     for counter1 from 1 to nops(CritParsNames) do
+			member(objParsNamesInNLP[counter1], Vars, 'indexOfObjPar');
+			indexListOfObjVarsInNLP:=[op(indexListOfObjVarsInNLP),x[indexOfObjPar]];
+		     end do;
+		else 
+		      for counter1 from 1 to nops(CritParsNames) do
+			indexListOfObjVarsInNLP:=[op(indexListOfObjVarsInNLP),x[counter1]];
+		      end do;
+             end if;	
+              
+             read(pathTemplate);
+             
+             npsolobjfun:= subs(
+    
+   	          ParsToBeSubs=    op(Pars), # subs exprseq, see template
+                  EAEsToBeSubs=    op(map(evalf, EAEs)), 
+               	  NumParsToBeSubs= NumParsOfNLP, 
+          	  NumVarsToBeSubs= NumVarsOfNLP,
+          	  NumEAEsToBeSubs= NumEAEsOfNLP,          	   
+                  NumDynVarsToBeSubs=  NumDynVars,
+                  initX0ToBeSubs=      initX0,
+                  initPToBeSubs=       initP,
+                  NumCritParsToBeSubs= NumCritPars,
+                  indsObjVarsToBeSubs=indexListOfObjVarsInNLP,
+                  NumOfNodesToBeSubs=  nodes,
+                  indexOfObjVarToBeSubs=indexOfObjVar, 
+    
+                  eval(objfunTemplate)
+               );
+             
+             
+             end if;
+        end if;
+     
+     codegen[fortran](
+            npsolconfun, 
+            filename= "npsolconfun.f",
+            precision= double
+          );
+      
+     codegen[fortran](
+            npsolobjfun, 
+            filename= "npsolobjfun.f",
+            precision= double
+          );
+ 
+    RETURN();
+  
+  end proc; # createExternalFunctions

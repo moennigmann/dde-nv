@@ -1,0 +1,33 @@
+########################################################################
+#
+# @path BVPOpt/createOptionsFile.txt
+#
+# @param subdirectory into which file will be written
+#
+# @return writes npsol_options.txt
+#
+# @revision
+#   2011-12-13 created by dka
+#
+########################################################################
+  createOptionsFile:=proc(
+    dirname::string
+  )
+  
+    local fd;
+  
+    fd := fopen(
+      cat("./", dirname, "/npsol_options.txt"),
+      WRITE,
+      TEXT
+    );
+
+    fprintf(
+      fd,
+      "begin\n  major iteration limit 9999\n  minor iteration limit 50\n  major print level 20\n  verify level -1\n  derivative level 3\n  nonlinear feasibility tolerance 0.00001\n  crash tolerance 0.004\nend\n"
+
+    );
+
+    fclose(fd);
+  
+  end proc; #createOptionsFile

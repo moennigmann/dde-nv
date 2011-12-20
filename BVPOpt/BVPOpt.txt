@@ -1,0 +1,43 @@
+###############################################################################
+#
+# @path BVPSol/BVPOpt.txt
+#
+# @brief Collects procedures that deal with optimization of periodic solutions
+#        of ODE systems
+# 
+# @notes The BVPOpt procedures are dependent on modules NPSOL and BVPSol        
+#
+# @authors dka
+#
+# @revision
+#   2011-01-14 Created by dka  
+#
+###############################################################################
+
+BVPOpt:=module()
+
+  export
+    createExternalFunctions,
+    createExternalDerivativesFuncs,
+    CreateInstance,
+    createSharedObject,
+    createOptionsFile,
+    Templates,
+    InternalNVVars;
+
+$include <createExternalFunctions.txt>  
+$include <createExternalDerivativesFuncs.txt>  
+$include <CreateInstance.txt>     
+$include <createSharedObject.txt>
+$include <createOptionsFile.txt>
+$include <Templates.txt>
+$include <InternalNVVars.txt>
+  
+end module; # BVPOpt
+
+save(BVPOpt, "BVPOpt.mpl");
+
+
+
+
+ 

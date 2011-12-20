@@ -1,0 +1,107 @@
+#########################################################################
+#
+# @path BVPOpt/createExternalDerivativesFuncs.txt
+#
+# @brief creates funcF0P.f and funcJ0P.f that are useb by confun template
+#
+# @param  anBVPSys, an ODE system for which BVP solution has to be found
+#
+# @revision
+# 2011-12-11 written by dka
+#########################################################################
+  createExternalDerivativesFuncs:= proc(
+    anBVPSys::DAESys
+  )
+    local NumDynVars, NumCritPars, ODEEqns, ParNames, VarNames, 
+          varsNamesSubstitutions, counter1, funcF0P, funcJ0P,
+          ListOFDerivsF0P, ListOFDerivsJ0P, ListOFDerivsF0PFortran,
+          i1, i2, i3, ListOFDerivsJ0PFortran;
+
+    #
+    # extract information from DAESys
+    # 
+      NumDynVars:=nops(anBVPSys["ODEs"]);
+      NumCritPars:=nops(anBVPSys["Parameters"]);
+      ODEEqns:= map(rhs,anBVPSys["ODEs"]);
+      ParNames:=map(lhs,anBVPSys["Parameters"]);
+      VarNames:=anBVPSys["DynVars"];
+
+     
+   # substitution of state variables names with Z
+     varsNamesSubstitutions:=[];
+     for counter1 from 1 to NumDynVars do
+	varsNamesSubstitutions:=[op(varsNamesSubstitutions),VarNames[counter1]=Z[counter1]];
+     end do;
+     
+   # substitution of parameters names with TRPAR
+     for counter1 from 1 to NumCritPars do
+	varsNamesSubstitutions:=[op(varsNamesSubstitutions),ParNames[counter1]=TRPAR[counter1]];
+     end do;       
+
+   # calculate derivatives F0P=f_TAlpha
+          
+          ListOFDerivsF0P:= [seq(
+            [seq(
+              diff(ODEEqns[i1], ParNames[i2]),
+              i2= 1..NumCritPars
+            )],
+            i1= 1..NumDynVars
+          )];
+   
+     ListOFDerivsF0PFortran:=subs(varsNamesSubstitutions,ListOFDerivsF0P);
+  
+        #
+        # generate funcF0P by substituting values into funcF0PTemplate
+        #
+
+          funcF0P:= subs(
+            ListOFDerivsF0PToBeSubs=  ListOFDerivsF0PFortran, 
+            NumDynVarsToBeSubs=  NumDynVars,
+            NumCritParsToBeSubs= NumCritPars,
+
+            eval(Templates:-funcF0PTemplate)
+          );
+
+      
+    
+     # calculate derivatives J0P=f_xTAlpha
+     
+          ListOFDerivsJ0P:= [seq(
+            [seq(
+                [seq(
+                     diff(diff(ODEEqns[i1], VarNames[i2]), ParNames[i3]),
+                     i3= 1..NumCritPars
+                 )],
+                i2= 1..NumDynVars
+             )],i1= 1..NumDynVars)];
+
+
+     ListOFDerivsJ0PFortran:=subs(varsNamesSubstitutions,ListOFDerivsJ0P);
+
+        #
+        # generate func0JP by substituting values into func0JPTemplate
+        #
+
+          funcJ0P:= subs(
+            ListOFDerivsJ0PToBeSubs=  ListOFDerivsJ0PFortran, 
+            NumDynVarsToBeSubs=  NumDynVars,
+            NumCritParsToBeSubs= NumCritPars,
+
+            eval(Templates:-funcJ0PTemplate)
+          );      
+
+     codegen[fortran](
+            funcF0P, 
+            filename= "funcF0P.f",
+            precision= double
+          );
+      
+     codegen[fortran](
+            funcJ0P, 
+            filename= "funcJ0P.f",
+            precision= double
+          );
+ 
+    RETURN();
+  
+  end proc; # createExternalFunctions
