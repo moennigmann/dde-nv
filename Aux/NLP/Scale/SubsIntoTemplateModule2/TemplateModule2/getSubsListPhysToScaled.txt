@@ -1,0 +1,15 @@
+################################################################
+#
+# @path Aux/NLP/Scale/SubsIntoTemplateModelu2/getSubsListPhysToScaled.txt
+#
+# @revision
+# 030222 removed subs list for parameters, in new TemplateModule2,
+#   only one such subs list exists
+# 021002 added substitutions for scaled parameters
+# 
+################################################################
+      getSubsListPhysToScaled:= proc()
+        return(SubsListPhysToScaled);
+      end proc; 
+
+

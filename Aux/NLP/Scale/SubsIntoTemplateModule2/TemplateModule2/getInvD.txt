@@ -1,0 +1,10 @@
+################################################################
+#
+# @path Aux/NLP/Scale/SubsIntoTemplateModelu2/getInvD.txt
+#
+################################################################
+      getInvD:= proc()
+        return(InvD); 
+      end proc; 
+
+

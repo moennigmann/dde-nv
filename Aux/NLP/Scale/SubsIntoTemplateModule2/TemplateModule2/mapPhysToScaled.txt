@@ -1,0 +1,53 @@
+##############################################################################
+#
+# @path Aux/NLP/Scale/SubsIntoTemplateModelu2/mapPhysToScaled.txt
+#
+# @notes (i) ignores unknown assignments in Sol, returns only 
+#   scaled variables of system
+#
+# @revision
+# 030224 written by mmo
+#
+###############################################################################
+mapPhysToScaled:= proc(
+  Sol::list(name= EvalsToFloat)
+)
+
+  local NamesInSol, NewSol, Missing, i1, tmp;
+
+  #
+  # make sure Sol assigns all variables
+  #
+    NamesInSol:= convert(
+      map(lhs, Sol),
+      set
+    ); 
+
+    Missing:= `minus`(
+      convert(RangesNames, set), 
+      NamesInSol
+    ); 
+
+    if not
+      Missing= {}
+    then
+      error("assignments for %1 are missing", Missing);
+    end if; 
+
+  #
+  # scale 
+  #
+    NewSol:= array(1..nops(RangesNames));
+    for i1 from 1 to nops(RangesNames) do
+      tmp:= subs(Sol, RangesNames[i1]);
+      tmp:= D[i1]* tmp- c[i1];
+      NewSol[i1]:= RangesNames[i1]= tmp; 
+    end do;
+    NewSol:= convert(NewSol, list);
+    
+  return(NewSol); 
+
+end proc; 
+
+  
+  

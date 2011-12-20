@@ -1,0 +1,99 @@
+################################################################
+#
+# @path Aux/NLP/Scale/SubsIntoTemplateModelu2/subsIntoDAESys.txt
+#
+# @revision
+# 040323 added scaling of AEs -jge
+# 030224 written by mmo
+#
+################################################################
+subsIntoDAESys:= proc(
+  anDAESys::DAESys,
+  MultiplicationKeyword::name
+)
+
+  local NewSys, FormerODE, FormerAEs, NewRhs, i1;
+
+  #
+  # check for common errors
+  #
+    if not
+      member(MultiplicationKeyword, {'MulEqnsByD', 'DoNotMulEqnsByD'})
+    then
+      error("2nd argument must be keyword MulEqnsByD or DoNotMulEqnsByD"); 
+    end if; 
+
+  NewSys:= copy(anDAESys); 
+
+  #
+  # substitute into rhs of EAEs
+  #
+    NewSys["ExplicitAEs"]:= array(1..nops(anDAESys["ExplicitAEs"]));
+    for i1 from 1 to nops(anDAESys["ExplicitAEs"]) do
+      NewSys["ExplicitAEs"][i1]:= subs(
+        SubsListScaledToPhys,
+	anDAESys["ExplicitAEs"][i1]
+      ); 
+    end do;
+    NewSys["ExplicitAEs"]:= convert(
+      NewSys["ExplicitAEs"],
+      list
+    ); 
+
+  #
+  # transform ODEs
+  #
+    NewSys["ODEs"]:= array(1..nops(anDAESys["ODEs"]));
+    for i1 from 1 to nops(anDAESys["ODEs"]) do
+      FormerODE:= anDAESys["ODEs"][i1];
+      NewRhs:= subs(
+        SubsListScaledToPhys,
+        rhs(FormerODE)
+      ); 
+
+      NewSys["ODEs"][i1]:= 
+        lhs(FormerODE)= NewRhs; 
+    end do; 
+
+  #
+  # multiply ODEs by D, if requested
+  #
+    if 
+      MultiplicationKeyword= 'MulEqnsByD'
+    then
+      for i1 from 1 to nops(anDAESys["ODEs"]) do
+        NewSys["ODEs"][i1]:= 
+          lhs(NewSys["ODEs"][i1])= D[i1]* rhs(NewSys["ODEs"][i1]);
+      end do; 
+    end if; 
+
+  #
+  # convert ODEs to list
+  #
+    NewSys["ODEs"]:= convert(
+      NewSys["ODEs"],
+      list
+    ); 
+    
+  #
+  # transform AEs
+  #
+    NewSys["AEs"]:= array(1..nops(anDAESys["AEs"]));
+    for i1 from 1 to nops(anDAESys["AEs"]) do
+      NewSys["AEs"][i1]:= subs(
+        SubsListScaledToPhys,
+        anDAESys["AEs"][i1]
+      ); 
+    end do; 
+  #
+  # convert AEs to list
+  #
+    NewSys["AEs"]:= convert(
+      NewSys["AEs"],
+      list
+    ); 
+    
+  return(eval(NewSys)); 
+
+end proc; 
+

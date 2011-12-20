@@ -1,0 +1,38 @@
+################################################################
+#
+# @path Aux/NLP/Scale/SubsIntoTemplateModelu2/subsIntoSys.txt
+#
+# @brief dispatches to SubsIntoExtAESys, SubsIntoDAESys etc.
+#
+# @revision
+# 030224 written by mmo
+#
+################################################################
+subsIntoSys:= proc(
+  Sys,
+  MulKeyword::name
+)
+
+  local NewSys; 
+
+  if
+    type(Sys, DAESys)
+  then
+    NewSys:= subsIntoDAESys(
+      Sys,
+      MulKeyword
+    );
+  elif
+    type(Sys, ExtAESys)
+  then
+    NewSys:= subsIntoExtAESys(
+      Sys,
+      MulKeyword
+    );
+  else
+    error("expecting a DAESys or an ExtAESys");
+  end if; 
+
+  return(NewSys);
+    
+end proc; 

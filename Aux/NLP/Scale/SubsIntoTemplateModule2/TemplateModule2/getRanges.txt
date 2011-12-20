@@ -1,0 +1,14 @@
+#################################################################
+# 
+# @path Aux/NLP/Scale/SubsIntoTemplateModelu2/getRanges.txt
+#
+# @revision
+# 030225 written by mmo
+#
+################################################################
+getRanges:= proc()
+  return(Ranges);
+end proc; 
+
+
+

@@ -1,0 +1,81 @@
+################################################################
+#
+# @path Aux/NLP/Scale/SubsIntoTemplateModelu2/subsIntoExtAESys.txt
+#
+# @revision
+# 030311 moved conversion to list below last access to array
+# 030222 written by mmo
+#
+################################################################
+subsIntoExtAESys:= proc(
+  anExtAESys::ExtAESys,
+  MultiplicationKeyword::name
+)
+
+  local NewSys, FormerODE, NewRhs, i1;
+
+  #
+  # check for common errors
+  #
+    if not
+      member(MultiplicationKeyword, {'MulEqnsByD', 'DoNotMulEqnsByD'})
+    then
+      error("2nd argument must be keyword MulEqnsByD or DoNotMulEqnsByD"); 
+    end if; 
+
+  NewSys:= copy(anExtAESys); 
+
+  #
+  # substitute into rhs of EAEs
+  #
+    NewSys["ExplicitAEs"]:= array(1..nops(anExtAESys["ExplicitAEs"]));
+    for i1 from 1 to nops(anExtAESys["ExplicitAEs"]) do
+      NewSys["ExplicitAEs"][i1]:= subs(
+        SubsListScaledToPhys,
+	anExtAESys["ExplicitAEs"][i1]
+      ); 
+    end do;
+    NewSys["ExplicitAEs"]:= convert(
+      NewSys["ExplicitAEs"],
+      list
+    ); 
+
+  #
+  # transform Equations
+  #
+    NewSys["Equations"]:= array(1..nops(anExtAESys["Equations"]));
+    for i1 from 1 to nops(anExtAESys["Equations"]) do
+      FormerODE:= anExtAESys["Equations"][i1];
+      NewRhs:= subs(
+        SubsListScaledToPhys,
+        rhs(FormerODE)
+      ); 
+
+      NewSys["Equations"][i1]:= 
+        lhs(FormerODE)= NewRhs; 
+    end do; 
+
+  #
+  # multiply Equations by D, if requested
+  #
+    if 
+      MultiplicationKeyword= 'MulEqnsByD'
+    then
+      for i1 from 1 to nops(anExtAESys["Equations"]) do
+        NewSys["Equations"][i1]:= 
+          lhs(NewSys["Equations"][i1])= D[i1]* rhs(NewSys["Equations"][i1]);
+      end do; 
+    end if; 
+
+  #
+  # convert new equations to list
+  #
+    NewSys["Equations"]:= convert(
+      NewSys["Equations"],
+      list
+    ); 
+    
+  return(eval(NewSys)); 
+
+end proc; 
+
