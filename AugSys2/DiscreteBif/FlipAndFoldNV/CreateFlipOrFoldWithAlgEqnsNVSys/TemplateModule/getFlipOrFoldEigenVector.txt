@@ -1,0 +1,112 @@
+#------------------------------------------------------------
+#
+# @path AugSys2/DiscreteBif/FlipAndFoldNV/CreateFlipOrFoldWithAlgEqnsNVSys/TemplateModule/getFlipOrFoldEigenVector.txt
+# 
+# @brief Computes generalized flip or fold eigenvector
+#
+# @notes (1) Proc returns EigenVector type of Vector 
+#            corresponding eigenvalue 1 or -1 
+#        (2) a line of content data is a list of form 
+#            [param1=..., param2=..., ...]
+#        (2) eigenvalue =-1 corresponding to generalized flip bifurcation, 
+#            eigenvalue = 1 corresponding to generalized fold  bifurcation, 
+#
+#------------------------------------------------------------
+        getFlipOrFoldEigenVector:= proc(
+          lineOfDataInit::list(name=EvalsToFloat), 
+          inputEigVal
+        )
+        
+          local ListOfNamesInlineOfDataInit,ListOfVarsAndPars,ListOfUnassigneds,
+                fixPointJac0, eigVectors, i1, i2, flipEigenVal,
+                flipEigenVectors, flipEigenVector, paramList, cForGenEigVec; 
+        
+          #
+          # lineOfDataInit must consist of all dynamic variables, algebraic variables and parameters
+          #
+            ListOfNamesInlineOfDataInit:= map(lhs, lineOfDataInit);
+
+            paramList:=map(lhs,ParsOfModelInModule);
+            
+            ListOfVarsAndPars:= [
+              op(VarsOfModelInModule),
+              op(AlgVarsOfModelInModule),
+              op(paramList)
+            ];
+
+            ListOfUnassigneds:= [];
+            for item in ListOfVarsAndPars do
+              if not
+                member(item, ListOfNamesInlineOfDataInit)
+              then
+                ListOfUnassigneds:= [op(ListOfUnassigneds),
+                  item
+                ];
+              end if;
+            end do; 
+
+            if not
+              ListOfUnassigneds= []
+            then
+              error("variables and parameters %1 must be assigned "
+                "by 1st argument", ListOfUnassigneds
+              );
+            end if;  
+ 
+          #
+          # substract data of parameters to Jacobian of system  
+          #
+
+          fixPointJac0 := evalf(subs(lineOfDataInit, getJac()));
+
+          #
+          # list of generalized eigenvalues and corresponding generalized eigenvectors of the system
+          # F_x w = lambda C w, in our case C=[[I,0],[0,0]]
+          #
+
+          cForGenEigVec:=Matrix(NumOfEqnsInModule);
+  
+          for i2 from 1 to nops(VarsOfModelInModule) do
+            cForGenEigVec[i2,i2]:=1;
+	   end do; 
+
+          eigVectors := LinearAlgebra[Eigenvectors](fixPointJac0,cForGenEigVec,output = 'list');
+        
+          # choosing eigenvalue which is equal to input eigenvalue
+
+         flipEigenVal := 0; 
+         for i1 from 1 while ((i1<= nops(eigVectors)) and (flipEigenVal=0) ) do
+           if ((abs(Re(eigVectors[i1,1])-inputEigVal)<10^(-4)) and ( abs(Im(eigVectors[i1,1])) <10^(-4)))    
+           then flipEigenVectors:=eigVectors[i1,3]; flipEigenVal:=inputEigVal;   
+           end if;  
+         end do;
+
+        # if no eigenvalue is equal to input eigenvalue then send an error
+
+	if ( flipEigenVal = 0) 
+         then error ("There is no point with eigenvalue=", inputEigVal);
+        end if;
+
+	flipEigenVector := flipEigenVectors[1];
+
+        # Cheking if imaginary part of eigenvector is equal to zero
+
+        for i2 from 1 to LinearAlgebra[Dimension](flipEigenVector) do 
+         if (abs(Im(flipEigenVector[i2])) > 10^(-5)) 
+         then  error ("Eigenvector corresponding to eigenvalue=", inputEigVal,"is not a real vector");
+         end if; 
+        end do;
+
+       flipEigenVector:=map(Re, flipEigenVector);
+
+       # normalize eigenvector if necessary
+
+       if (LinearAlgebra[VectorNorm](flipEigenVector, 2) <> 1) 
+        then flipEigenVector := flipEigenVector/LinearAlgebra[VectorNorm](flipEigenVector, 2);
+       end if;
+
+       # return eigenvector corresponding inputEigVal
+        
+       return(flipEigenVector):
+        
+       end proc; # getFlipOrFoldEigenVector

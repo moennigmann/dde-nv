@@ -1,0 +1,10 @@
+#------------------------------------------------------------
+#
+# @path AugSys2/DiscreteBif/FlipAndFoldNV/CreateFlipOrFoldWithAlgEqnsNVSys/TemplateModule/getJac.txt
+#
+# @brief returns Jacobian
+# 
+#------------------------------------------------------------
+        getJac:= proc()
+          return(eval(JacInModule)); 
+        end proc; # getJac
