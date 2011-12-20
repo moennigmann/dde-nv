@@ -1,0 +1,44 @@
+###############################################################################
+#
+# @path Models/source/Scott1990/Sys.txt
+#
+# @brief Implements A->B->C reaction model from Scott1990
+#
+# @authors dka
+#
+# @revision history:
+# 2011-11-24 Created by dka 
+#
+###############################################################################
+Sys:= module()
+
+  local aSys;
+
+  export
+    getSys; 
+
+  aSys:= table():
+
+  aSys["ODEs"]:= [
+	       `a'` =mu0*exp(phi*delta)-a*b^2-k*a,
+               `b'` =a*b^2+k*a-b,
+               `phi'`=b-g*phi];
+  
+  aSys["ExplicitAEs"]:= [k = 5.5*10^(-3), delta = 0.1];
+  
+  aSys["AlgVars"]:= [];
+  aSys["DynVars"]:= [a,b,phi];
+  aSys["Parameters"]:= [mu0 = 0.494710, g = 0.249179];
+  aSys["AEs"]:= [];
+
+  #------------------------------------------------------------
+  #
+  # getSys
+  #
+  #------------------------------------------------------------
+  getSys:= proc()
+    return(eval(aSys)); 
+  end proc;    
+
+end module; 
+

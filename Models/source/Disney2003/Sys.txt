@@ -1,0 +1,92 @@
+###############################################################################
+#
+# @path Models/source/Disney2003/Sys.txt
+#
+# @brief Implements three echelon supply chain model from Disney2003
+#
+# @authors dka
+#
+# @revision
+# 2011-11-24 Created by dka 
+#
+###############################################################################
+Sys:= module()
+
+  local Syst;
+
+  export
+    getSys; 
+
+  Syst := table([
+	("ExplicitAlgEqns")=[DINV = 0, 
+	                     WIP = ORATE+ORATEaux1, 
+	                     AVCON_t = AVCON+(CONSpar-AVCON)/(1+Ta), 
+	                     DWIPaux = AVCON*Tpbar, 
+	                     COMRATE_t = ORATEaux1, 
+	                     AINV_t = AINV+COMRATE_t-CONSpar, 
+	                     EINVaux = DINV-AINV, 
+	                     ORATE_t = AVCON+EINVaux/Ti+(DWIPaux-WIP)/Tw, 
+	                     DINVD = 0, 
+	                     WIPD = ORATED+ORATEaux1D+ORATEaux2D, 
+	                     AVCON_tD = AVCOND+(ORATE_t-AVCOND)/(1+Ta2), 
+	                     DWIPauxD = AVCOND*Tpbar2, 
+	                     COMRATE_tD = ORATEaux2D, 
+	                     AINV_tD = AINVD+COMRATE_tD-ORATE_t, 
+	                     EINVauxD = DINVD-AINVD, 
+	                     ORATE_tD = AVCOND+EINVauxD/Ti2+(DWIPauxD-WIPD)/Tw2, 
+	                     DINVM = 0, 
+	                     WIPM = ORATEM+ORATEaux1M+ORATEaux2M+ORATEaux3M, 
+	                     AVCON_tM = AVCONM+(ORATE_tD-AVCONM)/(1+Ta3), 
+	                     DWIPauxM = AVCONM*Tpbar3, 
+	                     COMRATE_tM = ORATEaux3M, 
+	                     AINV_tM = AINVM+COMRATE_tM-ORATE_tD, 
+	                     EINVauxM = DINVM-AINVM, 
+	                     ORATE_tM = AVCONM+EINVauxM/Ti3+(DWIPauxM-WIPM)/Tw3],
+	("DynEqns")=[AVCON = AVCON_t, 
+	             CONSt = CONSpar, 
+	             CONSaux = CONSpar, 
+	             ORATEaux1 = ORATE, 
+	             COMRATE = COMRATE_t, 
+	             ORATE = ORATE_t, 
+	             AINV = AINV_t, 
+	             AVCOND = AVCON_tD, 
+	             ORATEaux1D = ORATED, 
+	             ORATEaux2D = ORATEaux1D, 
+	             COMRATED = COMRATE_tD, 
+	             ORATED = ORATE_tD, 
+	             AINVD = AINV_tD, 
+	             AVCONM = AVCON_tM, 
+	             ORATEaux1M = ORATEM, 
+	             ORATEaux2M = ORATEaux1M, 
+	             ORATEaux3M = ORATEaux2M, 
+	             COMRATEM = COMRATE_tM, 
+	             ORATEM = ORATE_tM, 
+	             AINVM = AINV_tM],
+        ("AlgVars")=[],
+        ("DynVars")=[AVCON, CONSt, CONSaux, ORATEaux1, 
+                     COMRATE, ORATE, AINV, AVCOND, ORATEaux1D, 
+		     ORATEaux2D, COMRATED, ORATED, AINVD, 
+		     AVCONM, ORATEaux1M, ORATEaux2M, 
+		     ORATEaux3M, COMRATEM, ORATEM, AINVM],
+        ("Parameters")=[CONSpar = 0, Ta = 8, Tpbar = 2, Ti = 4, 
+                        Tw = 4, Ta2 = 8, Tpbar2 = 3, Ti2 = 4, 
+                        Tw2 = 4, Ta3 = 8, Tpbar3 = 4, Ti3 = 4, Tw3 = 4],
+        ("AlgEqns")=[]]);
+
+  #------------------------------------------------------------
+  #
+  # getSys
+  #
+  #------------------------------------------------------------
+  getSys:= proc()
+    return(eval(Syst)); 
+  end proc;   
+
+
+
+end module; 
+
+
+
+
+
