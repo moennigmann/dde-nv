@@ -1,0 +1,27 @@
+###########################################################################
+#
+# @path template function funcF0PTemplate, local to BVPOpt
+#
+# @brief creates fortran Template for calculation of partial 
+#        derivatives f_TAlpha (T - period, Alpha - uncertain parameters)
+#
+# @revision
+#   2011-12-11 written by dka
+###########################################################################
+    funcF0PTemplate:= proc(Z,DFP,TRPAR)  # types declared below
+          
+      declare(
+        Z=array(1..NumDynVarsToBeSubs,numeric),   # state variables 
+        DFP=array(1..NumDynVarsToBeSubs,1..NumCritParsToBeSubs,numeric), # matrix derivatives F_p
+        TRPAR=array(1..NumCritParsToBeSubs,numeric) # parameters
+      ); 
+  
+        DFP:= array(        
+          1..NumDynVarsToBeSubs,  
+          1..NumCritParsToBeSubs,  
+          ListOFDerivsF0PToBeSubs    
+        );                  
+              
+      RETURN();
+    
+    end proc: #funcF0PTemplate

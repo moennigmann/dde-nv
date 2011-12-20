@@ -1,0 +1,156 @@
+###############################################################################
+#
+# @path BVPOpt/InternalNVVars/getInternalVarsToSubs.txt
+# 
+# @brief Generate list of derivatives function values for a periodic 
+#        solution, that can be substituted into the NV system
+# 
+# @param Instance of BVPSol
+#
+# @authors dka
+#
+# @revision
+# 2011-11-19 written by dka
+#
+###############################################################################
+getInternalVarsToSubs:=proc(BVPSolInst::name)
+
+local aSys, internalVarsToSubsList, i, j, k, f_x, listForFxx, f_xx,
+      numOfDynEqns, numOfUncParam, f_alpha, f_xalpha, f_T, x0p, f_TVals,
+      X0pValsList, paramValsList, paramNames, dynVarsNames, rhsDynEqns,
+      listForFxAlpha, FXVals, FALVals, FXXVals, FXALVals, paramVals,
+      f_xT, jacOfSys, f_xTVals;
+
+#check if instance of BVPSol is defined correctly
+if not (BVPSolInst:-getPeriod()>0) then
+  error("input parameter should be given as instance of BVPSol, furthermore procedure runBVPSol should be completed successfully")
+end if;
+
+aSys:=BVPSolInst:-getSys();
+  
+# number of dynamical and uncertain parameters in the ODE system
+
+numOfDynEqns:=nops(aSys["ODEs"]);
+numOfUncParam:=nops(aSys["Parameters"]);
+
+internalVarsToSubsList:=[];
+
+
+# add values for Fx
+
+f_x:= Matrix(numOfDynEqns,numOfDynEqns,symbol='Fx');
+FXVals:=BVPSolInst:-getFx();
+
+for i from 1 to numOfDynEqns do
+  for j from 1 to numOfDynEqns do
+    internalVarsToSubsList:=[op(internalVarsToSubsList),f_x[i,j]=FXVals[i,j]];
+  end do;
+end do;
+
+
+# add values for f_alpha 
+
+f_alpha:= Matrix(numOfDynEqns,numOfUncParam,symbol='Fp');
+FALVals:=BVPSolInst:-getFalpha();
+
+for i from 1 to numOfDynEqns do
+  for j from 1 to numOfUncParam do
+    internalVarsToSubsList:=[op(internalVarsToSubsList),f_alpha[i,j]=FALVals[i,j]];
+  end do;
+end do;
+
+
+# add values for f_xx
+
+listForFxx := []; 
+for i to numOfDynEqns do 
+  listForFxx := [op(listForFxx), convert(Matrix(numOfDynEqns, numOfDynEqns, symbol = 'Fxx[i]'), listlist)] 
+end do: 
+f_xx := Array(listForFxx);
+
+FXXVals:=BVPSolInst:-getFxx();
+
+for i from 1 to numOfDynEqns do
+  for j from 1 to numOfDynEqns do
+    for k from 1 to numOfDynEqns do
+      internalVarsToSubsList:=[op(internalVarsToSubsList),f_xx[i,j,k]=FXXVals[i,j,k]];
+    end do;
+  end do;
+end do;
+
+
+# add values for f_xalpha
+ 
+listForFxAlpha := []; 
+for i to numOfDynEqns do 
+  listForFxAlpha := [op(listForFxAlpha), convert(Matrix(numOfDynEqns, numOfUncParam, symbol = 'Fxp[i]'), listlist)] 
+end do: 
+f_xalpha := Array(listForFxAlpha);
+
+FXALVals:=BVPSolInst:-getFxalpha();
+
+for i from 1 to numOfDynEqns do
+  for j from 1 to numOfDynEqns do
+    for k from 1 to numOfUncParam do
+      internalVarsToSubsList:=[op(internalVarsToSubsList),f_xalpha[i,j,k]=FXALVals[i,j,k]];
+    end do;
+  end do;
+end do;
+
+
+#
+# add values for f_T, where f_T depends on X0 and ODEs
+#
+
+f_T:=Vector(numOfDynEqns,symbol='Ft');
+
+dynVarsNames:=aSys["DynVars"];
+paramNames:=map(lhs,aSys["Parameters"]);
+rhsDynEqns:=map(rhs,aSys["ODEs"]);
+
+paramVals:=BVPSolInst:-getParams();
+
+
+# starting point of Poincare section xOp
+x0p:=BVPSolInst:-getSol()[1];
+X0pValsList := []; 
+for i to numOfDynEqns do 
+  X0pValsList := [op(X0pValsList), dynVarsNames[i] = x0p[i]]; 
+end do;
+
+# parameters values
+paramValsList:=[];
+for j from 1 to numOfUncParam do
+  paramValsList:=[op(paramValsList),paramNames[j]=paramVals[j]];
+end do;
+
+# f_T equals F(x0)
+f_TVals:=Vector(subs(X0pValsList, subs(paramValsList, rhsDynEqns)));
+
+for i from 1 to numOfDynEqns do
+  internalVarsToSubsList:=[op(internalVarsToSubsList),f_T[i]=evalf(f_TVals[i])];
+end do; 
+
+
+#
+# add values for f_xT, where f_xT also depends on X0 and ODEs
+#
+
+f_xT:=Matrix(numOfDynEqns,numOfDynEqns,symbol='Fxt');
+
+# system jacobian
+jacOfSys:=VectorCalculus[Jacobian](rhsDynEqns,dynVarsNames);
+
+#f_xT equals F_x(x0)
+f_xTVals:=subs(X0pValsList, subs(paramValsList, jacOfSys));
+
+for i from 1 to numOfDynEqns do
+  for j from 1 to numOfDynEqns do
+    internalVarsToSubsList:=[op(internalVarsToSubsList),f_xT[i,j]=evalf(f_xTVals[i,j])];
+  end do;
+end do;
+  
+return internalVarsToSubsList;
+
+end proc; 
+
