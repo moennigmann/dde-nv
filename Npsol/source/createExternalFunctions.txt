@@ -198,9 +198,9 @@
           eval(Templates:-objfunTemplate)
         );
         else 
-             pathTemplate:=anNLP["ObjfunTemplatePath"];
+             pathTemplate:=op(anNLP["ObjfunTemplatePath"]);
              if not Aux:-FileOperations:-fileExists(pathTemplate)
-             then error("CostFunction in NLP must be not empty or ObjfunTemplatePath did not define correct");
+             then error("CostFunction in NLP must be not empty or ObjfunTemplatePath was not defined correctly");
              else
              
              read(pathTemplate);
