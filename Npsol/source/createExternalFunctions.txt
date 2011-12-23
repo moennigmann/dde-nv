@@ -1,0 +1,243 @@
+#########################################################################
+#
+# @path local procedure createExternalFunctions
+#
+# @brief create procedure which (1) contains constraints and
+#        their Jacobian as needed by NPSOL
+#        create procedure which (2) contains cost function and
+#        its derivative
+#
+# @param anAESys: of type NLP, which contains constraints
+#          note: entry CostFunction must be given
+#        NameOfConfun: of type name, will contain proc of constraints
+#        NameOfObjfun: of type name, will contain proc of objective
+#       
+# @return assigned to NameOfConfun proc which encapsulates constraints
+#           and their derivatives
+#         assigned to NameOfObjfun proc which encapsulates objective
+#           and its derivatives
+#
+# @notes
+#   (1) procedure is not optimal: in case no nonlinear constraints and
+#   	no cost function exist, some time is wasted here; if no cost
+#   	function exists, it is set to zero and time is wasted by
+#   	calculating the derivs of zero with respect to vars; 
+#   (2) structure: CreateExternalFunctions
+#   	substitutes problem dependent information into
+#     	Templates:-ConfunTemplate and Templates:-ObjfunTemplate
+#     	to create procedures which if exported to fortran comply with npsol
+#     	requirements
+#
+# @revision
+# 2008-03-06  instead of anNLP[...] using anNLP["..."] by dka
+# 2008-03-05 by dka change ModelPack to Aux
+# 021127 pass op(EAEs) instead of EAEs to template to allow
+#   for dummy EAE in template which is necessary for CreateInstance
+#   to work on problems with empty EAEs; 
+# 021125 (i) NLP may now comprise ExplicitAEs, procedure substitutes
+#   these into templates; (ii) replaced 'OfAESys' by 'OfNLP';
+#   (iii) added substitution of EAEs into Constraints and
+#   CostFunction before Jacobian calculation with diff() (does not
+#   affect use of NPSOL with option adifor); 
+# 021122 added creation of functions necessary for use of adifor on
+#   cost function; 
+# 021120 added creation of functions necessary for use of adifor on
+#   constraints; 
+# 021105 removed check for standard notation
+# 010424 removed dummy parameter introduction and moved it to
+#   ConfunTemplate; name passed in NameOfConfun is
+#   left unassigned if no nonlinear constraints
+#   exist in nlp, CreateSharedObject will
+#   detect unassigned name and substitute dummy procedure;
+#   if no cost function exists it is set to zero - mmo
+# 0012xx written by mmo
+#
+#########################################################################
+  createExternalFunctions:= proc(
+    anNLP::NLP,
+    NameOfConfun::name,
+    NameOfObjfun::name
+  )
+    local Cons, Pars, Vars, CostFunc,
+      NumConsOfNLP, NumParsOfNLP, NumVarsOfNLP,
+      ListListOfJacElements, GradOfCostFunc, confun, objfun, i1,
+      ListOfDefExpr, UndefExpr, NumEAEsOfNLP, EAEs,
+      ConsAfterEAEsSubs, CostFuncAfterEAEsSubs, pathTemplate; 
+
+    #----------------------------------------------------------------------
+    #
+    # substitute information from actual AESys into templates
+    #
+    #----------------------------------------------------------------------    
+    #
+    # extract information from AESys
+    #
+      Cons := map(rhs, anNLP["Constraints"]);
+      Vars:= map(lhs, anNLP["Variables"]);
+      Pars:= map(rhs, anNLP["Parameters"]); 
+      EAEs:= map(rhs, anNLP["ExplicitAEs"]); 
+
+      NumConsOfNLP:= nops(Cons);
+      NumVarsOfNLP:= nops(Vars);
+      NumParsOfNLP:= nops(Pars);
+      NumEAEsOfNLP:= nops(EAEs); 
+
+    #
+    # if nonlinear constraints exist, create procedure which contains
+    #   nonlinear constraints to be exported to fortran
+    # otherwise, leave name in NameOfConfun to be of type unevaluated
+    #
+      if 
+        not Cons= [] and UseAdifor= false
+      then
+ 
+        #
+        # calculate derivatives of constraints
+        #
+        # note: for some reason substitution of the jacobian contained
+        #   in an array does not work with codegen/fortran, see
+        #   comment in template
+        #
+          ConsAfterEAEsSubs:= Aux:-ListOperations:-subsEqnListIntoEqn( 
+            anNLP["ExplicitAEs"],
+            anNLP["Constraints"]
+          ); 
+          ConsAfterEAEsSubs:= map(rhs, ConsAfterEAEsSubs); 
+          ListListOfJacElements:= [seq(
+            [seq(
+              diff(ConsAfterEAEsSubs[i1], Vars[i2]),
+              i2= 1..NumVarsOfNLP
+            )],
+            i1= 1..NumConsOfNLP
+          )];
+  
+        #
+        # generate confun by substituting values into ConfunTemplate
+        #
+          NameOfConfun:= subs(
+        
+            ParsToBeSubs=        op(Pars),        # subs exprseq, see template 
+            ConstraintsToBeSubs= map(evalf, Cons),# only non-linear Constraints
+            EAEsToBeSubs=        op(map(evalf, EAEs)), 
+            NumParsToBeSubs=     NumParsOfNLP, 
+            NumVarsToBeSubs=     NumVarsOfNLP,
+            NumConsToBeSubs=     NumConsOfNLP,
+            NumEAEsToBeSubs=     NumEAEsOfNLP, 
+            ListListToBeSubs=    ListListOfJacElements,
+      
+            eval(Templates:-confunTemplate)
+          );
+
+      elif
+        not Cons= [] and UseAdifor= true
+      then
+        #
+        # create fortran file to which adifor will be applied
+        #    
+          NameOfConfun:= subs(
+        
+            ParsToBeSubs=        op(Pars), # subs exprseq, see template 
+            ConstraintsToBeSubs= map(evalf, Cons),# only non-linear Constraints
+            EAEsToBeSubs=        op(map(evalf, EAEs)), 
+            NumParsToBeSubs=     NumParsOfNLP, 
+            NumVarsToBeSubs=     NumVarsOfNLP,
+            NumConsToBeSubs=     NumConsOfNLP,
+            NumEAEsToBeSubs=     NumEAEsOfNLP, 
+      
+            eval(Templates:-confunAdiforTemplate)
+          );
+          
+        #
+        # create wrapper to be called by npsol
+        #   
+      end if; # not Cons= []
+
+    #
+    # if a cost function exists in nlp, generate procedure which
+    # contains cost function to be exported to fortran
+    # otherwise use the template for objfunc from NLP["ObjfunTemplatePath"]
+    #
+
+    if 
+      UseAdifor= false
+    then
+      
+      if not anNLP["CostFunction"]= [] 
+      then CostFunc:= op(anNLP["CostFunction"]);
+      #
+      # calculate derivatives of constraints
+      #
+        GradOfCostFunc:= [];
+        CostFuncAfterEAEsSubs:= Aux:-ListOperations:-subsEqnListIntoEqn(
+          anNLP["ExplicitAEs"],
+          CostFunc
+        ); 
+        for i1 from 1 to NumVarsOfNLP do
+          GradOfCostFunc:= [
+            op(GradOfCostFunc),
+            diff(
+              CostFuncAfterEAEsSubs, 
+              Vars[i1]
+            )
+           ];
+        end do;
+
+      #
+      # generate objfun by substituting values into ObjfunTemplate
+      #
+        NameOfObjfun:= subs(
+    
+          ParsToBeSubs=    op(Pars), # subs exprseq, see template
+          ObjToBeSubs=     evalf(CostFunc), 
+          GradToBeSubs=    eval(GradOfCostFunc),
+          EAEsToBeSubs=    op(map(evalf, EAEs)), 
+          NumParsToBeSubs= NumParsOfNLP, 
+          NumVarsToBeSubs= NumVarsOfNLP,
+          NumEAEsToBeSubs= NumEAEsOfNLP, 
+    
+          eval(Templates:-objfunTemplate)
+        );
+        else 
+             pathTemplate:=op(anNLP["ObjfunTemplatePath"]);
+             if not Aux:-FileOperations:-fileExists(pathTemplate)
+             then error("CostFunction in NLP must be not empty or ObjfunTemplatePath was not defined correctly");
+             else
+             
+             read(pathTemplate);
+             
+             NameOfObjfun:= subs(
+    
+   	          ParsToBeSubs=    op(Pars), # subs exprseq, see template
+        	  ObjToBeSubs=     evalf(CostFunc), 
+ 	          GradToBeSubs=    eval(GradOfCostFunc),
+        	  EAEsToBeSubs=    op(map(evalf, EAEs)), 
+               	  NumParsToBeSubs= NumParsOfNLP, 
+          	  NumVarsToBeSubs= NumVarsOfNLP,
+          	  NumEAEsToBeSubs= NumEAEsOfNLP, 
+    
+                  eval(objfunTemplate)
+               );
+             
+             
+             end if;
+        end if;
+    else
+      #
+      # generate objfun by substituting into ObjfunAdiforTemplate
+      #
+        NameOfObjfun:= subs(
+          ParsToBeSubs=    op(Pars),
+          ObjToBeSubs=     evalf(CostFunc), 
+          EAEsToBeSubs=    op(map(evalf, EAEs)),
+          NumParsToBeSubs= NumParsOfNLP, 
+          NumVarsToBeSubs= NumVarsOfNLP,
+          NumEAEsToBeSubs= NumEAEsOfNLP, 
+    
+          eval(Templates:-objfunAdiforTemplate)
+        );
+         
+    end if; 
+ 
+    RETURN();
+  
+  end proc; # createExternalFunctions
