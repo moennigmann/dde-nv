@@ -80,30 +80,25 @@
     
     #
     # check if the phase condition is given in the form 'varible_i-constant' 
-    # (i.e., check if derivatives of phase condition have a form: 
-    #        diff(phaseCondition,varible_i)=1,
-    #        and the rest is equal to zero)
+    #
+    logicPhaseVarPresent:=validatePhaseCondition(anBVPSys,phaseCondition);
+    if(logicPhaseVarPresent=false)
+      then error("Phase condition should be given in form 'var_i-constant'",phaseCondition);
+    end if;
+
+    #
+    # get index of varible_i in phase condition
     #
     varsBVP:=anBVPSys["DynVars"];
 
-    logicPhaseVarPresent:=false;
     for i from 1 to nops(varsBVP) do
       phaseCondDeriv:=diff(phaseCondition,varsBVP[i]);
       if (phaseCondDeriv=1)
-      then if(logicPhaseVarPresent=false) 
-	   then logicPhaseVarPresent:=true;
-	        indPhaseCondVarible:=i;
-	   else error("Phase condition should be given in form 'var_i-constant'",phaseCondition);
-	   end if;
-      else if(phaseCondDeriv!=0)
-           then error("Phase condition should be given in form 'var_i-constant'",phaseCondition);
-           end if;
-      end if;	   
+	then indPhaseCondVarible:=i;
+      end if;
     end do;
     
-    if(logicPhaseVarPresent=false)
-    then error("Phase condition should be given in form 'var_i-constant'",phaseCondition);
-    end if;
+
     
     # 
     # substiture explicit functions intro anBVPSys
