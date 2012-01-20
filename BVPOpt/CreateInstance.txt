@@ -7,16 +7,19 @@
 #                and internal variables of optimization
 #         WorkingDir, directory into which files will be written
 #                     when compiling and at runtime
-#         nodes, number of nodes in multi-shooting procedure,
+#         nodes, number of nodes to initialize BVP solution,
 #         initX0, the initial guess for first point X0 of the trajectory solution
 #         initP, the initial guess for period of the trajectory solution 
-#         list of compilled objects obtaned from TIDES            
+#         list of compilled objects obtaned from TIDES,  
+#         phase condition              
 #
-# @return  procedure which starts bvpsol
+# @return  procedure which starts bvpopt
 #
-# @notes list of compilled objects obtaned from TIDES should
-#        contain path to "calltides.o" and corresponding 
-#        system file, e.g., "scott.o"
+# @notes (i) list of compilled objects obtaned from TIDES should
+#            contain path to "calltides.o" and corresponding 
+#            system file, e.g., "scott.o"
+#        (ii) for convenience only simple phase conditions are accepted,
+#             i.e only conditions of type 'varible_i-constant' 
 #
 # @revision
 #   2011-11-12 written by dka
@@ -28,10 +31,11 @@
                        nodes::integer,
                        initX0::list(name= EvalsToFloat),
                        initP::EvalsToFloat,                       
-                       objNames::list(string))
+                       objNames::list(string),
+                       phaseCondition)
 
     local bvpopt, BVPOptInstance, NewValues, NewParsNames, Missing, 
-          Obsolete, i1, ParNames, X0; 
+          Obsolete, i1, ParNames, X0, logicPhaseVarPresent; 
     
      #
      # prepare working dir
@@ -76,6 +80,15 @@
          X0:=[op(X0),NewValues[i1]];
       end do;
 
+
+    #
+    # check if the phase condition is given in the form 'varible_i-constant' 
+    #
+      logicPhaseVarPresent:=BVPSol:-validatePhaseCondition(anBVPSys,phaseCondition);
+      if(logicPhaseVarPresent=false)
+        then error("Phase condition should be given in form 'var_i-constant'",phaseCondition);
+      end if;
+
     
     # 
     # substiture explicit functions intro anBVPSys
@@ -94,7 +107,8 @@
           X0,
           initP,
           nodes,
-          objNames
+          objNames,
+          phaseCondition
         );
       catch:
 	printf("CreateSharedObject failed, \n");
