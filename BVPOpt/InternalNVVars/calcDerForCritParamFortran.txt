@@ -106,8 +106,7 @@ end do;
 f_T:=Vector(numOfDynEqns,symbol='Ft');
 
 for i from 1 to numOfDynEqns do
-#  internalVarsDerivsToSubsList:=[op(internalVarsDerivsToSubsList),f_T[i]=F0P[i,indexOfDeriv]];
-   internalVarsDerivsToSubsList:=[op(internalVarsDerivsToSubsList),f_T[i]=0];
+   internalVarsDerivsToSubsList:=[op(internalVarsDerivsToSubsList),f_T[i]=F0P[i,indexOfDeriv]];
 end do; 
 
 
@@ -116,8 +115,7 @@ f_xT:=Matrix(numOfDynEqns,numOfDynEqns,symbol='Fxt');
 
 for i from 1 to numOfDynEqns do
   for j from 1 to numOfDynEqns do
-#    internalVarsDerivsToSubsList:=[op(internalVarsDerivsToSubsList),f_xT[i,j]=J0P[i,j,indexOfDeriv]];
-   internalVarsDerivsToSubsList:=[op(internalVarsDerivsToSubsList),f_xT[i,j]=0];
+   internalVarsDerivsToSubsList:=[op(internalVarsDerivsToSubsList),f_xT[i,j]=J0P[i,j,indexOfDeriv]];
   end do;
 end do;
 
