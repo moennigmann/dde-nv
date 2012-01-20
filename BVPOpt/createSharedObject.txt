@@ -11,7 +11,8 @@
 #        X0, the initial guess for first point X0 of the trajectory solution
 #        initP, the initial guess for period of the trajectory solution 
 #        nodes, number of nodes in multi-shooting procedure,     
-#        list of compilled objects obtaned from TIDES
+#        list of compilled objects obtaned from TIDES,
+#        phase condition
 #
 # @notes list of compilled objects obtaned from TIDES should
 #        contain path to "calltides.o" and corresponding 
@@ -28,11 +29,12 @@
     X0::list(EvalsToFloat),
     initP::EvalsToFloat,
     nodes::integer,
-    objNames::list(string)
+    objNames::list(string),
+    phaseCondition
   )
 
     local oldDir, LinkerCommand, bvpopt, SharedObjectName,InstanceCounter,
-          i, objNamesList; 
+          i, objNamesList, indPhaseCondVarible; 
 
     InstanceCounter:= 1; 
     
@@ -52,17 +54,34 @@
       currentdir(bvpoptDir): 
       # currentdir creates error if bvpoptDir does not exist
   
+    
     #
-    # create external Fortran function fortranrhs.f and fortranjac.f 
-    # with procedures FCN and DFDY
+    # get index of varible_i in the phase condition
+    #
+    indPhaseCondVarible:=BVPSol:-getPhaseConditionIndex(anBVPSys,phaseCondition);
+
+    #
+    # create external Fortran files fortranrhs.f, fortranjac.f
+    # (rhs and jacobian of the original problem) 
+    #  extrhs.f, extjac.f, boundcond.f, and boundjac.f
+    # (rhs, boudary condition and jacobians of the problem extended by
+    #  additional variables with rhs=0, i.e. extended with period and 
+    #  left boundary conditions treated as unknown variables)
     # 
-      BVPSol:-createExternalFunctions(anBVPSys);
+      BVPSol:-CreateExternalFunctions:-createGenericExtFunctions(anBVPSys,
+								 'twpbvp',
+								 phaseCondition,
+								 indPhaseCondVarible);
         
     # 
-    # compile fortranrhs.f and fortranjac.f 
+    # compile created Fortran files
     #
       system("gfortran -c -shared -O -fPIC fortranrhs.f -o fortranrhs.o"); 
-      system("gfortran -c -shared -O -fPIC fortranjac.f -o fortranjac.o"); 
+      system("gfortran -c -shared -O -fPIC fortranjac.f -o fortranjac.o");
+      system("gfortran -c -shared -O -fPIC extrhs.f -o extrhs.o"); 
+      system("gfortran -c -shared -O -fPIC extjac.f -o extjac.o");
+      system("gfortran -c -shared -O -fPIC boundcond.f -o boundcond.o");
+      system("gfortran -c -shared -O -fPIC boundjac.f -o boundjac.o");  
 
 
     #
@@ -72,7 +91,8 @@
                              anNLP,
                              X0,
                              initP, 
-                             nodes); 
+                             nodes,
+                             indPhaseCondVarible); 
      
     # 
     # compile npsolobjfun.f and npsolconfun.f 
@@ -85,13 +105,13 @@
     # creates funcF0P.f and funcJ0P.f that are used in npsolobjfun.f
     #
 
-    # createExternalDerivativesFuncs(anBVPSys);
+     createExternalDerivativesFuncs(anBVPSys);
     
     # 
     # compile funcF0P.f and funcJ0P.f 
     #   
-    #  system("gfortran -c -shared -O -fPIC funcF0P.f -o funcF0P.o");
-    #  system("gfortran -c -shared -O -fPIC funcJ0P.f -o funcJ0P.o");
+      system("gfortran -c -shared -O -fPIC funcF0P.f -o funcF0P.o");
+      system("gfortran -c -shared -O -fPIC funcJ0P.f -o funcJ0P.o");
       
 
           
@@ -118,14 +138,17 @@
     # in additional to TIDES files connect NPSOL files
     #
         LinkerCommand:= cat(
-          `gcc -shared -Xlinker -Bsymbolic fortranrhs.o fortranjac.o npsolconfun.o npsolobjfun.o `,
+          `gcc -shared -Xlinker -Bsymbolic fortranrhs.o fortranjac.o `,
+          `extrhs.o extjac.o boundcond.o boundjac.o `,
+          `funcF0P.o funcJ0P.o `,
+          `npsolconfun.o npsolobjfun.o `,
            _ModulesDirectory, `/Npsol/ext_routines/f2c/cwrap/npsol_open.o `,
           _ModulesDirectory, `/Npsol/ext_routines/f2c/cwrap/npsol_close.o `,
           _ModulesDirectory, `/Npsol/ext_routines/f2c/cwrap/set_params.o `,
           _ModulesDirectory, `/Npsol/ext_routines/f2c/cwrap/cwrap_npsol.o `,
           objNamesList,
           _ModulesDirectory, `/Npsol/ext_routines/f2c/shared_obj/npsol.so `,
-          _ModulesDirectory, `/BVPSol/ext_routines/f2c/shared_obj/period.so `,
+          _ModulesDirectory, `/BVPSol/ext_routines/f2c/shared_obj/twpbvp/twpbvp.so `,
           ` -lf2c -O2 -lm -lgfortran -lTIDES -o `, 
           SharedObjectName
         );
