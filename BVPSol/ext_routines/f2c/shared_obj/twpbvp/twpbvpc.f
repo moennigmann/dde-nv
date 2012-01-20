@@ -1,18 +1,5 @@
 c ===================================================================================
-* karline: to make this code compatible with R:
-* 1. change all write(6,...) -> rprint
-* 2. add initu
-* 3. pass precisions, in 3-valued vector "precis", as passed form C calling routine
-*         - do not use d1mach of original FORTRAN code
-* 4. add argument useC for conditioning or not
-* 5. add arguments xguess and yguess (used if givu=TRUE)
-* 6. got rid of "pdebug"
-* 7. added iset, to contain several 'counters'
-c ===================================================================================
-
-
-c ===================================================================================
-c print R-messages
+c print messages
 c ===================================================================================
 
       subroutine rprint(msg)
@@ -60,6 +47,16 @@ c ==============================================================================
 c ===================================================================================
 c main driver for twpbvpc, written by Jeff Cash and Francesca Mazzia
 c with small adaptations to make it work with R by Karline Soetaert
+c ===================================================================================
+* karline: 
+* 1. change all write(6,...) -> rprint
+* 2. add initu
+* 3. pass precisions, in 3-valued vector "precis", as passed form C calling routine
+*         - do not use d1mach of original FORTRAN code
+* 4. add argument useC for conditioning or not
+* 5. add arguments xguess and yguess (used if givu=TRUE)
+* 6. got rid of "pdebug"
+* 7. added iset, to contain several 'counters'
 c ===================================================================================
 
       subroutine twpbvpc(ncomp, nlbc, aleft, aright,

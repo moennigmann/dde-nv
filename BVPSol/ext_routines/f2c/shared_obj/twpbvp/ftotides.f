@@ -1,3 +1,21 @@
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C
+C procedure FTOTIDES extract derivatives values calculated with TIDES
+C           (by default all derivatives are stored in one output vector)
+C
+C input: NN - number of diferential equations
+C        NPAR - number of parameters
+C        PAR - array of parameter values
+C        P -  soltuion period
+C        XST -intial point X(0)
+C        SIZEM - size of output vector of TIDES where all derivatives are stored
+C
+C output: derivatives FX,FP,FXX,FXP,FPP,FXXP,FXPP
+C
+C revision:
+C 2011-01-26 written by dka
+C
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       SUBROUTINE FTOTIDES(NN,NPAR,PAR,XST,P,SIZEM,
      1             FX,FP,FXX,FXP,FPP,FXXP,FXPP)
       INTEGER NN,NN1,NPAR,NPAR1,NGEN
@@ -14,6 +32,9 @@
 
       NN1=NN
       NPAR1=NPAR
+
+C     CALL TIDES TO CREATE VECTOR OUTM WHERE THE DERIVATIVES ARE STORED
+C     IN OUTM FIRST ALL FIRST DERIVATIVES ARE STORED, THEN SECONT AND ETC.
       call calltides(NN1,NPAR1,PAR,XST,P,OUTM)
 
 C     EXTRACT FROM OUTM MATRIX FX
@@ -39,6 +60,7 @@ C     EXTRACT FROM OUTM MATRIX FP
 5     CONTINUE
 
 C     EXTRACT FROM OUTM MATRIX FXX,FXP,FPP
+C     SYMMETRY OF THESE MATRICES ARE USED
       NOFF=NOFF+I2
       I2=0
       NGEN=NPAR1+NN1

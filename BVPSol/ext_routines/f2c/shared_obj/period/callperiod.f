@@ -1,7 +1,7 @@
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C
 C procedure CALLPERIOD calculates periodic solution
-C and its derivatives
+C and its derivatives with method PERIOD
 C
 C input: NN - number of diferential equations
 C        M - number of nodes
@@ -10,7 +10,7 @@ C        X0 - guess for the intial point X(0)
 C        P - guess for the period
 C        NPAR - number of parameters
 C        TRPAR - array of parameter values
-C        NPHASE - number of variable for which the phase condition is applied
+C        NPHASE - number of variable for which the phase condition is applied (here is not necessary)
 C
 C output: XT - values in nodes for scaled time (t/P)
 C         Y - periodic solution in nodes in the case of calculation with PERIOD
@@ -24,6 +24,8 @@ C         FAL - matrix of derivarives with respect to parameters (Fp)
 C         FAL - tensor of derivarives with respect to variables and parameters (Fxp)
 C         FXX - tensor of second derivatives with respect to variables (Fxx)
 C         FX - jacobian of the Poincare map
+C         FPP - tensor of second derivatives with respect to variables (Fpp)
+C         FXXP, FXPP - third order derivatives
 C
 C revision:
 C 2011-01-26 written by dka
@@ -51,16 +53,15 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       DOUBLE PRECISION FXPP(NN,NN,NPAR,NPAR)
       INTEGER NPHASE
 
-
+C  PRESICION OD A SOLUTION
       HDIF=1.D-7
-C
+C  NUMBER OF SHOOTING INTERVALS
       M1=M-1
 
-C
 C  AMOUNT OF REAL- AND INTEGER-WORKSPACE
       NRW=6000
       NIW=100
-C
+
 C  SHOOTING NODES
       XT(1)=0.D0
       RED=1.D0/DBLE(M1)
@@ -70,12 +71,12 @@ C  SHOOTING NODES
 
 C
 C  INITIAL VALUES OF TRAJECTORY
-
+C  CALLING 'DIFEXP' TO GENERATE INITIAL TRAJECTORY
 C
-C  CALLING DIFEXP TO GENERATE INITIAL TRAJECTORY
       DO 2 I=1,NN
 2     Y(I, 1) = X0(I)
 
+C  PREPAIRING PARAMETERS SETTINGS FOR CALLING 'DIFEXP'
       NRH=2000
       NIH=100
       IPAR(1)=0
@@ -96,6 +97,7 @@ C  CALLING DIFEXP TO GENERATE INITIAL TRAJECTORY
       IW(I)=0
 18    CONTINUE
 
+C  FOR EACH SHOOTING INTERVAL CALLING 'DIFEXP'
       DO 22 I=2,M
       TEND=XT(I)*P
       HMAX=TEND-T
@@ -107,6 +109,8 @@ C  CALLING DIFEXP TO GENERATE INITIAL TRAJECTORY
 
 22    CONTINUE
 
+C  PREPAIR PARAMETERS SETTINGS FOR CALLING 'PERIOD'
+C
 C  DESIRED RELATIVE ACCURACY FOR SOLUTION
       EPS=1.D-7
 C  CLASSIFICATION OF RIGHT-HAND SIDE (AUTONOMOUS SYSTEM)
@@ -129,30 +133,35 @@ C  PRINT PARAMETER
       CALL PERIOD(PRDIFX,NN,M,XT,Y,P,EPS,FM,6000,RW,100,IW,
      1            ICALL,TRPAR,HES)
 
+C IFAIL DETERMINS IF PERIOD IS SUCCEED
       IFAIL=ICALL(8)
+C POUT IS CALCULATED PERIOD
       POUT=P
+C TO CHECK IF SOLUTION IS DIFFER FROM CONSTANT CALCULATE ERRY
       ERRY1=DABS(Y(1,1)-Y(1,2))+DABS(Y(1,1)-Y(1,3))
       ERRY2=DABS(Y(1,1)-Y(1,4))+DABS(Y(1,1)-Y(1,5))
       ERRY=ERRY1+ERRY2
 
       EPSER=1.D-7
 
-C     IF PERIODIC SOLUTION IS FOUND
-C     THEN CALCULATE DERIVATIVES
+C  IF PERIODIC SOLUTION IS FOUND
+C  THEN CALCULATE DERIVATIVES WITH TIDES
       IF ((IFAIL.GT.0).AND.(ERRY.GT.EPSER)) THEN
 
-C     STEP SIZE H FOR DERIVATIVES CALCULATION
+C  STEP SIZE H FOR DERIVATIVES CALCULATION
       HD1=HDIF
 
-C     POINT X(0) ON THE POINCARE SECTION
+C  POINT X(0) ON THE POINCARE SECTION
       DO 5 I2=1,NN
 5     XST(I2)=Y(I2,1)
 
-C     SIZE OF OUTPUT ROW IF TILL 2ND ORDER DIRAVATIVAS WAS CALCULATED
+C  SIZE OF OUTPUT ROW IF TILL 3ND ORDER DIRAVATIVAS WAS CALCULATED
+C  (BY CONSTRUCTION SUCH A ROW IS OUTPUT FROM TIDES)
       SIZEM=1+NN+(NN+NPAR)*NN
      1      +((NN+NPAR)*(NN+NPAR+1)*NN)/2
      2      +((NN+NPAR)*(NN+NPAR+1)*(NN+NPAR+2)*NN)/6
 
+C GET DERIVATIVES WITH TIDES
       CALL FTOTIDES(NN,NPAR,TRPAR,XST,POUT,SIZEM,
      1              FX,FAL,FXX,FXAL,FPP,FXXP,FXPP)
 

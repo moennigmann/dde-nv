@@ -1,7 +1,7 @@
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C
 C procedure CALLPERIOD calculates periodic solution
-C and its derivatives
+C and its derivatives with method TWPBVP
 C
 C input: NN - number of diferential equations
 C        M - number of nodes
@@ -18,15 +18,17 @@ C             or Y(1) starting condition in the case of calulation with TWPBVP
 C         FM - eigenvalues of the Poincare map
 C              (in the case of calulation with TWPBVP are not calculated)
 C         POUT - period for the periodic solution
-C         IFAIL - integer value which indicates if calculation of PERIOD is succeeded (TRUE if IFAIL>0)
+C         IFAIL - integer value which indicates if calculation of PERIOD is succeeded (TRUE if IFAIL=0)
 C         ERRY - value which indicates if solution of PERIOD is constant (TRUE if ERRY>10^(-7))
 C         FAL - matrix of derivarives with respect to parameters (Fp)
 C         FAL - tensor of derivarives with respect to variables and parameters (Fxp)
 C         FXX - tensor of second derivatives with respect to variables (Fxx)
 C         FX - jacobian of the Poincare map
+C         FPP - tensor of second derivatives with respect to variables (Fpp)
+C         FXXP, FXPP - third order derivatives
 C
 C revision:
-C 2011-01-26 written by dka
+C 2012-01-07 written by dka
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       SUBROUTINE CALLPERIOD(NN,M,IPR,X0,P,NPAR,TRPAR,
@@ -65,19 +67,19 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       EXTERNAL  TWPBVPC, FSUB, DFSUB, GSUB, DGSUB
 
 
-C     RPAR (real) and IPAR (integer) are arrays that are passed to
-C     the F function, G function, and their Jacobians.
-C     RPAR is typically used as a parameter in the problem formulation, and
+C     TRPAR (real) and IPAR (integer) are arrays that are passed to
+C     the F function (RHS of the proble), G function (bondary condition 
+C     of the problem), and their Jacobians.
+C     TRPAR is typically used as a parameter in the problem formulation, and
 C     IPAR is normally used to select a problem from a set.
-C
-C     We have no parameters in our problem, so IPAR and RPAR are left alone.
+
+C     Dimension of the problem =2*n
+C     n additional variable is substituted into BVP problem to consider period
+C     as unknown variable and separate boudary conditions
+      NUDIM=2*NN
 
 C     If you do not like to use the conditioning in the mesh selection
 C     useC  = .false.
-
-      NUDIM=2*NN
-
-      indnms=0
       useC  =  .false.
 
 C     WRK is the floating point workspace and IWRK
@@ -180,12 +182,11 @@ C     values for the last node set equal to the values for the first node
       yguess(ind,M)=YU(ind,1)
 33    continue
 
-
-
 C     fixed points are x values which are required by the
 C     user to be part of the returned mesh.
 C     NFXPNT is the number of fixed points, which we set to be zero
       NFXPNT= 0
+      indnms=0
 
 C     the problem is nonlinear so we specify .false. here
       LINEAR = .FALSE.
@@ -219,13 +220,15 @@ c         RETURN
 c      END IF
       IFAIL=iflbvp
 
+C     POUT IS CALCULATED PERIOD (which is (n+1)st variable)
       POUT=U(NN+1,1)
 
+C     TO CHECK IF SOLUTION IS DIFFER FROM CONSTANT CALCULATING ERRY
       ERRY1=DABS(U(1,1)-U(1,2))+DABS(U(1,1)-U(1,3))
       ERRY2=DABS(U(1,1)-U(1,4))+DABS(U(1,1)-U(1,5))
       ERRY=ERRY1+ERRY2
 
-C     IF PERIODIC SOLUTION IS FOUND
+C     IF PERIODIC SOLUTION IS FOUND AND IT IS NOT CONSTANT
 C     THEN CALCULATE DERIVATIVES
       IF ((IFAIL.EQ.0).AND.(ERRY.GT.ETOL)) THEN
 
@@ -233,31 +236,27 @@ C     POINT X(0) ON THE POINCARE SECTION
       DO 5 I2=1,NN
 5     XST(I2)=U(I2,1)
 
-C     SIZE OF OUTPUT ROW IF TILL 3RD ORDER DIRAVATIVAS WAS CALCULATED
+C     SIZE OF OUTPUT ROW IF TILL 3ND ORDER DIRAVATIVAS WAS CALCULATED
+C    (BY CONSTRUCTION SUCH A ROW IS OUTPUT FROM TIDES)
       SIZEM=1+NN+(NN+NPAR)*NN
      1      +((NN+NPAR)*(NN+NPAR+1)*NN)/2
      2      +((NN+NPAR)*(NN+NPAR+1)*(NN+NPAR+2)*NN)/6
 
+C     GET DERIVATIVES WITH TIDES
       CALL FTOTIDES(NN,NPAR,TRPAR,XST,POUT,SIZEM,
      1              FX,FAL,FXX,FXAL,FPP,FXXP,FXPP)
 
       ENDIF
 
+C     MUNBER OF OUTPUT NODES
       M=NMSH
+C     SOLUTION IN INITIAL POINT X(0)
       DO 6 I2=1,NN
 6     Y(I2,1)=U(I2,1)
 
 C     the solution x values are stored in XX, the Y
 C     values are stored in U.
 C     U(i,j) refers to component i of point j in the mesh.
-
-      WRITE(6,*) 'Number of mesh points = ', NMSH
-
-c      DO IND=1,10
-c         WRITE(6,900) U(1,IND), U(2,IND), U(3,IND), U(4,IND), U(5,IND)
-c  900    FORMAT(F10.6, F10.6, F10.6, F10.6 F10.6)
-c      END DO
-
 
       RETURN
       END
