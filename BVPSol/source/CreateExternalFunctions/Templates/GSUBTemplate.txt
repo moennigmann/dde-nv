@@ -1,0 +1,26 @@
+###########################################################################
+#
+# @path BVPSol/CreateExternalFunctions/Templates/GSUBTemplate.txt
+#
+# @brief boundary value conditions for 'twpbvp'
+#
+# @revision
+#   2012-01-17 written by dka
+###########################################################################
+    GSUBTemplate:= proc(ICount::integer,NCOMP::integer,Z,G::numeric,TRPAR,IPAR::integer)
+      
+      local GSET;
+    
+      declare(
+        Z= array(1..NumExtDynVarsToBeSubs,numeric),
+        TRPAR= array(1..NumCritParsToBeSubs,numeric),
+        GSET= array(1..NumExtDynVarsToBeSubs,numeric)
+      ); 
+        
+	GSET:=array(1..NumExtDynVarsToBeSubs,BoundCondToBeSubs);
+	
+	G:=GSET(ICount);
+              
+      RETURN();
+    
+    end proc: #GSUBTemplate

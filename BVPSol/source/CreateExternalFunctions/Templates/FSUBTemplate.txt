@@ -1,0 +1,23 @@
+###########################################################################
+#
+# @path BVPSol/CreateExternalFunctions/Templates/FSUBTemplate.txt
+#
+# @brief RHS of extended BVP system for 'twpbvp'
+#
+# @revision
+#   2012-01-17 written by dka
+###########################################################################
+    FSUBTemplate:= proc(NCOMP::integer,X,Z,F,TRPAR,IPAR::integer)
+    
+          
+      declare(
+        Z= array(1..NumExtDynVarsToBeSubs,numeric),
+        F= array(1..NumExtDynVarsToBeSubs,numeric),
+        TRPAR= array(1..NumCritParsToBeSubs,numeric)
+      ); 
+        
+	F:=array(1..NumExtDynVarsToBeSubs,RHSExtToBeSubs);
+              
+      RETURN();
+    
+    end proc: #FSUBTemplate

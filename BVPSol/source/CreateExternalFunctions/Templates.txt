@@ -1,0 +1,32 @@
+#################################################################################
+#
+# @path BVPSOL:-CreateExternalFunctions:-Templates
+# 
+# @brief Collects templates for Fortran files that are needed for BVP solvers
+#
+# @revision
+#   2012-01-17 created by dka
+#    
+#################################################################################
+Templates:= module()
+
+  export
+    FCNTemplate,
+    FSUBTemplate,
+    DFDYTemplate,
+    DFSUBTemplate,
+    GSUBTemplate,
+    DGSUBTemplate;
+   
+        
+$include<CreateExternalFunctions/Templates/FCNTemplate.txt> 
+$include<CreateExternalFunctions/Templates/FSUBTemplate.txt> 
+$include<CreateExternalFunctions/Templates/DFDYTemplate.txt>
+$include<CreateExternalFunctions/Templates/DFSUBTemplate.txt> 
+$include<CreateExternalFunctions/Templates/GSUBTemplate.txt>
+$include<CreateExternalFunctions/Templates/DGSUBTemplate.txt>    
+
+end module; # Templates
+
+
+

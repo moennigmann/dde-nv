@@ -1,0 +1,23 @@
+###########################################################################
+#
+# @path BVPSol/CreateExternalFunctions/Templates/DFSUBTemplate.txt
+#
+# @brief Jacobian of extended BVP system for 'twpbvp'
+#
+# @revision
+#   2012-01-17 written by dka
+###########################################################################
+    DFSUBTemplate:= proc(NCOMP::integer,X,Z,DF,TRPAR,IPAR::integer)
+    
+          
+      declare(
+        Z= array(1..NumExtDynVarsToBeSubs,numeric),
+        DF= array(1..NumExtDynVarsToBeSubs,1..NumExtDynVarsToBeSubs,numeric),
+        TRPAR= array(1..NumCritParsToBeSubs,numeric)
+      ); 
+        
+	DF:=array(1..NumExtDynVarsToBeSubs,1..NumExtDynVarsToBeSubs,JacExtToBeSubs);
+              
+      RETURN();
+    
+    end proc: #DFSUBTemplate

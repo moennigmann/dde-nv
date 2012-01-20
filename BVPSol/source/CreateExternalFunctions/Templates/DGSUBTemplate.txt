@@ -1,0 +1,30 @@
+###########################################################################
+#
+# @path BVPSol/CreateExternalFunctions/Templates/DGSUBTemplate.txt
+#
+# @brief jacobian for boundary value conditions for 'twpbvp'
+#
+# @revision
+#   2012-01-17 written by dka
+###########################################################################
+    DGSUBTemplate:= proc(ICount::integer,NCOMP::integer,Z,DG,TRPAR,IPAR::integer)
+      
+      local DGSET, ind;
+    
+      declare(
+        Z= array(1..NumExtDynVarsToBeSubs,numeric),
+        TRPAR= array(1..NumCritParsToBeSubs,numeric),
+        DG= array(1..NumExtDynVarsToBeSubs,numeric),
+        DGSET= array(1..NumExtDynVarsToBeSubs,1..NumExtDynVarsToBeSubs,numeric),
+        ind=integer
+      ); 
+        
+	DGSET:=array(1..NumExtDynVarsToBeSubs,1..NumExtDynVarsToBeSubs,BoundJacToBeSubs);
+	
+	for ind to NumExtDynVarsToBeSubs do 
+	DG[ind] := DGSET[ICount, ind]; 
+	end do;
+              
+      RETURN();
+    
+    end proc: #DGSUBTemplate

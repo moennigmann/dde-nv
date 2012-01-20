@@ -1,0 +1,23 @@
+###########################################################################
+#
+# @path BVPSol/CreateExternalFunctions/Templates/DFDYTemplate.txt
+#
+# @brief Jacobian of original BVP system
+#
+# @revision
+#   2012-01-17 written by dka
+###########################################################################
+    DFDYTemplate:= proc(T, Z, DF, TRPAR)
+          
+      declare(
+        TZ=numeric,
+        Z= array(1..NumDynVarsToBeSubs,numeric),
+        DF= array(1..NumDynVarsToBeSubs,1..NumDynVarsToBeSubs,numeric),
+        TRPAR= array(1..NumCritParsToBeSubs,numeric)
+      ); 
+        
+	DF:=array(1..NumDynVarsToBeSubs,1..NumDynVarsToBeSubs,JacToBeSubs);
+              
+      RETURN();
+    
+    end proc: #DFDYTemplate
