@@ -8,7 +8,8 @@
 #         anNLP, an NLP which has internal variables to be defined from TIDEs,
 #         initX0, initial guess for the first point for BVP solution trajectory,
 #         initP, initial guess for the period BVP solution trajectory,
-#         nodes, number of nodes in which BVP solution is calculated
+#         nodes, number of nodes in which BVP solution is calculated,
+#         indPhaseCondVarible, index of variable involved in phase condition
 #
 # @revision
 # 2011-12-11 written by dka
@@ -18,7 +19,8 @@
     anNLP::NLP,
     initX0::list(EvalsToFloat),
     initP::EvalsToFloat,
-    nodes::integer
+    nodes::integer,
+    indPhaseCondVarible::integer
   )
     local Cons, Pars, Vars, CostFunc,
       NumConsOfNLP, NumParsOfNLP, NumVarsOfNLP,
@@ -151,7 +153,8 @@
             NumCritParsToBeSubs= NumCritPars,
             indsCritVarsToBeSubs=indexListOfCritVarsSubs,
             NumOfNodesToBeSubs=  nodes,
-             
+            indPhaseToBeSubs=    indPhaseCondVarible,
+              
             eval(Templates:-confunTemplate)
           );
 
@@ -244,7 +247,8 @@
                   NumCritParsToBeSubs= NumCritPars,
                   indsObjVarsToBeSubs=indexListOfObjVarsInNLP,
                   NumOfNodesToBeSubs=  nodes,
-                  indexOfObjVarToBeSubs=indexOfObjVar, 
+                  indexOfObjVarToBeSubs=indexOfObjVar,
+                  indPhaseToBeSubs=    indPhaseCondVarible, 
     
                   eval(objfunTemplate)
                );
