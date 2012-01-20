@@ -6,7 +6,10 @@
 #
 # @param directory where auxiliary files will be created,
 #        DAESys,
-#        list of compilled objects obtaned from TIDES
+#        list of compilled objects obtaned from TIDES,
+#        method name ('period' [Deuflhard,1984] or 'twpbvp' [Capper&Cash,2007]),
+#        phase condition (var_i-constant=0),
+#        index of variable for which the phase condition is stated 
 #
 # @notes list of compilled objects obtaned from TIDES should
 #        contain path to "calltides.o" and corresponding 
@@ -19,7 +22,10 @@
   createSharedObject:= proc(
     bvpsolDir::string,
     anBVPSys::DAESys,
-    objNames::list(string)
+    objNames::list(string),
+    methodName::name,
+    phaseCondition,
+    indPhaseCondVarible::integer
   )
 
     local oldDir, LinkerCommand, bvpsol, SharedObjectName,InstanceCounter,
@@ -47,7 +53,10 @@
     # create external Fortran function fortranrhs.f and fortranjac.f 
     # with procedures FCN and DFDY
     # 
-      createExternalFunctions(anBVPSys);
+      CreateExternalFunctions:-createGenericExtFunctions(anBVPSys,
+							 methodName,
+							 phaseCondition,
+							 indPhaseCondVarible);
         
     # 
     # compile fortranrhs.f and fortranjac.f 
@@ -73,22 +82,51 @@
         for i from 1 to nops(objNames) do
 	  objNamesList:=cat(objNamesList,objNames[i]," ");
         end do;
-     
+
+    #
+    # create shared object for the corresponding method
+    #
+
+    if (methodName='period')
+    then 
         LinkerCommand:= cat(
           `gcc -shared -Xlinker -Bsymbolic fortranrhs.o fortranjac.o `,
           _ModulesDirectory, `/BVPSol/ext_routines/f2c/cwrap/bvpopen.o `,
           _ModulesDirectory, `/BVPSol/ext_routines/f2c/cwrap/bvpclose.o `,
           _ModulesDirectory, `/BVPSol/ext_routines/f2c/cwrap/cwrap_bvpsol.o `,
           objNamesList,
-          _ModulesDirectory, `/BVPSol/ext_routines/f2c/shared_obj/period.so `,
+          _ModulesDirectory, `/BVPSol/ext_routines/f2c/shared_obj/period/period.so `,
           ` -lf2c -O2 -lm -lgfortran -lTIDES -o `, 
           SharedObjectName
         );
-    
-      system(LinkerCommand);
+    end if;
+
+    if (methodName='twpbvp')
+    then 
+        # 
+	# compile extrhs.f, extjac.f, boundcond.f, and boundjac.f
+	#
+	system("gfortran -c -shared -O -fPIC extrhs.f -o extrhs.o"); 
+	system("gfortran -c -shared -O -fPIC extjac.f -o extjac.o");
+	system("gfortran -c -shared -O -fPIC boundcond.f -o boundcond.o");
+	system("gfortran -c -shared -O -fPIC boundjac.f -o boundjac.o"); 
+        
+        LinkerCommand:= cat(
+          `gcc -shared -Xlinker -Bsymbolic fortranrhs.o fortranjac.o extrhs.o extjac.o boundcond.o boundjac.o `,
+          _ModulesDirectory, `/BVPSol/ext_routines/f2c/cwrap/bvpopen.o `,
+          _ModulesDirectory, `/BVPSol/ext_routines/f2c/cwrap/bvpclose.o `,
+          _ModulesDirectory, `/BVPSol/ext_routines/f2c/cwrap/cwrap_bvpsol.o `,
+          objNamesList,
+          _ModulesDirectory, `/BVPSol/ext_routines/f2c/shared_obj/twpbvp/twpbvp.so `,
+          ` -lf2c -O2 -lm -lgfortran -lTIDES -o `, 
+          SharedObjectName
+        );
+    end if;
+     
+    system(LinkerCommand);
 
     # 
-    # create interface to PERIOD
+    # create interface to the method
     #
       bvpsol:= runDefineExternal(SharedObjectName);
     

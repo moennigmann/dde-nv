@@ -17,14 +17,14 @@
 BVPSol:=module()
 
   export
-    createExternalFunctions, 
+    CreateExternalFunctions, 
     CreateInstance,
     createSharedObject,
     runDefineExternal,
     SubsIntoSimpleWrapper,
     Tests; 
 
-$include <createExternalFunctions.txt>
+$include <CreateExternalFunctions.txt>
 $include <CreateInstance.txt>
 $include <createSharedObject.txt>
 $include <runDefineExternal.txt>

@@ -10,14 +10,15 @@ SubsIntoSimpleWrapper:= proc(
   anBVPSys::DAESys,
   bvpsolCwrapper::procedure,
   WorkingDir::string,
-  nodes::integer
+  nodes::integer,
+  indPhaseCondVarible::integer
 )
       
     local N, M, IPRINT, NPAR, X0, TRPAR, i, P,Y,FM,POUT,
           IFAIL,ERRY,FAL,FXAL,FXX,listForFXAL,listForFXX,
           SimpleWrapperTemplate, FX, HDIF,
           FAlAl, FXXAl, FXAlAl, listForFXXPdim1, listForFXXPdim2,
-          listForFXPPdim1, listForFXPPdim2; 
+          listForFXPPdim1, listForFXPPdim2, NPHASE; 
 
     #
     # extract N, M, NPAR 
@@ -25,6 +26,7 @@ SubsIntoSimpleWrapper:= proc(
       N:= nops(anBVPSys["ODEs"]);      
       M:=nodes;
       NPAR:=nops(anBVPSys["Parameters"]);
+      NPHASE:=indPhaseCondVarible;
       
     #
     # IPRINT by defaults setted to 0
@@ -68,10 +70,6 @@ SubsIntoSimpleWrapper:= proc(
 
       FX:=Matrix(N, N, datatype = float[8], order = Fortran_order);
       
-  #
-  # HDIF
-  #    
-    HDIF:=0.001; 
 
 $include<SubsIntoSimpleWrapper/SimpleWrapperTemplate.txt>
 

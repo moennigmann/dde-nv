@@ -1,0 +1,21 @@
+######################################################################
+#
+# @path BVPSol:-CreateExternalFunctions
+#
+# @brief collects helping procedures for creating external fortran functions
+#
+# @revision
+#   2012-01-16 written by dka
+#
+######################################################################
+CreateExternalFunctions:=module()
+  
+  export
+    createGenericExtFunctions,
+    Templates; 
+
+$include<CreateExternalFunctions/createGenericExtFunctions.txt>
+$include<CreateExternalFunctions/Templates.txt>
+    
+end module; #CreateExternalFunctions
+

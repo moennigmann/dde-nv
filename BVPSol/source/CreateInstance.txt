@@ -6,13 +6,20 @@
 #         WorkingDir, directory into which bvpsol files will be written
 #                     when compiling and at runtime
 #         nodes, number of nodes in multi-shooting procedure,
-#         list of compilled objects obtaned from TIDES            
+#         list of compilled objects obtaned from TIDES,
+#         optional argument method name which is 'period' [Deuflhard,1984] 
+#                  or 'twpbvp' [Capper&Cash,2007] (by default the method 
+#                  is set to 'period')  
+#         optional phase condition (nesessary to be defined for the method 
+#                  'twpbvp', if not given by default is set to x1(0)=0)        
 #
 # @return  procedure which starts bvpsol
 #
-# @notes list of compilled objects obtaned from TIDES should
-#        contain path to "calltides.o" and corresponding 
-#        system file, e.g., "scott.o"
+# @notes (i) list of compilled objects obtaned from TIDES should
+#            contain path to "calltides.o" and corresponding 
+#            system file, e.g., "scott.o"
+#        (ii) for convenience only simple phase conditions are accepted,
+#             i.e only conditions of type 'varible_i-constant' 
 #
 # @revision
 #   2011-01-18 written by dka
@@ -21,9 +28,14 @@
   CreateInstance:=proc(anBVPSys::DAESys,
                        WorkingDir::string,
                        nodes::integer,
-                       objNames::list(string))
+                       objNames::list(string)
+                       #optional methodName
+                       #optional phaseCondition
+                       )
 
-    local bvpsol,BVPSolInstance; 
+    local bvpsol, BVPSolInstance, methodName, phaseCondition,
+	  varsBVP, phaseCondDeriv, i, indPhaseCondVarible,
+	  logicPhaseVarPresent; 
     
      #
      # prepare working dir
@@ -37,20 +49,79 @@
           );
         end if; 
     
+    #
+    # extract method name for a BVP solver if it is given
+    #
+    
+    if (nargs>4)
+    then 
+      methodName:=args[5];
+    else
+      methodName:=period;  
+    end if; 
+    
+    #
+    # validate input for the method name
+    #
+    if not ((methodName='period') or (methodName='twpbvp'))
+      then error("Method name should be 'period' or 'twpbvp'",methodName);
+    end if; 
+    
+    
+    #
+    # extract phase condition
+    #
+    if (nargs>5)
+    then 
+      phaseCondition:=args[6];
+    else
+      phaseCondition:=anBVPSys["DynVars"][1];  
+    end if; 
+    
+    #
+    # check if the phase condition is given in the form 'varible_i-constant' 
+    # (i.e., check if derivatives of phase condition have a form: 
+    #        diff(phaseCondition,varible_i)=1,
+    #        and the rest is equal to zero)
+    #
+    varsBVP:=anBVPSys["DynVars"];
+
+    logicPhaseVarPresent:=false;
+    for i from 1 to nops(varsBVP) do
+      phaseCondDeriv:=diff(phaseCondition,varsBVP[i]);
+      if (phaseCondDeriv=1)
+      then if(logicPhaseVarPresent=false) 
+	   then logicPhaseVarPresent:=true;
+	        indPhaseCondVarible:=i;
+	   else error("Phase condition should be given in form 'var_i-constant'",phaseCondition);
+	   end if;
+      else if(phaseCondDeriv!=0)
+           then error("Phase condition should be given in form 'var_i-constant'",phaseCondition);
+           end if;
+      end if;	   
+    end do;
+    
+    if(logicPhaseVarPresent=false)
+    then error("Phase condition should be given in form 'var_i-constant'",phaseCondition);
+    end if;
+    
     # 
     # substiture explicit functions intro anBVPSys
     #
     anBVPSys := Aux:-SystemClasses:-subsExplicitAEsIntoDAESys(anBVPSys);
      
     #
-    # prepare interface to PERIOD
+    # prepare interface to PERIOD or TWPBVP
     #
 
       try:
         bvpsol:= createSharedObject(
           WorkingDir,
           anBVPSys,
-          objNames
+          objNames,
+          methodName,
+          phaseCondition,
+          indPhaseCondVarible
         );
       catch:
 	printf("CreateSharedObject failed, \n");
@@ -70,7 +141,8 @@
           anBVPSys, 
           bvpsol,
           WorkingDir,
-          nodes
+          nodes,
+          indPhaseCondVarible
 	);
       catch:
 	printf("SubsIntoSimpleWrapper failed, \n");

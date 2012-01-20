@@ -34,7 +34,7 @@ runBVPSol:= proc()
       FXAL,    # output derivative F_x_alpha
       FXX,     # output derivative F_x_x
       FX,      # output derivative F_x
-      HDIF    # input spep size for finite difference method
+      NPHASE    # input spep size for finite difference method
     );
 
   currentdir(OldDir); 

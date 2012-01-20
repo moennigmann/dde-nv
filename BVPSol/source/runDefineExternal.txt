@@ -18,7 +18,7 @@ runDefineExternal:= proc(
     bvpsol:=define_external(
        'cwrapper_bvpsol', 
        N::(integer[4]),                                    #input        
-       M::(integer[4]),                                    #input
+       M::(integer[4]),                                    #input/output
        IPRINT::(integer[4]),                               #input
        X0::(ARRAY(1 .. N, float[8])),                      #input
        P::(float[8]),                                      #input
@@ -33,7 +33,7 @@ runDefineExternal:= proc(
        FXAL::(ARRAY(1 .. N, 1 .. N, 1 .. NPAR, float[8], order=Fortran_order)), #output
        FXX::(ARRAY(1 .. N, 1 .. N, 1 .. N, float[8], order=Fortran_order)),     #output 
        FX::(ARRAY(1 .. N, 1 .. N, float[8], order=Fortran_order)),     #output 
-       HDIF::(float[8]),                                  #input
+       NPHASE::(integer[4]),                               #input
        LIB = SharedObjectName);
   
   return(bvpsol);

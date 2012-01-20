@@ -14,7 +14,7 @@ extern void callperiod_(int *,int *,int *,double *,double *,
                         int *,double *,double *,
                         double *,double *,int *,
                         double *,double *,double *,double *, 
-                        double *, double *,double *,double *, 
+                        double *, int *,double *,double *, 
                         double *);
                         
 extern void bvpopen_();                        
@@ -29,7 +29,7 @@ void cwrapper_bvpsol(int NN, int M, int IPRINT,double *X0, double P,
                      int NPAR, double *TRPAR, double *Y,
                      double *FM, double *POUT, int *IFAIL, 
                      double *ERRY,double *FAL,double *FXAL,double *FXX, 
-                     double *FX, double HDIF)
+                     double *FX, int NPHASE)
 {
  
    double *FPP;
@@ -46,7 +46,7 @@ void cwrapper_bvpsol(int NN, int M, int IPRINT,double *X0, double P,
 	      &NPAR, TRPAR, Y,
 	      FM, POUT, IFAIL, 
 	      ERRY, FAL, FXAL, FXX, 
-	      FX, &HDIF, FPP, FXXP, FXPP);
+	      FX, &NPHASE, FPP, FXXP, FXPP);
 	      
    bvpclose_();
 	      

@@ -18,9 +18,11 @@ clean:
 	rm -f *~*
 	make -C ./source clean
 	make -C ./ext_routines/f2c/cwrap clean
-	make -C ./ext_routines/f2c/shared_obj clean
+	make -C ./ext_routines/f2c/shared_obj/period clean
+	make -C ./ext_routines/f2c/shared_obj/twpbvp clean
 
 all: 	
 	make -C ./source all
 	make -C ./ext_routines/f2c/cwrap all
-	make -C ./ext_routines/f2c/shared_obj all
+	make -C ./ext_routines/f2c/shared_obj/period all
+	make -C ./ext_routines/f2c/shared_obj/twpbvp all
