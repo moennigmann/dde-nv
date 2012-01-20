@@ -34,8 +34,7 @@
                        )
 
     local bvpsol, BVPSolInstance, methodName, phaseCondition,
-	  varsBVP, phaseCondDeriv, i, indPhaseCondVarible,
-	  logicPhaseVarPresent; 
+	  indPhaseCondVarible, logicPhaseVarPresent; 
     
      #
      # prepare working dir
@@ -87,18 +86,10 @@
     end if;
 
     #
-    # get index of varible_i in phase condition
+    # get index of varible_i in the phase condition
     #
-    varsBVP:=anBVPSys["DynVars"];
-
-    for i from 1 to nops(varsBVP) do
-      phaseCondDeriv:=diff(phaseCondition,varsBVP[i]);
-      if (phaseCondDeriv=1)
-	then indPhaseCondVarible:=i;
-      end if;
-    end do;
+    indPhaseCondVarible:=getPhaseConditionIndex(anBVPSys,phaseCondition);
     
-
     
     # 
     # substiture explicit functions intro anBVPSys

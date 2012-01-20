@@ -21,6 +21,7 @@ BVPSol:=module()
     CreateExternalFunctions, 
     CreateInstance,
     createSharedObject,
+    getPhaseConditionIndex,
     runDefineExternal,
     SubsIntoSimpleWrapper,
     Tests,
@@ -29,6 +30,7 @@ BVPSol:=module()
 $include <CreateExternalFunctions.txt>
 $include <CreateInstance.txt>
 $include <createSharedObject.txt>
+$include <getPhaseConditionIndex.txt>
 $include <runDefineExternal.txt>
 $include <SubsIntoSimpleWrapper.txt>
 $include <Tests.txt>
