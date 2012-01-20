@@ -50,8 +50,10 @@
       # currentdir creates error if bvpsolDir does not exist
   
     #
-    # create external Fortran function fortranrhs.f and fortranjac.f 
-    # with procedures FCN and DFDY
+    # create Fortran files fortranrhs.f and fortranjac.f 
+    # with procedures FCN and DFDY for both methods
+    # and files extrhs.f, extjac.f, boundcond.f, and boundjac.f for
+    # method 'twpbvp'
     # 
       CreateExternalFunctions:-createGenericExtFunctions(anBVPSys,
 							 methodName,
