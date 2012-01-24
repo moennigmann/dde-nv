@@ -1,5 +1,18 @@
 c ===================================================================================
-c print messages
+* karline: to make this code compatible with R:
+* 1. change all write(6,...) -> rprint
+* 2. add initu
+* 3. pass precisions, in 3-valued vector "precis", as passed form C calling routine
+*         - do not use d1mach of original FORTRAN code
+* 4. add argument useC for conditioning or not
+* 5. add arguments xguess and yguess (used if givu=TRUE)
+* 6. got rid of "pdebug"
+* 7. added iset, to contain several 'counters'
+c ===================================================================================
+
+
+c ===================================================================================
+c print R-messages
 c ===================================================================================
 
       subroutine rprint(msg)
@@ -47,16 +60,6 @@ c ==============================================================================
 c ===================================================================================
 c main driver for twpbvpc, written by Jeff Cash and Francesca Mazzia
 c with small adaptations to make it work with R by Karline Soetaert
-c ===================================================================================
-* karline: 
-* 1. change all write(6,...) -> rprint
-* 2. add initu
-* 3. pass precisions, in 3-valued vector "precis", as passed form C calling routine
-*         - do not use d1mach of original FORTRAN code
-* 4. add argument useC for conditioning or not
-* 5. add arguments xguess and yguess (used if givu=TRUE)
-* 6. got rid of "pdebug"
-* 7. added iset, to contain several 'counters'
 c ===================================================================================
 
       subroutine twpbvpc(ncomp, nlbc, aleft, aright,
@@ -517,7 +520,7 @@ c Karline: use precis instead of d1mach
 
 
       if (.not. linear) then
-         call dload(ntol, one, etest6, 1)
+         call dloadtwp(ntol, one, etest6, 1)
       else
          do 10 i = 1, ntol
             etest6(i) = one/max(quan6, tol(i)**third)
@@ -849,7 +852,7 @@ c end if if(comp_c)
       call matcop(nudim, ncomp, ncomp, nmsh, u, uold)
 *  Copy the current mesh into the xxold array.
 c     nmold = nmsh
-c     call dcopy(nmold, xx, 1, xxold, 1)
+c     call dcopytwp(nmold, xx, 1, xxold, 1)
 
 
       iorder = 6
@@ -956,7 +959,7 @@ c     call dcopy(nmold, xx, 1, xxold, 1)
       call matcop(nudim, ncomp, ncomp, nmsh, u, uold)
 *  Copy the current mesh into the xxold array. KSKS THIS WAS TOGGLED OFF - RESET IT....
       nmold = nmsh
-      call dcopy(nmold, xx, 1, xxold, 1)
+      call dcopytwp(nmold, xx, 1, xxold, 1)
 
 
 *  Save the old deferred correction vector def in def6.
@@ -1187,7 +1190,7 @@ c     cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
         DOUBLE PRECISION ALEFT,ARIGHT,XX,  CSUM,ZNORM,ALTSGN,TEMP
         INTEGER ISIGN(*)
         INTEGER N,NRWTOP,NOVRLP,NRWBLK,NCLBLK,NBLOKS,NRWBOT,IPVCD
-        INTEGER NCOMP,NMSH,idmx,idmn,idamax,idomg,job
+        INTEGER NCOMP,NMSH,idmx,idmn,idamaxtwp,idomg,job
         DIMENSION TOPBLK(NRWTOP,*),ARRAY(NRWBLK,NCLBLK,*),OMG(*),
      *          BOTBLK(NRWBOT,*),WORK(*),C1(ncomp,*),XX(*),
      *          IPVCD(*)
@@ -1954,7 +1957,7 @@ c     *                            (itnwt.le.2 .and. iflnwt.ne.0)) then
       logical use_c, comp_c
       common/algprs/ nminit, iprint, idum, use_c, comp_c
 
-*  blas: dcopy
+*  blas: dcopytwp
 
       parameter (eight = 8.0d+0)
 
@@ -2073,8 +2076,8 @@ c     *                            (itnwt.le.2 .and. iflnwt.ne.0)) then
 *  Richardson extrapolation to guide where the mesh points are placed.
 cf of the old mesh we take the values using incx = 2
             nmsh = 1 + (nmsh-1)/2
-            call dcopy(nmsh, xxold, 2, xx, 1)
-            call dcopy(nmsh, amg, 2, tmwork, 1)
+            call dcopytwp(nmsh, xxold, 2, xx, 1)
+            call dcopytwp(nmsh, amg, 2, tmwork, 1)
             ipow = 4
 
 *  The rerr array is overwritten by selmsh.
@@ -2189,7 +2192,7 @@ cf of the old mesh we take the values using incx = 2
 
       parameter ( efact  = 100.0d+0, huge = 1.0d+30 )
 
-*  blas: dload
+*  blas: dloadtwp
 
       save er6old, er8old
       character(len=100) msg
@@ -2210,7 +2213,7 @@ cf of the old mesh we take the values using incx = 2
       endif
 
       if (.not. linear) then
-         call dload(ntol, one, etest8, 1)
+         call dloadtwp(ntol, one, etest8, 1)
       else
          do 10 i = 1, ntol
             etest8(i) = one/max(quan8, tol(i)**fourth)
@@ -2227,7 +2230,7 @@ cf of the old mesh we take the values using incx = 2
 *  makes a stricter test).
 
       if (linear .and. strctr .and. nmsh .lt. nmold)
-     *   call dload(ntol, one, etest8, 1)
+     *   call dloadtwp(ntol, one, etest8, 1)
 
 
 
@@ -2338,7 +2341,7 @@ c we do not use u but uold
 *  which makes the error test stricter.  (The elements of etest8
 *  may have already been set to one earlier in this routine.)
 
-         if (linear) call dload(ntol, one, etest8, 1)
+         if (linear) call dloadtwp(ntol, one, etest8, 1)
 
 *  Selectively refine the mesh using the old solution and the
 *  6th order deferred correction.  Then, for a nonlinear prpblem,
@@ -2458,7 +2461,7 @@ c               call matcop(nudim, ncomp, ncomp, nmold, u, uold)
       intrinsic abs, max
       character(len=100) msg
 
-*  blas: idamax
+*  blas: idamaxtwp
 
 *  Find dfexmx, the maximum-magnitude element of defexp
 *  in components for which a tolerance is specified.
@@ -2469,7 +2472,7 @@ c               call matcop(nudim, ncomp, ncomp, nmold, u, uold)
       dfexmx = zero
       do 10 it = 1, ntol
          icmp = ltol(it)
-         idmx = idamax(nmsh-1, defexp(icmp, 1), ncomp)
+         idmx = idamaxtwp(nmsh-1, defexp(icmp, 1), ncomp)
          dval = abs(defexp(icmp, idmx))
          if (dval .ge. dfexmx) then
             dfexmx = dval
@@ -2482,7 +2485,7 @@ c               call matcop(nudim, ncomp, ncomp, nmold, u, uold)
 *  Find derivm (maximum-magnitude element of fval(incmp,*))
 *  for all mesh points.
 
-      idmx = idamax(nmsh, fval(incmp, 1), ncomp)
+      idmx = idamaxtwp(nmsh, fval(incmp, 1), ncomp)
       derivm = abs(fval(incmp, idmx))
 
 *  For component incmp, go through the mesh intervals to calculate
@@ -2834,7 +2837,7 @@ c               call matcop(nudim, ncomp, ncomp, nmold, u, uold)
       logical use_c, comp_c
       common/algprs/ nminit, iprint, idum, use_c, comp_c
 
-*  blas: dcopy
+*  blas: dcopytwp
 
       parameter (zero = 0.0d+0)
       character(len=100) msg
@@ -2846,9 +2849,9 @@ c               call matcop(nudim, ncomp, ncomp, nmold, u, uold)
 
       do 100 im = 1, nmsh-1
 
-         call dcopy(ncomp, defexp(1,im), 1, dexr(1), 1 )
+         call dcopytwp(ncomp, defexp(1,im), 1, dexr(1), 1 )
          do 50 ic = 1, ncomp
-            call dcopy(ncomp, chold(1,ic,im), 1, dsq(1,ic), 1)
+            call dcopytwp(ncomp, chold(1,ic,im), 1, dsq(1,ic), 1)
    50    continue
          call lufac (ncomp, ncomp, dsq, ipivot, ierlu)
          if (ierlu .eq. 0) then
@@ -2982,14 +2985,14 @@ c               call matcop(nudim, ncomp, ncomp, nmold, u, uold)
       dimension dfrat(ncomp,nmsh-1), bhold(ncomp,ncomp,nmsh-1)
 
       character(len=100) msg
-*  blas: ddot, dscal
+*  blas: ddottwp, dscaltwp
 
       parameter (zero = 0.0d+0, half = 0.5d+0, one = 1.0d+0)
 
       ninter = nmsh - 1
       do 10 im = 1, ninter
          hmsh = xx(im+1) - xx(im)
-         call dscal(ncomp*ncomp, (-half*hmsh), bhold(1,1,im), 1)
+         call dscaltwp(ncomp*ncomp, (-half*hmsh), bhold(1,1,im), 1)
    10 continue
 
       do 20 im = 1, ninter
@@ -2999,7 +3002,7 @@ c               call matcop(nudim, ncomp, ncomp, nmold, u, uold)
 
       do 30 im = 1, ninter
       do 30 ic = 1, ncomp
-         dfrat(ic,im) = ddot(ncomp, bhold(ic,1,im), ncomp,
+         dfrat(ic,im) = ddottwp(ncomp, bhold(ic,1,im), ncomp,
      *                        defimp(1,im), 1)
    30 continue
       return
@@ -3140,7 +3143,7 @@ c               call matcop(nudim, ncomp, ncomp, nmold, u, uold)
 
       intrinsic  abs, max
 
-*  blas: dcopy, dssq
+*  blas: dcopytwp, dssqtwp
 
       parameter ( one    = 1.0d+0 )
       parameter ( xlarge = 1.0d+6, huge = 1.0d+30, lmtfrz = 8)
@@ -3167,7 +3170,7 @@ c               call matcop(nudim, ncomp, ncomp, nmold, u, uold)
 *  adding the new deferred corrections to the already-calculated
 *  rhs vector.
 
-      call dcopy(nlbc, rhs, 1, rhstri, 1)
+      call dcopytwp(nlbc, rhs, 1, rhstri, 1)
       ind = nlbc
       do 10 im = 1, ninter
       do 10 ic = 1, ncomp
@@ -3175,9 +3178,9 @@ c               call matcop(nudim, ncomp, ncomp, nmold, u, uold)
          rhstri(ind) = rhs(ind) + defnew(ic, im)
    10 continue
       ind = ninter*nmsh + nlbc + 1
-      call dcopy(ncomp-nlbc, rhs, 1, rhstri, 1)
+      call dcopytwp(ncomp-nlbc, rhs, 1, rhstri, 1)
 
-      call dssq  ( nmsh*ncomp, rhstri, 1, scale, sumsq )
+      call dssqtwp  ( nmsh*ncomp, rhstri, 1, scale, sumsq )
       rnsq = (scale**2)*sumsq
 
       iter = 0
@@ -3195,7 +3198,7 @@ c               call matcop(nudim, ncomp, ncomp, nmold, u, uold)
          iflag = -2
          return
       end if
-      call dcopy(ncomp*nmsh, rhstri, 1, rhs, 1)
+      call dcopytwp(ncomp*nmsh, rhstri, 1, rhs, 1)
 
 *  Statement 100 is the top of the iteration loop.
 
@@ -3219,8 +3222,8 @@ c               call matcop(nudim, ncomp, ncomp, nmold, u, uold)
 *  Jacobian (whose LU factors are saved).  Copy the rhs array into
 *  tmprhs, which is then overwritten by blkslv.
 
-      call dcopy(ncomp*nmsh, rhs, 1, tmprhs, 1)
-      call dcopy(ncomp*nmsh,tmprhs,1,delu,1)
+      call dcopytwp(ncomp*nmsh, rhs, 1, tmprhs, 1)
+      call dcopytwp(ncomp*nmsh,tmprhs,1,delu,1)
       job = 0
       call crslve(Topblk, Nlbc, Ncomp, Ajac, Ncomp, 2*Ncomp,
      + Ninter, Botblk, Ncomp-Nlbc, Ipivot, Delu, job)
@@ -3246,7 +3249,7 @@ c               call matcop(nudim, ncomp, ncomp, nmold, u, uold)
       if (rnsq .lt. rnold) then
          better = .true.
          call matcop( ncomp, nudim, ncomp, nmsh, utrial, u )
-         call dcopy( ncomp*nmsh, rhstri, 1, rhs, 1 )
+         call dcopytwp( ncomp*nmsh, rhstri, 1, rhs, 1 )
       endif
 
 *  Stop the fixed Jacobian iterations if there have been too
@@ -3311,7 +3314,7 @@ c               call matcop(nudim, ncomp, ncomp, nmold, u, uold)
      *    fsub, dfsub, gsub, dgsub, iflag, rpar, ipar)
 ***********************************************************************
 *     call by: bvpsol
-*     calls to: lnrhs, jaccal, dcopy, colrow, dload, dload, clrslve
+*     calls to: lnrhs, jaccal, dcopytwp, colrow, dloadtwp, dloadtwp, clrslve
 *           maxpy
 **********************************************************************
       implicit double precision (a-h,o-z)
@@ -3333,7 +3336,7 @@ c               call matcop(nudim, ncomp, ncomp, nmold, u, uold)
       logical use_c, comp_c
       common/algprs/ nminit, iprint, idum, use_c, comp_c
 
-*  blas: dcopy, dload
+*  blas: dcopytwp, dloadtwp
 
       parameter  ( one = 1.0d+0, zero = 0.0d+0 )
       character(len=100) msg
@@ -3369,8 +3372,8 @@ c               call matcop(nudim, ncomp, ncomp, nmold, u, uold)
 *  The factors are overwritten on the matrices topblk, ajac and botblk.
 *  Interchanges are represented in the integer array ipivot.
 
-      call dcopy(ncomp*nmsh,rhs,1,tmprhs,1)
-      call dcopy(ncomp*nmsh,tmprhs,1,delu,1)
+      call dcopytwp(ncomp*nmsh,rhs,1,tmprhs,1)
+      call dcopytwp(ncomp*nmsh,tmprhs,1,delu,1)
 
       job = 0
       call colrow(isize, topblk,nlbc, ncomp, ajac, ncomp, 2*ncomp,
@@ -3389,14 +3392,14 @@ c               call matcop(nudim, ncomp, ncomp, nmold, u, uold)
 *  The right-hand side is the deferred correction array,
 *  padded with zeros at the boundary conditions.
 
-         call dload(nlbc, zero, tmprhs(1), 1)
+         call dloadtwp(nlbc, zero, tmprhs(1), 1)
          do 100 im = 1, ninter
             loc = (im-1)*ncomp + nlbc + 1
-            call dcopy(ncomp, defcor(1,im), 1, tmprhs(loc), 1)
+            call dcopytwp(ncomp, defcor(1,im), 1, tmprhs(loc), 1)
   100    continue
          nrhs = ninter*ncomp + nlbc + 1
-         call dload(ncomp-nlbc, zero, tmprhs(nrhs), 1)
-         call dcopy(ncomp*nmsh,tmprhs,1,delu,1)
+         call dloadtwp(ncomp-nlbc, zero, tmprhs(nrhs), 1)
+         call dcopytwp(ncomp*nmsh,tmprhs,1,delu,1)
          job = 0
 
       call crslve(topblk,nlbc,ncomp,ajac,ncomp,2*ncomp,ninter,
@@ -3461,7 +3464,7 @@ c      iflag = 0
 
       intrinsic  abs, max
 
-*  blas: dcopy
+*  blas: dcopytwp
 
       logical frscal
 c      save frscal
@@ -3612,8 +3615,8 @@ c
 *   Solve for the Newton step delu.  Copy the rhs array into tmprhs,
 *   which is then overwritten by blkslv.
 
-      call dcopy(ncomp*nmsh, rhs, 1, tmprhs, 1)
-      call dcopy(ncomp*nmsh,tmprhs,1,delu,1)
+      call dcopytwp(ncomp*nmsh, rhs, 1, tmprhs, 1)
+      call dcopytwp(ncomp*nmsh,tmprhs,1,delu,1)
       job = 0
       call colrow(nmsh*ncomp,topblk,nlbc,ncomp,ajac,ncomp,2*ncomp,
      +   ninter,botblk,ncomp-nlbc,ipivot,delu,iflag,job)
@@ -3741,8 +3744,8 @@ c  at the initial point of the line search.
 *  have already been calculated by blkdcm.
 *  Copy rhstri into tmprhs, which is overwritten by blkslv.
 
-      call dcopy(ncomp*nmsh, rhstri, 1, tmprhs, 1)
-      call dcopy(ncomp*nmsh,tmprhs,1,xmerit,1)
+      call dcopytwp(ncomp*nmsh, rhstri, 1, tmprhs, 1)
+      call dcopytwp(ncomp*nmsh,tmprhs,1,xmerit,1)
       job = 0
       call crslve(topblk, nlbc, ncomp, ajac, ncomp, 2*ncomp, ninter,
      +   botblk, ncomp-nlbc, ipivot, xmerit,job)
@@ -3770,7 +3773,7 @@ c  at the initial point of the line search.
       rnprev = rnsq
       rnsq = rnsqtr
       call matcop (ncomp, nudim, ncomp, nmsh, utrial, u)
-      call dcopy(ncomp*nmsh, rhstri, 1, rhs, 1)
+      call dcopytwp(ncomp*nmsh, rhstri, 1, rhs, 1)
       if (iprint .ge. 0) THEN
         write(msg,909) iter, alfa, fmtry, rnsq
         CALL rprint(msg)
@@ -3942,7 +3945,7 @@ c  at the initial point of the line search.
       integer nfunc, njac, nstep, nbound, njacbound
       common/diagnost/nfunc, njac, nstep, nbound, njacbound
 
-*  blas: dcopy, ddot
+*  blas: dcopytwp, ddottwp
 
       parameter ( zero = 0.0d+0, half = 0.5d+0, eighth = 0.125d+0 )
       parameter ( four = 4.0d+0, six = 6.0d+0 )
@@ -3954,7 +3957,7 @@ c  at the initial point of the line search.
 
       do 110 i = 1, nlbc
          call dgsub (i, ncomp, u(1,1), dgtm,rpar,ipar)
-         call dcopy(ncomp, dgtm(1), 1, topblk(i,1), nlbc)
+         call dcopytwp(ncomp, dgtm(1), 1, topblk(i,1), nlbc)
   110 continue
 
       call dfsub (ncomp, xx(1), u(1,1), dftm1(1,1), rpar, ipar)
@@ -3976,7 +3979,7 @@ c  at the initial point of the line search.
          call dfsub (ncomp, xhalf, uint, dftm2(1,1), rpar, ipar)
          do 140 ic = 1, ncomp
             do 130 jc = 1, ncomp
-               dsq = ddot(ncomp, dftm2(ic,1), ncomp,
+               dsq = ddottwp(ncomp, dftm2(ic,1), ncomp,
      *                       dftm1(1,jc), 1)
                ajac(ic,jc,im) = -hmsh*(dftm1(ic,jc)/six
      *             + dftm2(ic,jc)/three + hmsh*dsq/twelve)
@@ -3987,14 +3990,14 @@ c  at the initial point of the line search.
          call dfsub (ncomp, xx(im+1), u(1,im+1), dftm1(1,1), rpar, ipar)
          do 170 ic = 1, ncomp
             do 160 jc = 1, ncomp
-               dsq = ddot(ncomp, dftm2(ic,1), ncomp,
+               dsq = ddottwp(ncomp, dftm2(ic,1), ncomp,
      *                         dftm1(1,jc), 1)
                ajac(ic,jc+ncomp,im) = -hmsh*(dftm1(ic,jc)/six
      *               + dftm2(ic,jc)/three - hmsh*dsq/twelve)
   160       continue
-            call dcopy(ncomp, ajac(ic,ncomp+1,im), ncomp,
+            call dcopytwp(ncomp, ajac(ic,ncomp+1,im), ncomp,
      *                   chold(ic,1,im), ncomp)
-            call dcopy(ncomp, dftm1(ic,1), ncomp,
+            call dcopytwp(ncomp, dftm1(ic,1), ncomp,
      *                   bhold(ic,1,im), ncomp)
             ajac(ic,ic+ncomp,im) = ajac(ic,ic+ncomp,im) + one
             chold(ic,ic,im) = ajac(ic,ic+ncomp,im)
@@ -4007,7 +4010,7 @@ c  at the initial point of the line search.
 
       do 220 i = nlbc+1, ncomp
          call dgsub (i, ncomp, u(1, nmsh), dgtm,rpar,ipar)
-         call dcopy(ncomp, dgtm(1), 1, botblk(i-nlbc,1), ncomp-nlbc)
+         call dcopytwp(ncomp, dgtm(1), 1, botblk(i-nlbc,1), ncomp-nlbc)
   220 continue
 
       njacbound = njacbound + ncomp
@@ -4040,7 +4043,7 @@ c  at the initial point of the line search.
       intrinsic abs
       character(len=100) msg
 
-*  blas: dssq
+*  blas: dssqtwp
 
       ninter = nmsh - 1
       rnsq = zero
@@ -4079,7 +4082,7 @@ c  at the initial point of the line search.
          rhs(nrhs+ii) = -wg
    60 continue
 
-      call dssq  ( nmsh*ncomp, rhs, 1, scale, sumsq )
+      call dssqtwp  ( nmsh*ncomp, rhs, 1, scale, sumsq )
       rnsq = (scale**2)*sumsq
 
       nbound = nbound + ncomp
@@ -4111,7 +4114,7 @@ c  at the initial point of the line search.
       integer nfunc, njac, nstep, nbound, njacbound
       common/diagnost/nfunc, njac, nstep, nbound, njacbound
 
-*  blas: dssq
+*  blas: dssqtwp
 
       parameter ( zero = 0.0d+0, half = 0.5d+0, eighth = 0.125d+0 )
       parameter ( one = 1.0d+0, four = 4.0d+0, six = 6.0d+0 )
@@ -4159,7 +4162,7 @@ c  at the initial point of the line search.
 
       nbound = nbound + ncomp
 
-      call dssq  ( nmsh*ncomp, rhs, 1, scale, sumsq )
+      call dssqtwp  ( nmsh*ncomp, rhs, 1, scale, sumsq )
       rnsq = (scale**2)*sumsq
 
       return
@@ -4173,7 +4176,7 @@ c  at the initial point of the line search.
       logical use_c, comp_c
       common/algprs/ nminit, iprint, idum, use_c, comp_c
 
-*  blas: dcopy
+*  blas: dcopytwp
 
       parameter (half = 0.5d+0)
       character(len=100) msg
@@ -4196,7 +4199,7 @@ c  at the initial point of the line search.
 *  points, and xx contains the new mesh points.
 
       nmold = nmsh
-      call dcopy(nmold, xx, 1, xxold, 1)
+      call dcopytwp(nmold, xx, 1, xxold, 1)
 
       ninnew = 2*(nmsh-1)
       nmnew = ninnew + 1
@@ -4207,7 +4210,7 @@ c  at the initial point of the line search.
          ENDIF
 
          nmsh = nmold
-         call dcopy(nmold, xxold, 1, xx, 1)
+         call dcopytwp(nmold, xxold, 1, xx, 1)
          maxmsh = .true.
          return
       endif
@@ -4252,7 +4255,7 @@ c  at the initial point of the line search.
       intrinsic abs, max, int
       character(len=100) msg
 
-*  blas: dcopy
+*  blas: dcopytwp
 *  double precision dlog
 
       logical use_c, comp_c
@@ -4284,7 +4287,7 @@ c  at the initial point of the line search.
 *  Copy the current mesh into the xxold array.
 
 
-      call dcopy(nmold, xx, 1, xxold, 1)
+      call dcopytwp(nmold, xx, 1, xxold, 1)
       ithres = 0
       thres = one
 
@@ -4492,7 +4495,7 @@ c  at the initial point of the line search.
 *  but has more than 3 times as many intervals as the old mesh.
 *  Try doubling the mesh if possible.
 
-            call dcopy(nmsh, xxold, 1, xx, 1)
+            call dcopytwp(nmsh, xxold, 1, xx, 1)
             call dblmsh (nmsh, nmax, xx, nmold, xxold, maxmsh)
             ddouble = .true.
             return
@@ -4540,12 +4543,12 @@ c  at the initial point of the line search.
          ithres = ithres + 1
          thres = erdcid*thres
          if(thres .gt. errmax) thres = errmax
-         call dcopy(nmsh, xxold, 1, xx, 1)
+         call dcopytwp(nmsh, xxold, 1, xx, 1)
          go to 200
       else
 c         nmsh = 2*nmsh - 1
          nmsh = nmold
-         call dcopy(nmold, xxold, 1, xx, 1)
+         call dcopytwp(nmold, xxold, 1, xx, 1)
          maxmsh = .true.
       endif
       return
@@ -4569,7 +4572,7 @@ c       selmsh
       common/algprs/ nminit, iprint, idum, use_c, comp_c
       character(len=100) msg
 
-*  blas: dcopy
+*  blas: dcopytwp
 
 *  The routine smpmsh performs simple mesh refinement by adding
 *  points to one or three interval(s) in the region indicated
@@ -4578,7 +4581,7 @@ c       selmsh
 *  interval.
 
       nmold = nmsh
-      call dcopy(nmold, xx, 1, xxold, 1)
+      call dcopytwp(nmold, xx, 1, xxold, 1)
 
 *  numadd is altered if necessary so that it lies between 4 and 49
 
@@ -4857,7 +4860,7 @@ c
       logical use_c, comp_c
       common/algprs/ nminit, iprint, idum, use_c, comp_c
 
-*  blas: dcopy
+*  blas: dcopytwp
       logical nodouble
       parameter (two = 2.0d+0)
       parameter (bigfac = 10.0d+0, small = 1.0d-2, numpt = 14)
@@ -4940,7 +4943,7 @@ c     *   .and. (use_c))
 *  Copy the elements of rhs corresponding to interior mesh
 *  points for component icmp into a single vector tmwork.
 
-         call dcopy(ninter, rhs(indrhs), ncomp, tmwork, 1)
+         call dcopytwp(ninter, rhs(indrhs), ncomp, tmwork, 1)
 
          call stats(ninter, tmwork, rbigst, rsecnd,
      *                 sumrhs, intref)
@@ -5795,7 +5798,7 @@ c  end of getptq
       logical  use_c, comp_c
       common/algprs/ nminit, iprint, idum, use_c, comp_c
 
-* blas: dcopy
+* blas: dcopytwp
 
       parameter (zero = 0.0d+0)
       character(len=100) msg
@@ -5811,7 +5814,7 @@ c  end of getptq
 *  By construction, xx(1) = xxold(1).  Copy the first ncomp
 *  components of uold into those of u.
 
-      call dcopy(ncomp, uold(1,1), 1, u(1,1), 1)
+      call dcopytwp(ncomp, uold(1,1), 1, u(1,1), 1)
 
       i = 2
       do 100 im = 2, nmsh-1
@@ -5833,7 +5836,7 @@ c  end of getptq
 
 *  xx(im) and xxold(i) are identical.
 
-               call dcopy(ncomp, uold(1,i), 1, u(1,im), 1)
+               call dcopytwp(ncomp, uold(1,i), 1, u(1,im), 1)
                i = i + 1
             else
                xint = xxold(i) - xxold(i-1)
@@ -5845,7 +5848,7 @@ c  end of getptq
          endif
 
   100 continue
-      call dcopy(ncomp, uold(1,nmold), 1, u(1,nmsh), 1)
+      call dcopytwp(ncomp, uold(1,nmold), 1, u(1,nmsh), 1)
       return
       end
 
@@ -5978,7 +5981,7 @@ c#
 
       intrinsic abs, max, int
 
-*  blas: dcopy
+*  blas: dcopytwp
 *  double precision dlog
 
       logical use_c, comp_c
@@ -6012,7 +6015,7 @@ c#
 *  Copy the current mesh into the xxold array.
 
 
-      call dcopy(nmold, xx, 1, xxold, 1)
+      call dcopytwp(nmold, xx, 1, xxold, 1)
       ithres = 0
       thres = one
 
@@ -6274,7 +6277,7 @@ c        end if
 *  but has more than 3 times as many intervals as the old mesh.
 *  Try doubling the mesh if possible.
             nmsh = nmold
-            call dcopy(nmsh, xxold, 1, xx, 1)
+            call dcopytwp(nmsh, xxold, 1, xx, 1)
             call dblmsh (nmsh, nmax, xx, nmold, xxold, maxmsh)
             ddouble = .true.
             return
@@ -6324,12 +6327,12 @@ c        end if
          ithres = ithres + 1
          thres = erdcid*thres
          if(thres .gt. errmax) thres = errmax
-         call dcopy(nmsh, xxold, 1, xx, 1)
+         call dcopytwp(nmsh, xxold, 1, xx, 1)
          go to 200
       else
 c         nmsh = 2*nmsh - 1
          nmsh = nmold
-         call dcopy(nmsh, xxold, 1, xx, 1)
+         call dcopytwp(nmsh, xxold, 1, xx, 1)
          maxmsh = .true.
       endif
 
@@ -6359,7 +6362,7 @@ c   endif use the conditioning and the error
 
       intrinsic abs, max, int
 
-*  blas: dcopy
+*  blas: dcopytwp
 *  double precision dlog
 
       logical use_c, comp_c
@@ -6384,7 +6387,7 @@ c   endif use the conditioning and the error
 *  Copy the current mesh into the xxold array.
 
 
-      call dcopy(nmold, xx, 1, xxold, 1)
+      call dcopytwp(nmold, xx, 1, xxold, 1)
 
       ithres = 0
       thres = one
@@ -6566,7 +6569,7 @@ c  220 continue
 *  but has more than 3 times as many intervals as the old mesh.
 *  Try doubling the mesh if possible.
             nmsh = nmold
-            call dcopy(nmsh, xxold, 1, xx, 1)
+            call dcopytwp(nmsh, xxold, 1, xx, 1)
             call dblmsh (nmsh, nmax, xx, nmold, xxold, maxmsh)
             ddouble = .true.
             return
@@ -6601,7 +6604,7 @@ c  220 continue
 *  value nmax.
 
       nmsh = nmold
-      call dcopy(nmsh, xxold, 1, xx, 1)
+      call dcopytwp(nmsh, xxold, 1, xx, 1)
       maxmsh = .true.
 
 
@@ -6632,7 +6635,7 @@ c  220 continue
 
       intrinsic abs, max, int
 
-*  blas: dcopy
+*  blas: dcopytwp
 *  double precision dlog
 
       logical use_c, comp_c
@@ -6662,7 +6665,7 @@ c  220 continue
 *  Copy the current mesh into the xxold array.
 
 
-         call dcopy(nmold, xx, 1, xxold, 1)
+         call dcopytwp(nmold, xx, 1, xxold, 1)
 
       ithres = 0
       thres = one
@@ -6858,7 +6861,7 @@ c  220 continue
             ENDIF
 
             nmsh = nmold
-            call dcopy(nmsh, xxold, 1, xx, 1)
+            call dcopytwp(nmsh, xxold, 1, xx, 1)
             call dblmsh (nmsh, nmax, xx, nmold, xxold, maxmsh)
             ddouble = .true.
             return
@@ -6892,7 +6895,7 @@ c  220 continue
 *  value nmax.
 
       nmsh = nmold
-      call dcopy(nmsh, xxold, 1, xx, 1)
+      call dcopytwp(nmsh, xxold, 1, xx, 1)
       maxmsh = .true.
 
 
@@ -6918,7 +6921,7 @@ c  220 continue
 
       intrinsic abs, max, int
 
-*  blas: dcopy
+*  blas: dcopytwp
 *  double precision dlog
 
       logical use_c, comp_c
@@ -7122,7 +7125,7 @@ C     TO CONDITION  ESTIMATION, NUMERICAL ANALYSIS REPORT NO. 135,
 C     UNIVERSITY OF MANCHESTER, MANCHESTER M13 9PL, ENGLAND.
 C
 C     SUBROUTINES AND FUNCTIONS
-C     BLAS     IDAMAX, DASUM, DCOPY
+C     BLAS     idamaxtwp, DASUM, dcopytwp
 C     GENERIC  ABS, NINT, FLOAT, SIGN
 C
         INTRINSIC FLOAT
@@ -7136,7 +7139,7 @@ C        DOUBLE PRECISION FLOAT
 
 
       DOUBLE PRECISION DASUM
-      INTEGER IDAMAX
+      INTEGER idamaxtwp
 
       INTEGER ITMAX
       PARAMETER (ITMAX = 5)
@@ -7186,7 +7189,7 @@ C     ................ ENTRY   (JUMP = 2)
 C     FIRST ITERATION.  X HAS BEEN OVERWRITTEN BY TRANSPOSE(A)*X.
 C
  200   CONTINUE
-      J = IDAMAX(N,X,1)
+      J = idamaxtwp(N,X,1)
       ITER = 2
 C
 C     MAIN LOOP - ITERATIONS 2,3,...,ITMAX.
@@ -7204,7 +7207,7 @@ C     ................ ENTRY   (JUMP = 3)
 C     X HAS BEEN OVERWRITTEN BY A*X.
 C
  300   CONTINUE
-      CALL DCOPY(N,X,1,V,1)
+      CALL dcopytwp(N,X,1,V,1)
       ESTOLD = EST
       EST = DASUM(N,V,1)
       DO 310,I = 1,N
@@ -7230,7 +7233,7 @@ C     X HAS BEEN OVERWRITTEN BY TRANSPOSE(A)*X.
 C
  400   CONTINUE
       JLAST = J
-      J = IDAMAX(N,X,1)
+      J = idamaxtwp(N,X,1)
       IF (   (  X(JLAST) .NE. ABS(X(J))  ) .AND.
      +       (ITER .LT. ITMAX)   ) THEN
          ITER = ITER + 1
@@ -7255,7 +7258,7 @@ C
  500   CONTINUE
       TEMP = TWO*DASUM(N,X,1)/FLOAT(3*N)
       IF (TEMP. GT. EST) THEN
-         CALL DCOPY(N,X,1,V,1)
+         CALL dcopytwp(N,X,1,V,1)
          EST = TEMP
       ENDIF
 C
@@ -7428,7 +7431,7 @@ C*************************************************************************
         IMPLICIT NONE
         DOUBLE PRECISION TOPBLK,ARRAY,BOTBLK,B
         INTEGER N,NRWTOP,NOVRLP,NRWBLK,NCLBLK,NBLOKS,NRWBOT,PIVOT(*),
-     *          IFLAG,JOB, IDAMAX,i,IFAIL
+     *          IFLAG,JOB, idamaxtwp,i,IFAIL
         DIMENSION TOPBLK(NRWTOP,*),ARRAY(NRWBLK,NCLBLK,*),
      *          BOTBLK(NRWBOT,*),B(*)
 
@@ -8532,7 +8535,7 @@ C       RETURN FROM THE SOLUTION OF A-TRANSPOSE.X = B
       implicit double precision (a-h,o-z)
       dimension a(ndim,n), ip(n)
       intrinsic abs
-*  blas: daxpy, dscal, dswap. idamax
+*  blas: daxpytwp, dscaltwp, dswaptwp. idamaxtwp
 
       parameter ( zero = 0.0d+0, one = 1.0d+0 )
 
@@ -8559,7 +8562,7 @@ C       RETURN FROM THE SOLUTION OF A-TRANSPOSE.X = B
 *  Find the row index ipiv of the element of largest magnitude in
 *  column k.
 
-         ipiv = k-1 + idamax(n-k+1, a(k,k), 1)
+         ipiv = k-1 + idamaxtwp(n-k+1, a(k,k), 1)
          piv = a(ipiv,k)
          if (piv .eq. zero) then
             ier = k
@@ -8570,19 +8573,19 @@ C       RETURN FROM THE SOLUTION OF A-TRANSPOSE.X = B
 *  Perform interchanges if necessary.
 
          if (ipiv .ne. k) then
-            call dswap(n-k+1, a(ipiv,k), ndim, a(k,k), ndim)
+            call dswaptwp(n-k+1, a(ipiv,k), ndim, a(k,k), ndim)
          endif
 
 *  Save the (negative) multipliers in the subdiagonal elements of
 *  column k.
 
-         call dscal(n-k, (-one/piv), a(k+1,k), 1)
+         call dscaltwp(n-k, (-one/piv), a(k+1,k), 1)
 
 *  Update the remaining matrix.  Note that a(i,k) now contains
 *  the negative multipliers.
 
          do 50 j = k+1, n
-            call daxpy(n-k, a(k,j), a(k+1,k), 1, a(k+1,j), 1)
+            call daxpytwp(n-k, a(k,j), a(k+1,k), 1, a(k+1,j), 1)
    50    continue
 
 *  End of loop over columns.
@@ -8596,7 +8599,7 @@ C       RETURN FROM THE SOLUTION OF A-TRANSPOSE.X = B
       implicit double precision (a-h, o-z)
       dimension a(ndim,n), ip(n), b(n), x(n)
 
-*  blas:  daxpy, dcopy
+*  blas:  daxpytwp, dcopytwp
 
 *  The subroutine lusol is a simple-minded routine to solve a
 *  linear system whose LU factors have been computed by lufac.
@@ -8606,7 +8609,7 @@ C       RETURN FROM THE SOLUTION OF A-TRANSPOSE.X = B
 
 *  Copy the right-hand side b into x.
 
-      call dcopy (n, b, 1, x, 1)
+      call dcopytwp (n, b, 1, x, 1)
 
 *  Forward solution with l (unit lower-triangular factor), which
 *  is stored in the strict lower triangle of a.
@@ -8618,7 +8621,7 @@ C       RETURN FROM THE SOLUTION OF A-TRANSPOSE.X = B
             x(ipiv) = x(k)
             x(k) = tem
          endif
-         call daxpy ( n-k, x(k), a(k+1,k), 1, x(k+1), 1 )
+         call daxpytwp ( n-k, x(k), a(k+1,k), 1, x(k+1), 1 )
    20 continue
 
 *  Backward solution with u (upper-triangular factor), which is stored
@@ -8626,22 +8629,22 @@ C       RETURN FROM THE SOLUTION OF A-TRANSPOSE.X = B
 
       do 40 kb = n, 1, -1
          x(kb) = x(kb)/a(kb,kb)
-         call daxpy(kb-1, (-x(kb)), a(1,kb), 1, x(1), 1)
+         call daxpytwp(kb-1, (-x(kb)), a(1,kb), 1, x(1), 1)
    40 continue
 
       return
       end
 
-      subroutine dcopy ( n, x, incx, y, incy )
+      subroutine dcopytwp ( n, x, incx, y, incy )
       implicit double precision (a-h,o-z)
       integer            n, incx, incy
       dimension          x( * ), y( * )
 
-c  dcopy  performs the operation
+c  dcopytwp  performs the operation
 c
 c     y := x
 c
-c  nag fortran 77 version of the blas routine dcopy .
+c  nag fortran 77 version of the blas routine dcopytwp .
 c  nag fortran 77 o( n ) basic linear algebra routine.
 c
 c  -- written on 26-november-1982.
@@ -8678,21 +8681,21 @@ c     sven hammarling, nag central office.
 
       return
 
-*     end of dcopy .
+*     end of dcopytwp .
 
       end
 
-      subroutine daxpy ( n, alpha, x, incx, y, incy )
+      subroutine daxpytwp ( n, alpha, x, incx, y, incy )
       implicit double precision (a-h,o-z)
       integer            n, incx, incy
       dimension   x( * ), y( * )
 
-c  daxpy  performs the operation
+c  daxpytwp  performs the operation
 c
 c     y := alpha*x + y
 c
 c
-c  modified nag fortran 77 version of the blas routine daxpy .
+c  modified nag fortran 77 version of the blas routine daxpytwp .
 c
 c  -- written on 3-september-1982.
 c     sven hammarling, nag central office.
@@ -8729,21 +8732,21 @@ c     sven hammarling, nag central office.
       end if
       return
 
-*     end of daxpy .
+*     end of daxpytwp .
 
       end
 
-      double precision function ddot  ( n, x, incx, y, incy )
+      double precision function ddottwp  ( n, x, incx, y, incy )
       implicit double precision (a-h,o-z)
       integer           n, incx, incy
       dimension         x( * ), y( * )
 
-c  ddot   returns the value
+c  ddottwp   returns the value
 c
-c     ddot   = x'y
+c     ddottwp   = x'y
 c
 c
-c  modified nag fortran 77 version of the blas routine ddot  .
+c  modified nag fortran 77 version of the blas routine ddottwp  .
 c
 c  -- written on 21-september-1982.
 c     sven hammarling, nag central office.
@@ -8779,24 +8782,24 @@ c     sven hammarling, nag central office.
          end if
       end if
 
-      ddot   = sum
+      ddottwp   = sum
       return
 
-*     end of ddot  .
+*     end of ddottwp  .
 
       end
 
-      subroutine dscal ( n, alpha, x, incx )
+      subroutine dscaltwp ( n, alpha, x, incx )
       implicit double precision (a-h,o-z)
       integer          n, incx
       dimension        x( * )
 
-c  dscal  performs the operation
+c  dscaltwp  performs the operation
 c
 c     x := alpha*x
 c
 c
-c  modified nag fortran 77 version of the blas routine dscal .
+c  modified nag fortran 77 version of the blas routine dscaltwp .
 c
 c  -- written on 26-november-1982.
 c     sven hammarling, nag central office.
@@ -8822,21 +8825,21 @@ c     sven hammarling, nag central office.
 
       return
 
-*     end of dscal .
+*     end of dscaltwp .
 
       end
 
-      subroutine dswap ( n, x, incx, y, incy )
+      subroutine dswaptwp ( n, x, incx, y, incy )
       implicit double precision (a-h,o-z)
       integer      n, incx, incy
       dimension    x( * ), y( * )
 
-c  dswap  performs the operations
+c  dswaptwp  performs the operations
 c
 c     temp := x,   x := y,   y := temp.
 c
 c
-c  modified nag fortran 77 version of the blas routine dswap .
+c  modified nag fortran 77 version of the blas routine dswaptwp .
 c
 c  -- written on 26-november-1982.
 c     sven hammarling, nag central office.
@@ -8878,21 +8881,21 @@ c     sven hammarling, nag central office.
 
       return
 
-*     end of dswap .
+*     end of dswaptwp .
 
       end
 
-      integer function idamax( n, x, incx )
+      integer function idamaxtwp( n, x, incx )
       implicit double precision (a-h,o-z)
       integer         n, incx
       dimension       x( * )
 
-c  idamax returns the smallest value of i such that
+c  idamaxtwp returns the smallest value of i such that
 c
 c     abs( x( i ) ) = max( abs( x( j ) ) )
 c                      j
 c
-c  nag fortran 77 version of the blas routine idamax.
+c  nag fortran 77 version of the blas routine idamaxtwp.
 c  nag fortran 77 o( n ) basic linear algebra routine.
 c
 c  -- written on 31-may-1983.
@@ -8902,7 +8905,7 @@ c     sven hammarling, nag central office.
       integer             i     , imax  , ix
 
       if( n.lt.1 )then
-         idamax = 0
+         idamaxtwp = 0
          return
       end if
 
@@ -8919,17 +8922,17 @@ c     sven hammarling, nag central office.
    10    continue
       end if
 
-      idamax = imax
+      idamaxtwp = imax
       return
 
-*     end of idamax.
+*     end of idamaxtwp.
 
       end
-      subroutine dload ( n, const, x, incx )
+      subroutine dloadtwp ( n, const, x, incx )
       implicit double precision (a-h,o-z)
       dimension  x(*)
 c
-c  dload  performs the operation
+c  dloadtwp  performs the operation
 c
 c     x = const*e,   e' = ( 1  1 ... 1 ).
 c
@@ -8955,7 +8958,7 @@ c
 
       return
 
-*     end of dload .
+*     end of dloadtwp .
       end
 
 
@@ -9049,12 +9052,12 @@ c
       return
       end
 
-      subroutine dssq  ( n, x, incx, scale, sumsq )
+      subroutine dssqtwp  ( n, x, incx, scale, sumsq )
       implicit double precision (a-h,o-z)
       integer            n, incx
       dimension   x( * )
 
-*  Given the n-vector x, dssq returns values scale and sumsq such that
+*  Given the n-vector x, dssqtwp returns values scale and sumsq such that
 *     (scale**2) * sumsq = sum of squares of x(i),
 *  where  scale = max  abs(x(i)).
 
@@ -9079,7 +9082,7 @@ c
 
       return
 
-*     end of dssq  .
+*     end of dssqtwp  .
 
       end
 
