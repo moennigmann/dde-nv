@@ -67,7 +67,7 @@ void calltides_(int *nvar1, int *npar1, double *p1, double *v1, double *xend, do
 ///// TRANSLATE OUTPUT INTO FORTRAN
 
 	int sizematr;
-    int ngen;
+        int ngen;
 	ngen=nvar+npar;
 	sizematr=1+nvar+ngen*nvar+(ngen*(ngen+1)*nvar)/2+(ngen*(ngen+1)*(ngen+2)*nvar)/6;
 

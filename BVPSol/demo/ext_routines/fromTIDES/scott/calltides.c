@@ -95,7 +95,10 @@ void calltides_(int *nvar1, int *npar1, double *p1, double *v1, double *xend, do
 
 
 	int sizematr;
-	sizematr=1+nvar+(nvar+npar)*nvar+((nvar+npar)*(nvar+npar+1)*nvar)/2;
+	int ngen;
+	ngen=nvar+npar;
+	sizematr=1+nvar+ngen*nvar+(ngen*(ngen+1)*nvar)/2+(ngen*(ngen+1)*(ngen+2)*nvar)/6;
+
 
 	for( counter = 0; counter < sizematr; counter++)
 	{
