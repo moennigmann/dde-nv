@@ -63,15 +63,30 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       DOUBLE PRECISION WRK(LWRKFL)
       LOGICAL full, useC
       INTEGER IFAIL, IFLBVP, indnms, iset(6)
+      INTEGER iPstep
+      LOGICAL log1, log2, log3
+      DOUBLE PRECISION PFINAL
 
       EXTERNAL  TWPBVPC, FSUB, DFSUB, GSUB, DGSUB
-
 
 C     TRPAR (real) and IPAR (integer) are arrays that are passed to
 C     the F function (RHS of the proble), G function (bondary condition 
 C     of the problem), and their Jacobians.
 C     TRPAR is typically used as a parameter in the problem formulation, and
 C     IPAR is normally used to select a problem from a set.
+
+C     Try with different guesses for periods
+C     in range P-4..P+4
+      PGUESS=P-4D0
+C     if IFAIL=0 then solution is found
+      IFAIL = 10
+C     FX is controlled to check if the obtained solution is not a constant
+      FX(1,1) = 0
+
+C     if IFAIL!=0 and FX=0 then try to calculate solution for another period guess
+      log3=.TRUE.
+      iPstep=1
+      DO WHILE (log3)
 
 C     Dimension of the problem =2*n
 C     n additional variable is substituted into BVP problem to consider period
@@ -135,9 +150,6 @@ C     NMSH is the number of initial points we supply to
 C     the solver in the form of a guess, we set this
 C     to zero to indicate that we have no initial guess
       NMSH  = M
-
-C     Try with different guesses for periods
-      PGUESS=P
 
 C     Compute initial trajectory
       call DEFS(NN,M,X0,PGUESS,NPAR,TRPAR,XT,YU)
@@ -248,15 +260,21 @@ C     GET DERIVATIVES WITH TIDES
 
       ENDIF
 
-C     MUNBER OF OUTPUT NODES
-      M=NMSH
-C     SOLUTION IN INITIAL POINT X(0)
-      DO 6 I2=1,NN
-6     Y(I2,1)=U(I2,1)
+      PGUESS= P-4D0+0.1D0*iPstep
+      log1 =  .not. IFAIL .eq. 0
+      log2 = log1 .or. FX(1,1) .lt. 0.1D-9
+      log3 = log2 .and. PGUESS .lt. P+4.0D0
+      iPstep=iPstep+1
+      ENDDO
 
 C     the solution x values are stored in XX, the Y
 C     values are stored in U.
 C     U(i,j) refers to component i of point j in the mesh.
+
+C     Compute final trajectory in M nodes (for output of fixed size matrix)
+      PFINAL=POUT
+      call DEFS(NN,M,XST,PFINAL,NPAR,TRPAR,XT,Y)
+
 
       RETURN
       END
