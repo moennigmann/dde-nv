@@ -81,7 +81,7 @@
         n2= integer,
         n3= integer,
         
-        Y=array(1..NumDynVarsToBeSubs,1..NumOfNodesToBeSubs,numeric),
+        Y=array(1..NumDynVarsToBeSubs,1..NumOfNodesToBeSubs*20,numeric),
         FM=array(1..NumDynVarsToBeSubs,1..2,numeric),
         FX=array(1..NumDynVarsToBeSubs,1..NumDynVarsToBeSubs,numeric),
         POUT=numeric,
@@ -131,7 +131,7 @@
         NPHASE:=indPhaseToBeSubs;
         
         n1:=NumDynVarsToBeSubs; # dimension of ODEs
-        m1:=NumOfNodesToBeSubs; # number of nodes where BVP solution is calculated 
+        m1:=NumOfNodesToBeSubs*20; # number of nodes where BVP solution is calculated, for more precise evaluation of integral m set to m=m*20
         n2:=NumCritParsToBeSubs; # number of parameters
         n3:=-1; # output print option
 

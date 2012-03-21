@@ -51,11 +51,7 @@
         T1,    # value of T in the fist node (=0 by default)
         F0P,    # derivatives matrix f_xTP
         J0P,    # derivatives matrix f_xxTP
-        i1,     # counter
-        iPstep, # counter
-        log1,
-        log2,
-        log3;
+        i1;
           
       declare(
         par= array(
@@ -121,11 +117,7 @@
         J0P=array(1..NumDynVarsToBeSubs,1..NumDynVarsToBeSubs,1..NumCritParsToBeSubs,numeric),
         T1=numeric,
         
-        i1=integer,
-        iPstep=integer,
-        log1=boolean,
-        log2=boolean,
-        log3=boolean
+        i1=integer
       ); 
   
       #
@@ -160,17 +152,6 @@
       # set initial guess for period
         
         P:=initPToBeSubs;
-
-      # tries to calculate BVP soltunion for P from 
-      # initPToBeSubs till P+3
-        IFAIL:=10;
-        FX[1,1]:=0;
-       
-        for iPstep from 1 to 30 do
-        log1:= not (IFAIL=0);
-        log2:= log1 or (FX[1,1]<1e-10);
-        log3:= log2 and  (P<initPToBeSubs+3);
-        if (log3) then
         
       #
       # set initial point for BVP problem solution
@@ -196,9 +177,6 @@
    
         CALLPERIOD(n1,m1,n3,X0,P,n2,TRPAR,Y,FM,POUT,IFAIL,ERRY,FP,FXP,FXX,FX,NPHASE,FPP,FXXP,FXPP);
 	
-        end if;
-        P:=initPToBeSubs+iPstep*0.1;
-        end do; 
         
       # set starting point of BVP solution trajectory
       
@@ -224,12 +202,8 @@
   
       #
       # calculate Jacobian
-      #
-        cjac:= array(          #  note: for some reason, codegen/fortran
-          1..NumConsToBeSubs,  #  does not work if the array (rather
-          1..NumVarsToBeSubs,  #  than its entries in ListListToBeSubs)
-          ListListToBeSubs     #  is substituted; this trick solves
-        );                     #  the problem
+      # (comment for calculating gradients mumerically)
+      # cjac:= array(1..NumConsToBeSubs,1..NumVarsToBeSubs,ListListToBeSubs);                    
               
       RETURN();
     
