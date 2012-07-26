@@ -28,7 +28,7 @@ C         FPP - tensor of second derivatives with respect to variables (Fpp)
 C         FXXP, FXPP - third order derivatives
 C
 C revision:
-C 2012-01-07 written by dka
+C 20iCount-01-07 written by dka
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       SUBROUTINE CALLPERIOD(NN,M,IPR,X0,P,NPAR,TRPAR,
@@ -62,10 +62,12 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       DOUBLE PRECISION ALEFT, ARIGHT, ETOL
       DOUBLE PRECISION WRK(LWRKFL)
       LOGICAL full, useC
-      INTEGER IFAIL, IFLBVP, indnms, iset(6)
-      INTEGER iPstep
-      LOGICAL log1, log2, log3
-      DOUBLE PRECISION PFINAL
+      INTEGER IFAIL, IFLBVP, indnms, iset(6), iVCount, rowInd
+      INTEGER iPstep, iVstep(NN), iVLim, iVGen, numVInt, iVmax
+      LOGICAL logFAIL, logConst, logPLim
+      LOGICAL logVLim
+      DOUBLE PRECISION X0Init(NN), tempVar, offSetX0, stepX0
+      DOUBLE PRECISION PFINAL, offSetP, stepSizeP
 
       EXTERNAL  TWPBVPC, FSUB, DFSUB, GSUB, DGSUB
 
@@ -74,6 +76,17 @@ C     the F function (RHS of the proble), G function (bondary condition
 C     of the problem), and their Jacobians.
 C     TRPAR is typically used as a parameter in the problem formulation, and
 C     IPAR is normally used to select a problem from a set.
+
+      DO 11 I=1,NN
+C     set intial point guess 
+      X0Init(I)=X0(I)
+      iVstep(I) = 0 
+11    continue
+
+c     Try to find solution for different initial guess X0 values
+      logVLim=.TRUE.
+      iVGen = 0
+      DO WHILE (logVLim)
 
 C     Try with different guesses for periods
 C     in range P-4..P+4
@@ -84,9 +97,9 @@ C     FX is controlled to check if the obtained solution is not a constant
       FX(1,1) = 0
 
 C     if IFAIL!=0 and FX=0 then try to calculate solution for another period guess
-      log3=.TRUE.
-      iPstep=1
-      DO WHILE (log3)
+      logPLim=.TRUE.
+      iPstep = 0
+      DO WHILE (logPLim)
 
 C     Dimension of the problem =2*n
 C     n additional variable is substituted into BVP problem to consider period
@@ -260,12 +273,60 @@ C     GET DERIVATIVES WITH TIDES
 
       ENDIF
 
-      PGUESS= P-4D0+0.1D0*iPstep
-      log1 =  .not. IFAIL .eq. 0
-      log2 = log1 .or. FX(1,1) .lt. 0.1D-9
-      log3 = log2 .and. PGUESS .lt. P+4.0D0
+C     change initial period value guess if the solution is not found or constant
+      offSetP=4D0
+      stepSizeP=0.25D0
+      PGUESS= P-offSetP+stepSizeP*iPstep
+      logFAIL =  .not. IFAIL .eq. 0
+      logConst = logFAIL .or. ABS(FX(1,1)) .lt. 0.1D-9
+      logPLim = logConst .and. PGUESS .lt. P+offSetP
       iPstep=iPstep+1
       ENDDO
+
+c     if changing period guess does not return correct result, then vary initial point guess 
+c     for variables which are not fixed in phase condition   
+      
+      IF (logConst) THEN
+c     number of intervals in which initial value coordinate varies 
+      numVInt=4
+c     X0 coordinates vary in +/- offSetX0 with stepsize (2*offSetX0/numVInt)
+      offSetX0=1D0
+      stepX0=2*offSetX0/numVInt
+
+c     counter of all intervals
+      iVGen = iVGen+1
+      iVmax=numVInt**(NN-1)
+      
+      IF (iVGen.GT.iVmax) THEN
+      logVLim = .FALSE.
+      ENDIF
+
+c     from general counter iVGen=1..iVmax substruct counters for number of the
+c     correspondent intervals for each variable iVstep(1..NN) which is
+c     not fixed in the pase condition     
+      iVCount=0
+      DO 41 iVLim=1,NN
+      IF (iVLim.NE.NPHASE) THEN
+      tempVar=(iVGen-1)/(4**iVCount)
+      rowInd=FLOOR(tempVar)
+      iVstep(iVLim) = MOD(rowInd,numVInt)
+      iVCount=iVCount+1 
+      ENDIF
+41    continue
+
+c     set varied coordinates for initial guess X0 
+      DO 42 iVLim=1,NN
+      IF (iVLim.NE.NPHASE) THEN
+      X0(iVLim) = X0Init(iVLim)-offSetX0+stepX0*iVstep(iVLim)
+      ENDIF
+42    continue
+       
+      ELSE 
+      logVLim=.FALSE.
+      ENDIF
+
+      ENDDO
+      
 
 C     the solution x values are stored in XX, the Y
 C     values are stored in U.
