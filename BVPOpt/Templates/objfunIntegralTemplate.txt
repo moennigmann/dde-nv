@@ -4,11 +4,12 @@
 #
 # @brief template for integral objective function
 #
-# @notes  (1) in anNLP["ObjfunTemplatePath"] should be given path to this template
-#         (2) anNLP["IndexOfObjVariable"] should be given index of variable 
+# @notes  (1) end result is scaled with factor 10000
+#         (2) in anNLP["ObjfunTemplatePath"] should be given path to this template
+#         (3) anNLP["IndexOfObjVariable"] should be given index of variable 
 #             with respect to which the average value (integral) will be found
 #             (by default equals 1)
-#         (3) anNLP["ObjFunParameters"] names of parameters in objective function
+#         (4) anNLP["ObjFunParameters"] names of parameters in objective function
 #             are specified (by default take fist n_alpha parameters) 
 # @revision
 # 2011-12-16 written by dka
@@ -155,6 +156,8 @@
        end do;
        
        objf:=-objf;
+      # to force NPSOL to find more precise optimal value we introduce a factor 1000 of original objective 
+       objf:=10000*objf;
   
       #
       # calculate gradient of objective function

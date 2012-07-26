@@ -24,7 +24,7 @@
 
     fprintf(
       fd,
-      "begin\n  major iteration limit 9999\n  minor iteration limit 500\n  major print level 20\n  verify level -1\n  derivative level 0\n  optimality tolerance 1.0e-6\n  step limit 0.2\n  feasibility tolerance 1.0e-4\n  Linesearch tolerance 0.1\n  Crash tolerance 0.001\nend\n"
+      "begin\n  major iteration limit 9999\n  minor iteration limit 500\n  major print level 20\n  verify level -1\n  derivative level 0\n  optimality tolerance 1.0e-5\n  step limit 0.2\n  feasibility tolerance 1.0e-4\n  linesearch tolerance 0.1\n  crash tolerance 0.001\nend\n"
       );
 
     fclose(fd);
