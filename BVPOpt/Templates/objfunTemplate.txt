@@ -73,6 +73,9 @@
       # calculate objective function
       #
         objf:= ObjToBeSubs;
+     
+      # print objective function value
+      printObjFun(objf);
   
       #
       # calculate gradient of objective function

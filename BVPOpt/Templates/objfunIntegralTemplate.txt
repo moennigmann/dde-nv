@@ -164,6 +164,12 @@
       # (gradients are ommited)
       #
       #  objgrad:= GradToBeSubs;
+      
+      # print objective params info and objective function value
+      printParObjFun(n2,OBJPAR,objf);
+      
+      if (IFAIL <> 0) then error "FAILED IN OBJECTIVE";
+      end if;
               
       RETURN();
   

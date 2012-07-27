@@ -172,6 +172,9 @@
         m1:=NumOfNodesToBeSubs; # number of nodes where BVP solution is calculated 
         n2:=NumCritParsToBeSubs; # number of parameters
         n3:=-1; # output print option
+        
+      # print critical params info for constraints
+        printParConFun(n2,TRPAR);
 
       # calculate BVP solution and its partial derivatives 
    
@@ -203,7 +206,11 @@
       #
       # calculate Jacobian
       # (comment for calculating gradients mumerically)
-      # cjac:= array(1..NumConsToBeSubs,1..NumVarsToBeSubs,ListListToBeSubs);                    
+      # cjac:= array(1..NumConsToBeSubs,1..NumVarsToBeSubs,ListListToBeSubs); 
+      
+      if (IFAIL <> 0) then error "FAILED IN CONSTRAINTS";
+      end if;
+                         
               
       RETURN();
     
