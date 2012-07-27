@@ -16,7 +16,7 @@ all: twpbvp.so
 clean: 
 	rm -f *.o *.so *~* 
 
-OBJS= defs.o twpbvpc.o linalg_period.o zibconst.o zibsec.o period.o ftotides.o callperiod.o
+OBJS= defs.o twpbvpc.o linalg_period.o zibconst.o zibsec.o period.o ftotides.o callperiod.o infoprint.o
 
 period.o: period.f
 	${FF} -c ${CCFLAGS} period.f $(LIBS) -o period.o
@@ -40,7 +40,10 @@ defs.o: defs.f
 	${FF} -c ${CCFLAGS} defs.f $(LIBS) -o defs.o	
 
 twpbvpc.o: twpbvpc.f
-	${FF} -c ${CCFLAGS} twpbvpc.f $(LIBS) -o twpbvpc.o		
+	${FF} -c ${CCFLAGS} twpbvpc.f $(LIBS) -o twpbvpc.o
+
+infoprint.o: infoprint.f
+	${FF} -c ${CCFLAGS} infoprint.f $(LIBS) -o infoprint.o		
 
 twpbvp.so: $(OBJS) 
 	$(CC) $(CCFLAGS) $(OBJS) -o twpbvp.so
