@@ -4,6 +4,8 @@
 #
 # @brief Collects procedures that deal with solving boundary value problem for 
 #        ODE systems with periodical ordits 
+#        
+# @notes Libriary -lTIDES need to be installed 
 #
 # @authors dka
 # 
