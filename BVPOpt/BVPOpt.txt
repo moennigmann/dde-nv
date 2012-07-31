@@ -5,7 +5,8 @@
 # @brief Collects procedures that deal with optimization of periodic solutions
 #        of ODE systems
 # 
-# @notes The BVPOpt procedures are dependent on modules NPSOL and BVPSol        
+# @notes The BVPOpt procedures are dependent on modules NPSOL and BVPSol
+#        Libriary -lTIDES need to be installed        
 #
 # @authors dka
 #
