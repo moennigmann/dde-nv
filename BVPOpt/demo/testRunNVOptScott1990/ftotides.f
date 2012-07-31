@@ -1,0 +1,118 @@
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C
+C procedure FTOTIDES extract derivatives values calculated with TIDES
+C           (by default all derivatives are stored in one output vector)
+C
+C input: NN - number of diferential equations
+C        NPAR - number of parameters
+C        PAR - array of parameter values
+C        P -  soltuion period
+C        XST -intial point X(0)
+C        SIZEM - size of output vector of TIDES where all derivatives are stored
+C
+C output: derivatives FX,FP,FXX,FXP,FPP,FXXP,FXPP
+C
+C revision:
+C 2011-01-26 written by dka
+C
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+      SUBROUTINE FTOTIDES(NN,NPAR,PAR,XST,P,SIZEM,
+     1             FX,FP,FXX,FXP,FPP,FXXP,FXPP)
+      INTEGER NN,NN1,NPAR,NPAR1,NGEN
+      DOUBLE PRECISION PAR(NPAR),P,XST(NN)
+      INTEGER SIZEM, I1,J1, NOFF, I2,J2,K1,S1
+      DOUBLE PRECISION OUTM(SIZEM)
+      DOUBLE PRECISION FP(NN,NPAR),FXP(NN,NN,NPAR)
+      DOUBLE PRECISION FXX(NN,NN,NN),FX(NN,NN)
+      DOUBLE PRECISION COMR,EPS
+      DOUBLE PRECISION FPP(NN,NPAR,NPAR)
+      DOUBLE PRECISION FXXP(NN,NN,NN,NPAR)
+      DOUBLE PRECISION FXPP(NN,NN,NPAR,NPAR)
+      LOGICAL LP1,LP2
+
+      NN1=NN
+      NPAR1=NPAR
+
+C     CALL TIDES TO CREATE VECTOR OUTM WHERE THE DERIVATIVES ARE STORED
+C     IN OUTM FIRST ALL FIRST DERIVATIVES ARE STORED, THEN SECONT AND ETC.
+      call calltides(NN1,NPAR1,PAR,XST,P,OUTM)
+
+C     EXTRACT FROM OUTM MATRIX FX
+      NOFF=1+NN1
+      I2=0
+
+      DO 3 I1=1,NN1
+      DO 4 J1=1,NN1
+      I2=I2+1
+      FX(J1,I1)=OUTM(NOFF+I2)
+4     CONTINUE
+3     CONTINUE
+
+C     EXTRACT FROM OUTM MATRIX FP
+      NOFF=NOFF+I2
+      I2=0
+
+      DO 5 I1=1,NPAR1
+      DO 6 J1=1,NN1
+      I2=I2+1
+      FP(J1,I1)=OUTM(NOFF+I2)
+6     CONTINUE
+5     CONTINUE
+
+C     EXTRACT FROM OUTM MATRIX FXX,FXP,FPP
+C     SYMMETRY OF THESE MATRICES ARE USED
+      NOFF=NOFF+I2
+      I2=0
+      NGEN=NPAR1+NN1
+
+      DO 7 I1=1,NGEN
+      DO 8 J1=I1,NGEN
+      DO 9 K1=1,NN1
+      I2=I2+1
+      IF ((I1.LE.NN1).AND.(J1.LE.NN1)) THEN
+      FXX(K1,I1,J1)=OUTM(NOFF+I2)
+      FXX(K1,J1,I1)=OUTM(NOFF+I2)
+      END IF
+
+      IF ((I1.LE.NN1).AND.(J1.GT.NN1)) THEN
+      FXP(K1,I1,J1-NN1)=OUTM(NOFF+I2)
+      END IF
+
+      IF ((I1.GT.NN1).AND.(J1.GT.NN1)) THEN
+      FPP(K1,I1-NN1,J1-NN1)=OUTM(NOFF+I2)
+      FPP(K1,J1-NN1,I1-NN1)=OUTM(NOFF+I2)
+      END IF
+
+9     CONTINUE
+8     CONTINUE
+7     CONTINUE
+
+C     EXTRACT FROM OUTM MATRIX FXXP,FXPP
+
+      NOFF=NOFF+I2
+      I2=0
+
+      DO 10 I1=1,NGEN
+      DO 11 J1=I1,NGEN
+      DO 12 K1=J1,NGEN
+      DO 13 S1=1,NN1
+      I2=I2+1
+
+      LP1=((I1.LE.NN1).AND.(J1.LE.NN1).AND.(K1.GT.NN1))
+      IF (LP1) THEN
+      FXXP(S1,I1,J1,K1-NN1)=OUTM(NOFF+I2)
+      FXXP(S1,J1,I1,K1-NN1)=OUTM(NOFF+I2)
+      END IF
+
+      LP2=((I1.LE.NN1).AND.(J1.GT.NN1).AND.(K1.GT.NN1))
+      IF (LP2) THEN
+      FXPP(S1,I1,J1-NN1,K1-NN1)=OUTM(NOFF+I2)
+      FXPP(S1,I1,K1-NN1,J1-NN1)=OUTM(NOFF+I2)
+      END IF
+
+13    CONTINUE
+12    CONTINUE
+11    CONTINUE
+10    CONTINUE
+
+      END

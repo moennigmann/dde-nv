@@ -1,0 +1,12 @@
+begin
+  major iteration limit 9999
+  minor iteration limit 500
+  major print level 20
+  verify level -1
+  derivative level 0
+  optimality tolerance 1.0e-5
+  step limit 0.2
+  feasibility tolerance 1.0e-4
+  linesearch tolerance 0.1
+  crash tolerance 0.001 
+end
