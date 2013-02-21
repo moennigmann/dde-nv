@@ -2,7 +2,7 @@
 # 
 # @path AugSys2/ContBif/SaddleNodeNV/CreateSaddleNodeNVSys.txt
 #
-# @brief Creates an augmented NV system for DAESys without algebraic equations 
+# @brief Creates an augmented NV system for DAESys
 #        for critical boundaries which consist of saddle-node bifurcations 
 #
 # @param  

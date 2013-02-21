@@ -3,7 +3,7 @@
 # @path AugSys2/ContBif/HopfNV/CreateHopfNVSys.txt
 #
 # @brief Creates an augmented NV system for Hopf critical boundaries
-#        for DAESys without algebraic equations
+#        for DAESys
 #
 # @param  
 #   a model (DAESys) to be augmented by system for finding Hopf normal vectors,
@@ -314,7 +314,7 @@
 
         #----------------------------------------
         #
-        # fxT v2 + sigma C v1  - R C v2  + g1 w2 - g2 w1 =0
+        # fxT v2 + sigma C v1  - R C v2  + g1 w2 + g2 w1 =0
         #
         #----------------------------------------
 

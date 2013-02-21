@@ -1,0 +1,43 @@
+###########################################################################
+# 
+# @path AugSys2/DelayBif/HopfNV/CreateHopfNVSys/TemplateModule.txt 
+#
+# @brief Template for the module CreateHopfNVSys
+#
+# @param  
+#   a DDEs model to be augmented by NV system
+#
+# @return 
+#   normal vertor system for DDEs
+# 
+# @notes
+#   (1) local var names of module which are similar to names 
+#   which occur in constructor AugSys2:-HopfNV are 
+#   appended by "InModule" 
+#
+# @revision 
+#     2013-02-19 Created by dka
+#
+###########################################################################
+result:=module() # Template
+  
+        export 
+          getSys; 
+  
+        local 
+          ExtendedSysInModule, NumNVparamsInModule, 
+          VarsOfModelInModule, ParsOfModelInModule; 
+  
+        #
+        # receive information from constructor
+        #
+          ExtendedSysInModule:= copy(ExtendedSysToBeSubs);
+          NumOfDynEqnsInModule:= NumOfDynEqns; 
+          NumNVparamsInModule:= NumNVparamsToBeSubs; 
+          VarsOfModelInModule:= VarsOfModel;
+          ParsOfModelInModule:= ParsOfModel;
+
+$include <DelayBif/HopfNV/CreateHopfNVSys/TemplateModule/getSys.txt>
+
+
+      end module; # Template  

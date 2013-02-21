@@ -1,0 +1,22 @@
+  ##############################################################
+  #
+  #  @path AugSys2/DelayBif.txt
+  #  
+  #  @brief collects procedures for obtaining normal vector systems
+  #         for continuous ODE systems with time delays
+  #
+  #  @authors dka
+  #
+  #  @revision
+  #  2013-02-19 Created by dka
+  #
+  ##############################################################
+  DelayBif:=module()
+  
+    export
+      HopfNV; 
+
+$include <DelayBif/HopfNV.txt>
+
+
+  end module; # AugSys2:-DelayBif

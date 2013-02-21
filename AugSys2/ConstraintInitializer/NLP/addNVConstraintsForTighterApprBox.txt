@@ -25,7 +25,7 @@ addNVConstraintsForTighterApprBox:= proc(namesForNewRobustnessBallVars::list(nam
                                          namesForOptPointVars::list(name),
                                          powerOfNewRobustnessBall::integer,
 				         minDistance::EvalsToFloat,
-				         signOfDirectionNV::integer:=1)
+				         signOfDirectionNV::integer)
  
   local numberOfNVVars, i, signNV, newRobBallEqn, squareOfNormNV, squareOfNormNVToNewRobBall;
   

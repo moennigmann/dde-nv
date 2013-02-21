@@ -8,6 +8,7 @@
 # @authors dka
 #
 # @revision
+#   2013-02-19 Added DelayBif
 #   2011-12-07 Added PeriodicBif
 #   2009-12-22 Added SaddleNodeNV, HopfNV
 #   2008-07-09 Added Discretization
@@ -22,12 +23,14 @@ AugSys2:=module()
   export 
     ConstraintInitializer,
     ContBif,
+    DelayBif,
     Discretization,
     DiscreteBif,
     PeriodicBif; 
 
 $include <ConstraintInitializer.txt>
 $include <ContBif.txt>
+$include <DelayBif.txt>
 $include <Discretization.txt>
 $include <DiscreteBif.txt>
 $include <PeriodicBif.txt>
