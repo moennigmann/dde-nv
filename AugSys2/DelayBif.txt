@@ -1,16 +1,23 @@
-  ##############################################################
-  #
-  #  @path AugSys2/DelayBif.txt
-  #  
-  #  @brief collects procedures for obtaining normal vector systems
-  #         for continuous ODE systems with time delays
-  #
-  #  @authors dka
-  #
-  #  @revision
-  #  2013-02-19 Created by dka
-  #
-  ##############################################################
+##############################################################
+#
+#  @path AugSys2/DelayBif.txt
+#  
+#  @brief collects procedures for obtaining normal vector systems
+#         for continuous ODE systems with time delays
+# @notes
+#    (i)  a model of DDEs belongs to maple class DDESys
+#    (ii) DelVars in DDESys should contain N*M names of variables that correspond to the order: 
+#        [var1(t-tau1),var2(t-tau1),...,varN(t-tau1),
+#         var1(t-tau2),var2(t-tau2),...,varN(t-tau2),
+#         ..., var1(t-tauM),var2(t-tauM),...,varN(t-tauM)],
+#         where N=dim(DDESys["DynVars"]) and M is number of constant delays
+#
+#  @authors dka
+#
+#  @revision
+#  2013-02-19 Created by dka
+#
+##############################################################
   DelayBif:=module()
   
     export

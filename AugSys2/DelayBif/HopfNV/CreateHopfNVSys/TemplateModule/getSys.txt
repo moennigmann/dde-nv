@@ -1,10 +1,10 @@
-#------------------------------------------------------------
+########################################################################
 #
 # @path AugSys2/DelayBif/HopfNV/CreateHopfNVSys/TemplateModule/getSys.txt
 #
 # @brief returns complete system
 #
-#------------------------------------------------------------
+########################################################################
    getSys:= proc()
        return(eval(ExtendedSysInModule)); 
    end proc; # getSys
