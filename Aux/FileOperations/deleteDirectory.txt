@@ -20,7 +20,7 @@ deleteDirectory:= proc(
    aString::string
 )
 
-  local SystemCommand;
+  local SystemCommand, SystemCommandOk;
 
   #
   # create unix command

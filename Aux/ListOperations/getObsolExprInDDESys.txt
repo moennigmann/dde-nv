@@ -1,0 +1,55 @@
+#############################################################
+#
+# @path Aux/ListOperations/getObsolExprInDDESys.txt
+#
+# @param aDDESys = model
+#
+# @return list of Parameters, DynVars, AlgVars, DelVars and
+#  LHSs of equations in DAESys[ExplicitAEs],
+#  that do not appear on the RHS of any equation in
+#  DAESys[ExplicitAEs] and DAESys[ODEs].
+#
+# @notes (i) uses  GetObsolExprInList.
+#
+# @authors  dka
+#
+# @revision
+#   2013-02-19 Created by dka
+#
+#############################################################
+getObsolExprInDDESys:=proc(
+  aDDESys::table
+)
+
+  local ListOfEquations, ListOfNames, ObsolExpr;
+
+  #
+  # merge Parameters, DynVars and
+  # LHSs of ExplicitAEs into ListOfNames
+  #
+    ListOfNames:=[
+      op(aDDESys["DynVars"]),
+      op(aDDESys["AlgVars"]),
+      op(aDDESys["DelVars"]),
+      op(aDDESys["Parameters"]),
+      op(map(lhs, aDDESys["ExplicitAEs"]))
+    ];
+
+  #
+  # merge aDDESys["ExplicitAEs"], aDDESys["AEs"] and aDDESys["ODEs"] into ListOfEquations
+  #
+    ListOfEquations:=[
+      op(aDDESys["ExplicitAEs"]),
+      op(aDDESys["AEs"]),
+      op(aDDESys["ODEs"])
+    ];
+
+  ObsolExpr:= getObsolExprInList(
+    ListOfNames,
+    ListOfEquations
+  );
+
+  RETURN(ObsolExpr);
+
+end proc; # getObsolExprInDDESys
+

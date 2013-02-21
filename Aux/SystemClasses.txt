@@ -7,6 +7,7 @@
 # @authors mmo, dka
 #
 # @revision
+# 2013-02-19 added listOfErrorsInDDESys, listOfErrorsInDDESysPart2 by dka
 # 2010-08-26 copied subsStandardNotationIntoDAESysSen, evalODEsInDAESys,
 #            evalExplicitAEsInDAESys, newDAESys from ModelPack by dka
 # 2010-03-08 added listOfErrorsInExtAESysPart2, listOfErrorsInExtAESys from ModelPack
@@ -31,6 +32,8 @@ export
     listOfErrorsInAESys,
     listOfErrorsInDAESys,
     listOfErrorsInDAESysPart2,
+    listOfErrorsInDDESys,
+    listOfErrorsInDDESysPart2,
     listOfErrorsInDTASys,
     listOfErrorsInDTASysPart2,
     listOfErrorsInEAEs,
@@ -56,6 +59,8 @@ $include <SystemClasses/listOfErrorsInAESysPart2.txt>
 $include <SystemClasses/listOfErrorsInAESys.txt>
 $include <SystemClasses/listOfErrorsInDAESys.txt>
 $include <SystemClasses/listOfErrorsInDAESysPart2.txt>
+$include <SystemClasses/listOfErrorsInDDESys.txt>
+$include <SystemClasses/listOfErrorsInDDESysPart2.txt>
 $include <SystemClasses/listOfErrorsInDTASys.txt>
 $include <SystemClasses/listOfErrorsInDTASysPart2.txt>
 $include <SystemClasses/listOfErrorsInEAEs.txt>

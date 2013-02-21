@@ -1,0 +1,219 @@
+#############################################################
+#
+# @path Aux/SystemClasses/listOfErrorsInDDESys.txt
+#
+# @brief Generate list of structure errors in DDESys 
+#
+# @param table of type DDESys
+#
+# @return list of errors found in aDDESys
+#
+# @notes (i) ListOfErrorsInDDESys is used in init to
+#            define type/DDESys
+#        (i) DDEs class is implemented for one constant delay only
+#
+# @authors dka
+#
+# @revision
+#   2013-02-19 created by dka
+#
+#############################################################
+listOfErrorsInDDESys:= proc(
+  aDDESys 
+)
+
+  local i1, i,ParsAndIndependents, SetOfValidExpr,
+    NumberOfExplicitAEs, ListOfErrors, SetOfIndices,
+    ListOfUndefExpr, LHSidesOfODEs, ObsolExpr,
+    ParAndVar, DerivativesOfDynVars,
+    ParAndExplAE, Integrators, item;
+
+  #
+  # shortcut to false if aDDESys is not of type table
+  #
+    if not
+      type(aDDESys, table)
+    then
+      return(false);
+    end if; 
+
+  ListOfErrors:= [];
+
+  #------------------------------------------------------------
+  #
+  # check whether lists ExplicitAEs, ODEs,
+  #   Parameters, DynVars, AEs, AlgVars, DelVars exist
+  #
+  #------------------------------------------------------------
+   SetOfIndices:= {
+     indices(aDDESys)
+   };
+
+   #
+   # check existence and type of aDDESys["ExplicitAEs"]
+   #
+     if not(
+       member(["ExplicitAEs"], SetOfIndices))
+     then
+       ListOfErrors:= [op(ListOfErrors),
+         "entry ExplicitAEs missing"
+       ];
+       RETURN(ListOfErrors);
+     elif not(
+       type(aDDESys["ExplicitAEs"], list(equation)))
+     then
+       ListOfErrors:=[op(ListOfErrors),
+       "entry ExplicitAEs must be a list of equations"
+       ];
+       RETURN(ListOfErrors);
+     end if;
+
+   #
+   # check existence and type of aDDESys["ODEs"]
+   #
+     if not(
+       member(["ODEs"], SetOfIndices))
+     then
+       ListOfErrors:= [op(ListOfErrors),
+         "entry ODEs missing"
+       ];
+       RETURN(ListOfErrors);
+     elif not(
+       type(aDDESys["ODEs"], list(equation)))
+     then
+       ListOfErrors:=[op(ListOfErrors),
+       "entry ODEs must be a list of equations"
+       ];
+       RETURN(ListOfErrors);
+     end if;
+
+   #
+   # check existence and type of aDDESys["Parameters"]
+   #
+     if not(
+       member(["Parameters"], SetOfIndices))
+     then
+       ListOfErrors:= [op(ListOfErrors),
+         "entry Parameters missing"
+       ];
+       RETURN(ListOfErrors);
+     elif not(
+       type(aDDESys["Parameters"], list(name= EvalsToFloat)))
+     then
+       ListOfErrors:= [op(ListOfErrors),
+         "entry Parameters must be a list of name= EvalsToFloat"
+       ];
+       RETURN(ListOfErrors);
+     end if;
+
+   #
+   # check existence and type of aDDESys["DynVars"]
+   #
+     if not(
+       member(["DynVars"], SetOfIndices))
+     then
+       ListOfErrors:= [op(ListOfErrors),
+         "entry DynVars missing"
+       ];
+       RETURN(ListOfErrors);
+     elif not(
+       type(aDDESys["DynVars"], list))
+     then
+       ListOfErrors:= [op(ListOfErrors),
+         "entry DynVars must be a list"
+       ];
+       RETURN(ListOfErrors);
+     end if;
+
+
+   #
+   # check existence and type of aDDESys["DelVars"]
+   #
+     if not(
+       member(["DelVars"], SetOfIndices))
+     then
+       ListOfErrors:= [op(ListOfErrors),
+         "entry DelVars missing"
+       ];
+       RETURN(ListOfErrors);
+     elif not(
+       type(aDDESys["DelVars"], list))
+     then
+       ListOfErrors:= [op(ListOfErrors),
+         "entry DelVars must be a list"
+       ];
+       RETURN(ListOfErrors);
+     end if;
+
+
+   #
+   # check existence and type of aDDESys["AEs"]
+   #
+     if not(
+       member(["AEs"], SetOfIndices))
+     then
+       ListOfErrors:= [op(ListOfErrors),
+         "entry AEs missing"
+       ];
+       RETURN(ListOfErrors);
+     elif not(
+       type(aDDESys["AEs"], list))
+     then
+       ListOfErrors:= [op(ListOfErrors),
+         "entry AEs must be a list"
+       ];
+       RETURN(ListOfErrors);
+     end if;
+
+   #
+   # check existence and type of aDDESys["AlgVars"]
+   #
+     if not(
+       member(["AlgVars"], SetOfIndices))
+     then
+       ListOfErrors:= [op(ListOfErrors),
+         "entry AlgVars missing"
+       ];
+       RETURN(ListOfErrors);
+     elif not(
+       type(aDDESys["AlgVars"], list))
+     then
+       ListOfErrors:= [op(ListOfErrors),
+         "entry AlgVars must be a list"
+       ];
+       RETURN(ListOfErrors);
+     end if;
+
+  #------------------------------------------------------------  
+  #
+  # if errors were found, return them even if 
+  # listOfErrorsInAESysPart2 was requested
+  #
+  #------------------------------------------------------------
+    if not
+      ListOfErrors= []
+    then
+      return(ListOfErrors);
+    end if; 
+
+  #------------------------------------------------------------
+  #
+  # if optional argument 'long', 'all', 'strict' was given,
+  # call listOfErrorsInAESysPart2
+  #
+  #------------------------------------------------------------
+    if 
+      nargs>1
+    then
+      if 
+        args[2]= 'long' or
+        args[2]= 'all' or
+        args[2]= 'strict'
+      then
+        ListOfErrors:= listOfErrorsInDDESysPart2(aDDESys); 
+      end if;
+    end if; 
+
+  return(ListOfErrors);
+
+end proc; # listOfErrorsInDAESys

@@ -9,10 +9,11 @@
 # @authors mmo, dka
 #
 # @revision
-# 2010-08-26 added isCurve from ModelPack
-# 2008-03-05 added by dka NLP, LinearEqns, getRelErr, 
-#            moved fileExists to FileOperations
-# 2008-02-28 added by dka fileExists
+# 2013-02-19 added type DDESys by dka
+# 2010-08-26 added isCurve from ModelPack by dka 
+# 2008-03-05 added NLP, LinearEqns, getRelErr, 
+#            moved fileExists to FileOperations by dka 
+# 2008-02-28 added fileExists by dka 
 # 2008-02-28 printCompileOptions.moved to Programming.
 #            subsSubsList moved to ListOperations:-subsSubsList
 # 2008-02-26 Added BoxOperations - mmo
@@ -46,6 +47,7 @@ Aux:= module()
     `type/term`,
     `type/DTASys`,
     `type/DAESys`,
+    `type/DDESys`,
     `type/ExtAESys`,
     `type/Curve`;
 

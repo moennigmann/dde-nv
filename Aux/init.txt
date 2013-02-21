@@ -4,6 +4,7 @@
 #
 # @brief local procedure init
 # defines
+#   type/DDESys based listOfErrorsInDDESys
 #   type/DAESys based listOfErrorsInDAESys
 #   type/NLP based on listOfErrorsInNLP
 #   type/DTASys based listOfErrorsInDTASys
@@ -16,6 +17,7 @@
 # @authors mmo, dka
 #
 # @revision
+# 2013-02-19 added type DDESys
 # 2010-08-26 added type Curve from ModelPack
 # 2008-05-15 add type DAESys from ModelPack
 # 2008-03-05 Renamed procedure to listOfErrorsInDTASys
@@ -24,6 +26,19 @@
 #
 #############################################################
 init:= proc()
+
+ `type/DDESys`:= proc(
+    aDDESys
+  )
+  
+    if 
+      Aux:-SystemClasses:-listOfErrorsInDDESys(aDDESys)= []
+    then
+      return(true);
+    else
+      return(false);
+    end if; 
+  end proc; # type/DDESys
 
 
   `type/DTASys`:= proc(
@@ -38,6 +53,7 @@ init:= proc()
       return(false);
     end if; 
   end proc; # type/DTASys
+
 
  `type/DAESys`:= proc(
     aDAESys
