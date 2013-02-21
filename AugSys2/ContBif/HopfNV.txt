@@ -1,14 +1,14 @@
-  ##############################################################
-  #
-  #  @path AugSys2/ContBif/HopfNV.txt
-  #
-  #  @brief collects procedures for augmenting Hopf critical boundaries
-  #        by normal vector system 
-  #
-  #  @revision
-  #  2009-12-22 Moved from AugSys and apdated by dka
-  #
-  ##############################################################
+##############################################################
+#
+#  @path AugSys2/ContBif/HopfNV.txt
+#
+#  @brief collects procedures for augmenting Hopf critical boundaries
+#        by normal vector system 
+#
+#  @revision
+#  2009-12-22 Moved from AugSys and apdated by dka
+#
+###############################################################
   HopfNV:=module()
   
     export
