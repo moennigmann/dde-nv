@@ -1,0 +1,48 @@
+#########################################################################
+# 
+# @path AugSys2/PeriodicBif/FlipAndFoldNV/CreateFoldNVSys.txt
+#
+# @brief Creates a general augmented system for Fold critical boundaries
+#        for periodic solutions of ODE systems
+#
+# @param  
+#   dimension of ODEs,  
+#   dimension of uncertain parameters
+#   optional argument: radius of circle where eigenvalues have to lie (if not given by default = 1)
+#
+# @return a system for finding normal vertors
+#
+# @notes eigenvalue =-1 corresponding to flip bifurcation, 
+#        eigenvalue = 1 corresponding to fold  bifurcation, 
+#
+# @revision
+# 2011-11-07 Written by dka
+# 
+#########################################################################
+    
+    CreateFoldNVSys:=proc(
+      numOfDynEqns::integer,
+      numOfUncParam::integer
+      # optional radius
+    )
+    
+    local foldNVSys, radius; 
+    
+      #
+      # extract optional arguments
+      #
+        if 
+          nargs>2
+        then 
+          radius:= args[3];
+          if not ((radius>=0) and (radius<=1))
+  	  then error("Radius of circle where eigenvalues have to lie (third input) have to be between 0 to 1");
+   	  end if;
+        else
+          radius:=1; 
+        end if; 
+      
+    foldNVSys:=CreateFlipOrFoldNVSys(numOfDynEqns,numOfUncParam,1,radius); 
+    return(foldNVSys);
+
+    end proc;  #AugSys2:-PeriodicBif:-FlipAndFoldNV:-CreateFoldNVSys 

@@ -1,0 +1,461 @@
+###########################################################################
+# 
+# @path AugSys2/PeriodicBif/NeimarkSackerNV/CreateNeimarkSackerNVSys.txt
+#
+# @brief Creates a general augmented system for Neimark-Sacker critical boundaries
+#        for periodic solutions of ODE systems
+#
+# @param  
+#   dimension of ODEs,  
+#   dimension of uncertain parameters Alpha,
+#   optional argument: radius of circle where eigenvalues have to lie (if not given by default = 1)
+#
+# @return 
+#   a system for finding normal vectors (symbolical)
+# 
+# @revision
+# 2011-11-07 Written by dka
+#
+###########################################################################
+    CreateNeimarkSackerNVSys:=proc(
+      numOfDynEqns::integer,
+      numOfUncParam::integer
+      # optional radius
+    )
+
+      local i,j, ComplexRightEigSys, ExtendedSysToBeSubs,
+     	ExtendedSystemEquations, ExtendedSystemVariables,
+	InternalVariables, f_x, f_xTransp, f_xx,
+	f_xalpha, V1, V2, U, R, NewVariables, NewEquations, 
+        f_alpha,f_alphaTransp,W1,W2,fxx_w1,v1_fxx_w1,fxx_w2,v2_fxx_w2,
+        fxalpha_w1,v1_fxalpha_w1,fxalpha_w2,v2_fxalpha_w2,
+        f_xlist, f_alphalist, listForFxx, listForFxAlpha,
+        f_T, f_Ttransp, f_xT, f_xTlist, s_x, s_T, s_alpha,
+        f_xT_w1, f_xT_w2, V1T, V2T,
+        result, radius;
+        
+      #
+      # extract optional arguments
+      #
+        if 
+          nargs>2
+        then 
+          radius:= args[3];
+          if not ((radius>=0) and (radius<=1))
+  	  then error("Radius of circle where eigenvalues have to lie (third input) have to be between 0 to 1");
+   	  end if;
+        else
+          radius:=1; 
+        end if; 
+
+       #
+       # list of internal variables that will be calculated numerically
+       # 
+         InternalVariables:=[];
+       
+       #
+       # symbolic definitions of derivatives matrices and tensors
+       #
+  
+       # f_x
+  
+        f_x:= Matrix(numOfDynEqns,numOfDynEqns,symbol='Fx');
+        
+        f_xlist:=convert(f_x,listlist);
+        for i from 1 to numOfDynEqns do
+         InternalVariables:=[op(InternalVariables),op(f_xlist[i])]
+        end do; 
+
+        f_xTransp:= LinearAlgebra[Transpose](f_x); 
+
+       # f_alpha
+
+        f_alpha:= Matrix(numOfDynEqns,numOfUncParam,symbol='Fp');
+        
+        f_alphalist:=convert(f_alpha,listlist);
+        for i from 1 to numOfDynEqns do
+         InternalVariables:=[op(InternalVariables),op(f_alphalist[i])]
+        end do; 
+
+        f_alphaTransp:= LinearAlgebra[Transpose](f_alpha);
+
+      # f_xx       
+       
+        listForFxx := []; 
+        for i to numOfDynEqns do 
+	   listForFxx := [op(listForFxx), convert(Matrix(numOfDynEqns, numOfDynEqns, symbol = 'Fxx[i]'), listlist)] 
+        end do: 
+        f_xx := Array(listForFxx);
+        
+        for i from 1 to numOfDynEqns do
+	   for j from 1 to numOfDynEqns do
+	      InternalVariables:=[op(InternalVariables),op(listForFxx[i,j])];
+	   end do;
+        end do;
+
+      # f_xalpha
+       
+        listForFxAlpha := []; 
+        for i to numOfDynEqns do 
+	   listForFxAlpha := [op(listForFxAlpha), convert(Matrix(numOfDynEqns, numOfUncParam, symbol = 'Fxp[i]'), listlist)] 
+        end do: 
+        f_xalpha := Array(listForFxAlpha);
+
+        for i from 1 to numOfDynEqns do
+	   for j from 1 to numOfDynEqns do
+	      InternalVariables:=[op(InternalVariables),op(listForFxAlpha[i,j])];
+	   end do;
+        end do;
+
+     # f_T, f_xT, where T denotes period
+         
+        f_T:=Vector(numOfDynEqns,symbol='Ft');
+        f_Ttransp:=LinearAlgebra[Transpose](f_T);
+        
+        f_xT:=Matrix(numOfDynEqns,numOfDynEqns, symbol='Fxt');
+
+
+        InternalVariables:=[op(InternalVariables),op(convert(f_T,list))];
+        
+        f_xTlist:=convert(f_xT,listlist);
+        for i from 1 to numOfDynEqns do
+         InternalVariables:=[op(InternalVariables),op(f_xTlist[i])]
+        end do; 
+
+      #
+      # phase equation is chosen as s:=delta_1(x0)-x=0, where delta_1(x0)=x0_1;
+      # derivatives of the phase condition s_x=-e_1 and s_T=0 and s_alpha=0
+      # 
+        s_x:=Vector(numOfDynEqns);
+        s_x[1]:=-1;
+        s_T:=0;
+        s_alpha:=Vector(numOfUncParam);
+
+  
+      #------------------------------------------------------------
+      #
+      # start construction of normal vector system
+      #
+      #------------------------------------------------------------
+        #
+        # v1, v2, w1, w2 
+        #
+          V1:= [seq(
+            v1[i1], 
+            i1=1..numOfDynEqns)
+          ]; 
+
+          V2:= [seq(
+            v2[i1], 
+            i1=1..numOfDynEqns)
+          ];
+  
+          W1:= [seq(
+            w1[i1], 
+            i1=1..numOfDynEqns)
+          ]; 
+
+          W2:= [seq(
+            w2[i1], 
+            i1=1..numOfDynEqns)
+          ];
+  
+        #
+        # u and r 
+        #
+          U:= [seq(
+          u[i1], 
+            i1=1..numOfDynEqns)
+          ]; 
+  
+          R:= [seq(
+          r[i1], 
+            i1=1..numOfUncParam)
+          ]; 
+  
+
+      # augmented system will be in ExtendedSystemEquations, 
+      # ExtendedSystemVariables etc., 
+      # lists NewEquations, NewVariables are used to build next block 
+      #
+
+        # model equations f-x = 0 are ommited
+
+        #----------------------------------------
+        #
+        # fx w1 - R w1 cos(p) + R w2 sin(p)=0
+        #
+        #----------------------------------------
+
+         NewEquations := LinearAlgebra[Multiply](f_x, convert(W1,Vector))
+         -LinearAlgebra[Multiply](radius, LinearAlgebra[Multiply](convert(W1,Vector), cos(p)))
+         +LinearAlgebra[Multiply](radius, LinearAlgebra[Multiply](convert(W2,Vector), sin(p)));
+         
+         NewEquations:=[seq(0=NewEquations[i1],i1=1..numOfDynEqns)];
+
+         NewVariables:=[p,op(W1),op(W2)];
+          
+         ExtendedSystemEquations:= NewEquations;
+         ExtendedSystemVariables:= NewVariables;
+
+
+        #----------------------------------------
+        #
+        # fx w2 - R w1 sin(p) + R w2 cos(p)=0
+        #
+        #----------------------------------------
+
+         NewEquations := LinearAlgebra[Multiply](f_x, convert(W2,Vector))
+         -LinearAlgebra[Multiply](radius, LinearAlgebra[Multiply](convert(W1,Vector), sin(p)))
+         -LinearAlgebra[Multiply](radius, LinearAlgebra[Multiply](convert(W2,Vector), cos(p)));
+
+        NewEquations:=[seq(0=NewEquations[i1],i1=1..numOfDynEqns)];
+
+        ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            op(NewEquations)                    
+          ];
+
+
+        #----------------------------------------
+        #
+        # (w1-Iw2)T(w1+Iw2) -1 =0
+        #
+        #----------------------------------------
+
+        
+
+       NewEquations := LinearAlgebra[Multiply](LinearAlgebra[Transpose](convert(W1,Vector)),convert(W1,Vector))+ LinearAlgebra[Multiply](LinearAlgebra[Transpose](convert(W2,Vector)),convert(W2,Vector))-1;
+
+
+       ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            0=NewEquations                    
+          ];
+
+        #----------------------------------------
+        #
+        # w1T w2 =0
+        #
+        #----------------------------------------
+       
+
+        NewEquations := LinearAlgebra[Multiply](LinearAlgebra[Transpose](convert(W1,Vector)), convert(W2,Vector));
+
+        ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            0=NewEquations                    
+          ];
+
+
+        #----------------------------------------
+        #
+        # fxT v1 -R v1 cos(p) - R v2 sin(p) + g1 w1 - g2 w2 =0
+        #
+        #----------------------------------------
+
+          NewEquations := LinearAlgebra[Multiply](f_xTransp, convert(V1,Vector))
+         -LinearAlgebra[Multiply](radius, LinearAlgebra[Multiply](convert(V1,Vector), cos(p)))
+         -LinearAlgebra[Multiply](radius, LinearAlgebra[Multiply](convert(V2,Vector), sin(p)))
+         +LinearAlgebra[Multiply](convert(W1,Vector), g1)
+         -LinearAlgebra[Multiply](convert(W2,Vector), g2);
+         
+         NewEquations:=[seq(0=NewEquations[i1],i1=1..numOfDynEqns)];
+
+         NewVariables:=[op(V1),op(V2),g1,g2];
+          
+          ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            op(NewEquations)                    
+          ];
+  
+          ExtendedSystemVariables:= [
+            op(ExtendedSystemVariables),
+            op(NewVariables)
+          ];
+
+
+        #----------------------------------------
+        #
+        # fxT v2 -R v1 sin(p) - R v2 cos(p) + g1 w2 - g2 w1 =0
+        #
+        #----------------------------------------
+
+         NewEquations := LinearAlgebra[Multiply](f_xTransp, convert(V2,Vector))
+         +LinearAlgebra[Multiply](radius, LinearAlgebra[Multiply](convert(V1,Vector), sin(p)))
+         -LinearAlgebra[Multiply](radius, LinearAlgebra[Multiply](convert(V2,Vector), cos(p)))
+         +LinearAlgebra[Multiply](convert(W2,Vector), g1)
+         +LinearAlgebra[Multiply](convert(W1,Vector), g2);
+
+        NewEquations:=[seq(0=NewEquations[i1],i1=1..numOfDynEqns)];
+
+        ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            op(NewEquations)                    
+          ];
+
+
+        #----------------------------------------
+        #
+        # w1T v1 sin(p) -w2T v1 cos(p) - w1T v2 cos(p) +  w2T v2 sin(p) =0
+        #
+        #----------------------------------------
+
+  
+
+       NewEquations := sin(p)*LinearAlgebra[Multiply](LinearAlgebra[Transpose](convert(W1,Vector)), convert(V1,Vector))
+         +cos(p)*LinearAlgebra[Multiply](LinearAlgebra[Transpose](convert(W2,Vector)), convert(V1,Vector))
+         -cos(p)*LinearAlgebra[Multiply](LinearAlgebra[Transpose](convert(W1,Vector)), convert(V2,Vector))
+         +sin(p)*LinearAlgebra[Multiply](LinearAlgebra[Transpose](convert(W2,Vector)), convert(V2,Vector)); 
+
+       ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            0=NewEquations                    
+          ];
+
+        #----------------------------------------
+        #
+        # v1T w1 -v2T w2 -1 =0
+        #
+        #----------------------------------------
+       
+
+        NewEquations := LinearAlgebra[Multiply](LinearAlgebra[Transpose](convert(V1,Vector)), convert(W1,Vector))
+                         +LinearAlgebra[Multiply](LinearAlgebra[Transpose](convert(V2,Vector)), convert(W2,Vector))-1;
+
+        ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            0=NewEquations                    
+          ];
+
+
+        #----------------------------------------
+        #
+        # fxT u -u + + s_x kappa + v1 fxx w1+ v2 fxx w2 =0
+        #
+        #----------------------------------------
+          f_xx:=convert(f_xx,array);
+          fxx_w1:= Aux:-TensProd:-Tijk_xj(
+            f_xx, W1
+          );
+
+          v1_fxx_w1:= Aux:-TensProd:-xi_Aij(
+            V1,
+            fxx_w1
+          ); 
+
+          fxx_w2:= Aux:-TensProd:-Tijk_xj(
+            f_xx, W2
+          );
+
+          v2_fxx_w2:= Aux:-TensProd:-xi_Aij(V2,fxx_w2); 
+
+          NewEquations:= LinearAlgebra[Multiply](f_xTransp,convert(U,Vector))-convert(U,Vector)
+                         +LinearAlgebra[Multiply](s_x,kappa)
+                         +convert(v1_fxx_w1,Vector)+convert(v2_fxx_w2,Vector);
+
+          NewEquations:=[seq(0=NewEquations[i1],i1=1..numOfDynEqns)];
+             
+          NewVariables:= [op(U),kappa];
+          
+          ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            op(NewEquations)                    
+          ];
+  
+          ExtendedSystemVariables:= [
+            op(ExtendedSystemVariables),
+            op(NewVariables)
+          ];
+
+
+        #---------------------------------------------------
+        #
+        # fT^T u + s_T kappa + v1T fxT w1 + v2T fxT w2 = 0
+        #
+        #---------------------------------------------------
+          f_xT_w1:=LinearAlgebra[Multiply](f_xT,convert(W1,Vector));
+          f_xT_w2:=LinearAlgebra[Multiply](f_xT,convert(W2,Vector));
+
+          V1T:=LinearAlgebra[Transpose](convert(V1,Vector));
+          V2T:=LinearAlgebra[Transpose](convert(V2,Vector));
+          
+          NewEquations:=LinearAlgebra[Multiply](f_Ttransp,convert(U,Vector))
+                        +s_T*kappa
+                        +LinearAlgebra[Multiply](V1T,f_xT_w1)
+                        +LinearAlgebra[Multiply](V2T,f_xT_w2);
+          
+          ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            0=NewEquations                    
+          ];
+
+
+        #---------------------------------------------------
+        #
+        # f_alphaT u + s_alpha^T kappa + v1 fxalpha w1+ v2 fxalpha w2- r=0
+        #
+        #---------------------------------------------------
+          f_xalpha:=convert(f_xalpha,array);
+          fxalpha_w1:= Aux:-TensProd:-Tijk_xj(
+            f_xalpha, W1
+          );
+
+          v1_fxalpha_w1:= Aux:-TensProd:-xi_Tij(
+            V1,
+            fxalpha_w1
+          ); 
+
+          fxalpha_w2:= Aux:-TensProd:-Tijk_xj(
+            f_xalpha, W2
+          );
+
+          v2_fxalpha_w2:= Aux:-TensProd:-xi_Tij(
+            V2,
+            fxalpha_w2
+          ); 
+
+          NewEquations:= convert(R,Vector)-(LinearAlgebra[Multiply](f_alphaTransp,convert(U,Vector))
+                         + kappa*s_alpha  
+                         + convert(v1_fxalpha_w1,Vector)
+                         + convert(v2_fxalpha_w2,Vector));
+
+
+          NewEquations:=[seq(
+            0=NewEquations[i1],
+            i1=1..numOfUncParam
+          )];
+
+          NewVariables:= R;
+   
+          ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            op(NewEquations)                    
+          ];
+         
+           ExtendedSystemVariables:= [
+            op(ExtendedSystemVariables),
+            op(NewVariables)
+          ];
+  
+      #------------------------------------------------------------
+      #
+      # build table for augmented system from lists
+      #
+      #------------------------------------------------------------
+      
+      #
+      # apart from vars listed explicitly, the following vars
+      # are passed on to template:
+      #   numOfDynEqns -> NumDynEqns
+      #
+        ExtendedSysToBeSubs:= table();
+        ExtendedSysToBeSubs["Equations"]:= ExtendedSystemEquations;
+        ExtendedSysToBeSubs["Variables"]:= ExtendedSystemVariables;
+        ExtendedSysToBeSubs["Internal"]:= InternalVariables; 
+
+$include <PeriodicBif/NeimarkSackerNV/CreateNeimarkSackerNVSys/TemplateModule.txt>
+
+    return result;
+
+       end proc;  #AugSys2:-PeriodicBif:-NeimarkSackerNV:-CreateNeimarkSackerNVSys
