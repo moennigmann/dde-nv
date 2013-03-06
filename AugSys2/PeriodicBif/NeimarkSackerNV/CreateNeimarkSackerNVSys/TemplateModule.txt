@@ -1,0 +1,41 @@
+###########################################################################
+# 
+# @path AugSys2/PeriodicBif/NeimarkSackerNV/CreateNeimarkSackerNVSys/TemplateModule.txt 
+#
+# @brief Template for the module CreateNeimarkSackerNVSys
+#
+# @param none
+#
+# @return NV system for Neimark-Sacker critical boundaries of periodic soltutions of ODEs
+# 
+# @notes
+#   (1) local var names of module which are similar to names 
+#   which occur in constructor AugSys2:-PeriodicBif:-NeimarkSackerNV are 
+#   appended by "InModule" 
+#
+###########################################################################
+result:=module() # Template
+  
+        export 
+          getSys,
+          getInternalVars,
+          getVars,
+          getEquations; 
+  
+        local 
+          ExtendedSysInModule, NumNVparamsInModule, NumOfDynEqnsInModule; 
+  
+        #
+        # receive information from constructor
+        #
+          ExtendedSysInModule:= copy(ExtendedSysToBeSubs);
+          NumOfDynEqnsInModule:= numOfDynEqns; 
+          NumNVparamsInModule:= numOfUncParam;  
+
+$include <PeriodicBif/NeimarkSackerNV/CreateNeimarkSackerNVSys/TemplateModule/getSys.txt>
+$include <PeriodicBif/NeimarkSackerNV/CreateNeimarkSackerNVSys/TemplateModule/getInternalVars.txt>
+$include <PeriodicBif/NeimarkSackerNV/CreateNeimarkSackerNVSys/TemplateModule/getVars.txt>
+$include <PeriodicBif/NeimarkSackerNV/CreateNeimarkSackerNVSys/TemplateModule/getEquations.txt>
+
+
+      end module; # Template  
