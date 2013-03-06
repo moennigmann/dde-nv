@@ -1,0 +1,26 @@
+##############################################################
+#
+# @path AugSys2/PeriodicBif/FlipAndFoldNV.txt
+#
+# @brief collects procedures for augmenting Flip or Fold critical boundaries
+#        by normal vector system for periodic solutions of ODEs
+#
+# @authors dka
+#
+# @revision
+#    2011-11-07 Written by dka
+#
+##############################################################
+  FlipAndFoldNV:=module()
+  
+    export
+      CreateFlipNVSys,
+      CreateFlipOrFoldNVSys,
+      CreateFoldNVSys; 
+
+$include <PeriodicBif/FlipAndFoldNV/CreateFlipNVSys.txt>
+$include <PeriodicBif/FlipAndFoldNV/CreateFlipOrFoldNVSys.txt>
+$include <PeriodicBif/FlipAndFoldNV/CreateFoldNVSys.txt>
+
+  end module; # AugSys2:-PeriodicBif:-FlipAndFoldNV 
+ 

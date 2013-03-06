@@ -1,0 +1,26 @@
+##############################################################
+#
+# @path AugSys2/PeriodicBif/NeimarkSackerNV.txt
+#
+# @brief collects procedures for augmenting Neimark-Sacker critical boundaries
+#        by normal vector system for periodic solutions of ODEs
+#
+# @notes:
+#    (1) module uses name convention: 
+#    components of eigenvectors are called W1, W2, V1, V2
+#
+# @authors dka
+#
+# @revision
+#    2011-11-07 Written by dka
+#
+##############################################################
+  NeimarkSackerNV:=module()
+  
+    export
+      CreateNeimarkSackerNVSys; 
+
+$include <PeriodicBif/NeimarkSackerNV/CreateNeimarkSackerNVSys.txt>
+
+
+  end module; # AugSys2:-NeimarkSackerNV 
