@@ -1,0 +1,10 @@
+#------------------------------------------------------------
+#
+# @path AugSys2/DiscreteBif/FlipAndFoldNV/CreateFlipOrFoldNVSys/TemplateModule/getEquations.txt
+#
+# @brief returns system equations
+#
+#------------------------------------------------------------
+    getEquations:= proc()
+        return(eval(ExtendedSysInModule["Equations"])); 
+    end proc; # getEquations

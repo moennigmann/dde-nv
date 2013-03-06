@@ -1,0 +1,10 @@
+#------------------------------------------------------------
+#
+# @path AugSys2/PeriodicBif/NeimarkSackerNV/CreateNeimarkSackerNVSys/TemplateModule/getVars.txt
+#
+# @brief returns system variables
+#
+#------------------------------------------------------------
+    getVars:= proc()
+        return(eval(ExtendedSysInModule["Variables"])); 
+    end proc; # getVars

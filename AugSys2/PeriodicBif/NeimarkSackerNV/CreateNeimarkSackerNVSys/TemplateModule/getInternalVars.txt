@@ -1,0 +1,10 @@
+#------------------------------------------------------------
+#
+# @path AugSys2/PeriodicBif/NeimarkSackerNV/CreateNeimarkSackerNVSys/TemplateModule/getInternalVars.txt
+#
+# @brief returns internal variables
+#
+#------------------------------------------------------------
+    getInternalVars:= proc()
+        return(eval(ExtendedSysInModule["Internal"])); 
+    end proc; # getInternalVars

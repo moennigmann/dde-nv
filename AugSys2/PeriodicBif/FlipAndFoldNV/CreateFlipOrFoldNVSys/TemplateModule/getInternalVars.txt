@@ -1,0 +1,10 @@
+#------------------------------------------------------------
+#
+# @path AugSys2/DiscreteBif/FlipAndFoldNV/CreateFlipOrFoldNVSys/TemplateModule/getInternalVars.txt
+#
+# @brief returns internal variables of system
+#
+#------------------------------------------------------------
+    getInternalVars:= proc()
+        return(eval(ExtendedSysInModule["Internal"])); 
+    end proc; # getInternalVars
