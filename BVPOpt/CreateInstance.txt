@@ -91,9 +91,16 @@
 
     
     # 
-    # substiture explicit functions intro anBVPSys
+    # substiture explicit functions into anBVPSys
     #
       anBVPSys := Aux:-SystemClasses:-subsExplicitAEsIntoDAESys(anBVPSys);
+      
+    #
+    # running of shared object with Maple, takes too much time here
+    # alternatively, copy source files directly to target folder
+    # and run cwrap_npsol directly
+    # 
+      copyFilesForDemo(WorkingDir,objNames);
      
     #
     # prepare interface for optimization

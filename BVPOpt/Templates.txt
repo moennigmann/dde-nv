@@ -11,12 +11,14 @@
 Templates:=module()
   
   export  
-    confunTemplate, 
+    confunTemplate,
+    cwrapMainTemplate, 
     objfunTemplate,
     funcF0PTemplate,
     funcJ0PTemplate;
 
 $include <Templates/confunTemplate.txt>
+$include <Templates/cwrapMainTemplate.txt>
 $include <Templates/objfunTemplate.txt>
 $include <Templates/funcF0PTemplate.txt>  
 $include <Templates/funcJ0PTemplate.txt>

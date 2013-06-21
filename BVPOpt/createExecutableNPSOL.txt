@@ -1,0 +1,125 @@
+#########################################################################
+#
+# @path BVPOpt/createExecutableNPSOL.txt
+#
+# @brief instead of using define_esternal creates executable cwrap_npsol
+#        with main function in it 
+#
+# @revision
+# 2013-06-19 written by dka
+#########################################################################
+  createExecutableNPSOL:= proc(
+      NToBeSubs,                      #N
+      NCLINToBeSubs,                  #NCLIN
+      NCNLNToBeSubs,                  #NCNLN
+      NROWAToBeSubs,                  #NROWA
+      NROWJToBeSubs,                  #NROWJ
+      NROWRToBeSubs,                  #NROWR
+      A_swnpsolToBeSubs,              #A
+      B_swnpsolToBeSubs,              #BL,BU,CLAMBDA    
+      inform_swnpsolToBeSubs,         #INFORM 
+      iter_swnpsolToBeSubs,           #ITER     
+      istate_swnpsolToBeSubs,         #ISTATE 
+      c_swnpsolToBeSubs,              #C
+      cjac_swnpsolToBeSubs,           #CJAC     
+      objf_swnpsolToBeSubs,           #OBJF      
+      grad_swnpsolToBeSubs,           #OBJGRD
+      r_swnpsolToBeSubs,              #R
+      xvec_swnpsolToBeSubs,           #X  
+      LE_swnpsolToBeSubs,             #IW, LENW
+      NumParamsToBeSubs,              # not npsol arguments but used to pass
+      ParamsToBeSubs                  # parameters to npsol via common block
+  )
+    local main, BseqToBeSubs, ind, i, j, cjacSeqToBeSubs, ASeqToBeSubs,
+          rSeqToBeSubs, systemCommand;
+    
+    #
+    # for parsing transform matrices to lists 
+    #      
+    
+    BseqToBeSubs:=[];
+    for i from 1 to 3 do
+    for j from 1 to (NToBeSubs+NCNLNToBeSubs+NCLINToBeSubs) do
+    BseqToBeSubs:=[op(BseqToBeSubs),B_swnpsolToBeSubs[i,j]];
+    end do;
+    end do;
+    
+    cjacSeqToBeSubs:=[];
+    for i from 1 to NROWJToBeSubs do
+    for j from 1 to NToBeSubs do
+    cjacSeqToBeSubs:=[op(cjacSeqToBeSubs),cjac_swnpsolToBeSubs[i,j]];
+    end do;
+    end do;
+    
+    ASeqToBeSubs:=[];
+    for i from 1 to NROWAToBeSubs do
+    for j from 1 to NToBeSubs do
+    ASeqToBeSubs:=[op(ASeqToBeSubs),A_swnpsolToBeSubs[i,j]];
+    end do;
+    end do;
+    
+    rSeqToBeSubs:=[];
+    for i from 1 to NROWRToBeSubs do
+    for j from 1 to NToBeSubs do
+    rSeqToBeSubs:=[op(rSeqToBeSubs),r_swnpsolToBeSubs[i,j]];
+    end do;
+    end do;
+
+    #
+    # generate cwrap_npsol_main.c
+    #
+
+          main:= subs(
+            Nsubs=  NToBeSubs,
+            NCLINsubs=  NCLINToBeSubs, 
+            NCNLNsubs=  NCNLNToBeSubs,
+            NROWAsubs=  NROWAToBeSubs,
+            NROWJsubs=  NROWJToBeSubs, 
+            NROWRsubs=  NROWRToBeSubs,
+            NumParamsSubs= NumParamsToBeSubs,
+            xvec_swnpsolSubs=  [seq(xvec_swnpsolToBeSubs[ind],ind=1..NToBeSubs)],
+            ParamsSubs= [seq(ParamsToBeSubs[ind],ind=1..NumParamsToBeSubs)],
+            c_swnpsolSubs= [seq(c_swnpsolToBeSubs[ind],ind=1..NCNLNToBeSubs)],
+            B_swnpsolSubs= BseqToBeSubs, 
+            grad_swnpsolSubs= [seq(grad_swnpsolToBeSubs[ind],ind=1..NToBeSubs)],
+            cjac_swnpsolSubs = cjacSeqToBeSubs,
+            A_swnpsolSubs= ASeqToBeSubs,
+            r_swnpsolSubs= rSeqToBeSubs,
+            istate_swnpsolSubs= [seq(istate_swnpsolToBeSubs[ind],ind=1..NToBeSubs+NCLINToBeSubs+NCNLNToBeSubs)],
+            LE_swnpsolSubs= [seq(LE_swnpsolToBeSubs[ind],ind=1..2)],
+            eval(Templates:-cwrapMainTemplate)
+         );
+
+        codegen[C](
+            main, 
+            filename= "cwrap_npsol_main.c",
+            declarations='[inform::array(1..1,integer),
+                           iter::array(1..1,integer),
+                           istate::array(1..NToBeSubs+NCLINToBeSubs+NCNLNToBeSubs,integer),
+                           le::array(1..2,integer)]'
+          );
+    
+    
+      
+    #
+    # create executable run_npsol.o
+    #
+        systemCommand:= cat(
+          `gcc -O2 `,
+          `rtcomsubs.o npcomsubs.o nlssolsubs.o blas1.o blas2.o funcJ0P.o funcF0P.o `,
+          `get_params.o extrhs.o extjac.o defs.o boundcond.o boundjac.o mcsubs.o `,
+          `opsubs.o f06subs.o cmsubs.o qrsubs.o lssolsubs.o npsolsubs.o chsubs.o `,
+          `srsubs.o set_params.o npsol_close.o  npsol_open.o npsolconfun.o npsolobjfun.o `, 
+          `linalg_period.o zibconst.o zibsec.o period.o ftotides.o fortranjac.o `, 
+          `fortranrhs.o twpbvpc.o callperiod.o infoprint.o `,
+          `-g calltides.c scott.c cwrap_npsol_call.c cwrap_npsol_main.c -lTIDES -lm -lgfortran -o `, 
+          `run_npsol.o`
+        );
+    
+      system(systemCommand);
+      
+      print("Executable file run_npsol.o is created");
+
+    RETURN();
+  
+  end proc; # createExecutableNPSOL

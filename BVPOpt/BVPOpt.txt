@@ -18,6 +18,8 @@
 BVPOpt:=module()
 
   export
+    copyFilesForDemo,
+    createExecutableNPSOL,
     createExternalFunctions,
     createExternalDerivativesFuncs,
     CreateInstance,
@@ -26,6 +28,8 @@ BVPOpt:=module()
     Templates,
     InternalNVVars;
 
+$include <copyFilesForDemo.txt>  
+$include <createExecutableNPSOL.txt>  
 $include <createExternalFunctions.txt>  
 $include <createExternalDerivativesFuncs.txt>  
 $include <CreateInstance.txt>     

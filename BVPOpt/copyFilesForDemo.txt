@@ -1,0 +1,206 @@
+#############################################################
+#
+# BVPOpt/source/copyFilesForDemo.txt
+#
+# @brief copies external files of NPSOL and BVPSOL into target foulder
+#
+# @param directory where compilled objects will be created,
+#        list of compilled objects obtaned from TIDES
+#
+# @notes list of external compilled objects from NPSOL, 
+#        BVPSOL, and TIDES
+#
+# @revision
+# 2011-12-11 created by dka
+#
+#############################################################
+  copyFilesForDemo:= proc(
+    bvpoptDir::string,
+    objNames::list(string)
+  )
+
+    local i, objNamesList, oldDir, pathAndFile, objNameC, objName, objPath, 
+          subName, objNameH; 
+
+    #
+    # creates bvpoptDir
+    #
+      if not
+        Aux:-FileOperations:-dirExists(bvpoptDir)
+      then
+        mkdir(bvpoptDir);
+      end if;
+
+
+    #
+    # save directory in which proc was called and change to requested dir
+    #
+      oldDir:= currentdir():
+      currentdir(bvpoptDir): 
+    # currentdir creates error if bvpoptDir does not exist
+        
+
+    #
+    # copy files from BVPSOL
+    #
+   
+    FileTools[Copy](cat(_ModulesDirectory, "/BVPSol/ext_routines/f2c/shared_obj/twpbvp/period.f"),
+                    cat(currentdir(), "/period.f"));
+    FileTools[Copy](cat(_ModulesDirectory, "/BVPSol/ext_routines/f2c/shared_obj/twpbvp/linalg_period.f"),
+                    cat(currentdir(), "/linalg_period.f"));
+    FileTools[Copy](cat(_ModulesDirectory, "/BVPSol/ext_routines/f2c/shared_obj/twpbvp/zibconst.f"),
+                    cat(currentdir(), "/zibconst.f")); 
+    FileTools[Copy](cat(_ModulesDirectory, "/BVPSol/ext_routines/f2c/shared_obj/twpbvp/zibsec.f"),
+                    cat(currentdir(), "/zibsec.f"));
+    FileTools[Copy](cat(_ModulesDirectory, "/BVPSol/ext_routines/f2c/shared_obj/twpbvp/ftotides.f"),
+                    cat(currentdir(), "/ftotides.f"));
+    FileTools[Copy](cat(_ModulesDirectory, "/BVPSol/ext_routines/f2c/shared_obj/twpbvp/defs.f"),
+                    cat(currentdir(), "/defs.f"));
+    FileTools[Copy](cat(_ModulesDirectory, "/BVPSol/ext_routines/f2c/shared_obj/twpbvp/twpbvpc.f"),
+                    cat(currentdir(), "/twpbvpc.f"));
+    FileTools[Copy](cat(_ModulesDirectory, "/BVPSol/ext_routines/f2c/shared_obj/twpbvp/infoprint.f"),
+                    cat(currentdir(), "/infoprint.f"));
+    FileTools[Copy](cat(_ModulesDirectory, "/BVPSol/ext_routines/f2c/shared_obj/twpbvp/callperiod.f"),
+                    cat(currentdir(), "/callperiod.f"));                            
+        
+    # 
+    # compile created Fortran files
+    #
+      system("gfortran -c -shared -O -fPIC period.f -lTIDES -lm -o period.o");
+      system("gfortran -c -shared -O -fPIC linalg_period.f -lTIDES -lm -o linalg_period.o"); 
+      system("gfortran -c -shared -O -fPIC zibconst.f -lTIDES -lm -o zibconst.o"); 
+      system("gfortran -c -shared -O -fPIC zibsec.f -lTIDES -lm -o zibsec.o"); 
+      system("gfortran -c -shared -O -fPIC ftotides.f -lTIDES -lm -o ftotides.o"); 
+      system("gfortran -c -shared -O -fPIC defs.f -lTIDES -lm -o defs.o"); 
+      system("gfortran -c -shared -O -fPIC twpbvpc.f -lTIDES -lm -o twpbvpc.o"); 
+      system("gfortran -c -shared -O -fPIC infoprint.f -lTIDES -lm -o infoprint.o"); 
+      system("gfortran -c -shared -O -fPIC callperiod.f -lTIDES -lm -o callperiod.o");  
+     
+
+    #
+    # external object names obtained from TIDES 
+    # (depend on an induvidual problem) 
+    #
+        objNamesList:="";
+        for i from 1 to nops(objNames) do
+          pathAndFile:=Aux:-FileOperations:-splitPathAndFile(objNames[i]);
+          objPath:=pathAndFile[1];
+          objName:=pathAndFile[2];
+          if (objName="calltides.o")
+          then 
+               objNameC:="calltides.c";
+               FileTools[Copy](cat(objPath, "calltides.c"),cat(currentdir(), "/calltides.c")); 
+          else 
+               subName:= StringTools[Split](objName, ".")[1];
+               objNameC:=cat(subName, ".c");
+               objNameH:=cat(subName, ".h");
+               FileTools[Copy](cat(objPath, objNameC),cat(currentdir(), "/", objNameC));
+               FileTools[Copy](cat(objPath, objNameH),cat(currentdir(), "/", objNameH));
+          end if;
+	  objNamesList:=cat(objNamesList,objNameC," ");
+        end do;
+
+
+    #
+    # copy files from NPSOL
+    #
+    
+      FileTools[Copy](cat(_ModulesDirectory, "/Npsol/ext_routines/f2c/shared_obj/blas1.f"),
+                    cat(currentdir(), "/blas1.f"));
+      FileTools[Copy](cat(_ModulesDirectory, "/Npsol/ext_routines/f2c/shared_obj/blas2.f"),
+                    cat(currentdir(), "/blas2.f"));
+      FileTools[Copy](cat(_ModulesDirectory, "/Npsol/ext_routines/f2c/shared_obj/mcsubs.f"),
+                    cat(currentdir(), "/mcsubs.f"));
+      FileTools[Copy](cat(_ModulesDirectory, "/Npsol/ext_routines/f2c/shared_obj/opsubs.f"),
+                    cat(currentdir(), "/opsubs.f"));
+      FileTools[Copy](cat(_ModulesDirectory, "/Npsol/ext_routines/f2c/shared_obj/f06subs.f"),
+                    cat(currentdir(), "/f06subs.f"));
+      FileTools[Copy](cat(_ModulesDirectory, "/Npsol/ext_routines/f2c/shared_obj/cmsubs.f"),
+                    cat(currentdir(), "/cmsubs.f"));
+      FileTools[Copy](cat(_ModulesDirectory, "/Npsol/ext_routines/f2c/shared_obj/qrsubs.f"),
+                    cat(currentdir(), "/qrsubs.f"));
+      FileTools[Copy](cat(_ModulesDirectory, "/Npsol/ext_routines/f2c/shared_obj/lssolsubs.f"),
+                    cat(currentdir(), "/lssolsubs.f"));
+      FileTools[Copy](cat(_ModulesDirectory, "/Npsol/ext_routines/f2c/shared_obj/chsubs.f"),
+                    cat(currentdir(), "/chsubs.f"));
+      FileTools[Copy](cat(_ModulesDirectory, "/Npsol/ext_routines/f2c/shared_obj/srsubs.f"),
+                    cat(currentdir(), "/srsubs.f"));
+      FileTools[Copy](cat(_ModulesDirectory, "/Npsol/ext_routines/f2c/shared_obj/rtcomsubs.f"),
+                    cat(currentdir(), "/rtcomsubs.f"));
+      FileTools[Copy](cat(_ModulesDirectory, "/Npsol/ext_routines/f2c/shared_obj/nlssolsubs.f"),
+                    cat(currentdir(), "/nlssolsubs.f"));
+      FileTools[Copy](cat(_ModulesDirectory, "/Npsol/ext_routines/f2c/shared_obj/npcomsubs.f"),
+                    cat(currentdir(), "/npcomsubs.f"));
+      FileTools[Copy](cat(_ModulesDirectory, "/Npsol/ext_routines/f2c/shared_obj/npsolsubs.f"),
+                    cat(currentdir(), "/npsolsubs.f"));
+
+    # 
+    # compile created Fortran files
+    #
+      system("gfortran -c -shared -O -fPIC blas1.f -lTIDES -lm -o blas1.o");
+      system("gfortran -c -shared -O -fPIC blas2.f -lTIDES -lm -o blas2.o");
+      system("gfortran -c -shared -O -fPIC mcsubs.f -lTIDES -lm -o mcsubs.o");
+      system("gfortran -c -shared -O -fPIC opsubs.f -lTIDES -lm -o opsubs.o");
+      system("gfortran -c -shared -O -fPIC f06subs.f -lTIDES -lm -o f06subs.o");
+      system("gfortran -c -shared -O -fPIC cmsubs.f -lTIDES -lm -o cmsubs.o");
+      system("gfortran -c -shared -O -fPIC qrsubs.f -lTIDES -lm -o qrsubs.o");
+      system("gfortran -c -shared -O -fPIC lssolsubs.f -lTIDES -lm -o lssolsubs.o");
+      system("gfortran -c -shared -O -fPIC chsubs.f -lTIDES -lm -o chsubs.o");
+      system("gfortran -c -shared -O -fPIC srsubs.f -lTIDES -lm -o srsubs.o");
+      system("gfortran -c -shared -O -fPIC rtcomsubs.f -lTIDES -lm -o rtcomsubs.o");
+      system("gfortran -c -shared -O -fPIC nlssolsubs.f -lTIDES -lm -o nlssolsubs.o");
+      system("gfortran -c -shared -O -fPIC npcomsubs.f -lTIDES -lm -o npcomsubs.o");
+      system("gfortran -c -shared -O -fPIC npsolsubs.f -lTIDES -lm -o npsolsubs.o");
+
+
+
+      FileTools[Copy](cat(_ModulesDirectory, "/Npsol/ext_routines/f2c/cwrap/npsol_open.f"),
+                      cat(currentdir(), "/npsol_open.f"));
+      FileTools[Copy](cat(_ModulesDirectory, "/Npsol/ext_routines/f2c/cwrap/npsol_close.f"),
+                      cat(currentdir(), "/npsol_close.f"));
+      FileTools[Copy](cat(_ModulesDirectory, "/Npsol/ext_routines/f2c/cwrap/set_params.f"),
+                      cat(currentdir(), "/set_params.f"));
+      FileTools[Copy](cat(_ModulesDirectory, "/Npsol/ext_routines/f2c/cwrap/get_params.f"),
+                      cat(currentdir(), "/get_params.f"));
+
+    # 
+    # compile created Fortran files
+    #
+      system("gfortran -c -shared -O -fPIC npsol_open.f -lTIDES -lm -o npsol_open.o");
+      system("gfortran -c -shared -O -fPIC npsol_close.f -lTIDES -lm -o npsol_close.o");
+      system("gfortran -c -shared -O -fPIC set_params.f -lTIDES -lm -o set_params.o");
+      system("gfortran -c -shared -O -fPIC get_params.f -lTIDES -lm -o get_params.o");
+      
+
+      FileTools[Copy](cat(_ModulesDirectory, "/BVPOpt/ext_routines/f2c/cwrap/cwrap_npsol_call.c"),
+                      cat(currentdir(), "/cwrap_npsol_call.c"));
+     
+    #
+    # in additional to TIDES files connect NPSOL files
+    #
+    #    LinkerCommand:= cat(
+    #      `gcc -shared -Xlinker -Bsymbolic fortranrhs.o fortranjac.o `,
+    #      `extrhs.o extjac.o boundcond.o boundjac.o `,
+    #      `funcF0P.o funcJ0P.o `,
+    #      `npsolconfun.o npsolobjfun.o `,
+    #       _ModulesDirectory, `/Npsol/ext_routines/f2c/cwrap/npsol_open.o `,
+    #      _ModulesDirectory, `/Npsol/ext_routines/f2c/cwrap/npsol_close.o `,
+    #      _ModulesDirectory, `/Npsol/ext_routines/f2c/cwrap/set_params.o `,
+    #      _ModulesDirectory, `/Npsol/ext_routines/f2c/cwrap/cwrap_npsol.o `,
+    #      objNamesList,
+    #      _ModulesDirectory, `/Npsol/ext_routines/f2c/shared_obj/npsol.so `,
+    #      _ModulesDirectory, `/BVPSol/ext_routines/f2c/shared_obj/twpbvp/twpbvp.so `,
+    #      ` -lf2c -O2 -lm -lgfortran -lTIDES -o `, 
+    #      SharedObjectName
+    #    );
+    
+    #  system(LinkerCommand);
+
+    #
+    # change back to directory of calling procedure
+    #
+       currentdir(oldDir);
+  
+      RETURN();
+
+  end proc; # createSharedObject

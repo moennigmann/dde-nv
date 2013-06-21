@@ -138,17 +138,15 @@
     # in additional to TIDES files connect NPSOL files
     #
         LinkerCommand:= cat(
-          `gcc -shared -Xlinker -Bsymbolic fortranrhs.o fortranjac.o `,
-          `extrhs.o extjac.o boundcond.o boundjac.o `,
-          `funcF0P.o funcJ0P.o `,
-          `npsolconfun.o npsolobjfun.o `,
-           _ModulesDirectory, `/Npsol/ext_routines/f2c/cwrap/npsol_open.o `,
-          _ModulesDirectory, `/Npsol/ext_routines/f2c/cwrap/npsol_close.o `,
-          _ModulesDirectory, `/Npsol/ext_routines/f2c/cwrap/set_params.o `,
+          `gcc -shared -Xlinker -Bsymbolic `,
+          `rtcomsubs.o npcomsubs.o nlssolsubs.o blas1.o blas2.o funcJ0P.o funcF0P.o `,
+          `get_params.o extrhs.o extjac.o defs.o boundcond.o boundjac.o mcsubs.o `,
+          `opsubs.o f06subs.o cmsubs.o qrsubs.o lssolsubs.o npsolsubs.o chsubs.o `,
+          `srsubs.o set_params.o npsol_close.o  npsol_open.o npsolconfun.o npsolobjfun.o `, 
+          `linalg_period.o zibconst.o zibsec.o period.o ftotides.o fortranjac.o `, 
+          `fortranrhs.o twpbvpc.o callperiod.o infoprint.o `,
           _ModulesDirectory, `/Npsol/ext_routines/f2c/cwrap/cwrap_npsol.o `,
           objNamesList,
-          _ModulesDirectory, `/Npsol/ext_routines/f2c/shared_obj/npsol.so `,
-          _ModulesDirectory, `/BVPSol/ext_routines/f2c/shared_obj/twpbvp/twpbvp.so `,
           ` -lf2c -O2 -lm -lgfortran -lTIDES -o `, 
           SharedObjectName
         );
