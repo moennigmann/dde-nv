@@ -1,6 +1,6 @@
 ###############################################################################
 #
-# @path Aux/FileOperations/SplitPathAndFile.txt
+# @path Aux/FileOperations/splitPathAndFile.txt
 #
 # @brief splits string into path and file
 #
