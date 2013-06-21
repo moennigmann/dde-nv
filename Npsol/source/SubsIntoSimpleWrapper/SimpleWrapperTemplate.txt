@@ -10,6 +10,7 @@
 #     SimpleWrapperNPSOL 
 #
 # @revision
+#   2013-06-19 added createExecutableBVPOpt by dka
 #   030319 added ScalingPars, ScalingParsOn; 
 #   030108 added new methods
 #   021217 added SetParameters, CreateOptionsFile, SetOption, GetOptions
@@ -65,7 +66,8 @@ SimpleWrapperTemplate:= module()
 
   export
     boundsNotViolated, 
-    createDebugFiles, 
+    createDebugFiles,
+    createExecutableBVPOpt, 
     createOptionsFile, 
     getLowerActiveVarBounds,
     getUpperActiveVarBounds,
@@ -156,6 +158,7 @@ SimpleWrapperTemplate:= module()
         
 $include<SubsIntoSimpleWrapper/SimpleWrapperTemplate/boundsNotViolated.txt>
 $include<SubsIntoSimpleWrapper/SimpleWrapperTemplate/createDebugFiles.txt>
+$include<SubsIntoSimpleWrapper/SimpleWrapperTemplate/createExecutableBVPOpt.txt>
 $include<SubsIntoSimpleWrapper/SimpleWrapperTemplate/createOptionsFile.txt>
 $include<SubsIntoSimpleWrapper/SimpleWrapperTemplate/getBL.txt>
 $include<SubsIntoSimpleWrapper/SimpleWrapperTemplate/getBU.txt>
