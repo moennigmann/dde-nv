@@ -5,6 +5,7 @@
 # @brief Collects templates for Fortran files that are needed for BVP solvers
 #
 # @revision
+#   2013-06-16 added templates for derivatives of discontinuous systems by dka
 #   2012-01-17 created by dka
 #    
 #################################################################################
@@ -13,6 +14,7 @@ Templates:= module()
   export
     FCNTemplate,
     FSUBTemplate,
+    FXderivTemplate,
     DFDYTemplate,
     DFSUBTemplate,
     GSUBTemplate,
@@ -21,6 +23,7 @@ Templates:= module()
         
 $include<CreateExternalFunctions/Templates/FCNTemplate.txt> 
 $include<CreateExternalFunctions/Templates/FSUBTemplate.txt> 
+$include<CreateExternalFunctions/Templates/FXderivTemplate.txt> 
 $include<CreateExternalFunctions/Templates/DFDYTemplate.txt>
 $include<CreateExternalFunctions/Templates/DFSUBTemplate.txt> 
 $include<CreateExternalFunctions/Templates/GSUBTemplate.txt>

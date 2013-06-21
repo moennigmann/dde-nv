@@ -11,19 +11,24 @@
 # @return fortan files
 #
 # @revision
+# 2013-06-10 added discontinuous time case by dka
 # 2012-01-16 written by dka
 #
 ###############################################################################
   createGenericExtFunctions:= proc(anBVPSys::DAESys,
 				   methodName::name,
 				   phaseCondition,
-                                   indPhaseCondVarible::integer)
+                                   indPhaseCondVarible::integer,
+                                   initCond::list)
   
   local FCN, DFDY, NumDynVars, NumCritPars, RHSOriginalBVP, JacOriginalBVP,
         i1, i2, CritParsNames, DynVarsNames, NamesConventionForFortran,
         extBVPSys, NumExtDynVars, ExtRHSBVP, ExtDynVarsNames, ExtJacBVP,
         ExtNamesConventionForFortran, FSUB, DFSUB, GSUB, BoundCond, offsetInd,
-        BoundCondJac, DGSUB, indNum;
+        BoundCondJac, DGSUB, indNum, ExtNamesForRHS, BoundCondPart1, BoundCondPart2,
+        Hxm,fip,fim,fipVars,fimVars,ParamVars, fpdata, fmdata, fp, fm, sx,
+        taux0WithoutNorm, Mtm, normTaux0, taux0, MVecPart1, MonMatrixGen,
+        FXderiv, MonMatrixGenList;
   
   #
   # for both 'period' and 'twpbvp' create fortran file that contain
@@ -80,15 +85,29 @@
   # and left hand side boundary value conditions (they derivatives equal to zero),
   # i.e period and boundary conditions are teated as unknown ODE variables
   #  
-  if (methodName='twpbvp') 
+  if (methodName='twpbvp' or methodName='twpbvpdisc') 
   then
     extBVPSys:=table();
-    extBVPSys["ODEs"]:=[seq(lhs(anBVPSys["ODEs"][i1])=PeriodVarNew*rhs(anBVPSys["ODEs"][i1]),i1=1..NumDynVars),
+    
+    if (methodName='twpbvp')
+    then
+      extBVPSys["ODEs"]:=[seq(lhs(anBVPSys["ODEs"][i1])=PeriodVarNew*rhs(anBVPSys["ODEs"][i1]),i1=1..NumDynVars),
 			`PeriodVarNew'`=0,
 			seq(`RightCoord[i2]'`=0,i2=1..NumDynVars-1)];
-    extBVPSys["DynVars"]:=[op(DynVarsNames),
+      extBVPSys["DynVars"]:=[op(DynVarsNames),
 			   PeriodVarNew,
-			   seq(RightCoord[i2],i2=1..NumDynVars-1)];   
+			   seq(RightCoord[i2],i2=1..NumDynVars-1)];
+    else
+      #
+      # dim=dim(twpbvp)+1 since all left hand side boundary value conditions are nessesary
+      #
+      extBVPSys["ODEs"]:=[seq(lhs(anBVPSys["ODEs"][i1])=PeriodVarNew*rhs(anBVPSys["ODEs"][i1]),i1=1..NumDynVars),
+			`PeriodVarNew'`=0,
+			seq(`RightCoord[i2]'`=0,i2=1..NumDynVars)];
+      extBVPSys["DynVars"]:=[op(DynVarsNames),
+			   PeriodVarNew,
+			   seq(RightCoord[i2],i2=1..NumDynVars)]; 
+    end if;    
     extBVPSys["Parameters"]:=anBVPSys["Parameters"];
     extBVPSys["AEs"]:=anBVPSys["AEs"];
     extBVPSys["AlgVars"]:=anBVPSys["AlgVars"];
@@ -139,9 +158,15 @@
             filename= "extjac.f",
             precision= double
           );
+   end if;
+
+
    #
    # create functions for bondary value conditions and its jacobian
+   # x(0)=x(T) for continuous time case
    #
+  if (methodName='twpbvp') 
+  then
     BoundCond:=[subs(ExtNamesConventionForFortran,phaseCondition)];
     offsetInd:=0;
     for indNum from 1 to NumDynVars do
@@ -185,6 +210,109 @@
             precision= double
           );
    
+    
+  end if;
+  
+   #
+   # create functions for bondary value conditions and its jacobian
+   # x(0)=initCond(x(T)) for discontinuous time case
+   #
+  
+  if (methodName='twpbvpdisc') 
+  then
+    ExtNamesForRHS:=[seq(ExtDynVarsNames[i1]=Z[i1+1+NumDynVars],i1=1..NumDynVars),
+                     seq(CritParsNames[i2]=TRPAR[i2],i2=1..NumCritPars)
+		    ];
+    BoundCondPart1:=[];
+    for indNum from 1 to NumDynVars do
+         BoundCondPart1:=[op(BoundCondPart1),Z[indNum]-subs(ExtNamesForRHS,initCond[indNum])];
+    end do;
+    
+    BoundCondPart2:=[];
+    for indNum from 1 to NumDynVars do
+         BoundCondPart2:=[op(BoundCondPart2),Z[indNum]-Z[indNum+1+NumDynVars]];
+    end do;
+    
+    BoundCond:=[subs(ExtNamesConventionForFortran,phaseCondition),op(BoundCondPart1),op(BoundCondPart2)];
+    GSUB:= subs(        
+            NumExtDynVarsToBeSubs= NumExtDynVars,
+            NumCritParsToBeSubs  = NumCritPars,
+            BoundCondToBeSubs    = BoundCond, 
+            eval(CreateExternalFunctions:-Templates:-GSUBTemplate)
+     );
+   
+    codegen[fortran](
+            GSUB, 
+            filename= "boundcond.f",
+            precision= double
+          );
+   
+   
+    BoundCondJac:= [seq(
+            [seq(
+              diff(BoundCond[i1], Z[i2]),
+              i2= 1..NumExtDynVars)],
+            i1= 1..NumExtDynVars)];
+   
+    DGSUB:= subs(        
+            NumExtDynVarsToBeSubs= NumExtDynVars,
+            NumCritParsToBeSubs  = NumCritPars,
+            BoundJacToBeSubs     = BoundCondJac, 
+            eval(CreateExternalFunctions:-Templates:-DGSUBTemplate)
+     );
+   
+    codegen[fortran](
+            DGSUB, 
+            filename= "boundjac.f",
+            precision= double
+          );
+   
+    
+  end if;
+
+  
+   #
+   # create functions for derivatives of dyscontinuous systems
+   #
+  if (methodName='twpbvpdisc') 
+  then
+    ParamVars:=[seq(CritParsNames[i2]=TRPAR[i2],i2=1..NumCritPars)];
+    fip:=Vector(NumDynVars,symbol='F0');
+    fim:=Vector(NumDynVars,symbol='FE');
+    fipVars:=[seq(DynVarsNames[i1]=fip[i1],i1=1..NumDynVars)];
+    fimVars:=[seq(DynVarsNames[i1]=fim[i1],i1=1..NumDynVars)];
+    
+    Hxm:=VectorCalculus[Jacobian](initCond,DynVarsNames);
+    Hxm:=subs([op(ParamVars),op(fimVars)],Hxm);
+    
+    fpdata:=subs([op(fipVars),op(ParamVars)],map(rhs,anBVPSys["ODEs"]));
+    fmdata:=subs([op(fimVars),op(ParamVars)],map(rhs,anBVPSys["ODEs"]));
+    fp:=Vector(fpdata);
+    fm:=Vector(fmdata);
+    
+    sx:=subs(ParamVars,VectorCalculus[Jacobian]([phaseCondition],DynVarsNames));
+    
+    Mtm:=Matrix(NumDynVars,NumDynVars,symbol='FX');
+    taux0WithoutNorm:=-sx.Mtm;
+    normTaux0:=sx.fm;
+    taux0:=taux0WithoutNorm/normTaux0[1];
+    
+    MVecPart1:=Matrix(fp-Hxm.fm);
+    MonMatrixGen:=Hxm.Mtm-MVecPart1.taux0;
+    MonMatrixGenList:=convert(MonMatrixGen, listlist);
+
+    FXderiv:= subs(
+            NumCritParsToBeSubs= NumCritPars,
+            NumDynVarsToBeSubs= NumDynVars,        
+            FXToBeSubs= MonMatrixGenList,
+            eval(CreateExternalFunctions:-Templates:-FXderivTemplate)
+     );
+   
+    codegen[fortran](
+            FXderiv, 
+            filename= "fxderiv.f",
+            precision= double
+          );
     
   end if;
 

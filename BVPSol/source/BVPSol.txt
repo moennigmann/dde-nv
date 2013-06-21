@@ -12,6 +12,7 @@
 # @todo Implement RestoreInstance
 #
 # @revision
+#   2013-06-10 Added 'twpbvpdis' for discontinuous time case for passive robot models
 #   2012-01-16 In addition to 'period' added 'twpbvp' method by dka
 #   2011-01-14 Created by dka  
 #

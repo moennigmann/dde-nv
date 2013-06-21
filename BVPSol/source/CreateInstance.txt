@@ -11,7 +11,8 @@
 #                  or 'twpbvp' [Capper&Cash,2007] (by default the method 
 #                  is set to 'period')  
 #         optional phase condition (nesessary to be defined for the method 
-#                  'twpbvp', if not given by default is set to x1(0)=0)        
+#                  'twpbvp', if not given by default is set to x1(0)=0)
+#         optional list of boundary conditions for discontinuous time case        
 #
 # @return  procedure which starts bvpsol
 #
@@ -20,8 +21,14 @@
 #            system file, e.g., "scott.o"
 #        (ii) for convenience only simple phase conditions are accepted,
 #             i.e only conditions of type 'varible_i-constant' 
+#        (iii) for discontinuous time case initial conditions should be set
+#              as [init_1(x),init_2(x),...]. They will be transformed to
+#              [x_1(0)=init_1(x(T)),x_2(0)=init_2(x(T)),...]
+#        (iv)  for discontinuous time case variable indPhaseCondVariable is
+#              set to -10
 #
 # @revision
+#   2013-06-10 added parameter listOfInitCond for discontinuous time case
 #   2011-01-18 written by dka
 #
 ######################################################################
@@ -30,11 +37,12 @@
                        nodes::integer,
                        objNames::list(string)
                        #optional methodName
-                       #optional phaseCondition
+                       #optional phaseCondition 
+                       #optional listOfInitCond
                        )
 
     local bvpsol, BVPSolInstance, methodName, phaseCondition,
-	  indPhaseCondVarible, logicPhaseVarPresent; 
+	  indPhaseCondVariable, logicPhaseVarPresent, listOfInitCond; 
     
      #
      # prepare working dir
@@ -62,33 +70,49 @@
     #
     # validate input for the method name
     #
-    if not ((methodName='period') or (methodName='twpbvp'))
-      then error("Method name should be 'period' or 'twpbvp'",methodName);
+    if not ((methodName='period') or (methodName='twpbvp') or (methodName='twpbvpdisc'))
+      then error("Method name should be 'period' or 'twpbvp' or 'twpbvpdisc'",methodName);
     end if; 
     
     
     #
     # extract phase condition
     #
-    if (nargs>5)
+    if ((nargs>5) and (methodName='twpbvp'))
     then 
       phaseCondition:=args[6];
+  
+      #
+      # check if the phase condition is given in the form 'varible_i-constant' 
+      #
+      logicPhaseVarPresent:=validatePhaseCondition(anBVPSys,phaseCondition);
+      if(logicPhaseVarPresent=false)
+        then error("Phase condition should be given in form 'var_i-constant'",phaseCondition);
+      end if;
+
+      #
+      # get index of varible_i in the phase condition
+      #
+      indPhaseCondVariable:=getPhaseConditionIndex(anBVPSys,phaseCondition);  
     else
-      phaseCondition:=anBVPSys["DynVars"][1];  
+      phaseCondition:=anBVPSys["DynVars"][1];
+      indPhaseCondVariable:=1;  
     end if; 
     
-    #
-    # check if the phase condition is given in the form 'varible_i-constant' 
-    #
-    logicPhaseVarPresent:=validatePhaseCondition(anBVPSys,phaseCondition);
-    if(logicPhaseVarPresent=false)
-      then error("Phase condition should be given in form 'var_i-constant'",phaseCondition);
-    end if;
-
-    #
-    # get index of varible_i in the phase condition
-    #
-    indPhaseCondVarible:=getPhaseConditionIndex(anBVPSys,phaseCondition);
+    if  (nargs>6)
+    then
+       phaseCondition:=args[6];
+       indPhaseCondVariable:=-10;
+       listOfInitCond:=args[7];
+       if(type(listOfInitCond,list)=false)
+	  then error("Initial conditions should be of a type of list",listOfInitCond); 
+       end if;
+       if(nops(listOfInitCond)!=nops(anBVPSys["DynVars"]))
+	  then error("Initial conditions should be of dimension",nops(anBVPSys["DynVars"]), listOfInitCond); 
+       end if;
+    else
+       listOfInitCond:=[];
+    end if; 
     
     
     # 
@@ -107,7 +131,8 @@
           objNames,
           methodName,
           phaseCondition,
-          indPhaseCondVarible
+          indPhaseCondVariable,
+          listOfInitCond
         );
       catch:
 	printf("CreateSharedObject failed, \n");
@@ -128,7 +153,7 @@
           bvpsol,
           WorkingDir,
           nodes,
-          indPhaseCondVarible
+          indPhaseCondVariable
 	);
       catch:
 	printf("SubsIntoSimpleWrapper failed, \n");

@@ -20,9 +20,11 @@ clean:
 	make -C ./ext_routines/f2c/cwrap clean
 	make -C ./ext_routines/f2c/shared_obj/period clean
 	make -C ./ext_routines/f2c/shared_obj/twpbvp clean
+	make -C ./ext_routines/f2c/shared_obj/twpbvpdisc clean
 
 all: 	
 	make -C ./source all
 	make -C ./ext_routines/f2c/cwrap all
 	make -C ./ext_routines/f2c/shared_obj/period all
 	make -C ./ext_routines/f2c/shared_obj/twpbvp all
+	make -C ./ext_routines/f2c/shared_obj/twpbvpdisc all

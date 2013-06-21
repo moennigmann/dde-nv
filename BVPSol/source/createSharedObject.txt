@@ -9,13 +9,15 @@
 #        list of compilled objects obtaned from TIDES,
 #        method name ('period' [Deuflhard,1984] or 'twpbvp' [Capper&Cash,2007]),
 #        phase condition (var_i-constant=0),
-#        index of variable for which the phase condition is stated 
+#        index of variable for which the phase condition is stated
+#        list of boundary conditions for discontinuous time case  
 #
 # @notes list of compilled objects obtaned from TIDES should
 #        contain path to "calltides.o" and corresponding 
 #        system file, e.g., "scott.o"
 #
 # @revision
+# 2013-06-10 added parameter listOfInitCond for discontinuous time case
 # 2011-01-18 created by dka
 #
 #############################################################
@@ -25,7 +27,8 @@
     objNames::list(string),
     methodName::name,
     phaseCondition,
-    indPhaseCondVarible::integer
+    indPhaseCondVarible::integer,
+    listOfInitCond::list
   )
 
     local oldDir, LinkerCommand, bvpsol, SharedObjectName,InstanceCounter,
@@ -58,7 +61,8 @@
       CreateExternalFunctions:-createGenericExtFunctions(anBVPSys,
 							 methodName,
 							 phaseCondition,
-							 indPhaseCondVarible);
+							 indPhaseCondVarible,
+							 listOfInitCond);
         
     # 
     # compile fortranrhs.f and fortranjac.f 
@@ -102,8 +106,8 @@
           SharedObjectName
         );
     end if;
-
-    if (methodName='twpbvp')
+    
+    if ((methodName='twpbvp') or (methodName='twpbvpdisc'))
     then 
         # 
 	# compile extrhs.f, extjac.f, boundcond.f, and boundjac.f
@@ -112,7 +116,10 @@
 	system("gfortran -c -shared -O -fPIC extjac.f -o extjac.o");
 	system("gfortran -c -shared -O -fPIC boundcond.f -o boundcond.o");
 	system("gfortran -c -shared -O -fPIC boundjac.f -o boundjac.o"); 
-        
+    end if;	
+
+    if (methodName='twpbvp')
+    then      
         LinkerCommand:= cat(
           `gcc -shared -Xlinker -Bsymbolic fortranrhs.o fortranjac.o extrhs.o extjac.o boundcond.o boundjac.o `,
           _ModulesDirectory, `/BVPSol/ext_routines/f2c/cwrap/bvpopen.o `,
@@ -120,6 +127,25 @@
           _ModulesDirectory, `/BVPSol/ext_routines/f2c/cwrap/cwrap_bvpsol.o `,
           objNamesList,
           _ModulesDirectory, `/BVPSol/ext_routines/f2c/shared_obj/twpbvp/twpbvp.so `,
+          ` -lf2c -O2 -lm -lgfortran -lTIDES -o `, 
+          SharedObjectName
+        );
+    end if;
+    
+    if (methodName='twpbvpdisc')
+    then       
+        # 
+	# compile fxderiv.f
+	#
+	system("gfortran -c -shared -O -fPIC fxderiv.f -o fxderiv.o"); 
+       
+        LinkerCommand:= cat(
+          `gcc -shared -Xlinker -Bsymbolic fortranrhs.o fortranjac.o extrhs.o extjac.o boundcond.o boundjac.o fxderiv.o `,
+          _ModulesDirectory, `/BVPSol/ext_routines/f2c/cwrap/bvpopen.o `,
+          _ModulesDirectory, `/BVPSol/ext_routines/f2c/cwrap/bvpclose.o `,
+          _ModulesDirectory, `/BVPSol/ext_routines/f2c/cwrap/cwrap_bvpsol.o `,
+          objNamesList,
+          _ModulesDirectory, `/BVPSol/ext_routines/f2c/shared_obj/twpbvpdisc/twpbvpdisc.so `,
           ` -lf2c -O2 -lm -lgfortran -lTIDES -o `, 
           SharedObjectName
         );
