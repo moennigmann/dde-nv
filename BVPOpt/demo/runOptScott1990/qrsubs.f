@@ -1,12 +1,14 @@
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+*
 *     File  qrsubs.f
 *
 *     dgeqr    dgeqrp   dgeap    dgeapq
+*
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-      SUBROUTINE DGEQR ( M, N, A, LDA, ZETA, INFORM )
-      INTEGER            M, N, LDA, INFORM
-      DOUBLE PRECISION   A( LDA, * ), ZETA( * )
+      subroutine dgeqr ( m, n, A, ldA, zeta, inform )
+      integer            m, n, ldA, inform
+      double precision   A( ldA, * ), zeta( * )
 C
 C  1. Purpose
 C     =======
@@ -43,9 +45,9 @@ C  zeta( k )  is a scalar and  z( k )  is an  ( m - k )  element vector.
 C  zeta( k )  and  z( k ) are chosen to annhilate the elements below the
 C  triangular part of  A.
 C
-C  The vector  u( k )  is returned in the kth element of ZETA and in the
-C  kth column of A, such that zeta( k ) is in ZETA( k ) and the elements
-C  of z( k ) are in a( k + 1, k ), ..., a( m, k ). The elements of R are
+C  The vector  u( k )  is returned in the kth element of zeta and in the
+C  kth column of A, such that zeta( k ) is in zeta( k ) and the elements
+C  of z( k ) are in A( k + 1, k ), ..., A( m, k ). The elements of R are
 C  returned in the upper triangular part of  A.
 C
 C  Q is given by
@@ -90,11 +92,11 @@ C           be at least  m.
 C
 C           Unchanged on exit.
 C
-C  ZETA   - 'real' array of DIMENSION at least ( n ).
+C  zeta   - 'real' array of DIMENSION at least ( n ).
 C
-C           On  exit, ZETA( k )  contains the scalar  zeta( k )  for the
-C           kth  transformation.  If  T( k ) = I  then   ZETA( k ) = 0.0
-C           otherwise  ZETA( k )  contains  zeta( k ) as described above
+C           On  exit, zeta( k )  contains the scalar  zeta( k )  for the
+C           kth  transformation.  If  T( k ) = I  then   zeta( k ) = 0.0
+C           otherwise  zeta( k )  contains  zeta( k ) as described above
 C           and is always in the range ( 1.0, sqrt( 2.0 ) ).
 C
 C  INFORM - INTEGER.
@@ -127,13 +129,13 @@ C  auxiliary  linear  algebra routine  DGEAPQ. The  operation  B := Q'*B
 C  can be obtained by the call:
 C
 C     INFORM = 0
-C     CALL DGEAPQ( 'Transpose', 'Separate', M, N, A, LDA, ZETA,
+C     CALL DGEAPQ( 'Transpose', 'Separate', M, N, A, LDA, zeta,
 C    $             K, B, LDB, WORK, INFORM )
 C
 C  and  B := Q*B  can be obtained by the call:
 C
 C     INFORM = 0
-C     CALL DGEAPQ( 'No transpose', 'Separate', M, N, A, LDA, ZETA,
+C     CALL DGEAPQ( 'No transpose', 'Separate', M, N, A, LDA, zeta,
 C    $             K, B, LDB, WORK, INFORM )
 C
 C  In  both  cases  WORK  must be a  k  element array  that  is used  as
@@ -156,39 +158,39 @@ C
 C  -- Written on 13-December-1984.
 C     Sven Hammarling, Nag Central Office.
 C
-      EXTERNAL           DGEMV , DGER  , DGRFG
-      INTRINSIC          MIN
-      INTEGER            K     , LA
-      DOUBLE PRECISION   TEMP
-      DOUBLE PRECISION   ONE   ,         ZERO
-      PARAMETER        ( ONE   = 1.0D+0, ZERO  = 0.0D+0 )
+      external           dgemv , dger  , dgrfg
+      intrinsic          min
+      integer            k     , la
+      double precision   temp
+      double precision   one   ,         zero
+      parameter        ( one   = 1.0d+0, zero  = 0.0d+0 )
 
 *     Check the input parameters.
 
-      IF( N.EQ.0 )THEN
-         INFORM = 0
-         RETURN
-      END IF
-      IF( ( M.LT.N ).OR.( N.LT.0 ).OR.( LDA.LT.M ) )THEN
-         INFORM = 1
-         RETURN
-      END IF
+      if( n.eq.0 )then
+         inform = 0
+         return
+      end if
+      if( ( m.lt.n ).or.( n.lt.0 ).or.( ldA.lt.m ) )then
+         inform = 1
+         return
+      end if
 
 *     Perform the factorization.
 
-      LA = LDA
-      DO 20, K = 1, MIN( M - 1, N )
+      la = ldA
+      do 20, k = 1, min( m - 1, n )
 
 *        Use a Householder reflection to zero the kth column of A.
 *        First set up the reflection.
 
-         CALL DGRFG ( M - K, A( K, K ), A( K + 1, K ), 1, ZERO,
-     $                ZETA( K ) )
-         IF( ( ZETA( K ).GT.ZERO ).AND.( K.LT.N ) )THEN
-            IF( ( K + 1 ).EQ.N )
-     $         LA = M - K + 1
-            TEMP      = A( K, K )
-            A( K, K ) = ZETA( K )
+         call dgrfg ( m - k, A( k, k ), A( k + 1, k ), 1, zero,
+     $                zeta( k ) )
+         if( ( zeta( k ).gt.zero ).and.( k.lt.n ) )then
+            if( ( k + 1 ).eq.n )
+     $         la = m - k + 1
+            temp      = A( k, k )
+            A( k, k ) = zeta( k )
 
 *           We now perform the operation  A := Q( k )*A.
 
@@ -196,45 +198,44 @@ C
 *           of A.
 
 *           First form  work = B'*u. ( work is stored in the elements
-*           ZETA( k + 1 ), ..., ZETA( n ). )
+*           zeta( k + 1 ), ..., zeta( n ). )
 
-            CALL DGEMV ( 'Transpose', M - K + 1, N - K,
-     $                   ONE, A( K, K + 1 ), LA, A( K, K ), 1,
-     $                   ZERO, ZETA( K + 1 ), 1 )
+            call dgemv ( 'Transpose', m - k + 1, n - k,
+     $                   one, A( k, k + 1 ), la, A( k, k ), 1,
+     $                   zero, zeta( k + 1 ), 1 )
 
 *           Now form  B := B - u*work'.
 
-            CALL DGER  ( M - K + 1, N - K, -ONE, A( K, K ), 1,
-     $                   ZETA( K + 1 ), 1, A( K, K + 1 ), LA )
+            call dger  ( m - k + 1, n - k, -one, A( k, k ), 1,
+     $                   zeta( k + 1 ), 1, A( k, k + 1 ), la )
 
 *           Restore beta.
 
-            A( K, K ) = TEMP
-         END IF
-   20 CONTINUE
+            A( k, k ) = temp
+         end if
+   20 continue
 
 *     Store the final zeta when m.eq.n.
 
-      IF( M.EQ.N )
-     $   ZETA( N ) = ZERO
+      if( m.eq.n )
+     $   zeta( n ) = zero
 
-      INFORM = 0
-      RETURN
+      inform = 0
 
-*     End of DGEQR .
+*     end of dgeqr
+      end
 
-      END
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-      SUBROUTINE DGEQRP( PIVOT, M, N, A, LDA, ZETA, PERM, WORK, INFORM )
-      CHARACTER*1        PIVOT
-      INTEGER            M, N, LDA, INFORM
-      INTEGER            PERM( * )
-      DOUBLE PRECISION   A( LDA, * ), ZETA( * ), WORK( * )
+      subroutine dgeqrp( pivot, m, n, A, ldA, zeta, perm, work, inform )
+      character*1        pivot
+      integer            m, n, ldA, inform
+      integer            perm( * )
+      double precision   A( ldA, * ), zeta( * ), work( * )
 
-      DOUBLE PRECISION   WMACH
-      COMMON    /SOLMCH/ WMACH(15)
-      SAVE      /SOLMCH/
+      double precision   wmach
+      common    /solmch/ wmach(15)
+      save      /solmch/
 
 C  1. Purpose
 C     =======
@@ -274,9 +275,9 @@ C  zeta( k )  is a scalar and  z( k )  is an  ( m - k )  element vector.
 C  zeta( k )  and  z( k ) are chosen to annhilate the elements below the
 C  triangular part of  A.
 C
-C  The vector  u( k )  is returned in the kth element of ZETA and in the
-C  kth column of A, such that zeta( k ) is in ZETA( k ) and the elements
-C  of z( k ) are in a( k + 1, k ), ..., a( m, k ). The elements of R are
+C  The vector  u( k )  is returned in the kth element of zeta and in the
+C  kth column of A, such that zeta( k ) is in zeta( k ) and the elements
+C  of z( k ) are in A( k + 1, k ), ..., A( m, k ). The elements of R are
 C  returned in the upper triangular part of A.
 C
 C  Q is given by
@@ -355,14 +356,14 @@ C           be at least  m.
 C
 C           Unchanged on exit.
 C
-C  ZETA   - 'real' array of DIMENSION at least ( n ).
+C  zeta   - 'real' array of DIMENSION at least ( n ).
 C
-C           On exit, ZETA( k )  contains the scalar  zeta  for  the  kth
-C           transformation. If T( k ) = I then ZETA( k) = 0.0, otherwise
-C           ZETA( k )  contains the scalar  zeta( k ) as described above
+C           On exit, zeta( k )  contains the scalar  zeta  for  the  kth
+C           transformation. If T( k ) = I then zeta( k) = 0.0, otherwise
+C           zeta( k )  contains the scalar  zeta( k ) as described above
 C           and  is  always  in  the  range  ( 1.0, sqrt( 2.0 ) ).  When
-C           n .gt. m  the  elements  ZETA( m + 1 ),  ZETA( m + 2 ), ...,
-C           ZETA( n )  are used as internal workspace.
+C           n .gt. m  the  elements  zeta( m + 1 ),  zeta( m + 2 ), ...,
+C           zeta( n )  are used as internal workspace.
 C
 C  PERM   - INTEGER array of DIMENSION at least min( m, n ).
 C
@@ -411,13 +412,13 @@ C  auxiliary  linear algebra  routine  DGEAPQ. The  operation  B := Q'*B
 C  can be obtained by the call:
 C
 C     INFORM = 0
-C     CALL DGEAPQ( 'Transpose', 'Separate', M, N, A, LDA, ZETA,
+C     CALL DGEAPQ( 'Transpose', 'Separate', M, N, A, LDA, zeta,
 C    $             K, B, LDB, WORK, INFORM )
 C
 C  and  B := Q*B  can be obtained by the call:
 C
 C     INFORM = 0
-C     CALL DGEAPQ( 'No transpose', 'Separate', M, N, A, LDA, ZETA,
+C     CALL DGEAPQ( 'No transpose', 'Separate', M, N, A, LDA, zeta,
 C    $             K, B, LDB, WORK, INFORM )
 C
 C  In  both  cases  WORK  must be  a  k  element array  that is used  as
@@ -484,82 +485,82 @@ C
 C  -- Written on 13-December-1984.
 C     Sven Hammarling, Nag Central Office.
 C
-      EXTERNAL           MCHPAR, DGEMV , DGER  , DGRFG , DNRM2 , DSWAP
-      INTRINSIC          ABS   , MAX   , MIN   , SQRT
-      INTEGER            J     , JMAX  , K     , LA
-      DOUBLE PRECISION   EPS   , MAXNRM, NORM  , DNRM2 , TEMP  , TOL
-      DOUBLE PRECISION   LAMDA
-      PARAMETER        ( LAMDA = 1.0D-2 )
-      DOUBLE PRECISION   ONE   ,         ZERO
-      PARAMETER        ( ONE   = 1.0D+0, ZERO  = 0.0D+0 )
+      external           mchpar, dgemv , dger  , dgrfg , dnrm2 , dswap
+      intrinsic          abs   , max   , min   , sqrt
+      integer            j     , jmax  , k     , la
+      double precision   eps   , maxnrm, norm  , dnrm2 , temp  , tol
+      double precision   lamda
+      parameter        ( lamda = 1.0d-2 )
+      double precision   one   ,         zero
+      parameter        ( one   = 1.0d+0, zero  = 0.0d+0 )
 
 *     Check the input parameters.
 
-      IF( MIN( M, N ).EQ.0 )THEN
-         INFORM = 0
-         RETURN
-      END IF
-      IF( ( ( PIVOT.NE.'C' ).AND.( PIVOT.NE.'c' ).AND.
-     $      ( PIVOT.NE.'S' ).AND.( PIVOT.NE.'s' )      ).OR.
-     $    ( M.LT.0 ).OR.( N.LT.0 ).OR.( LDA.LT.M )           )THEN
-         INFORM = 1
-         RETURN
-      END IF
+      if( min( m, n ).eq.0 )then
+         inform = 0
+         return
+      end if
+      if( ( ( pivot.ne.'C' ).and.( pivot.ne.'c' ).and.
+     $      ( pivot.ne.'S' ).and.( pivot.ne.'s' )      ).or.
+     $    ( m.lt.0 ).or.( n.lt.0 ).or.( ldA.lt.m )           )then
+         inform = 1
+         return
+      end if
 
 *     Compute eps and the initial column norms.
 
-      CALL MCHPAR()
-      EPS = WMACH( 3 )
-      DO 10, J = 1, N
-         WORK( J )     = DNRM2 ( M, A( 1, J ), 1 )
-         WORK( J + N ) = WORK( J )
-   10 CONTINUE
+      call mchpar()
+      eps = wmach( 3 )
+      do 10, j = 1, n
+         work( j )     = dnrm2 ( m, A( 1, j ), 1 )
+         work( j + n ) = work( j )
+   10 continue
 
 *     Perform the factorization. TOL is the tolerance for DGRFG .
 
-      LA = LDA
-      DO 50, K = 1, MIN( M, N )
+      la = ldA
+      do 50, k = 1, min( m, n )
 
 *        Find the pivot column.
 
-         MAXNRM = ZERO
-         JMAX   = K
-         DO 20, J = K, N
-            IF( ( PIVOT.EQ.'C' ).OR.( PIVOT.EQ.'c' ) )THEN
-               IF( WORK( J + N  ).GT.MAXNRM )THEN
-                  MAXNRM = WORK( J + N )
-                  JMAX   = J
-               END IF
-            ELSE IF( WORK( J ).GT.ZERO )THEN
-               IF( ( WORK( J + N )/WORK( J ) ).GT.MAXNRM )THEN
-                  MAXNRM = WORK( J + N )/WORK( J )
-                  JMAX   = J
-               END IF
-            END IF
-   20    CONTINUE
-         PERM( K ) = JMAX
-         IF( JMAX.GT.K )THEN
-            CALL DSWAP ( M, A( 1, K ), 1, A( 1, JMAX ), 1 )
-            TEMP             = WORK( K )
-            WORK( K )        = WORK( JMAX )
-            WORK( JMAX )     = TEMP
-            WORK( JMAX + N ) = WORK( K + N )
-            PERM( K )        = JMAX
-         END IF
-         TOL = EPS*WORK( K )
-         IF( K.LT.M )THEN
+         maxnrm = zero
+         jmax   = k
+         do 20, j = k, n
+            if( ( pivot.eq.'C' ).or.( pivot.eq.'c' ) )then
+               if( work( j + n  ).gt.maxnrm )then
+                  maxnrm = work( j + n )
+                  jmax   = j
+               end if
+            else if( work( j ).gt.zero )then
+               if( ( work( j + n )/work( j ) ).gt.maxnrm )then
+                  maxnrm = work( j + n )/work( j )
+                  jmax   = j
+               end if
+            end if
+   20    continue
+         perm( k ) = jmax
+         if( jmax.gt.k )then
+            call dswap ( m, A( 1, k ), 1, A( 1, jmax ), 1 )
+            temp             = work( k )
+            work( k )        = work( jmax )
+            work( jmax )     = temp
+            work( jmax + n ) = work( k + n )
+            perm( k )        = jmax
+         end if
+         tol = eps*work( k )
+         if( k.lt.m )then
 
 *           Use a Householder reflection to zero the kth column of A.
 *           First set up the reflection.
 
-            CALL DGRFG ( M - K, A( K, K ), A( K + 1, K ), 1, TOL,
-     $                   ZETA( K ) )
-            IF( K.LT.N )THEN
-               IF( ZETA( K ).GT.ZERO )THEN
-                  IF( ( K + 1 ).EQ.N )
-     $               LA = M - K + 1
-                  TEMP      = A( K, K )
-                  A( K, K ) = ZETA( K )
+            call dgrfg ( m - k, A( k, k ), A( k + 1, k ), 1, tol,
+     $                   zeta( k ) )
+            if( k.lt.n )then
+               if( zeta( k ).gt.zero )then
+                  if( ( k + 1 ).eq.n )
+     $               la = m - k + 1
+                  temp      = A( k, k )
+                  A( k, k ) = zeta( k )
 
 *                 We now perform the operation  A := Q( k )*A.
 
@@ -567,66 +568,65 @@ C
 *                 part of A.
 
 *                 First form  work = B'*u. ( work is stored in the
-*                 elements ZETA( k + 1 ), ..., ZETA( n ). )
+*                 elements zeta( k + 1 ), ..., zeta( n ). )
 
-                  CALL DGEMV ( 'Transpose', M - K + 1, N - K,
-     $                         ONE, A( K, K + 1 ), LA, A( K, K ), 1,
-     $                         ZERO, ZETA( K + 1 ), 1 )
+                  call dgemv ( 'Transpose', m - k + 1, n - k,
+     $                         one, A( k, k + 1 ), la, A( k, k ), 1,
+     $                         zero, zeta( k + 1 ), 1 )
 
 *                 Now form  B := B - u*work'.
 
-                  CALL DGER  ( M - K + 1, N - K, -ONE, A( K, K ), 1,
-     $                         ZETA( K + 1 ), 1, A( K, K + 1 ), LA )
+                  call dger  ( m - k + 1, n - k, -one, A( k, k ), 1,
+     $                         zeta( k + 1 ), 1, A( k, k + 1 ), la )
 
 *                 Restore beta.
 
-                  A( K, K ) = TEMP
-               END IF
+                  A( k, k ) = temp
+               end if
 
 *              Update the unreduced column norms. Use the Linpack
 *              criterion for when to recompute the norms, except that
 *              we retain the original column lengths throughout and use
 *              a smaller lamda.
 
-               DO 40, J = K + 1, N
-                  IF( WORK( J + N ).GT.ZERO )THEN
-                     TEMP = ABS( A( K, J ) )/WORK( J + N )
-                     TEMP = MAX( ( ONE + TEMP )*( ONE - TEMP ), ZERO )
-                     NORM = TEMP
-                     TEMP = ONE +
-     $                      LAMDA*TEMP*( WORK( J + N )/WORK( J ) )**2
-                     IF( TEMP.GT.ONE )THEN
-                        WORK( J + N ) = WORK( J + N )*SQRT( NORM )
-                     ELSE
-                        WORK( J + N ) = DNRM2 ( M - K,
-     $                                          A( K + 1, J ), 1 )
-                     END IF
-                  END IF
-   40          CONTINUE
-            END IF
-         END IF
-   50 CONTINUE
+               do 40, j = k + 1, n
+                  if( work( j + n ).gt.zero )then
+                     temp = abs( A( k, j ) )/work( j + n )
+                     temp = max( ( one + temp )*( one - temp ), zero )
+                     norm = temp
+                     temp = one +
+     $                      lamda*temp*( work( j + n )/work( j ) )**2
+                     if( temp.gt.one )then
+                        work( j + n ) = work( j + n )*sqrt( norm )
+                     else
+                        work( j + n ) = dnrm2 ( m - k,
+     $                                          A( k + 1, j ), 1 )
+                     end if
+                  end if
+   40          continue
+            end if
+         end if
+   50 continue
 
 *     Store the final zeta when m.le.n.
 
-      IF( M.LE.N )
-     $   ZETA( M ) = ZERO
+      if( m.le.n )
+     $   zeta( m ) = zero
 
-      INFORM = 0
-      RETURN
+      inform = 0
 
-*     End of DGEQRP.
+*     end of dgeqrp
+      end
 
-      END
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-      SUBROUTINE DGEAP ( SIDE, TRANS, M, N, PERM, K, B, LDB )
+      subroutine dgeap ( side, trans, m, n, perm, k, b, ldB )
 *     .. Scalar Arguments ..
-      INTEGER            K, LDB, M, N
-      CHARACTER*1        SIDE, TRANS
+      integer            k, ldB, m, n
+      character*1        side, trans
 *     .. Array Arguments ..
-      DOUBLE PRECISION   B( LDB, * )
-      INTEGER            PERM( * )
+      double precision   B( ldB, * )
+      integer            perm( * )
 *     ..
 *
 *  Purpose
@@ -715,8 +715,8 @@ C
 *
 *           Unchanged on exit.
 *
-*  B      - DOUBLE PRECISION array of  DIMENSION  ( LDB, ncolb ),  where
-*           ncolb = k   when   SIDE = 'L' or 'l'  and   ncolb = m   when
+*  B      - DOUBLE PRECISION array of  DIMENSION  ( LDB, ncolB ),  where
+*           ncolB = k   when   SIDE = 'L' or 'l'  and   ncolB = m   when
 *           SIDE = 'R' or 'r'.
 *
 *           Before entry  with  SIDE = 'L' or 'l',  the  leading  M by K
@@ -742,81 +742,79 @@ C
 *
 *
 *     .. Local Scalars ..
-      DOUBLE PRECISION   TEMP
-      INTEGER            I, J, L
-      LOGICAL            LEFT, NULL, RIGHT, TRNSP
+      double precision   temp
+      integer            i, j, l
+      logical            left, null, right, trnsp
 *     .. Intrinsic Functions ..
-      INTRINSIC          MIN
+      intrinsic          min
 *     ..
 *     .. Executable Statements ..
-      IF( MIN( M, N, K ).EQ.0 )
-     $   RETURN
-      LEFT  = ( SIDE .EQ.'L' ).OR.( SIDE .EQ.'l' )
-      RIGHT = ( SIDE .EQ.'R' ).OR.( SIDE .EQ.'r' )
-      NULL  = ( TRANS.EQ.'N' ).OR.( TRANS.EQ.'n' )
-      TRNSP = ( TRANS.EQ.'T' ).OR.( TRANS.EQ.'t' )
-      IF( LEFT )THEN
-         IF( TRNSP )THEN
-            DO 20, I = 1, N
-               IF( PERM( I ).NE.I )THEN
-                  L = PERM( I )
-                  DO 10, J = 1, K
-                     TEMP      = B( I, J )
-                     B( I, J ) = B( L, J )
-                     B( L, J ) = TEMP
-   10             CONTINUE
-               END IF
-   20       CONTINUE
-         ELSE IF( NULL )THEN
-            DO 40, I = N, 1, -1
-               IF( PERM( I ).NE.I )THEN
-                  L = PERM( I )
-                  DO 30, J = 1, K
-                     TEMP      = B( L, J )
-                     B( L, J ) = B( I, J )
-                     B( I, J ) = TEMP
-   30             CONTINUE
-               END IF
-   40       CONTINUE
-         END IF
-      ELSE IF( RIGHT )THEN
-         IF( TRNSP )THEN
-            DO 60, J = 1, N
-               IF( PERM( J ).NE.J )THEN
-                  L = PERM( J )
-                  DO 50, I = 1, K
-                     TEMP      = B( I, J )
-                     B( I, J ) = B( L, J )
-                     B( L, J ) = TEMP
-   50             CONTINUE
-               END IF
-   60       CONTINUE
-         ELSE IF( NULL )THEN
-            DO 80, J = N, 1, -1
-               IF( PERM( J ).NE.J )THEN
-                  L = PERM( J )
-                  DO 70, I = 1, K
-                     TEMP      = B( L, J )
-                     B( L, J ) = B( I, J )
-                     B( I, J ) = TEMP
-   70             CONTINUE
-               END IF
-   80       CONTINUE
-         END IF
-      END IF
+      if( min( m, n, k ).eq.0 )
+     $   return
+      left  = ( side .eq.'L' ).or.( side .eq.'l' )
+      right = ( side .eq.'R' ).or.( side .eq.'r' )
+      null  = ( trans.eq.'N' ).or.( trans.eq.'n' )
+      trnsp = ( trans.eq.'T' ).or.( trans.eq.'t' )
+      if( left )then
+         if( trnsp )then
+            do 20, i = 1, n
+               if( perm( i ).ne.i )then
+                  l = perm( i )
+                  do 10, j = 1, k
+                     temp      = B( i, j )
+                     B( i, j ) = B( l, j )
+                     B( l, j ) = temp
+   10             continue
+               end if
+   20       continue
+         else if( null )then
+            do 40, i = n, 1, -1
+               if( perm( i ).ne.i )then
+                  l = perm( i )
+                  do 30, j = 1, k
+                     temp      = B( l, j )
+                     B( l, j ) = B( i, j )
+                     B( i, j ) = temp
+   30             continue
+               end if
+   40       continue
+         end if
+      else if( right )then
+         if( trnsp )then
+            do 60, j = 1, n
+               if( perm( j ).ne.j )then
+                  l = perm( j )
+                  do 50, i = 1, k
+                     temp      = B( i, j )
+                     B( i, j ) = B( l, j )
+                     B( l, j ) = temp
+   50             continue
+               end if
+   60       continue
+         else if( null )then
+            do 80, j = n, 1, -1
+               if( perm( j ).ne.j )then
+                  l = perm( j )
+                  do 70, i = 1, k
+                     temp      = B( l, j )
+                     B( l, j ) = B( i, j )
+                     B( i, j ) = temp
+   70             continue
+               end if
+   80       continue
+         end if
+      end if
 *
-      RETURN
-*
-*     End of DGEAP . ( F06QJF )
-*
-      END
+*     end of dgeap (f06qjf)
+      end
+
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-      SUBROUTINE DGEAPQ( TRANS, WHEREZ, M, N, A, LDA, ZETA,
-     $                   NCOLB, B, LDB, WORK, INFORM )
-      CHARACTER*1        TRANS, WHEREZ
-      INTEGER            M, N, LDA, NCOLB, LDB, INFORM
-      DOUBLE PRECISION   A( LDA, * ), ZETA( * ), B( LDB, * ), WORK( * )
+      subroutine dgeapq( trans, wherez, m, n, A, ldA, zeta,
+     $                   ncolB, b, ldB, work, inform )
+      character*1        trans, wherez
+      integer            m, n, ldA, ncolB, ldB, inform
+      double precision   A( ldA, * ), zeta( * ), B( ldB, * ), work( * )
 C
 C  1. Purpose
 C     =======
@@ -825,10 +823,10 @@ C  DGEAPQ performs one of the transformations
 C
 C     B := Q'*B   or   B := Q*B,
 C
-C  where B is an m by ncolb matrix and Q is an m by m orthogonal matrix,
+C  where B is an m by ncolB matrix and Q is an m by m orthogonal matrix,
 C  given as the product of  Householder transformation matrices, details
 C  of  which are stored in the  m by n ( m.ge.n )  array  A  and, if the
-C  parameter  WHEREZ = 'S' or 's', in the array ZETA.
+C  parameter  WHEREZ = 'S' or 's', in the array zeta.
 C
 C  This  routine is  intended for use following auxiliary linear algebra
 C  routines such as  DGEQR , DGEHES and DSLTRI. ( See those routines for
@@ -854,8 +852,8 @@ C
 C  zeta( k )  is a scalar and  z( k )  is an  ( m - k )  element vector.
 C
 C  z( k )  must  be  supplied  in  the  kth  column  of  A  in  elements
-C  a( k + 1, k ), ..., a( m, k )  and  zeta( k ) must be supplied either
-C  in  a( k, k )  or in  zeta( k ), depending upon the parameter WHEREZ.
+C  A( k + 1, k ), ..., A( m, k )  and  zeta( k ) must be supplied either
+C  in  A( k, k )  or in  zeta( k ), depending upon the parameter WHEREZ.
 C
 C  To obtain Q explicitly B may be set to I and premultiplied by Q. This
 C  is more efficient than obtaining Q'.
@@ -889,7 +887,7 @@ C              The elements of zeta are in A.
 C
 C           WHEREZ = 'S' or 's'
 C
-C              The elements of zeta are separate from A, in ZETA.
+C              The elements of zeta are separate from A, in zeta.
 C
 C           Unchanged on exit.
 C
@@ -925,12 +923,12 @@ C           be at least m.
 C
 C           Unchanged on exit.
 C
-C  ZETA   - 'real' array of DIMENSION at least min( m - 1, n ).
+C  zeta   - 'real' array of DIMENSION at least min( m - 1, n ).
 C
-C           Before entry with  WHEREZ = 'S' or 's', the array  ZETA must
+C           Before entry with  WHEREZ = 'S' or 's', the array  zeta must
 C           contain the elements of the vector  zeta.
 C
-C           When  WHEREZ = 'I' or 'i', the array ZETA is not referenced.
+C           When  WHEREZ = 'I' or 'i', the array zeta is not referenced.
 C
 C           Unchanged on exit.
 C
@@ -942,7 +940,7 @@ C           immediate return is effected.
 C
 C           Unchanged on exit.
 C
-C  B      - 'real' array of DIMENSION ( LDB, ncolb ).
+C  B      - 'real' array of DIMENSION ( LDB, ncolB ).
 C
 C           Before entry, the leading  M by NCOLB  part of  the array  B
 C           must  contain  the matrix to be  transformed.
@@ -957,7 +955,7 @@ C           be at least m.
 C
 C           Unchanged on exit.
 C
-C  WORK   - 'real' array of DIMENSION at least ( ncolb ).
+C  WORK   - 'real' array of DIMENSION at least ( ncolB ).
 C
 C           Used as internal workspace.
 C
@@ -989,86 +987,85 @@ C
 C  -- Written on 15-November-1984.
 C     Sven Hammarling, Nag Central Office.
 C
-      EXTERNAL           DGEMV , DGER
-      INTRINSIC          MIN
-      INTEGER            J     , K     , KK    , LB
-      DOUBLE PRECISION   TEMP
-      DOUBLE PRECISION   ONE   ,         ZERO
-      PARAMETER        ( ONE   = 1.0D+0, ZERO  = 0.0D+0 )
+      external           dgemv , dger
+      intrinsic          min
+      integer            j     , k     , kk    , lb
+      double precision   temp
+      double precision   one   ,         zero
+      parameter        ( one   = 1.0d+0, zero  = 0.0d+0 )
 
 *     Check the input parameters.
 
-      IF( MIN( N, NCOLB ).EQ.0 )THEN
-         INFORM = 0
-         RETURN
-      END IF
-      IF( ( ( TRANS .NE.' ' ).AND.
-     $      ( TRANS .NE.'N' ).AND.( TRANS .NE.'n' ).AND.
-     $      ( TRANS .NE.'T' ).AND.( TRANS .NE.'t' ).AND.
-     $      ( TRANS .NE.'C' ).AND.( TRANS .NE.'c' )      ).OR.
-     $    ( ( WHEREZ.NE.'I' ).AND.( WHEREZ.NE.'i' ).AND.
-     $      ( WHEREZ.NE.'S' ).AND.( WHEREZ.NE.'s' )      ).OR.
-     $    ( M.LT.N ).OR.( N.LT.0 ).OR.( LDA.LT.M ).OR.
-     $    ( NCOLB.LT.0 ).OR.( LDB.LT.M )                      )THEN
-         INFORM = 1
-         RETURN
-      END IF
+      if( min( n, ncolB ).eq.0 )then
+         inform = 0
+         return
+      end if
+      if( ( ( trans .ne.' ' ).and.
+     $      ( trans .ne.'N' ).and.( trans .ne.'n' ).and.
+     $      ( trans .ne.'T' ).and.( trans .ne.'t' ).and.
+     $      ( trans .ne.'C' ).and.( trans .ne.'c' )      ).or.
+     $    ( ( wherez.ne.'I' ).and.( wherez.ne.'i' ).and.
+     $      ( wherez.ne.'S' ).and.( wherez.ne.'s' )      ).or.
+     $    ( m.lt.n ).or.( n.lt.0 ).or.( ldA.lt.m ).or.
+     $    ( ncolB.lt.0 ).or.( ldB.lt.m )                      )then
+         inform = 1
+         return
+      end if
 
 *     Perform the transformation.
 
-      LB = LDB
-      DO 20, KK = 1, MIN( M - 1, N )
-         IF( ( TRANS.EQ.'T' ).OR.( TRANS.EQ.'t' ).OR.
-     $       ( TRANS.EQ.'C' ).OR.( TRANS.EQ.'c' )     )THEN
+      lb = ldB
+      do 20, kk = 1, min( m - 1, n )
+         if( ( trans.eq.'T' ).or.( trans.eq.'t' ).or.
+     $       ( trans.eq.'C' ).or.( trans.eq.'c' )     )then
 
 *           Q'*B = Q( p )*...*Q( 2 )*Q( 1 )*B,     p = min( m - 1, n ).
 
-            K = KK
-         ELSE
+            k = kk
+         else
 
 *           Q*B  = Q( 1 )'*Q( 2 )'*...*Q( p )'*B,  p = min( m - 1, n ).
 *           Note that  Q( k )' = Q( k ).
 
-            K = MIN( N, M - 1 ) + 1 - KK
-         END IF
-         IF( ( WHEREZ.EQ.'S' ).OR.( WHEREZ.EQ.'s' ) )THEN
-            TEMP      = A( K, K )
-            A( K, K ) = ZETA( K )
-         END IF
+            k = min( n, m - 1 ) + 1 - kk
+         end if
+         if( ( wherez.eq.'S' ).or.( wherez.eq.'s' ) )then
+            temp      = A( k, k )
+            A( k, k ) = zeta( k )
+         end if
 
-*        If ZETA( k ) is zero then Q( k ) = I and we can skip the kth
+*        If zeta( k ) is zero then Q( k ) = I and we can skip the kth
 *        transformation.
 
-         IF( A( K, K ).GT.ZERO )THEN
-            IF( NCOLB.EQ.1 )
-     $         LB = M - K + 1
+         if( A( k, k ).gt.zero )then
+            if( ncolB.eq.1 )
+     $         lb = m - k + 1
 
-*           Let C denote the bottom ( m - k + 1 ) by ncolb part of B.
+*           Let C denote the bottom ( m - k + 1 ) by ncolB part of B.
 
 *           First form  work = C'*u.
 
-            DO 10, J = 1, NCOLB
-               WORK( J ) = ZERO
-   10       CONTINUE
-            CALL DGEMV ( 'Transpose', M - K + 1, NCOLB,
-     $                   ONE, B( K, 1 ), LB, A( K, K ), 1,
-     $                   ZERO, WORK, 1 )
+            do 10, j = 1, ncolB
+               work( j ) = zero
+   10       continue
+            call dgemv ( 'Transpose', m - k + 1, ncolB,
+     $                   one, B( k, 1 ), lb, A( k, k ), 1,
+     $                   zero, work, 1 )
 
 *           Now form  C := C - u*work'.
 
-            CALL DGER  ( M - K + 1, NCOLB, -ONE, A( K, K ), 1,
-     $                   WORK, 1, B( K, 1 ), LB )
-         END IF
+            call dger  ( m - k + 1, ncolB, -one, A( k, k ), 1,
+     $                   work, 1, B( k, 1 ), lb )
+         end if
 
 *        Restore the diagonal element of A.
 
-         IF( ( WHEREZ.EQ.'S' ).OR.( WHEREZ.EQ.'s' ) )
-     $      A( K, K ) = TEMP
-   20 CONTINUE
+         if( ( wherez.eq.'S' ).or.( wherez.eq.'s' ) )
+     $      A( k, k ) = temp
+   20 continue
 
-      INFORM = 0
-      RETURN
+      inform = 0
 
-*     End of DGEAPQ.
+*     end of dgeapq
+      end
 
-      END

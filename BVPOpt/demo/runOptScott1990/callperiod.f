@@ -66,8 +66,8 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       INTEGER iPstep, iVstep(NN), iVLim, iVGen, numVInt, iVmax
       LOGICAL logFAIL, logConst, logPLim
       LOGICAL logVLim
-      DOUBLE PRECISION X0Init(NN), tempRes, offSetX0, stepX0
-      DOUBLE PRECISION PFINAL
+      DOUBLE PRECISION X0Init(NN), tempVar, offSetX0, stepX0
+      DOUBLE PRECISION PFINAL, offSetP, stepSizeP
 
       EXTERNAL  TWPBVPC, FSUB, DFSUB, GSUB, DGSUB
 
@@ -274,10 +274,12 @@ C     GET DERIVATIVES WITH TIDES
       ENDIF
 
 C     change initial period value guess if the solution is not found or constant
-      PGUESS= P-4D0+0.2D0*iPstep
+      offSetP=4D0
+      stepSizeP=0.25D0
+      PGUESS= P-offSetP+stepSizeP*iPstep
       logFAIL =  .not. IFAIL .eq. 0
       logConst = logFAIL .or. ABS(FX(1,1)) .lt. 0.1D-9
-      logPLim = logConst .and. PGUESS .lt. P+4.0D0
+      logPLim = logConst .and. PGUESS .lt. P+offSetP
       iPstep=iPstep+1
       ENDDO
 
@@ -285,8 +287,11 @@ c     if changing period guess does not return correct result, then vary initial
 c     for variables which are not fixed in phase condition   
       
       IF (logConst) THEN
-c     number of intervals that each initial value coordinate vary with step (2*offSetX0/numVInt)  
+c     number of intervals in which initial value coordinate varies 
       numVInt=4
+c     X0 coordinates vary in +/- offSetX0 with stepsize (2*offSetX0/numVInt)
+      offSetX0=1D0
+      stepX0=2*offSetX0/numVInt
 
 c     counter of all intervals
       iVGen = iVGen+1
@@ -295,22 +300,23 @@ c     counter of all intervals
       IF (iVGen.GT.iVmax) THEN
       logVLim = .FALSE.
       ENDIF
-      
+
+c     from general counter iVGen=1..iVmax substruct counters for number of the
+c     correspondent intervals for each variable iVstep(1..NN) which is
+c     not fixed in the pase condition     
       iVCount=0
       DO 41 iVLim=1,NN
       IF (iVLim.NE.NPHASE) THEN
-      tempRes=(iVGen-1)/(4**iVCount)
-      rowInd=FLOOR(tempRes)
+      tempVar=(iVGen-1)/(4**iVCount)
+      rowInd=FLOOR(tempVar)
       iVstep(iVLim) = MOD(rowInd,numVInt)
       iVCount=iVCount+1 
       ENDIF
 41    continue
 
+c     set varied coordinates for initial guess X0 
       DO 42 iVLim=1,NN
       IF (iVLim.NE.NPHASE) THEN
-c     X0 coordinates vary in +/- offSetX0 with stepsize (2*offSetX0/numVInt)
-      offSetX0=1D0
-      stepX0=2*offSetX0/numVInt
       X0(iVLim) = X0Init(iVLim)-offSetX0+stepX0*iVstep(iVLim)
       ENDIF
 42    continue

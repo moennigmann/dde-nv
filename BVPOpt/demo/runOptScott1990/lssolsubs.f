@@ -1,9 +1,12 @@
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-*     file  lssubs.f
+*
+*     File  lssolsubs.f
 *
 *     lssol    lsadd    lsadds   lsbnds   lschol   lscore   lscrsh
-*     lsdel    lsdflt   lsfeas   lsfile   lsgetp   lsgset   lskey
-*     lsloc    lsmove   lsmuls   lsoptn   lsprt    lssetx
+*     lsdel    lsdflt   lsfeas   lsfile   lsfrmH   lsgetp   lsgset
+*     lskey    lsloc    lsmove   lsmuls   lsnkey   lsoptn   lsprt
+*     lssetx
+*
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
       subroutine lssol ( mm, n,
@@ -73,15 +76,21 @@
 *     California 94305.
 *
 *     Systems Optimization Laboratory, Stanford University.
+*     Department of Mathematics, University of California, San Diego.
 *     Version 1.00 Dated  30-Jan-1986.
 *     Version 1.01 Dated  30-Jun-1986.   Level-2 BLAS added
 *     Version 1.02 Dated  13-May-1988.   Level-2 matrix routines added.
 *     Version 1.03 Dated  19-Jun-1989.   Some obscure bugs fixed.      
-*     Version 1.04 Dated  26-Aug-1991.   nrank bug fixed.      
+*     Version 1.04 Dated  26-Aug-1991.   nRank bug fixed.      
 *     Version 1.05 Dated  20-Sep-1992.   Output modified. 
 *                         20-Oct-1992    Summary file included.
+*                         12-Jul-1994    Hessian option added.
+*                                        Debug printing eliminated.
 *                         
-*     Copyright  1984/1993  Stanford University.
+*     Copyright  1983--1995  Stanford University.
+*     This software is not in the public domain. Its use is governed by
+*     a license agreement with Stanford University.  It is illegal to 
+*     make copies except as authorized by the license agreement.
 *
 *     This material may be reproduced by or for the U.S. Government 
 *     pursuant to the copyright license under DAR Clause 7-104.9(a)
@@ -93,11 +102,14 @@
 *     PA No. DE-AT03-76ER72018; the Army Research Office Contract
 *     DAA29-84-K-0156; and the Office of Naval Research Grant
 *     N00014-75-C-0267.
+*
+*     This version of  LSSOL  dated 16-Feb-95.
 *     ==================================================================
       double precision   wmach
       common    /solmch/ wmach(15)
       save      /solmch/
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
+      common    /sol1cm/ iPrint, iSumm , lines1, lines2
+      save      /sol1cm/ 
       common    /sol3cm/ lennam, ldT, ncolT, ldQ
       common    /sol4cm/ epspt3, epspt5, epspt8, epspt9
       common    /sol5cm/ Asize, dTmax, dTmin
@@ -105,43 +117,37 @@
       parameter         (lenls = 20)
       common    /sol1ls/ locls(lenls)
 
-      logical            lsdbg
-      parameter         (ldbg = 5)
-      common    /lsdebg/ ilsdbg(ldbg), lsdbg
-*     +Include lsparm+++++++++++++++++++++++++++++++++++++++++++++++++++
+*     +Include lsparm-Sep-95++++++++++++++++++++++++++++++++++++++++++++
       parameter         (mxparm = 30)
       integer            iprmls(mxparm), ipsvls
       double precision   rprmls(mxparm), rpsvls
 
       common    /lspar1/ ipsvls(mxparm),
-     $                   idbgls, iPrnt , iSumry, itmax1, itmax2, lcrash,
-     $	                 ldbgls, lprob , msgls , nn    , nnclin, nprob , 
-     $                   ipadls(18)
+     $                   itmax1, itmax2, lcrash, lformH, lprob , msgLS ,
+     $                   nn    , nnclin, nprob , ipadls(21)
 
       common    /lspar2/ rpsvls(mxparm),
      $                   bigbnd, bigdx , bndlow, bndupp, tolact, tolfea,
-     $                   tolrnk, rpadls(23)
+     $                   tolOpt, tolrnk, rpadls(22)
 
-      equivalence       (iprmls(1), idbgls), (rprmls(1), bigbnd)
+      equivalence       (iprmls(1), itmax1 ), (rprmls(1), bigbnd)
 
       save      /lspar1/, /lspar2/
 *     ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-      equivalence   (msgls , msglvl), (idbgls, idbg), (ldbgls, msgdbg)
-
-      intrinsic          max, min
+      equivalence   (msgls , msglvl)
 
 *     Local variables.
 
       logical            cold  , factrz, linObj, named , rowerr,
      $                   unitQ , vertex
       character*2        prbtyp
-      character*8        names(1)
+      character*16       names(1)
       parameter         (zero   =0.0d+0, point3 =3.3d-1, point8 =0.8d+0)
       parameter         (point9 =0.9d+0, one    =1.0d+0, hundrd =1.0d+2)
 
       character*40       title
       data               title
-     $                 / 'SOL/LSSOL  ---  Version 1.05-2  April 93' /
+     $                 / 'SOL/LSSOL  ---  Version 1.05-4   Sept 95' /
 *                         123456789|123456789|123456789|123456789|
 *
 *     Set the machine-dependent constants.
@@ -150,7 +156,6 @@
 
       epsmch = wmach( 3)
       rteps  = wmach( 4)
-      nout   = wmach(11)
 
       epspt3 = epsmch**point3
       epspt5 = rteps
@@ -175,52 +180,52 @@ C-->  condmx = max( one/epspt3, hundrd )
 *     Set all parameters determined by the problem type.
 
       if      (lprob .eq. 1 ) then
-         prbtyp    = 'FP'
+         prbtyp = 'FP'
          m      = 0
          linObj = .false.
          factrz = .true.
       else if (lprob .eq. 2 ) then
-         prbtyp    = 'LP'
+         prbtyp = 'LP'
          m      = 0
          linObj = .true.
          factrz = .true.
       else if (lprob .eq. 3 ) then
-         prbtyp    = 'QP'
+         prbtyp = 'QP'
          m      = mm
          linObj = .false.
          factrz = .true.
       else if (lprob .eq. 4 ) then
-         prbtyp    = 'QP'
+         prbtyp = 'QP'
          m      = mm
          linObj = .true.
          factrz = .true.
       else if (lprob .eq. 5 ) then
-         prbtyp    = 'QP'
+         prbtyp = 'QP'
          m      = mm
          linObj = .false.
          factrz = .false.
       else if (lprob .eq. 6 ) then
-         prbtyp    = 'QP'
+         prbtyp = 'QP'
          m      = mm
          linObj = .true.
          factrz = .false.
       else if (lprob .eq. 7 ) then
-         prbtyp    = 'LS'
+         prbtyp = 'LS'
          m      = mm
          linObj = .false.
          factrz = .true.
       else if (lprob .eq. 8 ) then
-         prbtyp    = 'LS'
+         prbtyp = 'LS'
          m      = mm
          linObj = .true.
          factrz = .true.
       else if (lprob .eq. 9 ) then
-         prbtyp    = 'LS'
+         prbtyp = 'LS'
          m      = mm
          linObj = .false.
          factrz = .false.
       else if (lprob .eq. 10) then
-         prbtyp    = 'LS'
+         prbtyp = 'LS'
          m      = mm
          linObj = .true.
          factrz = .false.
@@ -253,12 +258,12 @@ C-->  condmx = max( one/epspt3, hundrd )
       if (nclin .eq. 0) then
          ldQ    = 1
          ldT    = 1
-         ncolt  = 1
+         ncolT  = 1
          vertex = .false.
       else
          ldQ    = max( 1, mxfree )
          ldT    = max( maxnZ, maxact )
-         ncolt  = mxfree
+         ncolT  = mxfree
       end if
 
 *     Allocate certain arrays that are not done in lsloc.
@@ -272,7 +277,22 @@ C-->  condmx = max( one/epspt3, hundrd )
 
       call lsloc ( lprob, n, nclin, litotl, lwtotl )
 
-      cold  = lcrash .eq. 0
+      lkactv = locls( 1)
+
+      lanorm = locls( 2)
+      lpx    = locls( 4)
+      lres   = locls( 5)
+      lres0  = locls( 6)
+      lgQ    = locls( 8)
+      lcQ    = locls( 9)
+      lrlam  = locls(10)
+      lT     = locls(11)
+      lQ     = locls(12)
+      lwtinf = locls(13)
+      lwrk   = locls(14)
+      lfeatl = locls(15)
+
+      cold   = lcrash .eq. 0
 
 *     Check input parameters and storage limits.
 
@@ -283,30 +303,15 @@ C-->  condmx = max( one/epspt3, hundrd )
      $             leniw, lenw, litotl, lwtotl,
      $             n, nclin, ncnln,
      $             istate, kx, named, names,
-     $             bigbnd, bl, bu, x )
+     $             bigbnd, bl, bu, clamda, x )
 
       if (nerror .gt. 0) then
          inform = 6
          go to 800
       end if
 
-      lkactv = locls( 1)
-
-      lanorm = locls( 2)
-      lpx    = locls( 4)
-      lres   = locls( 5)
-      lres0  = locls( 6)
-      lgq    = locls( 8)
-      lcq    = locls( 9)
-      lrlam  = locls(10)
-      lT     = locls(11)
-      lQ     = locls(12)
-      lwtinf = locls(13)
-      lwrk   = locls(14)
-      lfeatl = locls(15)
-
       if (tolfea .gt. zero)
-     $   call dload ( n+nclin, (tolfea), w(lfeatl), 1 )
+     $   call dload ( n+nclin, tolfea, w(lfeatl), 1 )
 
       ianrmj = lanorm
       do 200, j = 1, nclin
@@ -331,38 +336,38 @@ C-->  condmx = max( one/epspt3, hundrd )
   210    continue
 
          if      (prbtyp .eq. 'LP'  .or.  prbtyp .eq. 'FP') then
-            nrank = 0
+            nRank = 0
          else if (prbtyp .eq. 'QP') then
 *           ------------------------------------------------------------
 *           Compute the Cholesky factorization of R.  The Hessian is
 *           m by m and resides in the upper left-hand corner of R.
 *           ------------------------------------------------------------
             do 220, j = m+1, n
-               call dload ( m, (zero), R(1,j), 1 )
+               call dload ( m, zero, R(1,j), 1 )
   220       continue
 
-            call lschol( ldR, m, nrank, tolrnk, kx, R, info )
+            call lschol( ldR, m, nRank, tolrnk, kx, R, info )
 
-            if (nrank .gt. 0)
-     $         call dload ( nrank, (zero), w(lres0), 1 )
+            if (nRank .gt. 0)
+     $         call dload ( nRank, zero, w(lres0), 1 )
          else if (prbtyp .eq. 'LS') then
 *           ------------------------------------------------------------
 *           Compute the orthogonal factorization PRQ = ( U ),  where P
 *                                                      ( 0 )
-*           is an orthogonal matrix and Q is a permutation matrix.
+*           is an orthogonal matrix and Q is a permutation.
 *           Overwrite R with the upper-triangle U.  The orthogonal
 *           matrix P is applied to the residual and discarded.  The
 *           permutation is stored in the array KX.  Once U has been
-*           computed we need only work with vectors of length N within
+*           computed we need only work with vectors of length n within
 *           lscore.  However, it is necessary to store the sum of
-*           squares of the terms  b(nrank+1),...,b(m),  where B = Pr.
+*           squares of the terms  b(nRank+1),...,b(m),  where b = Pr.
 *           ------------------------------------------------------------
             call dgeqrp( 'Column iterchanges', m, n, R, ldR,
-     $                   w(lwrk), iw(lkactv), w(lgq), info )
+     $                   w(lwrk), iw(lkactv), w(lgQ), info )
 
             lj  = lkactv
             do 230, j = 1, n
-               jmax = iw(lj)
+               jmax   = iw(lj)
                if (jmax .gt. j) then
                   jsave    = kx(jmax)
                   kx(jmax) = kx(j)
@@ -372,38 +377,38 @@ C-->  condmx = max( one/epspt3, hundrd )
   230       continue
 
             call dgeapq( 'Transpose', 'Separate', m, min( n,m-1 ), 
-     $                   R, ldR, w(lwrk), 1, b, m, w(lgq), info )
+     $                   R, ldR, w(lwrk), 1, b, m, w(lgQ), info )
 
             rownrm = dnrm2 ( n, R(1,1), ldR )
             if (          rownrm  .le.        tolrnk
      $          .or.  abs(R(1,1)) .le. rownrm*tolrnk) then
-               nrank = 0
+               nRank = 0
             else
-               nrank = idrank( min(n, m), R, ldR+1, tolrnk )
+               nRank = idrank( min(n, m), R, ldR+1, tolrnk )
             end if
 
-            if (m .gt. nrank) ssq1 = dnrm2 ( m-nrank, b(nrank+1), 1 )
+            if (m .gt. nRank) ssq1 = dnrm2 ( m-nRank, b(nRank+1), 1 )
 
-            if (nrank .gt. 0)
-     $         call dcopy ( nrank, b, 1, w(lres0), 1 )
+            if (nRank .gt. 0)
+     $         call dcopy ( nRank, b, 1, w(lres0), 1 )
          end if
       else
 *        ===============================================================
 *        R is input as an upper-triangular matrix with m rows.
 *        ===============================================================
-         nrank = m
-         if (nrank .gt. 0) then
+         nRank = m
+         if (nRank .gt. 0) then
             if      (prbtyp .eq. 'QP') then
-               call dload ( nrank, (zero), w(lres0), 1 )
+               call dload ( nRank, zero, w(lres0), 1 )
             else if (prbtyp .eq. 'LS') then
-               call dcopy ( nrank, b, 1, w(lres0), 1 )
+               call dcopy ( nRank, b, 1, w(lres0), 1 )
             end if
          end if
       end if
 
-      if (       msglvl .gt. 0     .and.  nrank  .lt. n
+      if (       msglvl .gt. 0     .and.  nRank  .lt. n
      $    .and.  prbtyp .ne. 'LP'  .and.  prbtyp .ne. 'FP') then
-         if (iPrint .gt. 0) write(iPrint, 9000) nrank
+         if (iPrint .gt. 0) write(iPrint, 9000) nRank
       end if
 *     ------------------------------------------------------------------
 *     Find an initial working set.
@@ -413,39 +418,39 @@ C-->  condmx = max( one/epspt3, hundrd )
      $             nfree, n, ldA,
      $             istate, iw(lkactv),
      $             bigbnd, tolact,
-     $             A, w(lAx), bl, bu, x, w(lgq), w(lwrk) )
+     $             A, w(lAx), bl, bu, x, w(lgQ), w(lwrk) )
 
 *     ------------------------------------------------------------------
 *     Compute the TQ factorization of the constraints while keeping R in
 *     upper-triangular form.  Transformations associated with Q are
-*     applied to cq.  Transformations associated with P are applied to
+*     applied to cQ.  Transformations associated with P are applied to
 *     res0.  If some simple bounds are in the working set,  kx is
 *     re-ordered so that the free variables come first.
 *     ------------------------------------------------------------------
-*     First, add the bounds. To save a bit of work, cq is not loaded
+*     First, add the bounds. To save a bit of work, cQ is not loaded
 *     until after kx has been re-ordered.
 
-      ngq   = 0
+      ngQ   = 0
       nres  = 0
-      if (nrank .gt. 0) nres = 1
+      if (nRank .gt. 0) nres = 1
       unitQ = .true.
 
       call lsbnds( unitQ,
-     $             inform, nZ, nfree, nrank, nres, ngq,
+     $             inform, nZ, nfree, nRank, nres, ngQ,
      $             n, ldQ, ldA, ldR, ldT,
      $             istate, kx, condmx,
-     $             A, R, w(lT), w(lres0), w(lcq), w(lQ),
+     $             A, R, w(lT), w(lres0), w(lcQ), w(lQ),
      $             w(lwrk), w(lpx), w(lrlam) )
 
       if (linObj) then
 
-*        Install the transformed linear term in cq.
+*        Install the transformed linear term in cQ.
 *        cmqmul applies the permutations in kx to cvec.
 
-         ngq = 1
-         call dcopy ( n, cvec, 1, w(lcq), 1 )
+         ngQ = 1
+         call dcopy ( n, cvec, 1, w(lcQ), 1 )
          call cmqmul( 6, n, nZ, nfree, ldQ, unitQ,
-     $                kx, w(lcq), w(lQ), w(lwrk) )
+     $                kx, w(lcQ), w(lQ), w(lwrk) )
       end if
 
       if (nactiv .gt. 0) then
@@ -454,10 +459,10 @@ C-->  condmx = max( one/epspt3, hundrd )
 
          call lsadds( unitQ, vertex,
      $                inform, 1, nact1, nactiv, nartif, nZ, nfree,
-     $                nrank, nrejtd, nres, ngq,
+     $                nRank, nrejtd, nres, ngQ,
      $                n, ldQ, ldA, ldR, ldT,
      $                istate, iw(lkactv), kx, condmx,
-     $                A, R, w(lT), w(lres0), w(lcq), w(lQ),
+     $                A, R, w(lT), w(lres0), w(lcQ), w(lQ),
      $                w(lwrk), w(lpx), w(lrlam) )
       end if
 
@@ -466,15 +471,16 @@ C-->  condmx = max( one/epspt3, hundrd )
 *     Compute the transformed residual vector  Pr = Pb - RQ'x.
 *     ------------------------------------------------------------------
       call lssetx( linObj, rowerr, unitQ,
-     $             nclin, nactiv, nfree, nrank, nZ,
+     $             nclin, nactiv, nfree, nRank, nZ,
      $             n, nctotl, ldQ, ldA, ldR, ldT,
      $             istate, iw(lkactv), kx,
      $             jmax, errmax, ctx, xnorm,
-     $             A, w(lAx), bl, bu, w(lcq), w(lres), w(lres0),
+     $             A, w(lAx), bl, bu, w(lcQ), w(lres), w(lres0),
      $             w(lfeatl), R, w(lT), x, w(lQ), w(lpx), w(lwrk) )
 
       if (rowerr) then
          if (iPrint .gt. 0) write(iPrint, 9010)
+         if (iSumm  .gt. 0) write(iSumm , 9010)
          inform = 3
          numinf = 1
          suminf = errmax
@@ -485,7 +491,7 @@ C-->  condmx = max( one/epspt3, hundrd )
 
       call lscore( prbtyp, named, names, linObj, unitQ,
      $             inform, iter, jinf, nclin, nctotl,
-     $             nactiv, nfree, nrank, nZ, nZr,
+     $             nactiv, nfree, nRank, nZ, nZr,
      $             n, ldA, ldR,
      $             istate, iw(lkactv), kx,
      $             ctx, obj, ssq1,
@@ -493,9 +499,21 @@ C-->  condmx = max( one/epspt3, hundrd )
      $             bl, bu, A, clamda, w(lAx),
      $             w(lfeatl), R, x, w )
 
+*     ------------------------------------------------------------------
+*     If required, form the triangular factor of the Hessian.
+*     ------------------------------------------------------------------
+*     First,  form the square matrix  R  such that  H = R'R.
+*     Compute the  QR  factorization of  R.
+
+      if (lformH .gt. 0) then
+         call lsfrmH( 'Permuted Hessian', unitQ, 
+     $                nfree, n, nRank, ldQ, ldR,
+     $                kx, R, w(lQ), w(lwrk), w(lpx) )
+      end if
+
       obj    = obj    + ctx
-      if (prbtyp .eq. 'LS'  .and.  nrank .gt. 0)
-     $   call dcopy ( nrank, w(lres), 1, b, 1 )
+      if (prbtyp .eq. 'LS'  .and.  nRank .gt. 0)
+     $   call dcopy ( nRank, w(lres), 1, b, 1 )
 
 *     ==================================================================
 *     Print messages if required.
@@ -576,22 +594,22 @@ C-->  condmx = max( one/epspt3, hundrd )
 
       subroutine lsadd ( unitQ,
      $                   inform, ifix, iadd, jadd,
-     $                   nactiv, nZ, nfree, nrank, nres, ngq,
+     $                   nactiv, nZ, nfree, nRank, nres, ngQ,
      $                   n, ldA, ldQ, ldR, ldT,
      $                   kx, condmx,
-     $                   A, R, T, res, gqm, Q,
+     $                   A, R, T, res, gQm, Q,
      $                   w, c, s )
 
       implicit           double precision(a-h,o-z)
       logical            unitQ
       integer            kx(n)
       double precision   A(ldA,*), R(ldR,*), T(ldT,*),
-     $                   res(n,*), gqm(n,*), Q(ldQ,*)
+     $                   res(n,*), gQm(n,*), Q(ldQ,*)
       double precision   w(n), c(n), s(n)
 
 *     ==================================================================
 *     lsadd   updates the factorization,  A(free) * (Z Y) = (0 T),  when
-*     a constraint is added to the working set.  If  nrank .gt. 0, the
+*     a constraint is added to the working set.  If  nRank .gt. 0, the
 *     factorization  ( R ) = PCQ  is also updated,  where  C  is the
 *                    ( 0 )
 *     least squares matrix,  R  is upper-triangular,  and  P  is an
@@ -617,25 +635,21 @@ C-->  condmx = max( one/epspt3, hundrd )
 *
 *     If  nres .gt. 0,  the row transformations are applied to the rows
 *     of the  (n by nres)  matrix  res.
-*     If  ngq .gt. 0,  the column transformations are applied to the
-*     columns of the  (ngq by n)  matrix  gqm'.
+*     If  ngQ .gt. 0,  the column transformations are applied to the
+*     columns of the  (ngQ by n)  matrix  gQm'.
 *
 *     Systems Optimization Laboratory, Stanford University.
+*     Department of Mathematics, University of California, San Diego.
 *     Original version written 31-October--1984.
 *     Level-2 matrix routines added 25-Apr-1988.
 *     This version of  lsadd  dated 14-Sep-92.
 *     ==================================================================
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
+      common    /sol1cm/ iPrint, iSumm , lines1, lines2
+      save      /sol1cm/ 
       common    /sol4cm/ epspt3, epspt5, epspt8, epspt9
       common    /sol5cm/ Asize, dTmax, dTmin
 
-      logical            lsdbg
-      parameter         (ldbg = 5)
-      common    /lsdebg/ ilsdbg(ldbg), lsdbg
-
       logical            bound , overfl
-      external           ddiv  , dnrm2
-      intrinsic          max   , min
       parameter         (zero = 0.0d+0, one = 1.0d+0)
 
 *     if the condition estimator of the updated factors is greater than
@@ -650,8 +664,6 @@ C-->  condmx = max( one/epspt3, hundrd )
 *        ===============================================================
 *        A simple bound has entered the working set.  iadd  is not used.
 *        ===============================================================
-         if (lsdbg  .and.  ilsdbg(1) .gt. 0)
-     $      write(iPrint, 1010) nactiv, nZ, nfree, ifix, jadd, unitQ
          nanew = nactiv
 
          if (unitQ) then
@@ -689,9 +701,6 @@ C-->  condmx = max( one/epspt3, hundrd )
 *        A general constraint has entered the working set.
 *        ifix  is not used.
 *        ===============================================================
-         if (lsdbg  .and.  ilsdbg(1) .gt. 0)
-     $      write(iPrint, 1020) nactiv, nZ, nfree, iadd, jadd, unitQ
-
          nanew  = nactiv + 1
 
 *        Transform the incoming row of  A  by  Q'.  Use c as workspace.
@@ -737,7 +746,7 @@ C-->  condmx = max( one/epspt3, hundrd )
          npiv  = nZ
       end if
 
-      nT = min( nrank, npiv )
+      nT = min( nRank, npiv )
 
       if (unitQ) then
 *        ---------------------------------------------------------------
@@ -745,10 +754,10 @@ C-->  condmx = max( one/epspt3, hundrd )
 *        Apply the sequence of pairwise interchanges P that moves the
 *        newly-fixed variable to position nfree.
 *        ---------------------------------------------------------------
-         if (ngq .gt. 0)
-     $      call f06qkf( 'Left', 'Transpose', nfree-1, w, ngq, gqm, n )
+         if (ngQ .gt. 0)
+     $      call f06qkf( 'Left', 'Transpose', nfree-1, w, ngQ, gQm, n )
             
-         if (nrank .gt. 0) then
+         if (nRank .gt. 0) then
 
 *           Apply the pairwise interchanges to the triangular part of R.
 *           The subdiagonal elements generated by this process are
@@ -801,19 +810,19 @@ C-->  condmx = max( one/epspt3, hundrd )
             call dcopy ( nactiv, w(nZ), 1, s(nZ), 1 )
          end if
 
-         if (ngq .gt. 0)
-     $      call f06qxf( 'Left ', 'Variable', 'Forwards', npiv , ngq,
-     $                   1, npiv, c, s, gqm, n )
+         if (ngQ .gt. 0)
+     $      call f06qxf( 'Left ', 'Variable', 'Forwards', npiv , ngQ,
+     $                   1, npiv, c, s, gQm, n )
          call f06qxf( 'Right', 'Variable', 'Forwards', nfree, nfree,
      $                1, npiv, c, s, Q, ldQ )
 
-         if (nrank .gt. 0) then
+         if (nRank .gt. 0) then
 
 *           Apply the rotations to the triangular part of R.
 *           The subdiagonal elements generated by this process are
 *           stored in  s(1),  s(2), ..., s(nt-1).
 
-            nT = min( nrank, npiv )
+            nT = min( nRank, npiv )
             call f06qvf( 'Right', n, 1, nT, c, s, R, ldR )
 
             if (nt .lt. npiv) then
@@ -842,9 +851,9 @@ C-->  condmx = max( one/epspt3, hundrd )
 *           columns of GQM and R corresponding to the new fixed variable.
 
             if (w(nfree) .lt. zero) then
-               nf = min( nrank, nfree )
+               nf = min( nRank, nfree )
                if (nf  .gt. 0) call dscal ( nf , -one,   R(1,nfree), 1 )
-               if (ngq .gt. 0) call dscal ( ngq, -one, gqm(nfree,1), n )
+               if (ngQ .gt. 0) call dscal ( ngQ, -one, gQm(nfree,1), n )
             end if
 
 *           ------------------------------------------------------------
@@ -876,45 +885,21 @@ C-->  condmx = max( one/epspt3, hundrd )
             dTmin  = tdTmin
             if (cond .ge. condbd) then
                if (iPrint .gt. 0) write(iPrint, 2000) jadd
+               if (iSumm  .gt. 0) write(iSumm , 2000) jadd
             end if
          else
 
 *           The proposed working set appears to be linearly dependent.
 
             inform = 1
-            if (lsdbg  .and.  ilsdbg(1) .gt. 0) then
-               write( iPrint, 3000 )
-               if (bound) then
-                  write(iPrint, 3010) Asize, dTmax, dTmin
-               else
-                  if (nactiv .gt. 0) then
-                     write(iPrint, 3020) Asize, dTmax, dTmin, dTnew
-                  else
-                     write(iPrint, 3030) Asize, dTnew
-                  end if
-               end if
-            end if
          end if
       end if
 
       return
 
- 1010 format(/ ' //lsadd //  Simple bound added.'
-     $       / ' //lsadd //  nactiv    nZ nfree  ifix  jadd unitQ'
-     $       / ' //lsadd //  ', 5i6, l6 )
- 1020 format(/ ' //lsadd //  General constraint added.           '
-     $       / ' //lsadd //  nactiv    nZ nfree  iadd  jadd unitQ'
-     $       / ' //lsadd //  ', 5i6, l6 )
  2000 format(/ ' XXX  Serious ill-conditioning in the working set',
      $         ' after adding constraint ',  i5
      $       / ' XXX  Overflow may occur in subsequent iterations.'//)
- 3000 format(/ ' //lsadd //  Dependent constraint rejected.' )
- 3010 format(/ ' //lsadd //     Asize     dTmax     dTmin        '
-     $       / ' //lsadd //', 1p, 3e10.2 )
- 3020 format(/ ' //lsadd //     Asize     dTmax     dTmin     dTnew'
-     $       / ' //lsadd //', 1p, 4e10.2 )
- 3030 format(/ ' //lsadd //     Asize     dTnew'
-     $       / ' //lsadd //', 1p, 2e10.2 )
 
 *     end of lsadd
       end
@@ -923,10 +908,10 @@ C-->  condmx = max( one/epspt3, hundrd )
 
       subroutine lsadds( unitQ, vertex,
      $                   inform, k1, k2, nactiv, nartif, nZ, nfree,
-     $                   nrank, nrejtd, nres, ngq,
+     $                   nRank, nrejtd, nres, ngQ,
      $                   n, ldQ, ldA, ldR, ldT,
      $                   istate, kactiv, kx, condmx,
-     $                   A, R, T, res, gqm, Q,
+     $                   A, R, T, res, gQm, Q,
      $                   w, c, s )
 
       implicit           double precision(a-h,o-z)
@@ -934,19 +919,20 @@ C-->  condmx = max( one/epspt3, hundrd )
       integer            istate(*), kactiv(n), kx(n)
       double precision   condmx
       double precision   A(ldA,*), R(ldR,*),
-     $                   T(ldT,*), res(n,*), gqm(n,*), Q(ldQ,*)
+     $                   T(ldT,*), res(n,*), gQm(n,*), Q(ldQ,*)
       double precision   w(n), c(n), s(n)
 
 *     ==================================================================
 *     lsadds  includes general constraints k1 thru k2 as new rows of
-*     the TQ factorization stored in T, Q.  If nrank is nonZero, the
-*     changes in Q are reflected in nrank by n triangular factor R such
+*     the TQ factorization stored in T, Q.  If nRank is nonZero, the
+*     changes in Q are reflected in nRank by n triangular factor R such
 *     that
 *                         C  =  P ( R ) Q,
 *                                 ( 0 )
 *     where  P  is orthogonal.
 *
 *     Systems Optimization Laboratory, Stanford University.
+*     Department of Mathematics, University of California, San Diego.
 *     Original version written  October-31-1984.
 *     This version of lsadds dated  16-May-1988.
 *     ==================================================================
@@ -978,10 +964,10 @@ C-->  condmx = max( one/epspt3, hundrd )
 
             call lsadd ( unitQ,
      $                   inform, ifix, iadd, jadd,
-     $                   nactiv, nZ, nfree, nrank, nres, ngq,
+     $                   nactiv, nZ, nfree, nRank, nres, ngQ,
      $                   n, ldA, ldQ, ldR, ldT,
      $                   kx, condmx,
-     $                   A, R, T, res, gqm, Q,
+     $                   A, R, T, res, gQm, Q,
      $                   w, c, s )
 
             if (inform .eq. 0) then
@@ -1039,10 +1025,10 @@ C-->  condmx = max( one/epspt3, hundrd )
 
                   call lsadd ( unitQ,
      $                         inform, ifix, iadd, jadd,
-     $                         nactiv, nZ, nfree, nrank, nres, ngq,
+     $                         nactiv, nZ, nfree, nRank, nres, ngQ,
      $                         n, ldA, ldQ, ldR, ldT,
      $                         kx, cndmax,
-     $                         A, R, T, res, gqm, Q,
+     $                         A, R, T, res, gQm, Q,
      $                         w, c, s  )
                end if
                nfree  = nfree  - 1
@@ -1061,10 +1047,10 @@ C-->  condmx = max( one/epspt3, hundrd )
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
       subroutine lsbnds( unitQ,
-     $                   inform, nZ, nfree, nrank, nres, ngq,
+     $                   inform, nZ, nfree, nRank, nres, ngQ,
      $                   n, ldQ, ldA, ldR, ldT,
      $                   istate, kx, condmx,
-     $                   A, R, T, res, gqm, Q,
+     $                   A, R, T, res, gQm, Q,
      $                   w, c, s )
 
       implicit           double precision(a-h,o-z)
@@ -1072,7 +1058,7 @@ C-->  condmx = max( one/epspt3, hundrd )
       integer            istate(*), kx(n)
       double precision   condmx
       double precision   A(ldA,*), R(ldR,*),
-     $                   T(ldT,*), res(n,*), gqm(n,*), Q(ldQ,*)
+     $                   T(ldT,*), res(n,*), gQm(n,*), Q(ldQ,*)
       double precision   w(n), c(n), s(n)
 
 *     ==================================================================
@@ -1083,13 +1069,14 @@ C-->  condmx = max( one/epspt3, hundrd )
 *     to kx, the other gives a matrix  Rz  with more rows and columns.
 *
 *     Systems Optimization Laboratory, Stanford University.
+*     Department of Mathematics, University of California, San Diego.
 *     Original version written  30-December-1985.
 *     This version of lsbnds dated 13-May-88.
 *     ==================================================================
 
       nfixed = n - nfree
 
-      if (nrank .lt. n  .and.  nrank .gt. 0) then
+      if (nRank .lt. n  .and.  nRank .gt. 0) then
 *        ---------------------------------------------------------------
 *        R is specified but singular.  Try and keep the dimension of Rz
 *        as large as possible.
@@ -1111,10 +1098,10 @@ C-->  condmx = max( one/epspt3, hundrd )
 
   120          call lsadd ( unitQ,
      $                      inform, ifix, iadd, jadd,
-     $                      nactv, nZ, nfree, nrank, nres, ngq,
+     $                      nactv, nZ, nfree, nRank, nres, ngQ,
      $                      n, ldA, ldQ, ldR, ldT,
      $                      kx, condmx,
-     $                      A, R, T, res, gqm, Q,
+     $                      A, R, T, res, gQm, Q,
      $                      w, c, s )
 
                nfree = nfree - 1
@@ -1145,8 +1132,8 @@ C-->  condmx = max( one/epspt3, hundrd )
                   kx(l)  = j
                   lstart = l + 1
 
-                  if (nrank .gt. 0)
-     $               call cmrswp( n, nres, nrank, ldR, k, l,
+                  if (nRank .gt. 0)
+     $               call cmrswp( n, nres, nRank, ldR, k, l,
      $                            R, res, c, s )
                end if
   250       continue
@@ -1160,11 +1147,11 @@ C-->  condmx = max( one/epspt3, hundrd )
 
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-      subroutine lschol( ldh, n, nrank, tolrnk, kx, h, inform )
+      subroutine lschol( ldH, n, nRank, tolrnk, kx, H, inform )
 
       implicit           double precision (a-h,o-z)
       integer            kx(*)
-      double precision   h(ldh,*)
+      double precision   H(ldH,*)
 
 *     ==================================================================
 *     LSCHOL  forms the Cholesky factorization of the positive
@@ -1186,13 +1173,13 @@ C-->  condmx = max( one/epspt3, hundrd )
 *     Level 2 Blas added 29-June-1986.
 *     This version of lschol dated  26-Jun-1989. 
 *     ==================================================================
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
-      intrinsic          abs   , max   , sqrt
-      external           idamax
+      common    /sol1cm/ iPrint, iSumm , lines1, lines2
+      save      /sol1cm/ 
+
       parameter        ( zero = 0.0d+0, one = 1.0d+0 )
 
       inform = 0
-      nrank  = 0
+      nRank  = 0
 
 *     Main loop for computing rows of  R.
 
@@ -1200,10 +1187,10 @@ C-->  condmx = max( one/epspt3, hundrd )
 
 *        Find maximum available diagonal.    
 
-         kmax = j - 1 + idamax( n-j+1, h(j,j), ldh+1 )
-         dmax = h(kmax,kmax)
+         kmax = j - 1 + idamax( n-j+1, H(j,j), ldH+1 )
+         dmax = H(kmax,kmax)
 
-         if (dmax .le. tolrnk*abs(h(1,1))) go to 300
+         if (dmax .le. tolrnk*abs(H(1,1))) go to 300
 
 *        Perform a symmetric interchange if necessary.
 
@@ -1212,45 +1199,46 @@ C-->  condmx = max( one/epspt3, hundrd )
             kx(kmax) = kx(j)
             kx(j)    = k
 
-            call dswap ( kmax-j, h(j+1,kmax), 1, h(j,j+1 ), ldh )
-            call dswap ( j     , h(1  ,j   ), 1, h(1,kmax), 1   )
-            call dswap ( n-kmax+1, h(kmax,kmax), ldh,
-     $                             h(j,kmax)   , ldh )
+            call dswap ( kmax-j, H(j+1,kmax), 1, H(j,j+1 ), ldH )
+            call dswap ( j     , H(1  ,j   ), 1, H(1,kmax), 1   )
+            call dswap ( n-kmax+1, H(kmax,kmax), ldH,
+     $                             H(j,kmax)   , ldH )
 
          end if
 
 *        Set the diagonal of  R.
 
          d      = sqrt( dmax )
-         h(j,j) = d
-         nrank  = nrank + 1
+         H(j,j) = d
+         nRank  = nRank + 1
 
          if (j .lt. n) then
 
 *           Set the super-diagonal elements of this row of R and update
 *           the elements of the block that is yet to be factorized.
                                                           
-            call dscal ( n-j,   (one/d), h(j  ,j+1), ldh )
-            call dsyr  ( 'u', n-j, -one, h(j  ,j+1), ldh,
-     $                                   h(j+1,j+1), ldh )
+            call dscal ( n-j,     (one/d), H(j  ,j+1), ldH )
+            call dsyr  ( 'U', n-j, (-one), H(j  ,j+1), ldH,
+     $                                     H(j+1,j+1), ldH )
          end if
 
   200 continue
 *     ------------------------------------------------------------------
 *     Check for the semi-definite case.
 *     ------------------------------------------------------------------
-  300 if (nrank .lt. n) then
+  300 if (nRank .lt. n) then
 
 *        Find the largest element in the unfactorized block.
 
          supmax = zero
          do 310, i = j, n-1
-            k      = i + idamax( n-i, h(i,i+1), ldh )
-            supmax = max( supmax, abs(h(i,k)) )
+            k      = i + idamax( n-i, H(i,i+1), ldH )
+            supmax = max( supmax, abs(H(i,k)) )
   310    continue
 
-         if (supmax .gt. tolrnk*abs(h(1,1))) then
+         if (supmax .gt. tolrnk*abs(H(1,1))) then
             if (iPrint .gt. 0) write(iPrint, 1000) dmax, supmax
+            if (iSumm  .gt. 0) write(iSumm , 1000) dmax, supmax
             inform = 1
          end if
       end if
@@ -1268,7 +1256,7 @@ C-->  condmx = max( one/epspt3, hundrd )
 
       subroutine lscore( prbtyp, named, names, linObj, unitQ,
      $                   inform, iter, jinf, nclin, nctotl,
-     $                   nactiv, nfree, nrank, nZ, nZr,
+     $                   nactiv, nfree, nRank, nZ, nZr,
      $                   n, ldA, ldR,
      $                   istate, kactiv, kx,
      $                   ctx, ssq, ssq1, suminf, numinf, xnorm,
@@ -1277,7 +1265,7 @@ C-->  condmx = max( one/epspt3, hundrd )
 
       implicit           double precision(a-h,o-z)
       character*2        prbtyp
-      character*8        names(*)
+      character*16       names(*)
       integer            istate(nctotl), kactiv(n), kx(n)
       double precision   bl(nctotl), bu(nctotl), A(ldA,*),
      $                   clamda(nctotl), Ax(*),
@@ -1309,7 +1297,8 @@ C-->  condmx = max( one/epspt3, hundrd )
 *     Constraint j may be violated by as much as featol(j).
 *
 *     Systems Optimization Laboratory, Stanford University.
-*     This version of  lscore  dated  14-Sep-92.
+*     Department of Mathematics, University of California, San Diego.
+*     This version of  lscore  dated  12-Jul-94.
 *
 *     Copyright  1984/1993  Stanford University.
 *
@@ -1327,41 +1316,35 @@ C-->  condmx = max( one/epspt3, hundrd )
       double precision   wmach
       common    /solmch/ wmach(15)
       save      /solmch/
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
-      common    /sol3cm/ lennam, ldT   , ncolt , ldQ
+      common    /sol1cm/ iPrint, iSumm , lines1, lines2
+      save      /sol1cm/ 
+      common    /sol3cm/ lennam, ldT   , ncolT , ldQ
       common    /sol4cm/ epspt3, epspt5, epspt8, epspt9
-      common    /sol5cm/ Asize, dTmax  , dTmin
+      common    /sol5cm/ Asize , dTmax , dTmin
 
       integer            locls
       parameter         (lenls = 20)
       common    /sol1ls/ locls(lenls)
 
-      logical            cmdbg, lsdbg
-      parameter         (ldbg = 5)
-      common    /lsdebg/ ilsdbg(ldbg), lsdbg
-      common    /cmdebg/ icmdbg(ldbg), cmdbg
-*     +Include lsparm+++++++++++++++++++++++++++++++++++++++++++++++++++
+*     +Include lsparm-Sep-95++++++++++++++++++++++++++++++++++++++++++++
       parameter         (mxparm = 30)
       integer            iprmls(mxparm), ipsvls
       double precision   rprmls(mxparm), rpsvls
 
       common    /lspar1/ ipsvls(mxparm),
-     $                   idbgls, iPrnt , iSumry, itmax1, itmax2, lcrash,
-     $	                 ldbgls, lprob , msgls , nn    , nnclin, nprob , 
-     $                   ipadls(18)
+     $                   itmax1, itmax2, lcrash, lformH, lprob , msgLS ,
+     $                   nn    , nnclin, nprob , ipadls(21)
 
       common    /lspar2/ rpsvls(mxparm),
      $                   bigbnd, bigdx , bndlow, bndupp, tolact, tolfea,
-     $                   tolrnk, rpadls(23)
+     $                   tolOpt, tolrnk, rpadls(22)
 
-      equivalence       (iprmls(1), idbgls), (rprmls(1), bigbnd)
+      equivalence       (iprmls(1), itmax1 ), (rprmls(1), bigbnd)
 
       save      /lspar1/, /lspar2/
 *     ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-      equivalence   (msgls , msglvl), (idbgls, idbg), (ldbgls, msgdbg)
+      equivalence       (msgls , msglvl)
 
-      external           ddiv  , dnrm2
-      intrinsic          abs   , max   , sqrt
       logical            convrg, cyclin, error , firstv, hitcon,
      $                   hitlow, needfg, overfl, prnt  , rowerr
       logical            singlr, stall , statpt, unbndd, uncon , unitgZ,
@@ -1379,8 +1362,8 @@ C-->  condmx = max( one/epspt3, hundrd )
       lres   = locls( 5)
       lres0  = locls( 6)
       lhZ    = locls( 7)
-      lgq    = locls( 8)
-      lcq    = locls( 9)
+      lgQ    = locls( 8)
+      lcQ    = locls( 9)
       lrlam  = locls(10)
       lT     = locls(11)
       lQ     = locls(12)
@@ -1388,19 +1371,24 @@ C-->  condmx = max( one/epspt3, hundrd )
       lwrk   = locls(14)
 
 *     Set up the adresses of the contiguous arrays  ( res0, res )
-*     and  ( gq, cq ).
+*     and  ( gQ, cQ ).
 
       nres   = 0
-      if (nrank .gt. 0) nres = 2
-      ngq    = 1
-      if (linObj) ngq = 2
+      if (nRank .gt. 0) nres = 2
+      ngQ    = 1
+      if (linObj) ngQ = 2
 
 *     Initialize.
 
       irefn  =   0
       iter   =   0
-      itmax  = itmax1
+      if (prbtyp .eq. 'FP') then
+         itmax = itmax2
+      else
+         itmax = itmax1
+      end if
 
+      isdel  =   0
       jadd   =   0
       jdel   =   0
       nphase =   1
@@ -1422,13 +1410,6 @@ C-->  condmx = max( one/epspt3, hundrd )
       stall  = .true.
       uncon  = .false.
       unbndd = .false.
-
-*     If debug output is required,  print nothing until iteration IDBG.
-
-      msgsvd = msglvl
-      if (idbg .gt. 0  .and.  idbg .le. itmax) then
-         msglvl = 0
-      end if
 
 *======================== start of the main loop =======================
 *
@@ -1468,8 +1449,8 @@ C-->  condmx = max( one/epspt3, hundrd )
 *     repeat
 *        repeat
   100       if (needfg) then
-               if (nrank .gt. 0) then
-                  resnrm = dnrm2 ( nrank, w(lres), 1 )
+               if (nRank .gt. 0) then
+                  resnrm = dnrm2 ( nRank, w(lres), 1 )
                   ssq    = half*(ssq1**2 + resnrm**2 )
                end if
 
@@ -1481,11 +1462,11 @@ C-->  condmx = max( one/epspt3, hundrd )
 
                   call lsgset( prbtyp, linObj, singlr, unitgZ, unitQ,
      $                         n, nclin, nfree,
-     $                         ldA, ldQ, ldR, nrank, nZ, nZr,
+     $                         ldA, ldQ, ldR, nRank, nZ, nZr,
      $                         istate, kx,
      $                         bigbnd, tolrnk, numinf, suminf,
      $                         bl, bu, A, w(lres), featol,
-     $                         w(lgq), w(lcq), R, x, w(lwtinf),
+     $                         w(lgQ), w(lcQ), R, x, w(lwtinf),
      $                         w(lQ), w(lwrk) )
 
                   if (prbtyp .ne. 'FP'  .and.  numinf .eq. 0
@@ -1497,18 +1478,18 @@ C-->  condmx = max( one/epspt3, hundrd )
             end if
 
             gznorm = zero
-            if (nZ  .gt. 0 ) gznorm = dnrm2 ( nZ, w(lgq), 1 )
+            if (nZ  .gt. 0 ) gznorm = dnrm2 ( nZ, w(lgQ), 1 )
 
             if (nZr .eq. nZ) then
                gZrnrm = gznorm
             else
                gZrnrm = zero
-               if (nZr .gt. 0) gZrnrm = dnrm2 ( nZr, w(lgq), 1 )
+               if (nZr .gt. 0) gZrnrm = dnrm2 ( nZr, w(lgQ), 1 )
             end if
 
             gfnorm = gznorm
             if (nfree .gt. 0  .and.  nactiv .gt. 0)
-     $         gfnorm = dnrm2 ( nfree, w(lgq), 1 )
+     $         gfnorm = dnrm2 ( nfree, w(lgQ), 1 )
 
 *           ------------------------------------------------------------
 *           Print the details of this iteration.
@@ -1516,25 +1497,22 @@ C-->  condmx = max( one/epspt3, hundrd )
 *           Define small quantities that reflect the size of x, R and
 *           the constraints in the working set.  If feasible,  estimate
 *           the rank and condition number of Rz.
-*           Note that nZr .le. nrank + 1.
+*           Note that nZr .le. nRank + 1.
 
             if (nZr .eq. 0) then
                singlr = .false.
             else
-               if (numinf .gt. 0  .or.  nZr .gt. nrank) then
-                  absrzz = zero
+               if (numinf .gt. 0  .or.  nZr .gt. nRank) then
+                  absRzz = zero
                   singlr = .true.
                else
                   call dcond ( nZr, R, ldR+1, dRzmax, dRzmin )
-                  absrzz = abs( R(nZr,nZr) )
+                  absRzz = abs( R(nZr,nZr) )
                   rownrm = dnrm2 ( n, R(1,1), ldR )
-                  singlr =       absrzz      .le. dRzmax*tolrnk 
+                  singlr =       absRzz      .le. dRzmax*tolrnk 
      $                     .or.  rownrm      .le.        tolrnk 
      $                     .or.  abs(R(1,1)) .le. rownrm*tolrnk
                end if
-
-               if (lsdbg  .and.  ilsdbg(1) .gt. 0)
-     $            write(iPrint, 9100) singlr, absrzz, dRzmax, dRzmin
             end if
 
             condRz = ddiv  ( dRzmax, dRzmin, overfl )
@@ -1545,8 +1523,8 @@ C-->  condmx = max( one/epspt3, hundrd )
             if (prnt) then
                call lsprt ( prbtyp, isdel, iter, jadd, jdel,
      $                      msglvl, nactiv, nfree, n, nclin,
-     $                      nrank, ldR, ldT, nZ, nZr, istate,
-     $                      alfa, condRz, condT, gfnorm, gZrnrm,
+     $                      nRank, ldR, ldT, nZ, nZr, istate,
+     $                      alfa, condRz, condT, gZrnrm,
      $                      numinf, suminf, ctx, ssq,
      $                      Ax, R, w(lT), x, w(lwrk) )
                jdel  = 0
@@ -1556,23 +1534,22 @@ C-->  condmx = max( one/epspt3, hundrd )
 
             if (numinf .gt. 0) then
                dinky  = zero
+               tolLM  = zero
             else
                objsiz = one  + abs( ssq + ctx )
                wssize = zero
                if (nactiv .gt. 0) wssize = dTmax
-               dinky  = epspt8 * max( wssize, objsiz, gfnorm )
-               if (uncon) then
+               dinky  = epspt8*max( wssize, objsiz, gfnorm )
+               tolLM  = tolOpt*max( wssize, objsiz, gfnorm )
+
+               if ( uncon ) then
                   unitgZ = gZrnrm .le. dinky
                end if
             end if
 
-            if (lsdbg  .and.  ilsdbg(1) .gt. 0)
-     $         write(iPrint, 9000) unitgZ, irefn, gZrnrm, dinky
-
-*           If the projected gradient  Z'g  is small and Rz is of full
-*           rank, X is a minimum on the working set.  An additional
-*           refinement step is allowed to take care of an inaccurate
-*           value of dinky.
+*           If the reduced gradient  Z'g  is small and Rz is of full
+*           rank, x is a minimum on the working set. Refinement steps
+*           are allowed to take care of dinky being too small.
 
             statpt = .not. singlr  .and.  gZrnrm .le. dinky
      $                             .or.   irefn  .gt. mrefn
@@ -1588,19 +1565,12 @@ C-->  condmx = max( one/epspt3, hundrd )
 
                   irefn = irefn + 1
                   iter  = iter  + 1
-
-                  if (iter .eq. idbg  .and.  iPrint .gt. 0) then
-                     lsdbg  = .true.
-                     cmdbg  =  lsdbg
-                     msglvl =  msgsvd
-                  end if
-
                   call lsgetp( linObj, singlr, unitgZ, unitQ,
      $                         n, nclin, nfree,
-     $                         ldA, ldQ, ldR, nrank, numinf, nZr,
+     $                         ldA, ldQ, ldR, nRank, numinf, nZr,
      $                         kx, ctp, pnorm,
      $                         A, w(lAp), w(lres), w(lhZ), w(lpx),
-     $                         w(lgq), w(lcq), R, w(lQ), w(lwrk) )
+     $                         w(lgQ), w(lcQ), R, w(lQ), w(lwrk) )
 
 *                 ------------------------------------------------------
 *                 Find the constraint we bump into along p.
@@ -1649,14 +1619,14 @@ C-->  condmx = max( one/epspt3, hundrd )
                   error = unbndd  .or.  cyclin
                   if (.not.  error) then
 *                    ---------------------------------------------------
-*                    Set x = x + alfa*p.  Update Ax, gq, res and ctx.
+*                    Set x = x + alfa*p.  Update Ax, gQ, res and ctx.
 *                    ---------------------------------------------------
                      if (alfa .ne. zero)
      $                  call lsmove( hitcon, hitlow, linObj, unitgZ,
-     $                               nclin, nrank, nZr,
+     $                               nclin, nRank, nZr,
      $                               n, ldR, jadd, numinf,
      $                               alfa, ctp, ctx, xnorm,
-     $                               w(lAp), Ax, bl, bu, w(lgq),
+     $                               w(lAp), Ax, bl, bu, w(lgQ),
      $                               w(lhZ), w(lpx), w(lres),
      $                               R, x, w(lwrk) )
 
@@ -1685,10 +1655,10 @@ C-->  condmx = max( one/epspt3, hundrd )
 
                         call lsadd ( unitQ,
      $                               inform, ifix, iadd, jadd,
-     $                               nactiv, nZ, nfree, nrank, nres,ngq,
+     $                               nactiv, nZ, nfree, nRank, nres,ngQ,
      $                               n, ldA, ldQ, ldR, ldT,
      $                               kx, condmx,
-     $                               A, R, w(lT), w(lres),w(lgq),w(lQ),
+     $                               A, R, w(lT), w(lres),w(lgQ),w(lQ),
      $                               w(lwrk), w(lrlam), w(lpx) )
 
                         nZr    = nZr - 1
@@ -1720,22 +1690,24 @@ C-->  condmx = max( one/epspt3, hundrd )
 
                      if (err1 .gt. featol(jmax1)) then
                         call lssetx( linObj, rowerr, unitQ,
-     $                               nclin, nactiv, nfree, nrank, nZ,
+     $                               nclin, nactiv, nfree, nRank, nZ,
      $                               n, nctotl, ldQ, ldA, ldR, ldT,
      $                               istate, kactiv, kx,
      $                               jmax1, err2, ctx, xnorm,
-     $                               A, Ax, bl, bu, w(lcq),
+     $                               A, Ax, bl, bu, w(lcQ),
      $                               w(lres), w(lres0), featol, R,
      $                               w(lT), x, w(lQ), w(lpx), w(lwrk) )
 
-                        if (lsdbg  .and.  ilsdbg(1) .gt. 0)
-     $                     write(iPrint, 2100) err1, err2
                         if (rowerr) then
                            if (iPrint .gt. 0) write(iPrint, 2200)
+                           if (iSumm  .gt. 0) write(iSumm , 2200)
+                           numinf =   1
+                           error  =   .true.
+                        else 
+                           numinf = - 1
+                           uncon  =   .false.
+                           irefn  =   0
                         end if
-                        uncon  =   .false.
-                        irefn  =   0
-                        numinf = - 1
                      end if
                      needfg = alfa .ne. zero
                   end if
@@ -1752,7 +1724,7 @@ C-->  condmx = max( one/epspt3, hundrd )
 
          if (numinf .eq. 0  .and.  prbtyp .eq. 'FP') then
             if (n .gt. nZ)
-     $         call dload ( n-nZ, (zero), w(lrlam), 1 )
+     $         call dload ( n-nZ, zero, w(lrlam), 1 )
             jtiny  = 0
             jsmlst = 0
             jbigst = 0
@@ -1761,18 +1733,18 @@ C-->  condmx = max( one/epspt3, hundrd )
             call lsmuls( prbtyp,
      $                   msglvl, n, nactiv, nfree,
      $                   ldA, ldT, numinf, nZ, nZr,
-     $                   istate, kactiv, kx, dinky,
+     $                   istate, kactiv, kx, tolLM,
      $                   jsmlst, ksmlst, jinf, jtiny,
      $                   jbigst, kbigst, trulam,
-     $                   A, w(lanorm), w(lgq), w(lrlam),
+     $                   A, w(lanorm), w(lgQ), w(lrlam),
      $                   w(lT), w(lwtinf) )
          end if
 
          if (.not. error) then
             if (     jsmlst .gt. 0) then
 
-*              LSMULS found a regular constraint with multiplier less
-*              than (-dinky).
+*              lsmuls found a regular constraint with multiplier less
+*              than (-tolLM).
 
                jdel   = jsmlst
                kdel   = ksmlst
@@ -1811,10 +1783,10 @@ C-->  condmx = max( one/epspt3, hundrd )
 *              Update the matrix factorizations.
 
                call lsdel ( unitQ,
-     $                      n, nactiv, nfree, nres, ngq, nZ, nZr,
-     $                      ldA, ldQ, ldR, ldT, nrank,
+     $                      n, nactiv, nfree, nres, ngQ, nZ, nZr,
+     $                      ldA, ldQ, ldR, ldT, nRank,
      $                      jdel, kdel, kactiv, kx,
-     $                      A, w(lres), R, w(lT), w(lgq), w(lQ),
+     $                      A, w(lres), R, w(lT), w(lgQ), w(lQ),
      $                      w(lwrk), w(lpx) )
             end if
          end if
@@ -1852,28 +1824,24 @@ C-->  condmx = max( one/epspt3, hundrd )
 *     ------------------------------------------------------------------
 *     Set   clamda.  Print the full solution.
 *     ------------------------------------------------------------------
-      msglvl = msgsvd
       if (msglvl .gt. 0  .and.  iPrint .gt. 0)
      $     write(iPrint, 2000) prbtyp, iter, inform
 
-      call cmprt ( msglvl, nfree, ldA,
-     $             n, nclin, nctotl, bigbnd,
-     $             named, names,
+      call cmwrp ( nfree, ldA,
+     $             n, nclin, nctotl,
      $             nactiv, istate, kactiv, kx,
-     $             A, bl, bu, x, clamda, w(lrlam), x )
+     $             A, bl, bu, x, clamda, featol,
+     $             w(lwrk), w(lrlam), x )
+      call cmprnt( msglvl, n, nclin, nctotl, bigbnd,
+     $             named, names, istate,
+     $             bl, bu, clamda, featol, w(lwrk) )
 
       return
 
  2000 format(/ ' Exit from ', a2, ' problem after ', i4, ' iterations.',
      $         '  inform =', i3 )
- 2100 format(  ' XXX  Iterative refinement.  Maximum errors before and',
-     $         ' after refinement are ',  1p, 2e14.2 )
  2200 format(  ' XXX  Warning.  Cannot satisfy the constraints to the',
      $         ' accuracy requested.')
- 9000 format(/ ' //lscore//  unitgZ irefn     gZrnrm      dinky'
-     $       / ' //lscore//  ', l6, i6, 1p, 2e11.2 )
- 9100 format(/ ' //lscore//  singlr    abs(Rzz)      dRzmax      dRzmin'
-     $       / ' //lscore//  ', l6,     1p, 3e12.4 )
 
 *     end of lscore
       end                         
@@ -1913,20 +1881,13 @@ C-->  condmx = max( one/epspt3, hundrd )
 *     a'x lt bl   a'x gt bu   a'x free   a'x = bl   a'x = bu   bl = bu
 *
 *     Systems Optimization Laboratory, Stanford University.
+*     Department of Mathematics, University of California, San Diego.
 *     Original version written 31-October-1984.
-*     This version of lscrsh dated 14-May-1992.
+*     This version of lscrsh dated 11-May-1995.
 *     ==================================================================
       double precision   wmach
       common    /solmch/ wmach(15)
       save      /solmch/
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
-
-      logical            lsdbg
-      parameter         (ldbg = 5)
-      common    /lsdebg/ ilsdbg(ldbg), lsdbg
-
-      external           ddot
-      intrinsic          abs, min
       parameter        ( zero = 0.0d+0, one = 1.0d+0 )
 
       flmax  =   wmach(7)
@@ -1951,13 +1912,6 @@ C-->  condmx = max( one/epspt3, hundrd )
 
       call dcopy ( n, x, 1, wx, 1 )
 
-      if (lsdbg) then
-         if (ilsdbg(1) .gt. 0)
-     $      write(iPrint, 1000) cold, nclin, nctotl
-         if (ilsdbg(2) .gt. 0)
-     $      write(iPrint, 1100) (wx(j), j = 1, n)
-      end if
-
       nfixed = 0
       nactiv = 0
       nartif = 0
@@ -1973,7 +1927,16 @@ C-->  condmx = max( one/epspt3, hundrd )
   100    continue
       else
          do 110, j = 1, nctotl
-            if (istate(j) .gt. 3  .or.  istate(j) .lt. 0) istate(j) = 0
+            b1     = bl(j)
+            b2     = bu(j)
+            if (b1 .eq. b2) then
+               istate(j) = 3
+            else if (istate(j) .ge. 3  .or.  istate(j) .lt. 0) then
+               istate(j) = 0
+            end if
+            if (b1 .le. biglow  .and.  b2 .ge. bigupp  ) istate(j) = 0
+            if (b1 .le. biglow  .and.  istate(j) .eq. 1) istate(j) = 0
+            if (b2 .ge. bigupp  .and.  istate(j) .eq. 2) istate(j) = 0
   110    continue
       end if
 
@@ -2135,40 +2098,23 @@ C-->  condmx = max( one/epspt3, hundrd )
       
       nfree = n - nfixed
 
-      if (lsdbg) then
-         if (ilsdbg(1) .gt. 0)
-     $       write(iPrint, 1300) nfixed, nactiv, nartif
-         if (ilsdbg(2) .gt. 0)
-     $       write(iPrint, 1200) (wx(j), j = 1, n)
-      end if
-
-      return
-
- 1000 format(/ ' //lscrsh// cold nclin nctotl'
-     $       / ' //lscrsh// ', l4, i6, i7 )
- 1100 format(/ ' //lscrsh// Variables before crash... '/ (5g12.3))
- 1200 format(/ ' //lscrsh// Variables after  crash... '/ (5g12.3))
- 1300 format(/ ' //lscrsh// Working set selected ...             '
-     $       / ' //lscrsh// nfixed nactiv nartif      '
-     $       / ' //lscrsh// ', i6, 2i7 )
-
 *     end of lscrsh
       end
 
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
       subroutine lsdel ( unitQ,
-     $                   n, nactiv, nfree, nres, ngq, nZ, nZr,
-     $                   ldA, ldQ, ldR, ldT, nrank,
+     $                   n, nactiv, nfree, nres, ngQ, nZ, nZr,
+     $                   ldA, ldQ, ldR, ldT, nRank,
      $                   jdel, kdel, kactiv, kx,
-     $                   A, res, R, T, gq, Q,
+     $                   A, res, R, T, gQ, Q,
      $                   c, s )
 
       implicit           double precision(a-h,o-z)
       logical            unitQ
       integer            kactiv(n), kx(n)
       double precision   A(ldA,*), res(n,*), R(ldR,*), T(ldT,*),
-     $                   gq(n,*), Q(ldQ,*)
+     $                   gQ(n,*), Q(ldQ,*)
       double precision   c(n), s(n)
 
 *     ==================================================================
@@ -2177,19 +2123,12 @@ C-->  condmx = max( one/epspt3, hundrd )
 *     constraint is deleted from the working set.
 *
 *     Systems Optimization Laboratory, Stanford University.
+*     Department of Mathematics, University of California, San Diego.
 *     Original version written 31-October-1984.
 *     Level-2 matrix routines added 25-Apr-1988.
 *     This version of lsdel dated  10-Sep-92.
 *     ==================================================================
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
       common    /sol5cm/ Asize, dTmax, dTmin
-
-      logical            lsdbg
-      parameter         (ldbg = 5)
-      common    /lsdebg/ ilsdbg(ldbg), lsdbg
-      
-      intrinsic          max   , min
-      external           idamax
       parameter        ( zero = 0.0d+0, one = 1.0d+0 )
 
       if (jdel .gt. 0) then
@@ -2203,19 +2142,16 @@ C-->  condmx = max( one/epspt3, hundrd )
 *           =======  Columns nfree+1 and ir of r must be swapped.
 
             ir     = nZ    + kdel
-            if (lsdbg  .and.  ilsdbg(1) .gt. 0)
-     $         write(iPrint, 1100) nactiv, nZ, nfree, ir, jdel, unitQ
-
             itdel  = 1
             nfree  = nfree + 1
 
             if (nfree .lt. ir) then
                kx(ir)    = kx(nfree)
                kx(nfree) = jdel
-               if (nrank .gt. 0)
-     $            call cmrswp( n, nres, nrank, ldR, nfree, ir,
+               if (nRank .gt. 0)
+     $            call cmrswp( n, nres, nRank, ldR, nfree, ir,
      $                         R, res, c, s )
-               call dswap ( ngq, gq(nfree,1), n, gq(ir,1), n )
+               call dswap ( ngQ, gQ(nfree,1), n, gQ(ir,1), n )
             end if
 
             if (.not. unitQ) then
@@ -2239,9 +2175,6 @@ C-->  condmx = max( one/epspt3, hundrd )
 
 *           Case 2.  A general constraint has been deleted.
 *           =======
-
-            if (lsdbg  .and.  ilsdbg(1) .gt. 0)
-     $         write(iPrint, 1200) nactiv, nZ, nfree, kdel, jdel, unitQ
 
             itdel  = kdel
             nactiv = nactiv - 1
@@ -2289,9 +2222,9 @@ C-->  condmx = max( one/epspt3, hundrd )
                call f06qxf( 'Right', 'Variable', 'Backwards', 
      $                      nfree, nfree, nZ, npiv, c, s, Q, ldQ )
                call f06qxf( 'Left ', 'Variable', 'Backwards', 
-     $                      npiv , ngq  , nZ, npiv, c, s, gq, n    )
+     $                      npiv , ngQ  , nZ, npiv, c, s, gQ, n    )
             
-               nT = min( nrank, npiv )
+               nT = min( nRank, npiv )
                
                if (nT .lt. npiv  .and.  nT .gt. 0) then
                
@@ -2330,13 +2263,10 @@ C-->  condmx = max( one/epspt3, hundrd )
 
       if (nZ .gt. nZr) then
          if (jdel .gt. 0) then
-            jart =   nZr1 - 1 + idamax( nZ-nZr1+1, gq(nZr1,1), 1 )
+            jart =   nZr1 - 1 + idamax( nZ-nZr1+1, gQ(nZr1,1), 1 )
          else
             jart = - jdel
          end if
-
-         if (lsdbg  .and.  ilsdbg(1) .gt. 0)
-     $      write( iPrint, 1000 ) nZ, nZr1, jart
 
          if (jart .gt. nZr1) then
 
@@ -2350,26 +2280,14 @@ C-->  condmx = max( one/epspt3, hundrd )
                call dswap ( nfree, Q(1,nZr1), 1, Q(1,jart), 1 )
             end if
 
-            call dswap ( ngq, gq(nZr1,1), n, gq(jart,1), n )
-            if (nrank .gt. 0)
-     $         call cmrswp( n, nres, nrank, ldR, nZr1, jart,
+            call dswap ( ngQ, gQ(nZr1,1), n, gQ(jart,1), n )
+            if (nRank .gt. 0)
+     $         call cmrswp( n, nres, nRank, ldR, nZr1, jart,
      $                      R, res, c, s )
          end if
       end if
 
       nZr = nZr1
-
-      return
-
- 1000 format(/ ' //lsdel //  Artificial constraint deleted.      '
-     $       / ' //lsdel //      nZ   nZr   jart                 '
-     $       / ' //lsdel //  ', 3i6 )
- 1100 format(/ ' //lsdel //  Simple bound deleted.               '
-     $       / ' //lsdel //  nactiv    nZ nfree    ir  jdel unitQ'
-     $       / ' //lsdel //  ', 5i6, l6 )
- 1200 format(/ ' //lsdel //  General constraint deleted.         '
-     $       / ' //lsdel //  nactiv    nZ nfree  kdel  jdel unitQ'
-     $       / ' //lsdel //  ', 5i6, l6 )
 
 *     end of lsdel
       end
@@ -2387,54 +2305,53 @@ C-->  condmx = max( one/epspt3, hundrd )
 *     the user.
 *
 *     Systems Optimization Laboratory, Stanford University.
+*     Department of Mathematics, University of California, San Diego.
 *     Original Fortran 77 version written 17-September-1985.
-*     This version of lsdflt dated  21-Mar-93.
+*     This version of lsdflt dated  18-Sep-95.
 *     ==================================================================
       double precision   wmach
       common    /solmch/ wmach(15)
       save      /solmch/
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
+
+      common    /sol1cm/ iPrint, iSumm , lines1, lines2
+      save      /sol1cm/ 
       common    /sol4cm/ epspt3, epspt5, epspt8, epspt9
 
-      logical            cmdbg, lsdbg
-      parameter         (ldbg = 5)
-      common    /lsdebg/ ilsdbg(ldbg), lsdbg
-      common    /cmdebg/ icmdbg(ldbg), cmdbg
-
-      logical            newopt
-      common    /sol3ls/ newopt
+      logical            newOpt, listOp
+      common    /sol3ls/ newOpt, listOp, ncalls
       save      /sol3ls/
 
-*     +Include lsparm+++++++++++++++++++++++++++++++++++++++++++++++++++
+*     +Include lsparm-Sep-95++++++++++++++++++++++++++++++++++++++++++++
       parameter         (mxparm = 30)
       integer            iprmls(mxparm), ipsvls
       double precision   rprmls(mxparm), rpsvls
 
       common    /lspar1/ ipsvls(mxparm),
-     $                   idbgls, iPrnt , iSumry, itmax1, itmax2, lcrash,
-     $	                 ldbgls, lprob , msgls , nn    , nnclin, nprob , 
-     $                   ipadls(18)
+     $                   itmax1, itmax2, lcrash, lformH, lprob , msgLS ,
+     $                   nn    , nnclin, nprob , ipadls(21)
 
       common    /lspar2/ rpsvls(mxparm),
      $                   bigbnd, bigdx , bndlow, bndupp, tolact, tolfea,
-     $                   tolrnk, rpadls(23)
+     $                   tolOpt, tolrnk, rpadls(22)
 
-      equivalence       (iprmls(1), idbgls), (rprmls(1), bigbnd)
+      equivalence       (iprmls(1), itmax1 ), (rprmls(1), bigbnd)
 
       save      /lspar1/, /lspar2/
 *     ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-      equivalence   (msgls , msglvl), (idbgls, idbg), (ldbgls, msgdbg)
+      equivalence   (msgls , msglvl)
 
       character*4        icrsh(0:2)
+      character*3        cHess(0:1)
       character*3        lstype(1:10)
-      character*16       key
-      parameter         (zero   =  0.0d+0, ten    = 10.0d+0)
+      parameter         (zero   =  0.0d+0, one = 1.0d+0, ten = 10.0d+0)
       parameter         (hundrd =100.0d+0)
-      parameter         (rdummy = -11111., idummy = -11111)
-      parameter         (gigant = 1.0d+20*.99999          )
+      parameter         (rdummy = -11111.0d+0, idummy = -11111)
+      parameter         (gigant = 1.0d+20*.99999d+0       )
       parameter         (wrktol = 1.0d-2                  )
       data               icrsh(0), icrsh(1), icrsh(2)
      $                 /'Cold'   ,'Warm'   ,'Hot '   /
+      data                cHess(0),  cHess(1)
+     $                 / ' no',      'yes'   /
       data               lstype(1), lstype(2)
      $                 /' FP'     ,' LP'     /
       data               lstype(3), lstype(4), lstype(5), lstype(6)
@@ -2444,10 +2361,10 @@ C-->  condmx = max( one/epspt3, hundrd )
 
       epsmch = wmach( 3)
 
-*     Make a dummy call to lskey to ensure that the defaults are set.
+*     Make a dummy call to lsnkey to ensure that the defaults are set.
 
-      call lskey ( nout, '*', key )
-      newopt = .true.
+      call lsnkey()
+      newOpt = .true.
 
 *     Save the optional parameters set by the user.  The values in
 *     rprmls and iprmls may be changed to their default values.
@@ -2455,48 +2372,36 @@ C-->  condmx = max( one/epspt3, hundrd )
       call icopy ( mxparm, iprmls, 1, ipsvls, 1 )
       call dcopy ( mxparm, rprmls, 1, rpsvls, 1 )
 
-      if (       iPrnt  .lt. 0      )  iPrnt   = nout
-      if (       iSumry .lt. 0      )  iSumry  = 6
-      if (       iSumry .eq. iPrnt  )  iSumry  = 0
-                                       iPrint  = iPrnt
-                                       iSumm   = iSumry
-      if (       lprob  .lt. 0      )  lprob   = 7
-      if (       lcrash .lt. 0
-     $    .or.   lcrash .gt. 2      )  lcrash  = 0
-      if (       itmax1 .lt. 0      )  itmax1  = max(50, 5*(n+nclin))
-      if (       itmax2 .lt. 0      )  itmax2  = max(50, 5*(n+nclin))
-      if (       msglvl .eq. idummy )  msglvl  = 10
-      if (       idbg   .lt. 0
-     $    .or.   idbg   .gt. itmax1 + itmax2
-     $                              )  idbg    = 0
-      if (       msgdbg .lt. 0      )  msgdbg  = 0
-      if (       msgdbg .eq. 0      )  idbg    = itmax1 + itmax2 + 1
-      if (       tolact .lt. zero   )  tolact  = wrktol
-      if (       tolfea .eq. rdummy
-     $    .or.  (tolfea .ge. zero
-     $    .and.  tolfea .lt. epsmch))  tolfea  = epspt5
-      if (       tolrnk .le. zero
-     $    .and. (lprob  .eq. 5  .or.
-     $           lprob  .eq. 7  .or.
-     $           lprob  .eq. 9)     )  tolrnk  = hundrd*epsmch
-      if (       tolrnk .le. zero   )  tolrnk  =    ten*epspt5
-      if (       bigbnd .le. zero   )  bigbnd  = gigant
-      if (       bigdx  .le. zero   )  bigdx   = max(gigant, bigbnd)
+      if (          iPrint .lt. 0     )   call mcout ( iPrint, iSumry )
+      if (          iSumm  .lt. 0     )   call mcout ( iPrntr, iSumm  )
+      if (          iSumm  .eq. iPrint)   iPrint  = 0
 
-      lsdbg = idbg .eq. 0  .and.  iPrint .gt. 0
-      cmdbg = lsdbg
-      k     = 1
-      msg   = msgdbg
-      do 200, i = 1, ldbg
-         ilsdbg(i) = mod( msg/k, 10 )
-         icmdbg(i) = ilsdbg(i)
-         k = k*10
-  200 continue
+      if (          lprob  .lt. 0      )  lprob   = 7
+      if (          lcrash .lt. 0
+     $    .or.      lcrash .gt. 2      )  lcrash  = 0
+      if (          lformH .lt. 0
+     $    .or.      lformH .gt. 1      )  lformH  = 0
+      if (          itmax1 .lt. 0      )  itmax1  = max(50, 5*(n+nclin))
+      if (          itmax2 .lt. 0      )  itmax2  = max(50, 5*(n+nclin))
+      if (          msglvl .eq. idummy )  msglvl  = 10
+      if (          tolact .lt. zero   )  tolact  = wrktol
+      if (          tolfea .eq. rdummy
+     $    .or.     (tolfea .ge. zero
+     $    .and.     tolfea .lt. epsmch))  tolfea  = epspt5
+      if (          tolOpt .lt. epsmch
+     $    .or.      tolOpt .ge. one    )  tolOpt  = epspt8
+      if (          tolrnk .le. zero
+     $    .and.    (lprob  .eq. 5  .or.
+     $              lprob  .eq. 7  .or.
+     $              lprob  .eq. 9)     )  tolrnk  = hundrd*epsmch
+      if (          tolrnk .le. zero   )  tolrnk  =    ten*epspt5
+      if (          bigbnd .le. zero   )  bigbnd  = gigant
+      if (          bigdx  .le. zero   )  bigdx   = max(gigant, bigbnd)
 
       if (msglvl .gt. 0) then
-
+*        ----------------
 *        Print the title.
-
+*        ----------------
          lenT = len( title )
          if (lenT .gt. 0) then
             nspace = (81 - lenT)/2 + 1
@@ -2518,11 +2423,13 @@ C-->  condmx = max( one/epspt3, hundrd )
          if (iPrint .gt. 0) then
             write(iPrint, 2000)
             write(iPrint, 2100) lstype(lprob),
-     $                          nclin , tolfea, icrsh(lcrash),
-     $                          n     , bigbnd, tolact,
-     $                          m     , bigdx , tolrnk
-            write(iPrint, 2200) msglvl, iPrnt , itmax1, 
-     $                          epsmch, iSumry, itmax2
+     $                          nclin , icrsh(lcrash), tolact,
+     $                          n     , bigbnd,        tolOpt,
+     $                          m     , bigdx ,        tolfea,
+     $                          cHess(lformH),         tolrnk            
+
+            write(iPrint, 2200) msglvl, iPrint,        itmax1, 
+     $                          epsmch, iSumm ,        itmax2
          end if
       end if
 
@@ -2533,21 +2440,23 @@ C-->  condmx = max( one/epspt3, hundrd )
      $/ ' ----------' )
  2100 format(
      $/ ' Problem type...........', 7x, a3
-     $/ ' Linear constraints.....',     i10,   6x,
-     $  ' Feasibility tolerance..', 1p, e10.2, 6x,
-     $  1x, a4, ' start.............'
-     $/ ' Variables..............',     i10,   6x,
-     $  ' Infinite bound size....', 1p, e10.2, 6x,
+     $/ ' Linear constraints.....',     i10,   2x,
+     $1x, a4,' start.............',     12x,
      $  ' Crash tolerance........',     e10.2
-     $/ ' Objective matrix rows..',     i10,   6x,
-     $  ' Infinite step size.....', 1p, e10.2, 6x,
+     $/ ' Variables..............',     i10,   2x,
+     $  ' Infinite bound size....', 1p, e10.2, 2x,
+     $  ' Optimality tolerance...', 1p, e10.2
+     $/ ' Objective matrix rows..',     i10,   2x,
+     $  ' Infinite step size.....', 1p, e10.2, 2x,
+     $  ' Feasibility tolerance..', 1p, e10.2
+     $/ ' Hessian................', 7x, a3,   38x,
      $  ' Rank tolerance.........',     e10.2 )
  2200 format(
-     $/ ' Print level............',     i10,   6x,
-     $  ' Print file.............',     i10,   6x,
+     $/ ' Print level............',     i10,   2x,
+     $  ' Print file.............',     i10,   2x,
      $  ' Feasibility phase itns.',     i10
-     $/ ' eps (machine precision)', 1p, e10.2, 6x,
-     $  ' Summary file...........',     i10,   6x,
+     $/ ' eps (machine precision)', 1p, e10.2, 2x,
+     $  ' Summary file...........',     i10,   2x,
      $  ' Optimality  phase itns.',     i10 )
 
 *     end of lsdflt
@@ -2571,17 +2480,10 @@ C-->  condmx = max( one/epspt3, hundrd )
 *          than  featol  and the 2-norm of the constraint violations.
 *
 *     Systems Optimization Laboratory, Stanford University.
+*     Department of Mathematics, University of California, San Diego.
 *     Original version      April    1984.
 *     This version of  lsfeas  dated  17-October-1985.
 *     ==================================================================
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
-
-      logical            lsdbg
-      parameter         (ldbg = 5)
-      common    /lsdebg/ ilsdbg(ldbg), lsdbg
-
-      external           idamax, dnrm2
-      intrinsic          abs
       parameter        ( zero = 0.0d+0 )
 
       biglow = - bigbnd
@@ -2636,87 +2538,148 @@ C-->  condmx = max( one/epspt3, hundrd )
 
       jmax   = idamax( n+nclin, work, 1 )
       errmax = abs ( work(jmax) )
-
-      if (lsdbg  .and.  ilsdbg(1) .gt. 0)
-     $   write(iPrint, 1000) errmax, jmax
-
-      cvnorm  = dnrm2 ( n+nclin, work, 1 )
-
-      return
-
- 1000 format(/ ' //lsfeas//  The maximum violation is ', 1pe14.2,
-     $                     ' in constraint', i5 )
+      cvnorm = dnrm2 ( n+nclin, work, 1 )
 
 *     end of lsfeas
       end
 
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-      subroutine lsfile( ioptns, inform )
-      integer            ioptns, inform
+      subroutine lsfile( iOptns, inform )
+      integer            iOptns, inform
 
 *     ==================================================================
-*     lsfile  reads the options file from unit  ioptns  and loads the
+*     lsfile  reads the options file from unit  iOptns  and loads the
 *     options into the relevant elements of  iprmls  and  rprmls.
 *
-*     If  ioptns .lt. 0  or  ioptns .gt. 99  then no file is read,
-*     otherwise the file associated with unit  ioptns  is read.
+*     If  iOptns .lt. 0  or  iOptns .gt. 99  then no file is read,
+*     otherwise the file associated with unit  iOptns  is read.
 *
 *     Output:
 *
 *         inform = 0  if a complete  options  file was found
 *                     (starting with  begin  and ending with  end);
-*                  1  if  ioptns .lt. 0  or  ioptns .gt. 99;
+*                  1  if  iOptns .lt. 0  or  iOptns .gt. 99;
 *                  2  if  begin  was found, but end-of-file
 *                     occurred before  end  was found;
 *                  3  if end-of-file occurred before  begin  or
 *                     endrun  were found;
 *                  4  if  endrun  was found before  begin.
 *     ==================================================================
-      logical             newopt
-      common     /sol3ls/ newopt
-      save       /sol3ls/
+      common    /sol1cm/ iPrint, iSumm , lines1, lines2
+      save      /sol1cm/ 
+      logical            newOpt, listOp
+      common    /sol3ls/ newOpt, listOp, ncalls
+      save      /sol3ls/
 
-      double precision    wmach(15)
-      common     /solmch/ wmach
-      save       /solmch/
+      external            lskey
+*     ------------------------------------------------------------------
+*     Update ncalls, the number of calls of lsoptn and lsfile since the
+*     start of this problem.
+*     On the very first call, the default parameters are set.
 
-      external            mchpar, lskey
-      logical             first
-      save                first , nout
-      data                first /.true./
-
-*     If first time in, set nout.
-*     newopt is true first time into lsfile or lsoptn
-*     and just after a call to lssol.
-
-      if (first) then
-         first  = .false.
-         newopt = .true.
-         call mchpar()
-         nout = wmach(11)
-      end if
-
-      call opfile( ioptns, nout, inform, lskey )
-
+      call lsnkey()
+      call opfile( iOptns, iPrint, iSumm, 
+     $             listOp, newOpt, inform, lskey )
+      newOpt = .false.
 
 *     end of lsfile
       end
 
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+      subroutine lsfrmH( task, unitQ, 
+     $                   nfree, n, nRank, ldQ, ldR,
+     $                   kx, R, Q, v, w )
+
+      implicit           double precision(a-h,o-z)
+      character*1        task
+      logical            unitQ
+      integer            kx(n)
+      double precision   R(ldR,*), Q(ldQ,*)
+      double precision   v(n), w(n)
+
+*     ==================================================================
+*     lsfrmH forms the Cholesky factor of the Hessian.
+*
+*     Systems Optimization Laboratory, Stanford University.
+*     Department of Mathematics, University of California, San Diego.
+*     Original version written by PEG, 07-Jul-94.
+*     This version of lsfrmH dated 14-Jul-94.
+*     ==================================================================
+      parameter         (zero = 0.0d+0, one = 1.0d+0)
+
+      if (task .eq. 'H') then
+*        ---------------------------------------------------------------
+*        Form the triangular factor of the Hessian.
+*        ---------------------------------------------------------------
+*        First,  form the square matrix  R  such that  P'HP = R'R,
+*        where P is the permutation  kx.
+*        Compute the  QR  factorization of  R.
+
+         do 100, j = 1, n
+            if (j .gt. 1)
+     $         call dload ( j-1, zero, v, 1 )
+            call dcopy ( n-j+1, R(j,j), ldR, v(j), 1 )
+            call cmqmul( 3, n, nZ, nfree, ldQ, unitQ,
+     $                   kx, v, Q, w )
+            call dcopy ( n, v, 1, R(j,1), ldR )
+  100    continue
+
+         call dgeqr ( n, n, R, ldR, w, info )
+
+      else if (task .eq. 'P') then
+*        ---------------------------------------------------------------
+*        Form the factor of the permuted Hessian  P'HP.
+*        ---------------------------------------------------------------
+         if ( unitQ ) then
+*           Relax, nothing needs to be done.
+         else 
+
+            m = min( nRank, nfree )
+            do 200, i = 1, m
+
+*              Set  v' = (ith row of R)*Q'. 
+
+               call dgemv ( 'No transpose', nfree, nfree-i+1, 
+     $                      one, Q(1,i), ldQ, R(i,i), ldR, 
+     $                      zero, v, 1 )
+               call dcopy ( nfree, v, 1, R(i,1), ldR )
+  200       continue
+            
+            call dgeqr ( m, m, R, ldR, w, info )
+
+            if (m .lt. n) then
+               info = 0
+               call dgeapq( 'Transpose', 'Separate', m, m, R, ldR, w,
+     $                      n-m, R(1,m+1), ldR, w(m+1), info )
+            end if
+         end if
+      end if 
+
+*     For safety, zero out the lower-triangular part of R.
+
+      do 300, j = 1, n-1
+         call dload ( n-j, zero, R(j+1,j), 1 )
+  300  continue
+
+*     end of lsfrmH
+      end
+
+*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
       subroutine lsgetp( linObj, singlr, unitgZ, unitQ,
      $                   n, nclin, nfree,
-     $                   ldA, ldQ, ldR, nrank, numinf, nZr,
+     $                   ldA, ldQ, ldR, nRank, numinf, nZr,
      $                   kx, ctp, pnorm,
      $                   A, Ap, res, hZ, p,
-     $                   gq, cq, R, Q, work )
+     $                   gQ, cQ, R, Q, work )
 
       implicit           double precision(a-h,o-z)
       logical            linObj, singlr, unitgZ, unitQ
       integer            kx(n)
       double precision   A(ldA,*), Ap(*), res(*), hZ(*), p(n),
-     $                   gq(n), cq(*), R(ldR,*), Q(ldQ,*)
+     $                   gQ(n), cQ(*), R(ldR,*), Q(ldQ,*)
       double precision   work(n)
 
 *     ==================================================================
@@ -2737,18 +2700,11 @@ C-->  condmx = max( one/epspt3, hundrd )
 *     (3) The vector Ap,  where A is the matrix of linear constraints.
 *
 *     Systems Optimization Laboratory, Stanford University.
+*     Department of Mathematics, University of California, San Diego.
 *     Original version written 31-October-1984.
 *     Level 2 Blas added 11-June-1986.
 *     This version of lsgetp dated  23-Oct-92.
 *     ==================================================================
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
-
-      logical            lsdbg
-      parameter         (ldbg = 5)
-      common    /lsdebg/ ilsdbg(ldbg), lsdbg
-
-      external           ddot  , dnrm2
-      intrinsic          min
       parameter        ( zero = 0.0d+0, one  = 1.0d+0 )
 
       if (singlr) then
@@ -2763,15 +2719,15 @@ C-->  condmx = max( one/epspt3, hundrd )
          end if
          p(nZr) = - one
 
-         gtp = ddot  ( nZr, gq, 1, p, 1 )
+         gtp = ddot  ( nZr, gQ, 1, p, 1 )
          if (gtp .gt. zero) call dscal ( nZr, (-one), p, 1 )
 
-         if (nZr .le. nrank) then
+         if (nZr .le. nRank) then
             if (numinf .eq. 0) then
                if (unitgZ) then
                   hZ(nZr) = R(nZr,nZr)*p(nZr)
                else
-                  call dload ( nZr, (zero), hZ, 1 )
+                  call dload ( nZr, zero, hZ, 1 )
                end if
             else
                hZ(1)   = R(1,1)*p(1)
@@ -2784,10 +2740,10 @@ C-->  condmx = max( one/epspt3, hundrd )
          if (linObj) then
             if (unitgZ) then
                if (nZr .gt. 1)
-     $            call dload ( nZr-1, (zero), hZ, 1 )
-               hZ(nZr) = - gq(nZr)/R(nZr,nZr)
+     $            call dload ( nZr-1, zero, hZ, 1 )
+               hZ(nZr) = - gQ(nZr)/R(nZr,nZr)
             else
-               call dcopy ( nZr, gq  , 1, hZ, 1 )
+               call dcopy ( nZr, gQ  , 1, hZ, 1 )
                call dscal ( nZr, (-one), hZ, 1 )
                call dtrsv ( 'U', 'T', 'N', nZr, R, ldR, hZ, 1 )
             end if
@@ -2804,28 +2760,17 @@ C-->  condmx = max( one/epspt3, hundrd )
 *     Compute  p = Zr*pz  and its norm.
 
       if (linObj)
-     $   ctp = ddot  ( nZr, cq, 1, p, 1 )
+     $   ctp = ddot  ( nZr, cQ, 1, p, 1 )
       pnorm  = dnrm2 ( nZr, p, 1 )
 
       call cmqmul( 1, n, nZr, nfree, ldQ, unitQ, kx, p, Q, work )
-
-      if (lsdbg  .and.  ilsdbg(2) .gt. 0)
-     $   write(iPrint, 1000) (p(j), j = 1, n)
 
 *     Compute  Ap.
 
       if (nclin .gt. 0) then
          call dgemv ( 'No transpose', nclin, n, one, A, ldA,
      $                p, 1, zero, Ap, 1 )
-
-         if (lsdbg  .and.  ilsdbg(2) .gt. 0)
-     $      write(iPrint, 1100) (ap(i), i = 1, nclin)
       end if
-
-      return
-
- 1000 format(/ ' //lsgetp//   p ... ' / (1p, 5e15.5))
- 1100 format(/ ' //lsgetp//  Ap ... ' / (1p, 5e15.5))
 
 *     end of lsgetp
       end
@@ -2834,11 +2779,11 @@ C-->  condmx = max( one/epspt3, hundrd )
 
       subroutine lsgset( prbtyp, linObj, singlr, unitgZ, unitQ,
      $                   n, nclin, nfree,
-     $                   ldA, ldQ, ldR, nrank, nZ, nZr,
+     $                   ldA, ldQ, ldR, nRank, nZ, nZr,
      $                   istate, kx,
      $                   bigbnd, tolrnk, numinf, suminf,
      $                   bl, bu, A, res, featol,
-     $                   gq, cq, R, x, wtinf, Q, wrk )
+     $                   gQ, cQ, R, x, wtinf, Q, wrk )
 
       implicit           double precision(a-h,o-z)
       character*2        prbtyp
@@ -2846,41 +2791,40 @@ C-->  condmx = max( one/epspt3, hundrd )
       integer            istate(*), kx(n)
       double precision   bl(*), bu(*), A(ldA,*),
      $                   res(*), featol(*)
-      double precision   gq(n), cq(*), R(ldR,*), x(n), wtinf(*),
+      double precision   gQ(n), cQ(*), R(ldR,*), x(n), wtinf(*),
      $                   Q(ldQ,*)
       double precision   wrk(n)
 
 *     ==================================================================
 *     lsgset  finds the number and weighted sum of infeasibilities for
 *     the bounds and linear constraints.   An appropriate transformed
-*     gradient vector is returned in  GQ.
+*     gradient vector is returned in  gQ.
 *
-*     Positive values of  ISTATE(j)  will not be altered.  These mean
+*     Positive values of  istate(j)  will not be altered.  These mean
 *     the following...
 *
 *               1             2           3
 *           a'x = bl      a'x = bu     bl = bu
 *
-*     Other values of  ISTATE(j)  will be reset as follows...
+*     Other values of  istate(j)  will be reset as follows...
 *           a'x lt bl     a'x gt bu     a'x free
 *              - 2           - 1           0
 *
-*     If  x  is feasible,  LSGSET computes the vector Q(free)'g(free),
+*     If  x  is feasible,  lsgset computes the vector Q(free)'g(free),
 *     where  g  is the gradient of the the sum of squares plus the
 *     linear term.  The matrix Q is of the form
 *                    ( Q(free)  0       ),
 *                    (   0      I(fixed))
 *     where  Q(free)  is the orthogonal factor of  A(free)  and  A  is
 *     the matrix of constraints in the working set.  The transformed
-*     gradients are stored in GQ.
+*     gradients are stored in gQ.
 *
 *     Systems Optimization Laboratory, Stanford University.
+*     Department of Mathematics, University of California, San Diego.
 *     Original version written 31-October-1984.
 *     Level 2 Blas added 11-June-1986.
 *     This version of lsgset dated 14-Sep-92.
 *     ==================================================================
-      external           ddot  , idrank
-      intrinsic          abs   , max   , min
       parameter        ( zero = 0.0d+0, one = 1.0d+0 )
                      
       bigupp =   bigbnd
@@ -2888,7 +2832,7 @@ C-->  condmx = max( one/epspt3, hundrd )
 
       numinf =   0
       suminf =   zero
-      call dload ( n, zero, gq, 1 )
+      call dload ( n, zero, gQ, 1 )
 
       do 200, j = 1, n+nclin
          if (istate(j) .le. 0) then
@@ -2925,47 +2869,47 @@ C-->  condmx = max( one/epspt3, hundrd )
   160       numinf = numinf + 1
             suminf = suminf + abs( weight ) * s
             if (j .le. n) then
-               gq(j) = weight
+               gQ(j) = weight
             else
-               call daxpy ( n, weight, A(k,1), ldA, gq, 1 )
+               call daxpy ( n, weight, A(k,1), ldA, gQ, 1 )
             end if
          end if
   200 continue
 
 *     ------------------------------------------------------------------
-*     Install  gq,  the transformed gradient.
+*     Install  gQ,  the transformed gradient.
 *     ------------------------------------------------------------------
       singlr = .false.
       unitgZ = .true.
 
       if (numinf .gt. 0) then
-         call cmqmul( 6, n, nZ, nfree, ldQ, unitQ, kx, gq, Q, wrk )
+         call cmqmul( 6, n, nZ, nfree, ldQ, unitQ, kx, gQ, Q, wrk )
       else if (numinf .eq. 0  .and.  prbtyp .eq. 'FP') then
-         call dload ( n, zero, gq, 1 )
+         call dload ( n, zero, gQ, 1 )
       else
 
 *        Ready for the Optimality Phase.
 *        Set nZr so that Rz is nonsingular.
 
-         if (nrank .eq. 0) then
+         if (nRank .eq. 0) then
             if (linObj) then
-               call dcopy ( n, cq, 1, gq, 1 )
+               call dcopy ( n, cQ, 1, gQ, 1 )
             else
-               call dload ( n, zero, gq, 1 )
+               call dload ( n, zero, gQ, 1 )
             end if
             nZr    = 0
          else
 
-*           Compute  gq = - R' * (transformed residual)
+*           Compute  gQ = - R' * (transformed residual)
 
-            call dcopy ( nrank, res, 1, gq, 1 )
-            call dscal ( nrank, (-one), gq, 1 )
-            call dtrmv ( 'U', 'T', 'N', nrank, R, ldR, gq, 1 )
-            if (nrank .lt. n)
-     $         call dgemv( 'T', nrank, n-nrank, -one,R(1,nrank+1),ldR,
-     $                      res, 1, zero, gq(nrank+1), 1 )
+            call dcopy ( nRank, res, 1, gQ, 1 )
+            call dscal ( nRank, (-one), gQ, 1 )
+            call dtrmv ( 'U', 'T', 'N', nRank, R, ldR, gQ, 1 )
+            if (nRank .lt. n)
+     $         call dgemv( 'T', nRank, n-nRank, -one,R(1,nRank+1),ldR,
+     $                      res, 1, zero, gQ(nRank+1), 1 )
 
-            if (linObj) call daxpy ( n, one, cq, 1, gq, 1 )
+            if (linObj) call daxpy ( n, one, cQ, 1, gQ, 1 )
             unitgZ = .false.
 
             rownrm = dnrm2 ( n, R(1,1), ldR )
@@ -2973,7 +2917,7 @@ C-->  condmx = max( one/epspt3, hundrd )
      $          .or. abs(R(1,1)) .le. rownrm*tolrnk) then
                nZr = 0
             else
-               nZr = idrank( min(nrank, nZ), R, ldR+1, tolrnk )
+               nZr = idrank( min(nRank, nZ), R, ldR+1, tolrnk )
             end if
          end if
       end if
@@ -2983,56 +2927,50 @@ C-->  condmx = max( one/epspt3, hundrd )
 
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-      subroutine lskey ( nout, buffer, key )
+      subroutine lskey ( iPrint, iSumm, listOp, buffer, key )
 
       implicit           double precision(a-h,o-z)
       character*(*)      buffer
+      logical            listOp
 
 *     ==================================================================
 *     lskey   decodes the option contained in  buffer  in order to set
 *     a parameter value in the relevant element of  iprmls  or  rprmls.
 *
-*
 *     Input:
-*
-*     nout   a unit number for printing error messages.
-*            if nout = 0 no error messages are printed.
-*
+*        iPrint   the print   file for error messages
+*        iSumm    the summary file for error messages.
 *     Output:
+*        key    The first keyword contained in buffer.
 *
-*     key    The first keyword contained in BUFFER.
-*
-*
-*     lskey  calls opnumb and the subprograms
-*                 lookup, scannr, tokens, upcase
-*     (now called oplook, opscan, optokn, opuppr)
-*     supplied by Informatics General, Inc., Palo Alto, California.
+*        lskey  calls opnumb and the subprograms
+*               lookup, scannrl tokens, upcase
+*        (now called oplook, opscan, optokn, opuppr)
+*        supplied by Informatics General, Inc., Palo Alto, California.
 *
 *     Systems Optimization Laboratory, Stanford University.
-*     This version of  lskey dated 19-Oct-92.
+*     Department of Mathematics, University of California, San Diego.
+*     This version of  lskey dated 14-Sep-95.
 *     ==================================================================
-*     +Include lsparm+++++++++++++++++++++++++++++++++++++++++++++++++++
+*     +Include lsparm-Sep-95++++++++++++++++++++++++++++++++++++++++++++
       parameter         (mxparm = 30)
       integer            iprmls(mxparm), ipsvls
       double precision   rprmls(mxparm), rpsvls
 
       common    /lspar1/ ipsvls(mxparm),
-     $                   idbgls, iPrnt , iSumry, itmax1, itmax2, lcrash,
-     $	                 ldbgls, lprob , msgls , nn    , nnclin, nprob , 
-     $                   ipadls(18)
+     $                   itmax1, itmax2, lcrash, lformH, lprob , msgLS ,
+     $                   nn    , nnclin, nprob , ipadls(21)
 
       common    /lspar2/ rpsvls(mxparm),
      $                   bigbnd, bigdx , bndlow, bndupp, tolact, tolfea,
-     $                   tolrnk, rpadls(23)
+     $                   tolOpt, tolrnk, rpadls(22)
 
-      equivalence       (iprmls(1), idbgls), (rprmls(1), bigbnd)
+      equivalence       (iprmls(1), itmax1 ), (rprmls(1), bigbnd)
 
       save      /lspar1/, /lspar2/
 *     ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
       external           opnumb
-      logical            first , more  , number, opnumb, sorted
-      save               first
+      logical            more  , number, opnumb, sorted
 
       parameter         (     maxkey = 28,  maxtie = 12,   maxtok = 10,
      $                        maxtyp = 16)
@@ -3040,16 +2978,15 @@ C-->  condmx = max( one/epspt3, hundrd )
      $                   type(maxtyp)
       character*16       key, key2, key3, value
 
-      parameter         (idummy = -11111,  rdummy = -11111.0,
-     $                   sorted = .true.,  zero   =  0.0     )
+      parameter         (idummy = -11111,  rdummy = -11111.0d+0,
+     $                   sorted = .true.,  zero   =  0.0d+0    )
 
-      data                first
-     $                  /.true./
       data   keys
      $ / 'BEGIN           ',
      $   'COLD            ', 'CONSTRAINTS     ', 'CRASH           ',
-     $   'DEBUG           ', 'DEFAULTS        ', 'END             ',
-     $   'FEASIBILITY     ', 'HOT             ', 'INFINITE        ',
+     $   'DEFAULTS        ', 'END             ',
+     $   'FEASIBILITY     ', 'HESSIAN         ', 'HOT             ',
+     $   'INFINITE        ',
      $   'IPRMLS          ', 'ITERATIONS      ', 'ITERS:ITERATIONS',
      $   'ITNS :ITERATIONS', 'LINEAR          ', 'LIST            ',
      $   'LOWER           ', 'NOLIST          ', 'OPTIMALITY      ',
@@ -3072,14 +3009,6 @@ C-->  condmx = max( one/epspt3, hundrd )
      $   'QP          :QP2', 'QP1             ', 'QP2             ',
      $   'QP3             ', 'QP4             ', 'QUADRATIC   :QP2'/
 *-----------------------------------------------------------------------
-
-      if (first) then
-         first  = .false.
-         do 10, i = 1, mxparm
-            iprmls(i) = idummy
-            rprmls(i) = rdummy
-   10    continue
-      end if
 
 *     Eliminate comments and empty lines.
 *     A '*' appearing anywhere in buffer terminates the string.
@@ -3155,9 +3084,9 @@ C-->  condmx = max( one/epspt3, hundrd )
             nnclin = rvalue
          else if (key .eq. 'CRASH       ') then
             tolact = rvalue
-         else if (key .eq. 'DEBUG       ') then
-            ldbgls = rvalue
          else if (key .eq. 'DEFAULTS    ') then
+            call mcout ( iPrint, iSumm )
+            listOp = .true.
             do 20, i = 1, mxparm
                iprmls(i) = idummy
                rprmls(i) = rdummy
@@ -3166,7 +3095,8 @@ C-->  condmx = max( one/epspt3, hundrd )
               if (key2.eq. 'PHASE       ') itmax1 = rvalue
               if (key2.eq. 'TOLERANCE   ') tolfea = rvalue
               if (loc2.eq.  0            ) then
-                 if (nout .gt. 0)          write(nout, 2320) key2
+                 if (iPrint .gt. 0)        write(iPrint, 2320) key2
+                 if (iSumm  .gt. 0)        write(iSumm , 2320) key2
               end if
          else
             more   = .true.
@@ -3175,21 +3105,26 @@ C-->  condmx = max( one/epspt3, hundrd )
 
       if (more) then
          more   = .false.
-         if (key .eq. 'HOT         ') then
+         if      (key .eq. 'HESSIAN     ') then
+            lformH = 1
+            if   (key2.eq. 'NO          ') lformH = 0
+         else if (key .eq. 'HOT         ') then
             lcrash = 2
          else if (key .eq. 'INFINITE    ') then
-              if (key2.eq. 'BOUND       ') bigbnd = rvalue * 0.99999
+              if (key2.eq. 'BOUND       ') bigbnd = rvalue * 0.99999d+0
               if (key2.eq. 'STEP        ') bigdx  = rvalue
               if (loc2.eq.  0            ) then
-                 if (nout .gt. 0)          write(nout, 2320) key2
+                 if (iPrint .gt. 0)        write(iPrint, 2320) key2
+                 if (iSumm  .gt. 0)        write(iSumm , 2320) key2
               end if
          else if (key .eq. 'IPRMLS      ') then
-*           Allow things like  iprmls 21 = 100  to set iprmls(21) = 100
+*           Allow things like  IPRMLS 21 = 100  to set IPRMLS(21) = 100
             ivalue = rvalue
             if (ivalue .ge. 1  .and. ivalue .le. mxparm) then
                read (key3, '(bn, i16)') iprmls(ivalue)
             else
-               if (nout .gt. 0) write(nout, 2400) ivalue
+               if (iPrint .gt. 0) write(iPrint, 2400) ivalue
+               if (iSumm  .gt. 0) write(iSumm , 2400) ivalue
             end if
          else if (key .eq. 'ITERATIONS  ') then
             itmax2 = rvalue
@@ -3205,7 +3140,12 @@ C-->  condmx = max( one/epspt3, hundrd )
       if (more) then
          more   = .false.
          if      (key .eq. 'OPTIMALITY  ') then
-            itmax2 = rvalue
+              if (key2.eq. 'PHASE       ') itmax2 = rvalue
+              if (key2.eq. 'TOLERANCE   ') tolOpt = rvalue
+              if (loc2.eq.  0            ) then
+                 if (iPrint .gt. 0)        write(iPrint, 2320) key2
+                 if (iSumm  .gt. 0)        write(iSumm , 2320) key2
+              end if
          else if (key .eq. 'PROBLEM     ') then
             if      (key2 .eq. 'NUMBER') then
                nprob  = rvalue
@@ -3225,10 +3165,12 @@ C-->  condmx = max( one/epspt3, hundrd )
                if (key3 .eq. 'LS3') lprob = 9
                if (key3 .eq. 'LS4') lprob = 10
                if (loc3 .eq.  0   ) then
-                  if (nout .gt. 0)  write(nout, 2330) key3
+                  if (iPrint .gt. 0)  write(iPrint, 2330) key3
+                  if (iSumm  .gt. 0)  write(iSumm , 2330) key3
                end if
             else
-               if (nout .gt. 0) write(nout, 2320) key2
+               if (iPrint .gt. 0) write(iPrint, 2320) key2
+               if (iSumm  .gt. 0) write(iSumm , 2320) key2
             end if
          else
             more   = .true.
@@ -3238,25 +3180,25 @@ C-->  condmx = max( one/epspt3, hundrd )
       if (more) then
          more   = .false.
          if      (key .eq. 'PRINT       ') then
-              if (key2.eq. 'FILE        ') iPrnt  = rvalue
+              if (key2.eq. 'FILE        ') iPrint = rvalue
               if (key2.eq. 'LEVEL       ') msgls  = rvalue
               if (loc2.eq.  0            ) then
-                 if (nout .gt. 0)          write(nout, 2320) key2
+                 if (iPrint .gt. 0)        write(iPrint, 2320) key2
+                 if (iSumm  .gt. 0)        write(iSumm , 2320) key2
               end if
          else if (key .eq. 'RANK        ') then
             tolrnk = rvalue
          else if (key .eq. 'RPRMLS      ') then
-*           Allow things like  rprmls 21 = 2  to set rprmls(21) = 2.0
+*           Allow things like  RPRMLS 21 = 2  to set RPRMLS(21) = 2.0
             ivalue = rvalue
             if (ivalue .ge. 1  .and. ivalue .le. mxparm) then
                read (key3, '(bn, e16.0)') rprmls(ivalue)
             else
-               if (nout .gt. 0) write(nout, 2400) ivalue
+               if (iPrint .gt. 0) write(iPrint, 2400) ivalue
+               if (iSumm  .gt. 0) write(iSumm , 2400) ivalue
             end if
-         else if (key .eq. 'START       ') then
-            idbgls = rvalue
          else if (key .eq. 'SUMMARY     ') then
-            iSumry = rvalue
+            iSumm  = rvalue
          else if (key .eq. 'UPPER       ') then
             bndupp = rvalue
          else if (key .eq. 'VARIABLES   ') then
@@ -3264,7 +3206,8 @@ C-->  condmx = max( one/epspt3, hundrd )
          else if (key .eq. 'WARM        ') then
             lcrash = 1
          else
-            if (nout .gt. 0) write(nout, 2300) key
+            if (iPrint .gt. 0) write(iPrint, 2300) key
+            if (iSumm  .gt. 0) write(iSumm , 2300) key
          end if
       end if
 
@@ -3287,28 +3230,23 @@ C-->  condmx = max( one/epspt3, hundrd )
 *     ==================================================================
 *     lsloc   allocates the addresses of the work arrays for  lscore.
 *
-*     Note that the arrays  ( gq, cq )  and  ( res, res0, hz )  lie in
+*     Note that the arrays  ( gQ, cQ )  and  ( res, res0, hz )  lie in
 *     contiguous areas of workspace.
 *     res, res0 and hZ are not needed for LP.
 *     CQ is defined when the objective has an explicit linear term.
 *
 *     Systems Optimization Laboratory, Stanford University.
+*     Department of Mathematics, University of California, San Diego.
 *     Original version written  29-October-1984.
 *     This version of lsloc dated 16-February-1986.
 *     ==================================================================
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
-      common    /sol3cm/ lennam, ldT   , ncolt, ldQ
+      common    /sol3cm/ lennam, ldT   , ncolT, ldQ
 
       parameter        ( lenls = 20 )
       common    /sol1ls/ locls(lenls)
 
-      logical            lsdbg
-      parameter        ( ldbg = 5 )
-      common    /lsdebg/ ilsdbg(ldbg), lsdbg
-
       miniw     = litotl + 1
       minw      = lwtotl + 1
-
 
 *     Assign array lengths that depend upon the problem dimensions.
 
@@ -3316,12 +3254,12 @@ C-->  condmx = max( one/epspt3, hundrd )
          lenT  = 0
          lenQ = 0
       else
-         lenT  = ldT *ncolt
+         lenT  = ldT *ncolT
          lenQ = ldQ*ldQ
       end if
 
-      lencq  = 0
-      if (lprob .eq. 2*(lprob/2)) lencq  = n
+      lencQ  = 0
+      if (lprob .eq. 2*(lprob/2)) lencQ  = n
       lenres = 0
       if (lprob .gt. 2          ) lenres = n
 
@@ -3331,9 +3269,9 @@ C-->  condmx = max( one/epspt3, hundrd )
       lanorm    = minw
       lAp       = lanorm + nclin
       lpx       = lAp    + nclin
-      lgq       = lpx    + n
-      lcq       = lgq    + n
-      lres      = lcq    + lencq
+      lgQ       = lpx    + n
+      lcQ       = lgQ    + n
+      lres      = lcQ    + lencQ
       lres0     = lres   + lenres
       lhZ       = lres0  + lenres
       lrlam     = lhZ    + lenres
@@ -3351,8 +3289,8 @@ C-->  condmx = max( one/epspt3, hundrd )
       locls( 5) = lres
       locls( 6) = lres0
       locls( 7) = lhZ
-      locls( 8) = lgq
-      locls( 9) = lcq
+      locls( 8) = lgQ
+      locls( 9) = lcQ
       locls(10) = lrlam
       locls(11) = lT
       locls(12) = lQ
@@ -3369,20 +3307,20 @@ C-->  condmx = max( one/epspt3, hundrd )
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
       subroutine lsmove( hitcon, hitlow, linObj, unitgZ,
-     $                   nclin, nrank, nZr,
+     $                   nclin, nRank, nZr,
      $                   n, ldR, jadd, numinf,
      $                   alfa, ctp, ctx, xnorm,
-     $                   Ap, Ax, bl, bu, gq, hZ, p, res,
+     $                   Ap, Ax, bl, bu, gQ, hZ, p, res,
      $                   R, x, work )
 
       implicit           double precision (a-h,o-z)
       logical            hitcon, hitlow, linObj, unitgZ
-      double precision   Ap(*), Ax(*), bl(*), bu(*), gq(*), hZ(*),
+      double precision   Ap(*), Ax(*), bl(*), bu(*), gQ(*), hZ(*),
      $                   p(n), res(*), R(ldR,*), x(n)
       double precision   work(*)
 
 *     ==================================================================
-*     lsmove  changes x to x + alfa*p and updates ctx, Ax, res and gq
+*     lsmove  changes x to x + alfa*p and updates ctx, Ax, res and gQ
 *     accordingly.
 *
 *     If a bound was added to the working set,  move x exactly on to it,
@@ -3390,18 +3328,11 @@ C-->  condmx = max( one/epspt3, hundrd )
 *     to some other closer constraint.)
 *
 *     Systems Optimization Laboratory, Stanford University.
+*     Department of Mathematics, University of California, San Diego.
 *     Original version written 27-December-1985.
 *     Level 2 BLAS added 11-June-1986.
 *     This version of lsmove dated 14-Sep-92.
 *     ==================================================================
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
-
-      logical            lsdbg
-      parameter         (ldbg = 5)
-      common    /lsdebg/ ilsdbg(ldbg), lsdbg
-
-      external           dnrm2
-      intrinsic          abs   , min
       parameter        ( zero  = 0.0d+0, one = 1.0d+0 )
 
       call daxpy ( n, alfa, p, 1, x, 1 )
@@ -3417,7 +3348,7 @@ C-->  condmx = max( one/epspt3, hundrd )
       if (nclin .gt. 0)
      $   call daxpy ( nclin, alfa, Ap, 1, Ax, 1 )
 
-      if (nZr .le. nrank) then
+      if (nZr .le. nRank) then
          if (unitgZ) then
             res(nZr) = res(nZr) - alfa*hZ(nZr)
          else
@@ -3427,19 +3358,19 @@ C-->  condmx = max( one/epspt3, hundrd )
          if (numinf .eq. 0) then
 
 *           Update the transformed gradient GQ so that
-*           gq = gq + alfa*R'( HZ ).
+*           gQ = gQ + alfa*R'( HZ ).
 *                            ( 0  )
 
             if (unitgZ) then
                call daxpy ( n-nZr+1, alfa*hZ(nZr), R(nZr,nZr), ldR,
-     $                                             gq(nZr)   , 1      )
+     $                                             gQ(nZr)   , 1      )
             else
                call dcopy ( nZr, hZ, 1, work, 1 )
                call dtrmv ( 'U', 'T', 'N', nZr, R, ldR, work, 1 )
                if (nZr .lt. n)
      $            call dgemv ( 'T', nZr, n-nZr, one, R(1,nZr+1), ldR,
      $                         hZ, 1, zero, work(nZr+1), 1 )
-               call daxpy ( n, alfa, work, 1, gq, 1 )
+               call daxpy ( n, alfa, work, 1, gQ, 1 )
             end if
          end if
       end if
@@ -3452,16 +3383,16 @@ C-->  condmx = max( one/epspt3, hundrd )
       subroutine lsmuls( prbtyp,
      $                   msglvl, n, nactiv, nfree,
      $                   ldA, ldT, numinf, nZ, nZr,
-     $                   istate, kactiv, kx, dinky,
+     $                   istate, kactiv, kx, tolLM,
      $                   jsmlst, ksmlst, jinf, jtiny,
      $                   jbigst, kbigst, trulam,
-     $                   A, anorms, gq, rlamda, T, wtinf )
+     $                   A, anorms, gQ, rlamda, T, wtinf )
 
       implicit           double precision(a-h,o-z)
       character*2        prbtyp
       integer            istate(*), kactiv(n), kx(n)
       double precision   A(ldA,*), anorms(*),
-     $                   gq(n), rlamda(n), T(ldT,*), wtinf(*)
+     $                   gQ(n), rlamda(n), T(ldT,*), wtinf(*)
 
 *     ==================================================================
 *     lsmuls  first computes the Lagrange multiplier estimates for the
@@ -3475,13 +3406,13 @@ C-->  condmx = max( one/epspt3, hundrd )
 *     not to their magnitude.
 *
 *     jsmlst  is the index of the minimum of the set of adjusted
-*             multipliers with values less than  - dinky.  A negative
+*             multipliers with values less than  - tolLM.  A negative
 *             jsmlst defines the index in Q'g of the artificial
 *             constraint to be deleted.
 *     ksmlst  marks the position of general constraint jsmlst in kactiv.
 *
 *     jbigst  is the index of the largest of the set of adjusted
-*             multipliers with values greater than (1 + dinky).
+*             multipliers with values greater than (1 + tolLM).
 *     kbigst  marks its position in kactiv.
 *
 *     On exit,  elements 1 thru nactiv of rlamda contain the unadjusted
@@ -3489,37 +3420,33 @@ C-->  condmx = max( one/epspt3, hundrd )
 *     of rlamda contain the unadjusted multipliers for the bounds.
 *
 *     Systems Optimization Laboratory, Stanford University.
+*     Department of Mathematics, University of California, San Diego.
 *     Original version written 31-October-1984.
 *     This version of lsmuls dated  14-Sep-92.
 *     ==================================================================
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
-
-      logical            lsdbg
-      parameter         (ldbg = 5)
-      common    /lsdebg/ ilsdbg(ldbg), lsdbg
-
-      intrinsic          abs, min
+      common    /sol1cm/ iPrint, iSumm , lines1, lines2
+      save      /sol1cm/ 
       parameter        ( one    =1.0d+0 )
 
       nfixed =   n - nfree
 
       jsmlst =   0
       ksmlst =   0
-      smllst = - dinky
+      smllst = - tolLM
 
-      tinylm =   dinky
+      tinylm =   tolLM
       jtiny  =   0
 
       jbigst =   0
       kbigst =   0
-      biggst =   one + dinky
+      biggst =   one + tolLM
 
       if (nZr .lt. nZ) then
 *        ---------------------------------------------------------------
 *        Compute jsmlst for the artificial constraints.
 *        ---------------------------------------------------------------
          do 100, j = nZr+1, nZ
-            rlam = - abs( gq(j) )
+            rlam = - abs( gQ(j) )
             if (rlam .lt. smllst) then
                smllst =   rlam
                jsmlst = - j
@@ -3530,7 +3457,7 @@ C-->  condmx = max( one/epspt3, hundrd )
   100    continue
 
          if (msglvl .ge. 20) then
-            if (iPrint .gt. 0) write(iPrint, 1000) (gq(k), k=nZr+1,nZ)
+            if (iPrint .gt. 0) write(iPrint, 1000) (gQ(k), k=nZr+1,nZ)
          end if
       end if
 
@@ -3541,7 +3468,7 @@ C-->  condmx = max( one/epspt3, hundrd )
 *     constraints in the working set, by solving  T'*lamda = Y'g.
 
       if (n .gt. nZ)
-     $   call dcopy ( n-nZ, gq(nZ+1), 1, rlamda, 1 )
+     $   call dcopy ( n-nZ, gQ(nZ+1), 1, rlamda, 1 )
       if (nactiv .gt. 0)
      $   call cmtsol( 2, ldT, nactiv, T(1,nZ+1), rlamda )
 
@@ -3619,12 +3546,6 @@ C-->  condmx = max( one/epspt3, hundrd )
      $                         rlamda(k), k=1,nactiv)
       end if
 
-      if (lsdbg  .and.  ilsdbg(1) .gt. 0) then
-         write(iPrint, 9000) jsmlst, smllst, ksmlst
-         write(iPrint, 9100) jbigst, biggst, kbigst
-         write(iPrint, 9200) jtiny , tinylm
-      end if
-
       return
 
  1000 format(/ ' Multipliers for the artificial constraints        '
@@ -3633,14 +3554,72 @@ C-->  condmx = max( one/epspt3, hundrd )
      $       / 4(i5, 1pe11.2))
  1200 format(/ ' Multipliers for the ', a2, ' linear constraints   '
      $       / 4(i5, 1pe11.2))
- 9000 format(/ ' //lsmuls//  jsmlst     smllst     ksmlst (scaled) '
-     $       / ' //lsmuls//  ', i6, 1pe11.2, 5x, i6 )
- 9100 format(  ' //lsmuls//  jbigst     biggst     kbigst (scaled) '
-     $       / ' //lsmuls//  ', i6, 1pe11.2, 5x, i6 )
- 9200 format(  ' //lsmuls//   jtiny     tinylm                     '
-     $       / ' //lsmuls//  ', i6, 1pe11.2)
 
 *     end of lsmuls
+      end
+
+*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+      subroutine lsnkey( )
+
+      implicit           double precision (a-h,o-z)
+
+*     ==================================================================
+*     lsnkey  counts consecutive calls of lsoptn or lsfile
+*
+*     Original version written  11-Sep-95,
+*     This version of  lsnkey  dated  14-Sep-95.
+*     ==================================================================
+      common    /sol1cm/ iPrint, iSumm , lines1, lines2
+      save      /sol1cm/ 
+      logical            newOpt, listOp
+      common    /sol3ls/ newOpt, listOp, ncalls
+      save      /sol3ls/
+
+*     +Include lsparm-Sep-95++++++++++++++++++++++++++++++++++++++++++++
+      parameter         (mxparm = 30)
+      integer            iprmls(mxparm), ipsvls
+      double precision   rprmls(mxparm), rpsvls
+
+      common    /lspar1/ ipsvls(mxparm),
+     $                   itmax1, itmax2, lcrash, lformH, lprob , msgLS ,
+     $                   nn    , nnclin, nprob , ipadls(21)
+
+      common    /lspar2/ rpsvls(mxparm),
+     $                   bigbnd, bigdx , bndlow, bndupp, tolact, tolfea,
+     $                   tolOpt, tolrnk, rpadls(22)
+
+      equivalence       (iprmls(1), itmax1 ), (rprmls(1), bigbnd)
+
+      save      /lspar1/, /lspar2/
+*     ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      parameter         (rdummy = -11111.0d+0, idummy = -11111)
+
+      logical             first
+      save                first
+      data                first /.true./
+
+      if ( first ) then
+         nCalls = 0
+         first  = .false.
+         newOpt = .true.
+         listOp = .true.
+
+         call mcout ( iPrint, iSumm )
+         do 10, i = 1, mxparm
+            iprmls(i) = idummy
+            rprmls(i) = rdummy
+   10    continue
+         first  = .false.
+      end if
+
+      if ( newOpt ) then
+         nCalls = 1
+      else
+         nCalls = nCalls + 1
+      end if
+  
+*     end of lsnkey
       end
 
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -3649,65 +3628,45 @@ C-->  condmx = max( one/epspt3, hundrd )
       character*(*)      string
 
 *     ==================================================================
-*     lsoptn  loads the option supplied in  string  into the relevant
-*     element of  iprmls  or  rprmls.
+*     lsoptn  loads the option supplied in string into the relevant
+*     element of iprmlc, rprmlc, iprmls or rprmls.
 *     ==================================================================
+      common    /sol1cm/ iPrint, iSumm , lines1, lines2
+      save      /sol1cm/ 
+      logical            newOpt, listOp
+      common    /sol3ls/ newOpt, listOp, ncalls
+      save      /sol3ls/
 
-      logical             newopt
-      common     /sol3ls/ newopt
-      save       /sol3ls/
-
-      double precision    wmach(15)
-      common     /solmch/ wmach
-      save       /solmch/
-
-      external            mchpar
-      character*16        key
-      character*72        buffer
-      logical             first , prnt
-      save                first , nout  , prnt
-      data                first /.true./
-
-*     If first time in, set  nout.
-*     newopt  is true first time into  lsfile  or  lsoptn
-*     and just after a call to  lssol.
-*     prnt    is set to true whenever  newopt  is true.
-
-      if (first) then
-         first  = .false.
-         newopt = .true.
-         call mchpar()
-         nout   =  wmach(11)
-      end if
+      character*16       key
+      character*72       buffer
+*     ------------------------------------------------------------------
       buffer = string
 
-*     Call  lskey   to decode the option and set the parameter value.
-*     If newopt is true, reset prnt and test specially for nolist.
+*     If this is the first call of lsnkey, set newOpt and default values
+*     of the optional parameters. The default is to list the options.
+*     Increment ncalls, the number of calls of lsoptn and lsfile for
+*     this optimization.
 
-      if (newopt) then
-         newopt = .false.
-         prnt   = .true.
-         call lskey ( nout, buffer, key )
+      call lsnkey()
 
-         if (key .eq. 'NOLIST') then
-            prnt   = .false.
-         else
-            write(nout, '(// a / a /)')
-     $         ' Calls to Option Routine',
-     $         ' -----------------------'
-            write(nout, '( 6x, a )') buffer
+*     Call  lskey  to decode the option and set the parameter value.
+*     If required, print a heading at the start of a new run.
+*     Note that the following call to lskey may reset iPrint and iSumm.
+
+      call lskey ( iPrint, iSumm, listOp, buffer, key )
+      if (key .eq.  'LIST'  ) listOp = .true.
+      if (key .eq.  'NOLIST') listOp = .false.
+
+      if ( listOp ) then 
+         if ( newOpt ) then
+            if (iPrint .gt. 0) then
+               write ( iPrint, '(// a / a /)' )
+     $                         ' Optional Parameters',
+     $                         ' -------------------'
+            end if
+            newOpt = .false.
          end if
-      else
-         if (prnt) then
-            iPrint = nout
-            write(nout, '( 6x, a )') buffer
-         else
-            iPrint = 0
-         end if
-
-         call lskey ( iPrint, buffer, key )
-         if (key .eq.   'list') prnt = .true.
-         if (key .eq. 'nolist') prnt = .false.
+         if (iPrint .gt. 0) write ( iPrint, '( 6x, a )'    ) buffer
       end if
 
 *     end of lsoptn
@@ -3715,10 +3674,60 @@ C-->  condmx = max( one/epspt3, hundrd )
 
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+      subroutine lsopti( string, ivalue )
+
+      implicit           double precision (a-h,o-z)
+      character*(*)      string
+      integer            ivalue
+
+*     ==================================================================
+*     lsopti decodes the option contained in  string // ivalue.
+*
+*     14 Sep 1995: first version.
+*     ==================================================================
+      character*16       key
+      character*72       buff72
+
+      write(key, '(i16)') ivalue
+      lenbuf = len(string)
+      buff72 = string
+      buff72(lenbuf+1:lenbuf+16) = key
+      call lsoptn( buff72 )
+
+*     end of lsopti
+      end
+
+*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+      subroutine lsoptr( string, rvalue )
+
+      implicit           double precision (a-h,o-z)
+      character*(*)      string
+      double precision   rvalue
+
+*     ==================================================================
+*     lsoptr decodes the option contained in  string // rvalue.
+*
+*     14 Sep 1995: first version.
+*     ==================================================================
+      character*16       key
+      character*72       buff72
+
+      write(key, '(1p, e16.8)') rvalue
+      lenbuf = len(string)
+      buff72 = string
+      buff72(lenbuf+1:lenbuf+16) = key
+      call lsoptn( buff72 )
+
+*     end of lsoptr
+      end
+
+*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
       subroutine lsprt ( prbtyp, isdel, iter, jadd, jdel,
      $                   msglvl, nactiv, nfree, n, nclin,
-     $                   nrank, ldR, ldT, nZ, nZr, istate,
-     $                   alfa, condRz, condT, gfnorm, gZrnrm,
+     $                   nRank, ldR, ldT, nZ, nZr, istate,
+     $                   alfa, condRz, condT, gZrnrm,
      $                   numinf, suminf, ctx, ssq,
      $                   Ax, R, T, x, work )
 
@@ -3747,26 +3756,13 @@ C-->  condmx = max( one/epspt3, hundrd )
 *        ge  30        diagonals of  T  and  R.
 *
 *
-*     Debug printing is performed depending on the logical variable 
-*     lsdbg, which is set true when  idbg  major iterations have been
-*     performed.  At this point,  printing is done according to a string
-*     of binary digits of the form  SVT  (stored in the integer array
-*     ilsdbg).
-*
-*     S  set 'on' gives information from the maximum step routine cmalf.
-*     V  set 'on' gives various vectors in  lscore  and its auxiliaries.
-*     T  set 'on' gives a trace of which routine was called and an
-*                 indication of the progress of the run.
-*
 *     Systems Optimization Laboratory, Stanford University.
+*     Department of Mathematics, University of California, San Diego.
 *     Original version written 31-October-1984.
 *     This version of lsprt dated 07-Jan-93.
 *     ==================================================================
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
-
-      logical            lsdbg
-      parameter         (ldbg = 5)
-      common    /lsdebg/ ilsdbg(ldbg), lsdbg
+      common    /sol1cm/ iPrint, iSumm , lines1, lines2
+      save      /sol1cm/ 
 
       logical            first , linObj, newSet, prtHdr
       character*2        ladd, ldel
@@ -3784,7 +3780,7 @@ C-->  condmx = max( one/epspt3, hundrd )
       if (msglvl .ge. 5) then
 
          first  = iter  .eq. 0
-         linObj = nrank .eq. 0
+         linObj = nRank .eq. 0
 
          Itn    = mod( iter, 1000  )
          ndf    = mod( nZr , 10000 )
@@ -3839,11 +3835,11 @@ C-->  condmx = max( one/epspt3, hundrd )
             if (linObj) then
                write(iPrint, 1700) Itn, jdel, ldel, jadd, ladd,
      $                             alfa, numinf, obj, gZrnrm, ndf, nArt,
-     $                             n-nfree, nactiv, gfnorm, condT
+     $                             n-nfree, nactiv, condT
             else
                write(iPrint, 1700) Itn, jdel, ldel, jadd, ladd,
      $                             alfa, numinf, obj, gZrnrm, ndf, nArt,
-     $                             n-nfree, nactiv, gfnorm, condT,
+     $                             n-nfree, nactiv, condT,
      $                             CondRz
             end if
             lines1 = lines1 + 1
@@ -3880,8 +3876,8 @@ C-->  condmx = max( one/epspt3, hundrd )
                   call dcopy ( nactiv, T(nactiv,nZ+1), ldT-1, work,1 )
                   write(iPrint, 3000) prbtyp, (work(j), j=1,nactiv)
                end if
-               if (nrank  .gt. 0)
-     $            write(iPrint, 3100) prbtyp, (R(j,j) , j=1,nrank )
+               if (nRank  .gt. 0)
+     $            write(iPrint, 3100) prbtyp, (R(j,j) , j=1,nRank )
             end if
             write(iPrint, 5000)
          end if
@@ -3894,14 +3890,11 @@ C-->  condmx = max( one/epspt3, hundrd )
  1100 format(// ' Itn Jdel  Jadd     Step Ninf  Sinf/Objective',
      $          ' Norm gZ   Zr  Art' )
  1200 format(// ' Itn Jdel  Jadd     Step Ninf  Sinf/Objective',
-     $          ' Norm gZ   Zr  Art ',
-     $          ' Bnd  Lin Norm gf  Cond T' )
+     $          ' Norm gZ   Zr  Art  Bnd  Lin Norm gf  Cond T' )
  1300 format(// ' Itn Jdel  Jadd     Step Ninf  Sinf/Objective',
-     $          ' Norm gZ   Zr  Art ',
-     $          ' Bnd  Lin Norm gf  Cond T Cond Rz' )
+     $          ' Norm gZ   Zr  Art  Bnd  Lin  Cond T Cond Rz' )
  1700 format(    i4, i5, a1, i5, a1, 1p, e8.1, i5, e16.8, 
-     $           e8.1, 2i5,
-     $           2i5, e8.1, 2e8.0 )
+     $           e8.1, 2i5, 2i5, 2e8.0 )
  2000 format(/ ' Values and status of the ', a2, ' constraints'
      $       / ' ---------------------------------------' )
  2100 format(/ ' Variables...'                 / (1x, 5(1p, e15.6, i5)))
@@ -3919,18 +3912,18 @@ C-->  condmx = max( one/epspt3, hundrd )
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
       subroutine lssetx( linObj, rowerr, unitQ,
-     $                   nclin, nactiv, nfree, nrank, nZ,
+     $                   nclin, nactiv, nfree, nRank, nZ,
      $                   n, nctotl, ldQ, ldA, ldR, ldT,
      $                   istate, kactiv, kx,
      $                   jmax, errmax, ctx, xnorm,
-     $                   A, Ax, bl, bu, cq, res, res0, featol,
+     $                   A, Ax, bl, bu, cQ, res, res0, featol,
      $                   R, T, x, Q, p, work )
 
       implicit           double precision (a-h,o-z)
       logical            linObj, rowerr, unitQ
       integer            istate(nctotl), kactiv(n), kx(n)
       double precision   A(ldA,*), Ax(*), bl(nctotl), bu(nctotl),
-     $                   cq(*), res(*), res0(*), featol(nctotl), p(n),
+     $                   cQ(*), res(*), res0(*), featol(nctotl), p(n),
      $                   R(ldR,*), T(ldT,*), Q(ldQ,*), x(n)
       double precision   work(nctotl)
 
@@ -3945,27 +3938,20 @@ C-->  condmx = max( one/epspt3, hundrd )
 *     used.  If  x  is still infeasible,  rowerr is set to true.
 *
 *     Systems Optimization Laboratory, Stanford University.
+*     Department of Mathematics, University of California, San Diego.
 *     Original version written 31-October-1984.
-*     This version of lssetx dated 29-December-1985.
+*     This version of lssetx dated 16-May-93.
 *     ==================================================================
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
-
-      logical            lsdbg
-      parameter         (ldbg = 5)
-      common    /lsdebg/ ilsdbg(ldbg), lsdbg
-
-      external           idamax, ddot
-      intrinsic          abs, min
-      parameter        ( ntry  = 2 )
+      parameter        ( ntry  = 5 )
       parameter        ( zero  = 0.0d+0, one = 1.0d+0 )
 
 *     ------------------------------------------------------------------
 *     Move  x  onto the simple bounds in the working set.
 *     ------------------------------------------------------------------
       do 100, k = nfree+1, n
-          j   = kx(k)
-          is  = istate(j)
-          bnd = bl(j)
+          j     = kx(k)
+          is    = istate(j)
+          bnd   = bl(j)
           if (is .ge. 2) bnd  = bu(j)
           if (is .ne. 4) x(j) = bnd
   100 continue
@@ -3987,9 +3973,9 @@ C-->  condmx = max( one/epspt3, hundrd )
 *           where  py  solves the triangular system  T*(py) = residuals.
 
             do 220, i = 1, nactiv
-               k   = kactiv(i)
-               j   = n + k
-               bnd = bl(j)
+               k      = kactiv(i)
+               j      = n + k
+               bnd    = bl(j)
                if (istate(j) .eq. 2) bnd = bu(j)
                work(i) = bnd - ddot  ( n, A(k,1), ldA, x, 1 )
   220       continue
@@ -4037,33 +4023,24 @@ C-->  condmx = max( one/epspt3, hundrd )
 *     Compute the linear objective value  c'x  and the transformed
 *     residual  Pr  -  RQ'x = res0  -  RQ'x.
 *     ==================================================================
-      if (nrank .gt. 0  .or.  linObj) then
+      if (nRank .gt. 0  .or.  linObj) then
          call dcopy ( n, x, 1, p, 1 )
          call cmqmul( 6, n, nZ, nfree, ldQ, unitQ, kx, p, Q, work )
       end if
 
       ctx = zero
       if (linObj)
-     $   ctx = ddot  ( n, cq, 1, p, 1 )
+     $   ctx = ddot  ( n, cQ, 1, p, 1 )
 
-      if (nrank .gt. 0) then
+      if (nRank .gt. 0) then
+         call dtrmv ( 'U', 'N', 'N', nRank, R, ldR, p, 1 )
+         if (nRank .lt. n)
+     $      call dgemv ( 'N', nRank, n-nRank, one, R(1,nRank+1), ldR,
+     $                   p(nRank+1), 1, one, p, 1 )
 
-         call dtrmv ( 'U', 'N', 'N', nrank, R, ldR, p, 1 )
-         if (nrank .lt. n)
-     $      call dgemv ( 'N', nrank, n-nrank, one, R(1,nrank+1), ldR,
-     $                   p(nrank+1), 1, one, p, 1 )
-
-         call dcopy ( nrank,         res0, 1, res, 1 )
-         call daxpy ( nrank, (-one), p   , 1, res, 1 )
-
+         call dcopy ( nRank,         res0, 1, res, 1 )
+         call daxpy ( nRank, (-one), p   , 1, res, 1 )
       end if
-
-      if (lsdbg  .and.  ilsdbg(2) .gt. 0)
-     $   write(iPrint, 2200) (x(j), j = 1, n)
-
-      return
-
- 2200 format(/ ' //lssetx// Variables after refinement ... '/ (5g12.3))
 
 *     end of lssetx
       end

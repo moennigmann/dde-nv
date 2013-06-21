@@ -1,118 +1,129 @@
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-*     File  OPSUBS FORTRAN
 *
-*     OPFILE   OPLOOK   OPNUMB   OPSCAN   OPTOKN   OPUPPR
+*     File  opsubs.f
+*
+*     opfile   oplook   opnumb   opscan   optokn   opuppr
+*
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-      SUBROUTINE OPFILE( IOPTNS, NOUT, INFORM, OPKEY )
-      INTEGER            IOPTNS, NOUT, INFORM
-      EXTERNAL           OPKEY
+      subroutine opfile( iOptns, iPrint, iSumm, 
+     $                   listOp, newOpt, inform, opkey )
+      integer            iOptns, iPrint, iSumm, inform
+      logical            listOp, newOpt
+      external           opkey
 
-************************************************************************
-*     OPFILE  reads the options file from unit  IOPTNS  and loads the
+*     ==================================================================
+*     opfile  reads the options file from unit  iOptns  and loads the
 *     options into the relevant elements of the integer and real
 *     parameter arrays.
 *
 *     Systems Optimization Laboratory, Stanford University.
-*     This version dated December 18, 1985.
-************************************************************************
-      LOGICAL             PRNT
-      CHARACTER*16        KEY   , TOKEN(1)
-      CHARACTER*72        BUFFER, OLDBUF
-
-      PRNT   = .TRUE.
+*     University of California, San Diego.
+*     This version dated September 12 1995.
+*     ==================================================================
+      character*16        key   , token(1)
+      character*72        buffer, oldbuf
 
 *     Return if the unit number is out of range.
 
-      IF (IOPTNS .LT. 0  .OR.  IOPTNS .GT. 99) THEN
-         INFORM = 1
-         RETURN
-      END IF
+      if (iOptns .lt. 0  .or.  iOptns .gt. 99) then
+         inform = 1
+         return
+      end if
 
 *     ------------------------------------------------------------------
 *     Look for  BEGIN, ENDRUN  or  SKIP.
 *     ------------------------------------------------------------------
-      NREAD  = 0
-   50    READ (IOPTNS, '(A)', END = 930) BUFFER
-         NREAD = NREAD + 1
-         NKEY  = 1
-         CALL OPTOKN( BUFFER, NKEY, TOKEN )
-         KEY   = TOKEN(1)
-         IF (KEY .EQ. 'ENDRUN') GO TO 940
-         IF (KEY .NE. 'BEGIN' ) THEN
-            IF (NREAD .EQ. 1  .AND.  KEY .NE. 'SKIP') THEN
-               WRITE (NOUT, 2000) IOPTNS, BUFFER
-            END IF
-            GO TO 50
-         END IF
+      nread  = 0
+   50    read (iOptns, '(a)', end = 930) buffer
+         nread = nread + 1
+         nkey  = 1
+         call optokn( buffer, nkey, token )
+         key   = token(1)
+         if (key .eq. 'ENDRUN') go to 940
+         if (key .ne. 'BEGIN' ) then
+            if (nread .eq. 1  .and.  key .ne. 'SKIP') THEN
+               if (iPrint .gt. 0) write ( iPrint, 2000 ) iOptns, buffer
+               if (iSumm  .gt. 0) write ( iSumm , 2000 ) iOptns, buffer
+            end if
+            go to 50
+         end if
 
 *     ------------------------------------------------------------------
 *     BEGIN found.
-*     This is taken to be the first line of an OPTIONS file.
+*     This is taken to be the first line of an options file.
 *     Read the second line to see if it is NOLIST.
 *     ------------------------------------------------------------------
-      OLDBUF = BUFFER
-      READ (IOPTNS, '(A)', END = 920) BUFFER
+      oldbuf = buffer
+      read (iOptns, '(a)', end = 920) buffer
 
-      CALL OPKEY ( NOUT, BUFFER, KEY )
+      call opkey ( iPrint, iSumm , listOp, buffer, key )
 
-      IF (KEY .EQ. 'NOLIST') THEN
-         PRNT   = .FALSE.
-      END IF
+      if (key .eq. 'NOLIST') then
+         listOp = .false.
+      end if
 
-      IF (PRNT) THEN
-         WRITE (NOUT, '(// A / A /)')
-     $      ' OPTIONS file',
-     $      ' ------------'
-         WRITE (NOUT, '(6X, A )') OLDBUF, BUFFER
-      END IF
+      if ( listOp ) then
+         if (newOpt) then
+            if (iPrint .gt. 0) 
+     $         write ( iPrint, '(// a / a /)')
+     $                         ' Optional Parameters',
+     $                         ' -------------------'
+            newOpt = .false.
+         end if
+         if (iPrint .gt. 0) write ( iPrint, '(6x, a )' ) oldbuf, buffer
+      end if
 
 *     ------------------------------------------------------------------
 *     Read the rest of the file.
 *     ------------------------------------------------------------------
-*+    while (key .ne. 'end') loop
-  100 IF    (KEY .NE. 'END') THEN
-         READ (IOPTNS, '(A)', END = 920) BUFFER
-         IF (PRNT)
-     $      WRITE (NOUT, '( 6X, A )') BUFFER
+*+    while (key .ne. 'END') loop
+  100 if    (key .ne. 'END') then
+         read (iOptns, '(a)', end = 920) buffer
 
-         CALL OPKEY ( NOUT, BUFFER, KEY )
+         if ( listOp ) then
+            if (iPrint .gt. 0) write ( iPrint, '( 6x, a )' ) buffer
+         end if
 
-         IF (KEY .EQ.   'LIST') PRNT = .TRUE.
-         IF (KEY .EQ. 'NOLIST') PRNT = .FALSE.
-         GO TO 100
-      END IF
+         call opkey ( iPrint, iSumm, listOp, buffer, key )
+         if (key .eq. 'LIST'  ) listOp = .true.
+         if (key .eq. 'NOLIST') listOp = .false.
+         go to 100
+      end if
 *+    end while
 
-      INFORM =  0
-      RETURN
+      inform =  0
+      return
 
-  920 WRITE (NOUT, 2200) IOPTNS
-      INFORM = 2
-      RETURN
+  920 if (iPrint .gt. 0) write (iPrint, 2200) iOptns
+      if (iSumm  .gt. 0) write (iSumm , 2200) iOptns
+      inform = 2
+      return
 
-  930 WRITE (NOUT, 2300) IOPTNS
-      INFORM = 3
-      RETURN
+  930 if (iPrint .gt. 0) write (iPrint, 2300) iOptns
+      if (iSumm  .gt. 0) write (iSumm , 2300) iOptns
+      inform = 3
+      return
 
-  940 WRITE (NOUT, '(// 6X, A)') BUFFER
-      INFORM = 4
-      RETURN
+  940 if (iPrint .gt. 0) write (iPrint, '(// 6x, a)') buffer
+      if (iSumm  .gt. 0) write (iSumm , '(// 6x, a)') buffer
+      inform = 4
+      return
 
- 2000 FORMAT(
+ 2000 format(
      $ //' XXX  Error while looking for an OPTIONS file on unit', I7
      $ / ' XXX  The file should start with BEGIN, SKIP or ENDRUN'
      $ / ' XXX  but the first record found was the following:'
      $ //' ---->', A
      $ //' XXX  Continuing to look for OPTIONS file...')
- 2200 FORMAT(//' XXX  End-of-file encountered while processing',
+ 2200 format(//' XXX  End-of-file encountered while processing',
      $         ' an OPTIONS file on unit', I6)
- 2300 FORMAT(//' XXX  End-of-file encountered while looking for',
+ 2300 format(//' XXX  End-of-file encountered while looking for',
      $         ' an OPTIONS file on unit', I6)
 
-*     End of  OPFILE.
+*     end of  opfile.
+      end
 
-      END
 C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 C
       SUBROUTINE OPLOOK (NDICT, DICTRY, ALPHA, KEY, ENTRY)

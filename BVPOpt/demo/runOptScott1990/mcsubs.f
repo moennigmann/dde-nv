@@ -1,7 +1,9 @@
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+*
 *     File  mcsubs.f
 *
-*     mchpar   mcenvn   mcenv2   mcstor   mcmin    mcclos   mcopen
+*     mchpar   mcout    mcenvn   mcenv2   mcstor   mcmin
+*
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
       subroutine mchpar()
@@ -22,44 +24,31 @@
 *                          machine can evaluate  1.0/SMALL  without
 *                          causing overflow.
 *     wmach(8)  = RTBIG  = sqrt(BIG).
-*     wmach(9)  = UNDFLW = 0 if underflow is not fatal, +ve otherwise.
-*                          (not implemented in post-1982 versions).
-*     wmach(10) = NIN    = standard file number of the input stream.
-*     wmach(11) = NOUT   = standard file number of the output stream.
 *     ==================================================================
       double precision   wmach
       common    /solmch/ wmach(15)
       save      /solmch/
 
       logical            first , hdwire
-      integer            emin  , nbase , ndigit, nin   , nout
+      integer            emin  , nbase , ndigit
 
       double precision   base  , eps   , big   , rmin
-      double precision   small , undflw
+      double precision   small
       intrinsic          sqrt
       save               first
       data               first / .true. /
-
 
       if (first) then
          first = .false.
 
 *        ---------------------------------------------------------------
 *        Machine-dependent code.
-*        1. Set UNDFLW, NIN, NOUT, HDWIRE as desired.
+*        1. Set HDWIRE as required.
 *        2. If  HDWIRE = .TRUE.  set the machine constants
 *               NBASE, NDIGIT, EPS, RMIN, BIG
 *           in-line.  Otherwise, they will be computed by MCENVN.
 *        ---------------------------------------------------------------
-         undflw = 0
-         nin    = 5
-C-->     nout   = 6
-C-->     nout   = 9
-         nout   = 9
-C-->     call mcopen ( nin , 'IN ' )
-C-->     call mcopen ( nout, 'OUT' )
-
-         hdwire = .false.
+         hdwire = .true.
 
          if (hdwire) then
 
@@ -67,11 +56,11 @@ C-->     call mcopen ( nout, 'OUT' )
 *           (Rounded arithmetic is mandated).
 
             nbase  = 2
-            ndigit = 52
+            ndigit = 53
             base   = nbase
             eps    = base**(- ndigit)
-            rmin   = base**(- 126)
-            big    = base**(+ 127)
+            rmin   = base**(- 1021)
+            big    = base**(+ 1023)
          else
             call mcenvn( nbase, ndigit, eps, emin, rmin )
             small  = rmin*nbase**4
@@ -86,15 +75,28 @@ C-->     call mcopen ( nout, 'OUT' )
          wmach( 6) = sqrt( rmin )
          wmach( 7) = big
          wmach( 8) = sqrt( big )
-         wmach( 9) = undflw
-         wmach(10) = nin
-         wmach(11) = nout
       end if
 
-      return
+*     end of mchpar
+      end
 
-*     end of  mchpar.
+*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+      subroutine mcout ( iPrint, iSumm )
+
+*     ==================================================================
+*     mcout  defines the unit numbers for the default print files.
+*
+*     iPrint = unit number of the 132-column format print file.
+*     iSumm  = unit number for the 80-column format summary file.
+*
+*     Beware: changing the defaults so that iPrint = iSumm  will cause
+*             duplicate lines to be printed.
+*     ==================================================================
+      iPrint = 9
+      iSumm  = 6
+
+*     end of mcout
       end
 
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -142,7 +144,7 @@ C     ------------------------------------------------------------------
 
       double precision   a, b, leps, lrmin, one, rbase, small, two, zero
       integer            gnmin, gpmin, i, lbeta, lemin, lt, ngnmin,
-     *                   ngpmin, nout
+     *                   ngpmin
       logical            first, iwarn, lrnd
 
       double precision   mcstor
@@ -152,7 +154,8 @@ C     ------------------------------------------------------------------
 
       intrinsic          abs, max, min
 
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
+      common    /sol1cm/ iPrint, iSumm , lines1, lines2
+      save      /sol1cm/ 
 
       save               first, iwarn, lbeta, lemin, leps, lrmin, lt
 
@@ -247,7 +250,8 @@ C     ------------------------------------------------------------------
 *        Comment out this IF block if Emin is ok
          if (iwarn) then
             first = .true.
-            write (nout,fmt=99999) lemin
+            if (iPrint .gt. 0) write (iPrint,fmt=99999) lemin
+            if (iSumm  .gt. 0) write (iSumm ,fmt=99999) lemin
          end if
 *        **
 
@@ -506,71 +510,4 @@ C     ------------------------------------------------------------------
       
 *     End of mcmin (getmin).
 
-      end
-
-*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-      subroutine mcclos( lun )
-
-*     ==================================================================
-*     mcclos  closes the file with logical unit number lun.
-*     ==================================================================
-
-      close ( lun )
-
-*     end of mcclos
-      end
-
-*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-      subroutine mcopen( lun, state )
-
-      integer            lun
-      character*3        state
-
-*     ==================================================================
-*     mcopen  opens the file with logical unit number lun.
-*
-*     state   is intended to be input as 'IN ' or 'OUT'.  It may
-*     be helpful on some systems.  Only  sequential files are used and
-*     it is never necessary to read and write to the same file.
-*
-*     'IN ' refers to an existing input file that will not be altered.
-*     'OUT' means that a new file will be output.  If the file already
-*     exists, it might be OK to overwrite it, but on some systems it
-*     is better to create a new version of the file.  The choice is
-*     open (to coin a phrase).
-*
-*     15-Nov-91: First version based on Minos 5.4 routine m1open.
-*     20-Oct-92: Current version.
-*     ==================================================================
-
-      if ( state .eq. 'IN ' ) then
-
-*        Open an input file (e.g., OPTIONS, LOAD).
-*        'OLD' means there will be an error if the file does not exist.
-*        Since some systems position existing files at the end
-*        (rather than the beginning), a rewind is performed.
-      
-         open  ( lun, status='OLD' )
-         rewind( lun, err=900 )
-
-      else if ( state .eq. 'OUT' ) then
-
-*        Open an output file (e.g. SUMMARY, SOLUTION).
-*        If it is OK to overwrite an existing file, we could do the
-*        same as for input:
-
-*---     open  ( lun )
-*---     rewind( lun, err=900 )
-
-*        On DEC VAX/VMS systems it is better to let a new generation
-*        be created when the first write occurs, so we do nothing:
-
-         open( lun, status='unknown' )
-      end if
-
-  900 return
-
-*     end of mcopen.
       end

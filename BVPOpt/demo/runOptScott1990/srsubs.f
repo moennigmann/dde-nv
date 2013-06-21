@@ -177,7 +177,7 @@
 *                   from the interval of uncertainty.
 *
 *
-*     Systems Optimization Laboratory, Stanford University, California.
+*     Copyright  1980--1994  SOL, Stanford University, California.
 *     Original version February 1982.  Rev. May 1983.
 *     Original f77 version 22-August-1985.
 *     This version of srchc dated  14-Sep-92.
@@ -193,7 +193,6 @@
       logical            badfun, closef, found 
       logical            quitF , quitI
       logical            fitok , setxw 
-      intrinsic          abs   , sqrt
 
       parameter        ( zero  =0.0d+0, point1 =0.1d+0, half  =0.5d+0 )
       parameter        ( one   =1.0d+0, three  =3.0d+0, five  =5.0d+0 )
@@ -783,7 +782,7 @@
 *                   lower function but has just been excluded from 
 *                   (a,b).
 *
-*     Systems Optimization Laboratory, Stanford University, California.
+*     Copyright  1980--1994  SOL, Stanford University, California.
 *     Original version February 1982.  Rev. May 1983.
 *     Original F77 version 22-August-1985.
 *     This version of srchq dated  24-Oct-91.
@@ -799,7 +798,6 @@
       logical            badfun, closef, found 
       logical            quitF , quitFZ, quitI , quitS 
       logical            setxv , xinxw
-      intrinsic          abs   , sqrt
 
       parameter        ( zero  =0.0d+0, point1 =0.1d+0, half   =0.5d+0 )
       parameter        ( one   =1.0d+0, two    =2.0d+0, five   =5.0d+0 )

@@ -1,12 +1,14 @@
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+*
 *     file  npsolsubs.f
 *
-*     npsol    npalf    npchkd   npcore   npcrsh   npdflt   npfd     
-*     npfeas   npfile   npgetr   npiqp    npkey    nploc    npmrt    
-*     npoptn   npprt    nprset   npsavr   npsetx   npsrch   npupdt
+*     npsol    npcore   npcrsh   npdflt   npfile   npgetr   npiqp
+*     npkey    nploc    npnkey   npoptn   npopti   npoptr   npprt
+*     nprset   npsavr   npsetx   npupdt
+*
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-      subroutine npsol ( n, nclin, ncnln, ldA, ldcJu, ldR,
+      subroutine npsol ( n, nclin, ncnln, ldA, ldJu, ldR,
      $                   A, bl, bu,
      $                   funcon, funobj,
      $                   inform, iter, istate,
@@ -17,9 +19,8 @@
       external           funcon, funobj
       integer            istate(n+nclin+ncnln)
       integer            iw(leniw)
-      double precision   A(ldA,*), bl(n+nclin+ncnln),
-     $                   bu(n+nclin+ncnln)
-      double precision   c(*), cJacu(ldcJu,*), clamda(n+nclin+ncnln)
+      double precision   A(ldA,*), bl(n+nclin+ncnln), bu(n+nclin+ncnln)
+      double precision   c(*), cJacu(ldJu,*), clamda(n+nclin+ncnln)
       double precision   gradu(n), R(ldR,*), x(n)
       double precision   w(lenw)
 
@@ -53,7 +54,7 @@
 *
 *
 *     Complete documentation for  NPSOL  is contained in Report
-*     SOL 86-2, Users guide for NPSOL (Version 4.0), by P.E. Gill,
+*     SOL 86-2, Users guide for NPSOL (Version 5.0), by P.E. Gill,
 *     W. Murray, M.A. Saunders and M.H. Wright, Department of Operations
 *     Research,  Stanford University, Stanford, California 94305.
 *
@@ -63,74 +64,75 @@
 *     Version 3.0,  March     20, 1985. First Fortran 77 version
 *     Version 3.2,  August    20, 1985.
 *     Version 4.0,  April     16, 1986. First version with differences
-*     Version 4.01, June      30, 1986. Level 2 BLAS + F77 linesearch
+*     Version 4.01, June      30, 1986. Level 2 BLAS + F77 line search
 *     Version 4.02, August     5, 1986. Reset SSBFGS. One call to chfd
 *     Version 4.03, June      14, 1987. Step limit
 *     Version 4.04, June      28, 1989. Vectorizable BLAS
 *     Version 4.05, November  28, 1989. Load and save files added
 *     Version 4.06, November   5, 1991. srchq and srchc updated
 *                   October   29, 1992. Summary/print file option.
+*     Version 5.00, May       12, 1993. New document.
+*     Version 5.01, Jul       12, 1994. Debug printing eliminated.
+*     Version 5.02, Sep       15, 1995. Printing revamped.
 *
-*     Copyright  1983/1993  Stanford University.
-*
-*     This material may be reproduced by or for the U.S. Government 
-*     pursuant to the copyright license under DAR Clause 7-104.9(a)
-*     (1979 Mar).
-*
+*     Copyright  1983--1995  Stanford University.
+*     This software is not in the public domain. Its use is governed by
+*     a license agreement with Stanford University.  It is illegal to 
+*     make copies except as authorized by the license agreement.
+* 
 *     This material is based upon work partially supported by the 
 *     National Science Foundation under Grants MCS-7926009 and 
 *     ECS-8312142; the Department of Energy Contract AM03-76SF00326,
 *     PA No. DE-AT03-76ER72018; the Army Research Office Contract
 *     DAA29-84-K-0156; and the Office of Naval Research Grant
 *     N00014-75-C-0267.
+*
+*     This version of  NPSOL  dated 14-Sep-95.
 *     ==================================================================
 *     ------------------------------------------------------------------
 *     Common blocks.
 *     ------------------------------------------------------------------
-*     +Include lsparm+++++++++++++++++++++++++++++++++++++++++++++++++++
+*     +Include lsparm-Sep-95++++++++++++++++++++++++++++++++++++++++++++
       parameter         (mxparm = 30)
       integer            iprmls(mxparm), ipsvls
       double precision   rprmls(mxparm), rpsvls
 
       common    /lspar1/ ipsvls(mxparm),
-     $                   idbgls, iPrnt , iSumry, itmax1, itmax2, lcrash,
-     $	                 ldbgls, lprob , msgls , nn    , nnclin, nprob , 
-     $                   ipadls(18)
+     $                   itmax1, itmax2, lcrash, lformH, lprob , msgLS ,
+     $                   nn    , nnclin, nprob , ipadls(21)
 
       common    /lspar2/ rpsvls(mxparm),
      $                   bigbnd, bigdx , bndlow, bndupp, tolact, tolfea,
-     $                   tolrnk, rpadls(23)
+     $                   tolOpt, tolrnk, rpadls(22)
 
-      equivalence       (iprmls(1), idbgls), (rprmls(1), bigbnd)
+      equivalence       (iprmls(1), itmax1 ), (rprmls(1), bigbnd)
 
       save      /lspar1/, /lspar2/
-*     ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-*     +Include npparm+++++++++++++++++++++++++++++++++++++++++++++++++++
+*     +Include npparm-Sep-95++++++++++++++++++++++++++++++++++++++++++++
       integer            iprmnp(mxparm), ipsvnp
       double precision   rprmnp(mxparm), rpsvnp
 
       common    /nppar1/ ipsvnp(mxparm),
-     $                   idbgnp, itmxnp, jvrfy1, jvrfy2, jvrfy3, jvrfy4,
-     $                   ldbgnp, lformH, lvlder, lverfy, msgNP , nlnf  ,
-     $                   nlnj  , nlnx  , nncnln, nsave , nload , ksave ,
-     $                   ipadnp(12)
+     $                   itmxnp, jvrfy1, jvrfy2, jvrfy3, jvrfy4, lvlder, 
+     $                   lverfy, msgNP , nlnf  , nlnj  , nlnx  , nncnln,
+     $                   nsave , nload , ksave , ipadnp(15)
 
       common    /nppar2/ rpsvnp(mxparm),
      $                   cdint , ctol  , dxlim , epsrf , eta   , fdint ,
-     $                   ftol  , hcndbd, rpadnp(22)
+     $                   ftol  , Hcndbd, rpadnp(22)
 
-      equivalence       (iprmnp(1), idbgnp), (rprmnp(1), cdint)
+      equivalence       (iprmnp(1), itmxnp), (rprmnp(1), cdint)
 
       save      /nppar1/, /nppar2/
 *     ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-      equivalence  (idbgnp, idbg  ), (itmxnp, nmajor), (itmax2, nminor)
-      equivalence  (ldbgls, mnrdbg), (ldbgnp, mjrdbg), (msgls , msgQP )
+      equivalence  (itmxnp, nmajor), (itmax2, nminor), (msgLS , msgQP )
 
       double precision   wmach
       common    /solmch/ wmach(15)
       save      /solmch/
 
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
+      common    /sol1cm/ iPrint, iSumm , lines1, lines2
+      save      /sol1cm/ 
       common    /sol3cm/ lennam, ldT   , ncolT , ldQ
       common    /sol4cm/ epspt3, epspt5, epspt8, epspt9
       common    /sol5cm/ Asize , dTmax , dTmin
@@ -148,54 +150,45 @@
       common    /sol4np/ lvldif, ncdiff, nfdiff, lfdset
       common    /sol5np/ lvrfyc, jverfy(4)
       logical            incrun
-      common    /sol6np/ rhomax, rhonrm, rhodmp, scale, incrun
-
-      logical            cmdbg, lsdbg, npdbg
-      parameter         (ldbg = 5)
-      common    /npdebg/ inpdbg(ldbg), npdbg
-      common    /lsdebg/ ilsdbg(ldbg), lsdbg
-      common    /cmdebg/ icmdbg(ldbg), cmdbg
-
-      intrinsic          abs   , max   , min   , mod   , sqrt  , real
+      common    /sol6np/ PenMax, PenNrm, PenDmp, PenScl, incrun
 
 *     Local variables.
 
-      external           ddiv  , dnrm2
-      character*8        names(1)
+      character*16       names(1)
       logical            cold  , linobj, named , overfl, rowerr, vertex
       logical            needfd
       parameter         (zero   =0.0d+0, point3 =3.3d-1, point8 =0.8d+0)
-      parameter         (point9 =0.9d+0, one    =1.0d+0                )
+      parameter         (point9 =0.9d+0, one    =1.0d+0, ten = 10.0d+0 )
       parameter         (hundrd =1.0d+2, growth =1.0d+2                )
 
       character*40       title
       data               title
-     $                 / 'NPSOL  ---  Version 4.06-2     Nov  1992' /
-      
+     $                 / 'NPSOL  ---  Version 5.0-2      Sept 1995' /
+*                         1234567890123456789012345678901234567890
+
 *     Set the machine-dependent constants.
 
       call mchpar()
 
       epsmch = wmach( 3)
       rteps  = wmach( 4)
-      nout   = wmach(11)
 
       epspt3 = epsmch**point3
       epspt5 = rteps
       epspt8 = epsmch**point8
       epspt9 = epsmch**point9
 
-      rhomax = one/epsmch
-      rootn  = sqrt(real(n))
+      PenMax = one/epsmch
+      rootn  = sqrt(dble(n))
 
 *     Default names will be provided for variables during printing.
-      
+
       named  = .false.
       inform = 0
 
 *     Set the default values for the parameters.
 
-      call npdflt( n, nclin, ncnln, leniw, lenw, title )
+      call npdflt( n, nclin, ncnln, title )
 
       needfd = lvlder .eq. 0  .or.  lvlder .eq. 2
      $                        .or. (lvlder .eq. 1  .and.  ncnln .gt. 0)
@@ -206,10 +199,10 @@
       nplin  = n     + nclin
       nctotl = nplin + ncnln
 
-*     Assign the dimensions of arrays in the parameter list of NPCORE.
+*     Assign the dimensions of arrays in the parameter list of npcore.
 *     Economies of storage are possible if the minimum number of active
 *     constraints and the minimum number of fixed variables are known in
-*     advance.  The expert user should alter MINACT and MINFXD
+*     advance.  The expert user should alter minact and minfxd
 *     accordingly.
 
       minact = 0
@@ -230,35 +223,14 @@
       end if
 
       lennam = 1
-
-      ldAqp = max( nclin+ncnln, 1 )
-      if (ncnln .eq. 0  .and.  nclin .gt. 0) ldAqp = ldA
+      ldAqp  = max( nclin+ncnln, 1 )
 
 *     nploc  defines the arrays that contain the locations of various
 *     work arrays within  w  and  iw.
 
       litotl = 0
       lwtotl = 0
-      
       call nploc( n, nclin, ncnln, nctotl, litotl, lwtotl)
-
-*     Allocate certain addresses that are not allocated in NPLOC.
-
-      lax    = lwtotl + 1
-      lwtotl = lax    + nclin - 1
-      lAx    = min( lAx, lwtotl )
-
-*     Check input parameters and storage limits.
-      call cmchk ( nerror, msgNP, lcrash, .false.,
-     $             leniw, lenw, litotl, lwtotl,
-     $             n, nclin, ncnln,
-     $             istate, iw, named, names,
-     $             bigbnd, bl, bu, x )
-
-      if (nerror .gt. 0) then
-         inform = 9
-         go to 800
-      end if
 
       lkactv = locls( 1)
       lAnorm = locls( 2)
@@ -277,10 +249,11 @@
       lAqp   = locnp( 3)
       ldx    = locnp( 7)
       lfeatl = locnp(10)
+      lx1    = locnp(11)
       lwrk2  = locnp(12)
 
       lcmul  = locnp(16)
-      lrho   = locnp(20)
+      lPen   = locnp(20)
       lwrk3  = locnp(21)
       lneedc = locnp(24)
       lhfrwd = locnp(25)
@@ -288,10 +261,28 @@
       lcJac  = locnp(27)
       lgrad  = locnp(28)
 
-      ldcJ   = max ( ncnln, 1 )
+      ldJ    = max ( ncnln, 1 )
 
-      tolrnk = one / hcndbd
-      Rcndbd = sqrt( hcndbd )
+*     Allocate certain addresses that are not allocated in nploc.
+
+      lAx    = lwtotl + 1
+      lwtotl = lAx    + nclin - 1
+
+*     Check input parameters and storage limits.
+
+      call cmchk ( nerror, msgNP, lcrash, .false.,
+     $             leniw, lenw, litotl, lwtotl,
+     $             n, nclin, ncnln,
+     $             istate, iw, named, names,
+     $             bigbnd, bl, bu, clamda, x )
+
+      if (nerror .gt. 0) then
+         inform = 9
+         go to 800
+      end if
+
+      tolrnk = one / Hcndbd
+      Rcndbd = sqrt( Hcndbd )
 
 *     ==================================================================
 *     If a unit number for a load file has been set, read initial values
@@ -301,7 +292,7 @@
          call npgetr( nerror, unitQ, n, nclin, ncnln, ldR, ldQ,
      $                nfree0, iter, istate, iw(lkx),
      $                w(lhfrwd), w(lhctrl),
-     $                w(lcmul), R, w(lrho), x, w(lQ) )
+     $                w(lcmul), R, w(lPen), x, w(lQ) )
 
          if (nerror .gt. 0) then
             inform = 9
@@ -330,6 +321,9 @@
       ngrad  = 0
       nstate = 1
 
+      xnorm  = dnrm2 ( n, x, 1 )
+      call dcopy ( n, x, 1, w(lx1), 1 )
+
 *     ------------------------------------------------------------------
 *     If required,  compute the problem functions.
 *     If the constraints are nonlinear,  the first call of funcon
@@ -337,16 +331,15 @@
 *     the Jacobian (with constant elements set) is placed in  cJacu.
 *     ------------------------------------------------------------------
       if (lverfy .ge. 10) then
-         xnorm  = dnrm2 ( n, x, 1 )
          lvrfyc = lverfy - 10
          call npchkd( info, msgNP, nstate, lvlder, nfun, ngrad,
-     $                ldcJ, ldcJu, n, ncnln,
+     $                ldJ, ldJu, n, ncnln,
      $                funcon, funobj, iw(lneedc),
      $                bigbnd, epsrf, cdint, fdint,
      $                fdchk, fdnorm, objf, xnorm,
      $                bl, bu, c, w(lwrk3), w(lcJac), cJacu, w(lcJdx),
      $                w(ldx), w(lgrad), gradu, w(lhfrwd), w(lhctrl),
-     $                x, w(lwrk1), w(lwrk2), w, lenw )
+     $                x, w(lwrk1), w(lwrk2) )
 
          if (info .ne. 0) then
             if (info .gt. 0) inform = 7
@@ -355,8 +348,6 @@
          end if
          nstate = 0
       end if
-      
-      call icopy ( ldbg, ilsdbg, 1, icmdbg, 1 )
 
       if (nclin .gt. 0) then
          ianrmj = lAnorm
@@ -381,7 +372,7 @@
      $             nfree, n, ldA,
      $             istate, iw(lkactv),
      $             bigbnd, tolact,
-     $             A, w(lax), bl, bu, x, w(lwrk1), w(lwrk2) )
+     $             A, w(lAx), bl, bu, x, w(lwrk1), w(lwrk2) )
 
       nres   = 0
       ngq    = 0
@@ -408,24 +399,23 @@ C-->  condmx = max( one/epspt3, hundrd )
             Rfrobn = rootn
 
             nrank  = 0
-            if (ncnln .gt. 0) call dload ( ncnln, (zero), w(lcmul), 1 )
+            if (ncnln .gt. 0) call dload ( ncnln, zero, w(lcmul), 1 )
          else
 
 *           R will be updated while finding a feasible x.
 
             nrank  = nlnx
-            call dload ( nlnx, (zero), w(lres0), 1 )
+            call dload ( nlnx, zero, w(lres0), 1 )
             if (ncnln .gt. 0)
      $         call dcopy ( ncnln, clamda(nplin+1), 1, w(lcmul), 1 )
 
          end if
 
          incrun = .true.
-         rhonrm =  zero
-         rhodmp =  one
-         scale  =  one
-         
-         call dload ( ncnln, (zero), w(lrho), 1 )
+         PenNrm =  zero
+         PenDmp =  one
+         PenScl  =  one
+         call dload ( ncnln, zero, w(lPen), 1 )
 
 *        ---------------------------------------------------------------
 *        Re-order kx so that the free variables come first.
@@ -490,10 +480,8 @@ C-->  condmx = max( one/epspt3, hundrd )
          jinf   = 0
          lclam  = lwrk2
 
-         idbgsv = idbg
-         if (idbg .gt. 0) then
-            idbg = nminor + 1
-         end if
+         itmxsv = itmax1
+         itmax1 = nMinor 
 
          call lscore( 'FP problem', named, names, linobj, unitQ,
      $                nLPerr, itns, jinf, nclin, nplin,
@@ -504,6 +492,8 @@ C-->  condmx = max( one/epspt3, hundrd )
      $                bl, bu, A, w(lclam), w(lAx),
      $                w(lfeatl), R, x, w )
 
+         itmax1 = itmxsv
+
          if (nLPerr .gt. 0) then
             inform = 2
             go to 800
@@ -512,8 +502,6 @@ C-->  condmx = max( one/epspt3, hundrd )
             if (iSumm  .gt. 0) write(iSumm , 7000)
          end if
 
-         idbg  = idbgsv
-         call icopy ( ldbg, inpdbg, 1, icmdbg, 1 )
       else
 *        ---------------------------------------------------------------
 *        Hot start.
@@ -529,7 +517,7 @@ C-->  condmx = max( one/epspt3, hundrd )
 
       if (lcrash .gt. 0) then
 
-*        Check for a bad R.
+*        Check for a bad initial R.
 
          Rfrobn = f06qgf( 'Frobenius norm', 'Upper', n, n, R, ldR )
          call dcond ( n, R, ldR+1, dRmax, dRmin )
@@ -549,28 +537,35 @@ C-->  condmx = max( one/epspt3, hundrd )
      $                   w(lgq), R, w(lQ), w(lwrk1), w(lres0) )
          end if
       end if
-      
-*     ==================================================================
-*     Now we can check the gradients at a feasible x.
-*     ==================================================================
-      lvrfyc = lverfy
-      if (lverfy .ge. 10) lvrfyc = -1
 
-      call npchkd( info, msgNP, nstate, lvlder, nfun, ngrad,
-     $             ldcJ, ldcJu, n, ncnln,
-     $             funcon, funobj, iw(lneedc),
-     $             bigbnd, epsrf, cdint, fdint,
-     $             fdchk, fdnorm, objf, xnorm,
-     $             bl, bu, c, w(lwrk3), w(lcJac), cJacu, w(lcJdx),
-     $             w(ldx), w(lgrad), gradu, w(lhfrwd), w(lhctrl),
-     $             x, w(lwrk1), w(lwrk2), w, lenw )
+*     ==================================================================
+*     Check the gradients at this first feasible x.
+*     ==================================================================
+      call daxpy ( n, (-one), x, 1, w(lx1), 1 )
+      dxnorm = dnrm2 ( n, w(lx1), 1 )
 
-      if (info .ne. 0) then
-         if (info .gt. 0) inform = 7
-         if (info .lt. 0) inform = info
-         go to 800
+      if (lverfy .ge. 10  .and.  dxnorm .le. ten*epsmch) then
+*        Relax, we already have everything at this x.
+      else
+         lvrfyc = lverfy
+         if (lverfy .ge. 10) lvrfyc = -1
+
+         call npchkd( info, msgNP, nstate, lvlder, nfun, ngrad,
+     $                ldJ, ldJu, n, ncnln,
+     $                funcon, funobj, iw(lneedc),
+     $                bigbnd, epsrf, cdint, fdint,
+     $                fdchk, fdnorm, objf, xnorm,
+     $                bl, bu, c, w(lwrk3), w(lcJac), cJacu, w(lcJdx),
+     $                w(ldx), w(lgrad), gradu, w(lhfrwd), w(lhctrl),
+     $                x, w(lwrk1), w(lwrk2) )
+
+         if (info .ne. 0) then
+            if (info .gt. 0) inform = 7
+            if (info .lt. 0) inform = info
+            go to 800
+         end if
       end if
-      
+
       call dcopy ( n, w(lgrad), 1, w(lgq), 1 )
       call cmqmul( 6, n, nZ, nfree, ldQ, unitQ,
      $             iw(lkx), w(lgq), w(lQ), w(lwrk1) )
@@ -584,7 +579,7 @@ C-->  condmx = max( one/epspt3, hundrd )
 *        ---------------------------------------------------------------
          call npcore( named, names, unitQ, inform, iter,
      $                n, nclin, ncnln, nctotl, nactiv, nfree, nZ,
-     $                ldcJ, ldcJu, ldAqp, ldR,
+     $                ldJ, ldJu, ldA, ldR,
      $                nfun, ngrad, istate, iw(lkactv), iw(lkx),
      $                objf, fdnorm, xnorm, funcon, funobj,
      $                A, w(lAx), bl, bu, c, w(lcJac), cJacu, clamda,
@@ -596,7 +591,7 @@ C-->  condmx = max( one/epspt3, hundrd )
          if (nclin .gt. 0)
      $      call f06qff( 'General', nclin, n, A, ldA, w(lAqp), ldAqp )
 
-*        Try and add some nonlinear constraint indices to KACTIV.
+*        Try and add some nonlinear constraint indices to kactiv.
 *
          call npcrsh( cold, n, nclin, ncnln,
      $                nctotl, nactiv, nfree, nZ,
@@ -605,7 +600,7 @@ C-->  condmx = max( one/epspt3, hundrd )
 
          call npcore( named, names, unitQ, inform, iter,
      $                n, nclin, ncnln, nctotl, nactiv, nfree, nZ,
-     $                ldcJ, ldcJu, ldAqp, ldR,
+     $                ldJ, ldJu, ldAqp, ldR,
      $                nfun, ngrad, istate, iw(lkactv),iw(lkx),
      $                objf, fdnorm, xnorm, funcon, funobj,
      $                w(lAqp), w(lAx), bl, bu, c, w(lcJac),cJacu,clamda,
@@ -621,29 +616,16 @@ C-->  condmx = max( one/epspt3, hundrd )
          call npsavr( unitQ, n, nclin, ncnln, ldR, ldQ,
      $                nfree, nsave, iter, istate, iw(lkx),
      $                w(lhfrwd), w(lhctrl),
-     $                w(lcmul), R, w(lrho), x, w(lQ) )
+     $                w(lcmul), R, w(lPen), x, w(lQ) )
       end if
 
 *     ------------------------------------------------------------------
-*     If required, form the triangular factor of the Hessian.
+*     If required, overwrite R with the factor of the Hessian.
 *     ------------------------------------------------------------------
-*     First,  form the square matrix  R  such that  H = R'R.
-*     Compute the  QR  factorization of  R.
-
       if (lformH .gt. 0) then
-         lv     = lwrk2
-         do 400 j = 1, n
-            if (j .gt. 1)
-     $         call dload ( j-1, zero, w(lv), 1 )
-
-            lvj = lv + j - 1
-            call dcopy ( n-j+1, R(j,j), ldR, w(lvj), 1     )
-            call cmqmul( 3, n, nZ, nfree, ldQ, unitQ,
-     $                   iw(lkx), w(lv), w(lQ), w(lwrk1) )
-            call dcopy ( n    , w(lv) , 1    , R(j,1), ldR )
-  400    continue
-         
-         call dgeqr ( n, n, R, ldR, w(lwrk1), info )
+         call lsfrmH( 'Hessian', unitQ, 
+     $                nfree, n, n, ldQ, ldR,
+     $                iw(lkx), R, w(lQ), w(lwrk1), w(lwrk2) )
       end if
 
 *     ==================================================================
@@ -700,8 +682,8 @@ C-->  condmx = max( one/epspt3, hundrd )
 
       if (inform .lt. 9) then
          if (ncnln .gt. 0) then
-            call f06qff( 'General', ncnln, n, w(lcJac), ldcJ, 
-     $                   cJacu, ldcJu)
+            call f06qff( 'General', ncnln, n, w(lcJac), ldJ, 
+     $                   cJacu, ldJu)
          end if
          call dcopy ( n, w(lgrad), 1, gradu, 1 )
       end if
@@ -711,7 +693,7 @@ C-->  condmx = max( one/epspt3, hundrd )
  3000 format(/ ' Exit NPSOL - User requested termination.'          )
  4000 format(/ ' Exit NPSOL - Optimal solution found.'              )
  4100 format(/ ' Exit NPSOL - Optimal solution found, ',
-     $         ' but the requested accuracy could not be achieved.' )
+     $         ' but not to the requested accuracy.' )
  4200 format(/ ' Exit NPSOL - No feasible point for the linear',
      $         ' constraints.')
  4300 format(/ ' Exit NPSOL - No feasible point for the nonlinear',
@@ -734,332 +716,9 @@ C-->  condmx = max( one/epspt3, hundrd )
 
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-      subroutine npalf ( inform, n, nclin, ncnln,
-     $                   alfa, alfmin, alfmax, bigbnd, dxnorm,
-     $                   Anorm, Adx, Ax, bl, bu,
-     $                   dslk, dx, slk, x )
-
-      implicit           double precision (a-h,o-z)
-      double precision   Anorm(*), Adx(*), Ax(*), bl(*), bu(*),
-     $                   dslk(*), dx(n), slk(*), x(n)
-
-*     ==================================================================
-*     npalf   finds a step alfa such that the point x + alfa*p reaches
-*     one of the slacks or linear constraints.  The step alfa is the
-*     maximum step that can be taken without violating one of the slacks
-*     or linear constraints that is currently satisfied.
-*
-*     Systems Optimization Laboratory, Stanford University.
-*     Original Fortran 77 version written  June 1986.
-*     This version of npalf dated  13-Jun-1987.
-*     ==================================================================
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
-      common    /sol4cm/ epspt3, epspt5, epspt8, epspt9
-
-      logical            cmdbg
-      integer            lcmdbg
-      parameter         (lcmdbg = 5)
-      common    /cmdebg/ icmdbg(lcmdbg), cmdbg
-
-      intrinsic          abs, max, min
-      parameter        ( zero = 0.0d+0, one = 1.0d+0 )
-
-      if (cmdbg  .and.  icmdbg(3) .gt. 0) write(iPrint, 1000)
-
-      alfa   = alfmax
-      j      = 1
-
-*+    while (j .le. n+nclin+ncnln .and. alfa .gt. alfmin) do
-  100 if    (j .le. n+nclin+ncnln .and. alfa .gt. alfmin) then
-
-         if      (j .le. n      ) then
-            Axi    =  x(j)
-            Adxi   = dx(j)
-            rownrm = one
-         else if (j .le. n+nclin) then
-
-            i      = j - n
-            Axi    = Ax(i)
-            Adxi   = Adx(i)
-            rownrm = Anorm(i) + one
-         else
-
-            i      = j - n - nclin
-            Axi    = slk(i)
-            Adxi   = dslk(i)
-            rownrm = one
-         end if
-
-         res = - one
-         if (     Adxi .le. - epspt9*rownrm*dxnorm) then
-
-*           Constraint decreasing.
-
-            Adxi = - Adxi
-            if (bl(j) .gt. -bigbnd) res = Axi   - bl(j)
-         else if (Adxi .gt.   epspt9*rownrm*dxnorm) then
-
-*           Constraint increasing.
-
-            if (bu(j) .lt.  bigbnd) res = bu(j) - Axi
-         end if
-
-         if (res .gt. zero  .and.  alfa*Adxi .gt. res)
-     $      alfa  = res / Adxi
-
-         if (cmdbg  .and.  icmdbg(3) .gt. 0)
-     $      write(iPrint, 1200) j, res, Adxi, alfa
-
-         j = j + 1
-         go to 100
-*+    end while
-      end if
-
-*     ==================================================================
-*     Determine alfa, the bound on the step to be taken.
-*     ==================================================================
-      alfa   = max( alfa, alfmin )
-
-      inform = 0
-      if (alfa .ge. alfmax) inform = 1
-
-      if (cmdbg  .and.  icmdbg(1) .gt. 0  .and.  inform .gt. 0)
-     $   write(iPrint, 9010) alfa
-
-      return
-
- 1000 format(/ ' npalf  entered'
-     $       / '    j            res             Ap           alfa '/)
- 1200 format( i5, 3g15.5 )
- 9010 format(/ ' //npalf //  No finite step.'
-     $       / ' //npalf //             alfa'
-     $       / ' //npalf //  ', g15.4 )
-
-*     end of npalf
-      end
-
-*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-      subroutine npchkd( inform, msgNP, nstate, lvlder, nfun, ngrad,
-     $                   ldcJ, ldcJu, n, ncnln,
-     $                   funcon, funobj, needc,
-     $                   bigbnd, epsrf, cdint, fdint,
-     $                   fdchk, fdnorm, objf, xnorm,
-     $                   bl, bu, c, c1, cJac, cJacu, cJdx,
-     $                   dx, grad, gradu, hforwd, hcntrl,
-     $                   x, wrk1, wrk2, w, lenw )
-
-      implicit           double precision (a-h,o-z)
-      integer            needc(*)
-      double precision   c(*), c1(*), cJac(ldcJ,*), cJacu(ldcJu,*),
-     $                   cJdx(*)
-      double precision   bl(n), bu(n), dx(n), grad(n), gradu(n), x(n)
-      double precision   hforwd(*), hcntrl(*)
-      double precision   wrk1(n), wrk2(*), w(lenw)
-      external           funcon, funobj
-
-*     ==================================================================
-*     npchkd  performs the following...
-*     (1)  Computes the objective and constraint values objf and c.
-*     (2)  Evaluates the user-provided gradients in cJacu and gradu.
-*     (3)  Counts the missing gradients.
-*     (4)  Loads the known gradients into grad and cJac.
-*     (5)  Checks that the known gradients are programmed correctly.
-*     (6)  Computes the missing gradient elements.
-*
-*     Systems Optimization Laboratory, Stanford University, California.
-*     Original version written 4-September-1985.
-*     This version of npchkd dated 26-Nov-1989.
-*     ==================================================================
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
-      common    /sol4cm/ epspt3, epspt5, epspt8, epspt9
-
-      common    /sol4np/ lvldif, ncdiff, nfdiff, lfdset
-      common    /sol5np/ lvrfyc, jverfy(4)
-
-      logical            centrl, needfd
-      parameter        ( rdummy =-11111.0d+0)
-
-      infog  = 0
-      infocj = 0
-      nfdiff = 0
-      ncdiff = 0
-      ncset  = n*ncnln
-      
-      if (ncnln .gt. 0) then
-*        ===============================================================
-*        Compute the constraints and Jacobian matrix.
-*        ===============================================================
-*        If some derivatives are missing, load the Jacobian with dummy
-*        values.  Any elements left unaltered after the call to funcon
-*        must be estimated.  A record of the missing jacobian elements
-*        is stored in  cJacu.
-
-         needfd = lvlder .eq. 0  .or.  lvlder .eq. 1
-
-         if (needfd)
-     $      call f06qhf( 'General', ncnln, n, rdummy, rdummy,
-     $                   cJacu, ldcJu )
-
-         call iload ( ncnln, (1), needc, 1 )
-
-         mode   = 2
-         call funcon( mode, ncnln, n, ldcJu,
-     $                needc, x, c, cJacu, nstate )
-         if (mode .lt. 0) go to 9999
-
-         call f06qff( 'General', ncnln, n, cJacu, ldcJu, cJac, ldcJ )
-
-         if (needfd) then
-
-*           Count the number of missing Jacobian elements.
-
-            do 220, j = 1, n
-               do 210, i = 1, ncnln
-                  if (cJacu(i,j) .eq. rdummy) ncdiff = ncdiff + 1
-  210          continue
-  220       continue
-
-            ncset = ncset - ncdiff
-            if (nstate .eq. 1) then
-               if (ncdiff .eq. 0) then
-                  if (lvlder .eq. 0) lvlder = 2
-                  if (lvlder .eq. 1) lvlder = 3
-                  if (msgNP .gt. 0  .and.  iPrint .gt. 0)
-     $               write(iPrint, 1000) lvlder
-               else
-                  if (msgNP .gt. 0  .and.  iPrint .gt. 0)
-     $               write(iPrint, 1100) ncset, n*ncnln, ncdiff
-               end if
-            end if
-         end if
-      end if
-      
-*     ==================================================================
-*     Repeat the procedure above for the objective function.
-*     ==================================================================
-      needfd = lvlder .eq. 0  .or.  lvlder .eq. 2
-
-      if (needfd)
-     $   call dload ( n, rdummy, gradu, 1 )
-
-      mode  = 2
-      call funobj( mode, n, x, objf, gradu, nstate )
-      if (mode .lt. 0) go to 9999
-
-      call dcopy ( n, gradu, 1, grad, 1 )
-
-      if (needfd) then
-
-*        Count the number of missing gradient elements.
-
-         do 300, j = 1, n
-            if (gradu(j) .eq. rdummy) nfdiff = nfdiff + 1
-  300    continue
-
-         if (nstate .eq. 1) then
-            if (nfdiff .eq. 0) then
-               if (lvlder .eq. 0) lvlder = 1
-               if (lvlder .eq. 2) lvlder = 3
-               if (msgNP .gt. 0  .and.  iPrint .gt. 0)
-     $            write(iPrint, 2000) lvlder
-            else
-               if (msgNP .gt. 0  .and.  iPrint .gt. 0)
-     $            write(iPrint, 2100) n - nfdiff, n, nfdiff
-            end if
-         end if
-      end if
-
-      nfun  = nfun  + 1
-      ngrad = ngrad + 1
-      
-*     ==================================================================
-*     Check whatever gradient elements have been provided.
-*     ==================================================================
-      if (lvrfyc .ge. 0) then
-         if (ncset .gt. 0) then
-            call chcJac( mode, lvlder, msgNP,
-     $                   ncset, n, ncnln, ldcJ, ldcJu,
-     $                   bigbnd, epsrf, epspt3, fdchk, xnorm,
-     $                   funcon, needc,
-     $                   bl, bu, c, c1, cJac, cJacu, cJdx,
-     $                   dx, wrk2, x, wrk1, w, lenw )
-            if (mode .lt. 0) go to 9999
-            infocj = mode
-         end if
-
-         if (nfdiff .lt. n) then
-            call chfgrd( mode, msgNP, n,
-     $                   bigbnd, epsrf, epspt3, fdchk, objf, xnorm,
-     $                   funobj,
-     $                   bl, bu, grad, gradu, dx, x, wrk1, w, lenw )
-            if (mode .lt. 0) go to 9999
-            infog   = mode
-         end if
-      end if
-
-      needfd = ncdiff .gt. 0  .or.  nfdiff .gt. 0
-      if (needfd) then
-*        ===============================================================
-*        Compute the missing gradient elements.
-*        ===============================================================
-*        chfd computes the finite-difference intervals or checks
-*        preassigned (scalar) values.
-
-         call chfd  ( mode, msgNP, lvlder,
-     $                n, ncnln, ldcJ, ldcJu,
-     $                bigbnd, epsrf, fdnorm, objf,
-     $                funobj, funcon, needc,
-     $                bl, bu, c, c1, cJdx, cJac, cJacu,
-     $                grad, gradu, hforwd, hcntrl, x,
-     $                dx, w, lenw )
-
-         if (mode .lt. 0) go to 9999
-
-         if (lfdset .gt. 0) then
-            centrl = lvldif .eq. 2
-            call npfd  ( centrl, mode,
-     $                   ldcJ, ldcJu, n, ncnln,
-     $                   bigbnd, cdint, fdint, fdnorm, objf,
-     $                   funcon, funobj, needc,
-     $                   bl, bu, c, c1, cJdx, cJac, cJacu,
-     $                   grad, gradu, hforwd, hcntrl, x,
-     $                   w, lenw )
-
-            if (mode .lt. 0) go to 9999
-         end if
-      end if
-
-      inform = infocj + infog
-
-      return
-
-*     The user requested termination.
-
- 9999 inform = mode
-      return
-
- 1000 format(//' All Jacobian elements have been set.  ',
-     $         ' Derivative level increased to ', i4 )
- 1100 format(//' The user sets ', i6, '   out of', i6,
-     $         '   Jacobian elements.'
-     $       / ' Each iteration, ', i6,
-     $         '   Jacobian elements will be estimated numerically.' )
- 2000 format(//' All objective gradient elements have been set.  ',
-     $         ' Derivative level increased to ', i4 )
- 2100 format(//' The user sets ', i6, '   out of', i6,
-     $         '   objective gradient elements.'
-     $       / ' Each iteration, ', i6,
-     $         '   gradient elements will be estimated numerically.' )
-
-*     end of npchkd
-      end
-
-*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
       subroutine npcore( named, names, unitQ, inform, majIts,
      $                   n, nclin, ncnln, nctotl, nactiv, nfree, nZ,
-     $                   ldcJ, ldcJu, ldAqp, ldR,
+     $                   ldJ, ldJu, ldAqp, ldR,
      $                   nfun, ngrad, istate, kactiv, kx,
      $                   objf, fdnorm, xnorm, funcon, funobj,
      $                   Aqp, Ax, bl, bu, c, cJac, cJacu, clamda,
@@ -1070,14 +729,14 @@ C-->  condmx = max( one/epspt3, hundrd )
       integer            istate(*), kactiv(n), kx(n)
       integer            iw(*)
       double precision   Aqp(ldAqp,*), Ax(*), bl(nctotl), bu(nctotl),
-     $                   c(*), cJac(ldcJ,*), cJacu(ldcJu,*)
+     $                   c(*), cJac(ldJ,*), cJacu(ldJu,*)
       double precision   clamda(nctotl), featol(nctotl), grad(n),
      $                   gradu(n), R(ldR,*), x(n)
       double precision   w(lenw)
       external           funcon, funobj
 
       double precision   Asize, dTmax, dTmin
-      character*8        names(*)
+      character*16       names(*)
                
 *     ==================================================================
 *     npcore  is the core routine for  npsol,  a sequential quadratic
@@ -1085,13 +744,14 @@ C-->  condmx = max( one/epspt3, hundrd )
 *
 *     Systems Optimization Laboratory, Stanford University.
 *     Original version      February-1982.
-*     This version of npcore dated 23-Dec-92.
+*     This version of npcore dated 05-May-93.
 *     ==================================================================
       double precision   wmach
       common    /solmch/ wmach(15)
       save      /solmch/
 
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
+      common    /sol1cm/ iPrint, iSumm , lines1, lines2
+      save      /sol1cm/ 
       common    /sol3cm/ lennam, ldT   , ncolT , ldQ
       common    /sol4cm/ epspt3, epspt5, epspt8, epspt9
       common    /sol5cm/ Asize , dTmax , dTmin
@@ -1103,60 +763,46 @@ C-->  condmx = max( one/epspt3, hundrd )
       parameter         (lennp = 35)
       common    /sol1np/ locnp(lennp)
       common    /sol4np/ lvldif, ncdiff, nfdiff, lfdset
-      common    /sol5np/ lvrfyc, jverfy(4)
-      logical            incrun
-      common    /sol6np/ rhomax, rhonrm, rhodmp, scale, incrun
 
-      parameter         (ldbg = 5)
-      logical            cmdbg, npdbg
-      common    /npdebg/ inpdbg(ldbg), npdbg
-      common    /cmdebg/ icmdbg(ldbg), cmdbg
-
-*     +Include lsparm+++++++++++++++++++++++++++++++++++++++++++++++++++
+*     +Include lsparm-Sep-95++++++++++++++++++++++++++++++++++++++++++++
       parameter         (mxparm = 30)
       integer            iprmls(mxparm), ipsvls
       double precision   rprmls(mxparm), rpsvls
 
       common    /lspar1/ ipsvls(mxparm),
-     $                   idbgls, iPrnt , iSumry, itmax1, itmax2, lcrash,
-     $	                 ldbgls, lprob , msgls , nn    , nnclin, nprob , 
-     $                   ipadls(18)
+     $                   itmax1, itmax2, lcrash, lformH, lprob , msgLS ,
+     $                   nn    , nnclin, nprob , ipadls(21)
 
       common    /lspar2/ rpsvls(mxparm),
      $                   bigbnd, bigdx , bndlow, bndupp, tolact, tolfea,
-     $                   tolrnk, rpadls(23)
+     $                   tolOpt, tolrnk, rpadls(22)
 
-      equivalence       (iprmls(1), idbgls), (rprmls(1), bigbnd)
+      equivalence       (iprmls(1), itmax1 ), (rprmls(1), bigbnd)
 
       save      /lspar1/, /lspar2/
-*     ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-*     +Include npparm+++++++++++++++++++++++++++++++++++++++++++++++++++
+*     +Include npparm-Sep-95++++++++++++++++++++++++++++++++++++++++++++
       integer            iprmnp(mxparm), ipsvnp
       double precision   rprmnp(mxparm), rpsvnp
 
       common    /nppar1/ ipsvnp(mxparm),
-     $                   idbgnp, itmxnp, jvrfy1, jvrfy2, jvrfy3, jvrfy4,
-     $                   ldbgnp, lformH, lvlder, lverfy, msgNP , nlnf  ,
-     $                   nlnj  , nlnx  , nncnln, nsave , nload , ksave ,
-     $                   ipadnp(12)
+     $                   itmxnp, jvrfy1, jvrfy2, jvrfy3, jvrfy4, lvlder, 
+     $                   lverfy, msgNP , nlnf  , nlnj  , nlnx  , nncnln,
+     $                   nsave , nload , ksave , ipadnp(15)
 
       common    /nppar2/ rpsvnp(mxparm),
      $                   cdint , ctol  , dxlim , epsrf , eta   , fdint ,
-     $                   ftol  , hcndbd, rpadnp(22)
+     $                   ftol  , Hcndbd, rpadnp(22)
 
-      equivalence       (iprmnp(1), idbgnp), (rprmnp(1), cdint)
+      equivalence       (iprmnp(1), itmxnp), (rprmnp(1), cdint)
 
       save      /nppar1/, /nppar2/
 *     ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-      equivalence  (idbgnp, idbg  ), (itmxnp, nmajor), (itmax2, nminor)
-      equivalence  (ldbgls, mnrdbg), (ldbgnp, mjrdbg), (msgls , msgQP )
+      equivalence  (itmxnp, nmajor), (itmax2, nminor), (msgLS , msgQP )
 
       logical            goodgq, newgq
       logical            centrl, convrg, convpt, done  , error , feasqp
       logical            infeas, needfd, optiml, overfl, unitQ
       logical            KTcond(2)
-      intrinsic          abs   , max   , min   , mod   , real  , sqrt
-      external           ddiv  , ddot  , dnrm2
 
       character*5        MjrMsg
       parameter        ( zero = 0.0d+0, one = 1.0d+0                )
@@ -1195,7 +841,7 @@ C-->  condmx = max( one/epspt3, hundrd )
       lcJdx1 = locnp(17)
       ldlam  = locnp(18)
       ldslk  = locnp(19)
-      lrho   = locnp(20)
+      lPen   = locnp(20)
       lwrk3  = locnp(21)
       lslk1  = locnp(22)
       lslk   = locnp(23)
@@ -1217,7 +863,7 @@ C-->  condmx = max( one/epspt3, hundrd )
       ncqp   = nclin + ncnln
       nl     = min( nplin + 1, nctotl )
 
-      ldcJ1 = max( ncqp , 1 )
+      ldJ1   = max( ncqp , 1 )
 
       needfd = lvlder .eq. 0  .or.  lvlder .eq. 2
      $                        .or. (lvlder .eq. 1  .and.  ncnln .gt. 0)
@@ -1225,19 +871,7 @@ C-->  condmx = max( one/epspt3, hundrd )
       alfa   = zero
       alfdx  = zero
       rtftol = sqrt( ftol )
-      rootn  = sqrt( real(n) )
-
-*     If debug printing is required,  turn off any extensive printing
-*     until iteration  idbg.
-
-      msgsv1 = msgNP
-      msgsv2 = msgQP
-      if (idbg .le. nmajor  .and.  idbg .gt. 0) then
-         msgNP = 0
-         if (msgsv1 .ge. 5) msgNP = 5
-         msgQP = 0
-         if (msgsv2 .ge. 5) msgQP = 5
-      end if
+      rootn  = sqrt( dble(n) )
 
 *     ------------------------------------------------------------------
 *     Information from the feasibility phase will be used to generate a
@@ -1264,7 +898,7 @@ C-->  condmx = max( one/epspt3, hundrd )
             call npsavr( unitQ, n, nclin, ncnln, ldR, ldQ,
      $                   nfree, nsave, majIts, istate, kx,
      $                   w(lhfrwd), w(lhctrl),
-     $                   w(lcmul), R, w(lrho), x, w(lQ) )
+     $                   w(lcmul), R, w(lPen), x, w(lQ) )
          end if
 
          minIts = 0
@@ -1281,12 +915,11 @@ C-->  condmx = max( one/epspt3, hundrd )
 *                 transformed gradient of the objective.
 *                 ------------------------------------------------------
                   call npfd  ( centrl, mode,
-     $                         ldcJ, ldcJu, n, ncnln,
+     $                         ldJ, ldJu, n, ncnln,
      $                         bigbnd, cdint, fdint, fdnorm, objf,
      $                         funcon, funobj, iw(lneedc),
      $                         bl, bu, c, w(lwrk2), w(lwrk3),cJac,cJacu,
-     $                         grad, gradu, w(lhfrwd), w(lhctrl), x,
-     $                         w, lenw )
+     $                         grad, gradu, w(lhfrwd), w(lhctrl), x )
                   inform = mode
                   if (mode .lt. 0) go to 800
                end if
@@ -1309,14 +942,14 @@ C-->  condmx = max( one/epspt3, hundrd )
 *           Note that the array violn is wrk3.
 *           ============================================================
             call npiqp ( feasqp, unitQ, nQPerr, majIts, Mnr, 
-     $                   n, nclin, ncnln, ldcJ, ldAqp, ldR,
+     $                   n, nclin, ncnln, ldJ, ldAqp, ldR,
      $                   linact, nlnact, nactiv, nfree, nZ, numinf,
      $                   istate, kactiv, kx,
      $                   dxnorm, gdx, qpcurv,
      $                   Aqp, w(lAdx), w(lAnorm), Ax, bl, bu,
      $                   c, cJac, clamda, w(lcmul), w(lcs1),
      $                   w(ldlam), w(ldslk), w(ldx), w(lbl), w(lbu),
-     $                   w(lqptol), R, w(lrho), w(lslk), w(lvioln), x,
+     $                   w(lqptol), R, w(lPen), w(lslk), w(lvioln), x,
      $                   w(lwtinf), iw, w )
 
             minIts = minIts + Mnr
@@ -1331,7 +964,7 @@ C-->  condmx = max( one/epspt3, hundrd )
 *           ============================================================
 *           Compute quantities needed for the convergence test.
 *           ============================================================
-*           Compute the norms of the projected gradient and the
+*           Compute the norms of the reduced gradient and the
 *           gradient with respect to the free variables.
 
             gznorm = zero
@@ -1439,10 +1072,9 @@ C-->  condmx = max( one/epspt3, hundrd )
 
          objalf = objf
          grdalf = gdx
-         glf1   = gdx
+         gL1    = gdx
          if (ncnln .gt. 0) then
-            glf1   = glf1
-     $                 - ddot( ncnln, w(lcJdx), 1, clamda(nl), 1 )
+            gL1 = gL1 - ddot( ncnln, w(lcJdx), 1, clamda(nl), 1 )
 
 *           Compute the value and directional derivative of the
 *           augmented Lagrangian merit function.
@@ -1452,7 +1084,7 @@ C-->  condmx = max( one/epspt3, hundrd )
      $                   objalf, grdalf, qpcurv,
      $                   istate,
      $                   w(lcJdx), w(lcmul), w(lcs1),
-     $                   w(ldlam), w(lrho), w(lvioln),
+     $                   w(ldlam), w(lPen), w(lvioln),
      $                   w(lwrk1), w(lwrk2) )
          end if
 
@@ -1463,8 +1095,7 @@ C-->  condmx = max( one/epspt3, hundrd )
      $                ldR, ldT, n, nclin, ncnln,
      $                nctotl, nactiv, linact, nlnact, nZ, nfree,
      $                majit0, majIts, minIts, istate, alfa, nfun,
-     $                condHz, condH, condT, objalf, objf,
-     $                gfnorm, gznorm, cvnorm,
+     $                condHz, condT, objalf, objf, gznorm, cvnorm,
      $                Ax, c, R, w(lT), w(lvioln), x, w(lwrk1) )
 
          alfa  = zero
@@ -1472,13 +1103,6 @@ C-->  condmx = max( one/epspt3, hundrd )
 
          if (.not. (done  .or.  error)) then
             majIts = majIts + 1
-
-            if (majIts .eq. idbg  .and.  iPrint .gt. 0) then
-               npdbg = .true.
-               cmdbg =  npdbg
-               msgNP =  msgsv1
-               msgQP =  msgsv2
-            end if
 
 *           Make copies of information needed for the BFGS update.
 
@@ -1492,7 +1116,7 @@ C-->  condmx = max( one/epspt3, hundrd )
             end if
 
 *           ============================================================
-*           Compute the parameters for the linesearch.
+*           Compute the parameters for the line search.
 *           ============================================================
 *           alfmin is the smallest allowable step predicted by the QP
 *           subproblem.
@@ -1531,7 +1155,7 @@ C-->  condmx = max( one/epspt3, hundrd )
 
 *           ------------------------------------------------------------
 *           alfsml trips the computation of central differences.  If a
-*           trial steplength falls below alfsml, the linesearch is
+*           trial steplength falls below alfsml, the line search is
 *           terminated.
 *           ------------------------------------------------------------
             alfsml = zero
@@ -1547,17 +1171,16 @@ C-->  condmx = max( one/epspt3, hundrd )
             alfa   = min  ( alflim, one )
 
             call npsrch( needfd, nlserr, n, ncnln,
-     $                   ldcJ, ldcJu, nfun, ngrad,
+     $                   ldJ, ldJu, nfun, ngrad,
      $                   iw(lneedc), funcon, funobj,
      $                   alfa, alfbnd, alfmax, alfsml, dxnorm,
-     $                   epsrf, eta, gdx, grdalf, glf1, glf2,
+     $                   epsrf, eta, gdx, grdalf, gL1, gL2,
      $                   objf, objalf, qpcurv, xnorm,
      $                   c, w(lwrk1), cJac, cJacu, w(lcJdx), w(lwrk3),
      $                   w(lc1mul), w(lcmul), w(lcs1),
-     $                   w(lcs2), w(ldx), w(ldlam), w(ldslk), grad,
-     $                   gradu, clamda(nl), w(lrho),
-     $                   w(lslk1), w(lslk), w(lx1), x,
-     $                   w(lwrk2), w, lenw )
+     $                   w(lcs2), w(ldx), w(ldlam), w(ldslk), 
+     $                   grad, gradu, clamda(nl), w(lPen),
+     $                   w(lslk1), w(lslk), w(lx1), x, w(lwrk2) )
 
 *           ------------------------------------------------------------
 *           npsrch  sets nlserr to the following values...
@@ -1590,7 +1213,7 @@ C-->  condmx = max( one/epspt3, hundrd )
             error  = nlserr .ge. 4
             if (error) then
 *              ---------------------------------------------------------
-*              The linesearch failed to find a better point.
+*              The line search failed to find a better point.
 *              If exact gradients or central differences are being used,
 *              or the KT conditions are satisfied, stop.  Otherwise,
 *              switch to central differences and solve the QP again.
@@ -1615,15 +1238,15 @@ C-->  condmx = max( one/epspt3, hundrd )
                   ngrad = ngrad + 1
 
                   if (ncnln .gt. 0) then
-                     call iload ( ncnln, (1), iw(lneedc), 1 )
+                     call iload ( ncnln, 1, iw(lneedc), 1 )
 
-                     call funcon( mode, ncnln, n, ldcJu, iw(lneedc),
+                     call funcon( mode, ncnln, n, ldJu, iw(lneedc),
      $                            x, w(lwrk1), cJacu, nstate )
                      inform = mode
                      if (mode .lt. 0) go to 800
 
-                     call f06qff( 'General', ncnln, n, cJacu, ldcJu,
-     $                            cJac, ldcJ )
+                     call f06qff( 'General', ncnln, n, cJacu, ldJu,
+     $                            cJac, ldJ )
                   end if
 
                   call funobj( mode, n, x, obj, gradu, nstate )
@@ -1633,23 +1256,22 @@ C-->  condmx = max( one/epspt3, hundrd )
                   call dcopy ( n, gradu, 1, grad, 1 )
 
                   call npfd  ( centrl, mode,
-     $                         ldcJ, ldcJu, n, ncnln,
+     $                         ldJ, ldJu, n, ncnln,
      $                         bigbnd, cdint, fdint, fdnorm, objf,
      $                         funcon, funobj, iw(lneedc),
      $                         bl, bu, c, w(lwrk2), w(lwrk3),cJac,cJacu,
-     $                         grad, gradu, w(lhfrwd), w(lhctrl), x,
-     $                         w, lenw )
+     $                         grad, gradu, w(lhfrwd), w(lhctrl), x )
 
                   inform = mode
                   if (mode .lt. 0) go to 800
 
                   gdx  =  ddot( n, grad, 1, w(ldx), 1 )
-                  glf2 =  gdx
+                  gL2  =  gdx
                   if (ncnln .gt. 0) then
-                     call dgemv ( 'N', ncnln, n, one, cJac, ldcJ,
+                     call dgemv ( 'N', ncnln, n, one, cJac, ldJ,
      $                            w(ldx), 1, zero, w(lcJdx), 1 )
-                     glf2 = glf2 -
-     $                      ddot( ncnln, w(lcJdx), 1, clamda(nl), 1 )
+                     gL2 = gL2 -
+     $                         ddot( ncnln, w(lcJdx), 1, clamda(nl), 1 )
                   end if
                end if
 
@@ -1672,8 +1294,8 @@ C-->  condmx = max( one/epspt3, hundrd )
 *              =========================================================
                call npupdt( MjrMsg, unitQ,
      $                      n, ncnln, nfree, nZ,
-     $                      ldcJ1, ldcJ, ldQ, ldR, kx,
-     $                      alfa, glf1, glf2, qpcurv,
+     $                      ldJ1, ldJ, ldQ, ldR, kx,
+     $                      alfa, gL1, gL2, qpcurv,
      $                      w(lcJac1), cJac, w(lcJdx1), w(lcJdx),
      $                      w(lcs1), w(lcs2), w(lgq1), w(lgq),
      $                      w(lHpq), w(lRpq), clamda(nl), r,
@@ -1688,11 +1310,6 @@ C-->  condmx = max( one/epspt3, hundrd )
 *                 Reset the condition estimator and range-space
 *                 partition of Q'HQ.
 *                 ------------------------------------------------------
-                  if (npdbg  .and.  inpdbg(1) .gt. 0) then
-                     write(iPrint, 9000) Rfrobn, dRmax , dRmin,
-     $                                   cond  , Rcndbd
-                  end if
-
                   MjrMsg(5:5) = 'refactorize Hessian'
 
                   call nprset( unitQ,
@@ -1729,19 +1346,18 @@ C-->  condmx = max( one/epspt3, hundrd )
 *     ------------------------------------------------------------------
 *     Set  clamda.  Print the full solution.
 *     ------------------------------------------------------------------
-  800 msgNP = msgsv1
-      msgQP = msgsv2
-      if (msgNP .gt. 0  .and.  iPrint .gt. 0) then
+  800 if (msgNP .gt. 0  .and.  iPrint .gt. 0) then
          write(iPrint, 2100) inform, majIts, nfun, ngrad
       end if
 
-      call cmprt ( msgNP, nfree, ldAqp,
-     $             n, nclin, nctotl, bigbnd,
-     $             named, names,
+      call cmwrp ( nfree, ldAqp,
+     $             n, nclin, nctotl,
      $             nactiv, istate, kactiv, kx,
-     $             Aqp, bl, bu, c, clamda, w(lrlam), x )
-      if (ncnln .gt. 0)
-     $call dcopy ( ncnln, w(lcmul), 1, clamda(n+nclin+1), 1 )
+     $             Aqp, bl, bu, c, clamda, featol,
+     $             w(lwrk1), w(lrlam), x )
+      call cmprnt( msgNP, n, nclin, nctotl, bigbnd,
+     $             named, names, istate,
+     $             bl, bu, clamda, featol, w(lwrk1) )
 
       return
 
@@ -1749,10 +1365,6 @@ C-->  condmx = max( one/epspt3, hundrd )
      $         '   nfun = ', i4, '   ngrad = ', i4 )
  3000 format(  ' Minor itn', i6, '.  Central-differences computed. ',
      $         ' QP re-solved.' )
- 9000 format(/ ' //npcore//        Rfrobn         dRmax         dRmin'
-     $       / ' //npcore//', 1p, 3e14.2
-     $       / ' //npcore//          Cond        Rcndbd'
-     $       / ' //npcore//', 1p, 2e14.2 )
 
 *     end of npcore
       end
@@ -1777,25 +1389,13 @@ C-->  condmx = max( one/epspt3, hundrd )
 *     Original version   14-February 1985.
 *     This version of  npcrsh  dated 14-November-1985.
 *     ==================================================================
-      double precision   wmach
-      common    /solmch/ wmach(15)
-      save      /solmch/
-
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
-
-      logical            npdbg
-      parameter        ( ldbg = 5 )
-      common    /npdebg/ inpdbg(ldbg), npdbg
-
-      intrinsic          abs, min
       parameter        ( one = 1.0d+0 )
 
       nfixed = n      - nfree
-      linact = nactiv
       nplin  = n      + nclin
 
 *     If a cold start is being made, initialize the status of the QP
-*     working set.  First,  if  BL(j) = BU(j),  set ISTATE(j)=3.
+*     working set.  First,  if  bl(j) = bu(j),  set istate(j)=3.
 
       if (cold) then
          do 130, j = nplin+1, nctotl
@@ -1817,7 +1417,6 @@ C-->  condmx = max( one/epspt3, hundrd )
   200 continue
 
       if (cold) then
-
 *        ---------------------------------------------------------------
 *        If a cold start is required, an attempt is made to add as many
 *        nonlinear constraints as possible to the working set.
@@ -1869,25 +1468,16 @@ C-->  condmx = max( one/epspt3, hundrd )
       end if
 
 *     ------------------------------------------------------------------
-*     An initial working set has now been selected.
+*     A working set has now been selected.
 *     ------------------------------------------------------------------
-      nlnact = nactiv - linact
-      nZ     = nfree  - nactiv
-      if (npdbg  .and.  inpdbg(1) .gt. 0)
-     $   write(iPrint, 1000) nfixed, linact, nlnact
-
-      return
-
- 1000 format(/ ' //npcrsh//  Working set selected....'
-     $       / ' //npcrsh// nfixed linact nlnact     '
-     $       / ' //npcrsh//', 3i7 )
+      nZ = nfree  - nactiv
 
 *     end of npcrsh
       end
 
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-      subroutine npdflt( n, nclin, ncnln, leniw, lenw, title )
+      subroutine npdflt( n, nclin, ncnln, title )
 
       implicit           double precision (a-h,o-z)
 
@@ -1899,92 +1489,82 @@ C-->  condmx = max( one/epspt3, hundrd )
 *
 *     Systems Optimization Laboratory, Stanford University.
 *     Original Fortran 77 version written 10-September-1985.
-*     This version of npdflt dated 09-Nov-92.
+*     This version of npdflt dated 14-Sep-95.
 *     ==================================================================
       double precision   wmach
       common    /solmch/ wmach(15)
       save      /solmch/
 
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
+      common    /sol1cm/ iPrint, iSumm , lines1, lines2
+      save      /sol1cm/ 
       common    /sol4cm/ epspt3, epspt5, epspt8, epspt9
                  
       common    /sol4np/ lvldif, ncdiff, nfdiff, lfdset
       common    /sol5np/ lvrfyc, jverfy(4)
 
-      logical            cmdbg, lsdbg, npdbg
-      parameter        ( ldbg = 5 )
-      common    /npdebg/ inpdbg(ldbg), npdbg
-      common    /lsdebg/ ilsdbg(ldbg), lsdbg
-      common    /cmdebg/ icmdbg(ldbg), cmdbg
-
-      logical            newopt
-      common    /sol7np/ newopt
+      logical            newopt, listOp
+      common    /sol7np/ newopt, listOp, ncalls
       save      /sol7np/
 
-*     +Include lsparm+++++++++++++++++++++++++++++++++++++++++++++++++++
+*     +Include lsparm-Sep-95++++++++++++++++++++++++++++++++++++++++++++
       parameter         (mxparm = 30)
       integer            iprmls(mxparm), ipsvls
       double precision   rprmls(mxparm), rpsvls
 
       common    /lspar1/ ipsvls(mxparm),
-     $                   idbgls, iPrnt , iSumry, itmax1, itmax2, lcrash,
-     $	                 ldbgls, lprob , msgls , nn    , nnclin, nprob , 
-     $                   ipadls(18)
+     $                   itmax1, itmax2, lcrash, lformH, lprob , msgLS ,
+     $                   nn    , nnclin, nprob , ipadls(21)
 
       common    /lspar2/ rpsvls(mxparm),
      $                   bigbnd, bigdx , bndlow, bndupp, tolact, tolfea,
-     $                   tolrnk, rpadls(23)
+     $                   tolOpt, tolrnk, rpadls(22)
 
-      equivalence       (iprmls(1), idbgls), (rprmls(1), bigbnd)
+      equivalence       (iprmls(1), itmax1 ), (rprmls(1), bigbnd)
 
       save      /lspar1/, /lspar2/
-*     ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-*     +Include npparm+++++++++++++++++++++++++++++++++++++++++++++++++++
+*     +Include npparm-Sep-95++++++++++++++++++++++++++++++++++++++++++++
       integer            iprmnp(mxparm), ipsvnp
       double precision   rprmnp(mxparm), rpsvnp
 
       common    /nppar1/ ipsvnp(mxparm),
-     $                   idbgnp, itmxnp, jvrfy1, jvrfy2, jvrfy3, jvrfy4,
-     $                   ldbgnp, lformH, lvlder, lverfy, msgNP , nlnf  ,
-     $                   nlnj  , nlnx  , nncnln, nsave , nload , ksave ,
-     $                   ipadnp(12)
+     $                   itmxnp, jvrfy1, jvrfy2, jvrfy3, jvrfy4, lvlder, 
+     $                   lverfy, msgNP , nlnf  , nlnj  , nlnx  , nncnln,
+     $                   nsave , nload , ksave , ipadnp(15)
 
       common    /nppar2/ rpsvnp(mxparm),
      $                   cdint , ctol  , dxlim , epsrf , eta   , fdint ,
-     $                   ftol  , hcndbd, rpadnp(22)
+     $                   ftol  , Hcndbd, rpadnp(22)
 
-      equivalence       (iprmnp(1), idbgnp), (rprmnp(1), cdint)
+      equivalence       (iprmnp(1), itmxnp), (rprmnp(1), cdint)
 
       save      /nppar1/, /nppar2/
 *     ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-      equivalence  (idbgnp, idbg  ), (itmxnp, nmajor), (itmax2, nminor)
-      equivalence  (ldbgls, mnrdbg), (ldbgnp, mjrdbg), (msgls , msgQP )
+      equivalence  (itmxnp, nmajor), (itmax2, nminor), (msgLS , msgQP )
 
-      intrinsic          abs    , len    , max   , mod   , real
       parameter        ( zero   =  0.0d+0, one    =  1.0d+0 )
       parameter        ( point3 =  3.3d-1, point8 =  0.8d+0 )
       parameter        ( point9 =  0.9d+0, two    =  2.0d+0 )
       parameter        ( tenp6  =  1.0d+6, hundrd = 10.0d+1 )
-      parameter        ( rdummy = -11111., idummy = -11111  )
-      parameter        ( gigant =  1.0d+20*.99999           )
+      parameter        ( rdummy = -11111.0d+0, idummy = -11111)
+      parameter        ( gigant =  1.0d+20*.99999d+0        )
       parameter        ( wrktol =  1.0d-2                   )
 
       character*4        icrsh(0:2)
-      character*16       key
+      character*3        cHess(0:1)
       data                icrsh(0),  icrsh(1),  icrsh(2)
      $                 / 'cold'   , 'warm'   , 'hot '    /
+      data                cHess(0),  cHess(1)
+     $                 / ' no',      'yes'   /
 
       epsmch = wmach( 3)
-      nout   = wmach(11)
-
-      condbd = max ( one/(hundrd*epsmch*real(n)), tenp6 )
+      condbd = max ( one/(hundrd*epsmch*dble(n)), tenp6 )
 
       nplin  = n     + nclin
       nctotl = nplin + ncnln
 
-*     Make a dummy call npkey to ensure that the defaults are set.
+*     Make a dummy call to npnkey to ensure that the defaults are set.
 
-      call npkey ( nout, '*', key )
+      call npnkey()
       newopt = .true.
 
 *     Save the optional parameters set by the user.  The values in
@@ -1996,11 +1576,10 @@ C-->  condmx = max( one/epspt3, hundrd )
       call icopy ( mxparm, iprmnp, 1, ipsvnp, 1 )
       call dcopy ( mxparm, rprmnp, 1, rpsvnp, 1 )
 
-      if (          iPrnt  .lt. 0     )   iPrnt   = nout
-      if (          iSumry .lt. 0     )   iSumry  = 6
-      if (          iSumry .eq. iPrnt )   iSumry  = 0
-                                          iPrint  = iPrnt
-                                          iSumm   = iSumry
+      if (          iPrint .lt. 0     )   call mcout ( iPrint, iSumry )
+      if (          iSumm  .lt. 0     )   call mcout ( iPrntr, iSumm  )
+      if (          iSumm  .eq. iPrint)   iPrint  = 0
+
       if (          lcrash .lt. 0
      $    .or.      lcrash .gt. 2     )   lcrash  =  0
       if (          lvlder .lt. 0
@@ -2011,12 +1590,6 @@ C-->  condmx = max( one/epspt3, hundrd )
       if (          nmajor .lt. 0     )   nmajor  = max(50, 3*nplin+
      $                                                     10*ncnln )
       if (          nminor .lt. 1     )   nminor  = max(50, 3*nctotl)
-      if (          mjrdbg .lt. 0     )   mjrdbg  =  0
-      if (          mnrdbg .lt. 0     )   mnrdbg  =  0
-      if (          idbg   .lt. 0
-     $    .or.      idbg   .gt. nmajor)   idbg    =  0
-      if (          mjrdbg .eq. 0
-     $    .and.     mnrdbg .eq. 0     )   idbg    = nmajor + 1
       if (          msgNP  .eq. idummy)   msgNP   = 10
       if (          msgQP  .eq. idummy)   msgQP   =  0
                                           nlnf    =  n
@@ -2030,8 +1603,10 @@ C-->  condmx = max( one/epspt3, hundrd )
      $    .or.      jvrfy4 .gt. n     )   jvrfy4  =  n
       if (          jvrfy3 .le. 0
      $    .or.      jvrfy3 .gt. jvrfy4)   jvrfy3  =  1
-      if (          lverfy .eq. idummy
-     $    .or.      lverfy .gt. 13    )   lverfy  =  0
+      if (         (lverfy .lt. -1
+     $    .or.      lverfy .gt. 13) .or.
+     $             (lverfy .ge.  4 
+     $    .and.     lverfy .le.  9)   )   lverfy  =  0
 
       if (          ksave  .le. 0     )   ksave   =  nmajor + 1
       if (          nsave  .lt. 0     )   nsave   =  0
@@ -2045,6 +1620,8 @@ C-->  condmx = max( one/epspt3, hundrd )
      $    .or.      tolact .ge. one   )   tolact  =  wrktol
       if (          tolfea .lt. epsmch
      $    .or.      tolfea .ge. one   )   tolfea  =  epspt5
+      if (          tolOpt .lt. epsmch
+     $    .or.      tolOpt .ge. one   )   tolOpt  =  epspt8
       if (          epsrf  .lt. epsmch
      $    .or.      epsrf  .ge. one   )   epsrf   =  epspt9
                                           lfdset  =  0
@@ -2063,7 +1640,7 @@ C-->  condmx = max( one/epspt3, hundrd )
       if (          ftol   .lt. epsrf
      $    .or.      ftol   .ge. one   )   ftol    = epsrf**point8
 
-      if (          hcndbd .lt. one   )   hcndbd  = condbd
+      if (          Hcndbd .lt. one   )   Hcndbd  = condbd
 
                                           dctol   = epspt5
       if (          lvlder .lt. 2     )   dctol   = epspt3
@@ -2076,25 +1653,11 @@ C-->  condmx = max( one/epspt3, hundrd )
       jverfy(3) = jvrfy3
       jverfy(4) = jvrfy4
 
-      npdbg = idbg .eq. 0  .and.  iPrint .gt. 0
-      cmdbg = npdbg
-      lsdbg = npdbg
-
-      k     = 1
-      msg1  = mjrdbg
-      msg2  = mnrdbg
-      do 200, i = 1, ldbg
-         inpdbg(i) = mod( msg1/k, 10 )
-         icmdbg(i) = inpdbg(i)
-         ilsdbg(i) = mod( msg2/k, 10 )
-         k = k*10
-  200 continue
-
       if (msgNP .gt. 0) then
-
+*        ---------------------------------------------------------------
 *        Print the title.  If no hot start is specified,  the parameters
 *        are final and can be printed.
-
+*        ---------------------------------------------------------------
          lenT = len( title )
          nspace = (81 - lenT)/2 + 1
          if (iPrint .gt. 0) then
@@ -2113,13 +1676,14 @@ C-->  condmx = max( one/epspt3, hundrd )
 
          if (iPrint .gt. 0  .and.  lcrash .le. 1) then
             write(iPrint, 2000)
-            write(iPrint, 2100) nclin , tolfea, icrsh(lcrash) ,
-     $                          n     , bigbnd, tolact,
-     $                          dxlim , bigdx
+            write(iPrint, 2100) nclin , icrsh(lcrash), tolact,
+     $                          n     , bigbnd,        tolOpt,
+     $                          cHess(lformH), bigdx , tolfea,
+     $                                  dxlim
             write(iPrint, 2200) ncnln , ftol  , epsrf ,
      $                          nlnj  , ctol  , epsmch,
-     $                          nlnf  , eta   , iPrnt ,
-     $                          lvlder, lverfy, iSumry
+     $                          nlnf  , eta   , iPrint,
+     $                          lvlder, lverfy, iSumm
             write(iPrint, 2300) nmajor, msgNP ,
      $                          nminor, msgQP ,
      $                          nload , nsave , ksave
@@ -2142,38 +1706,41 @@ C-->  condmx = max( one/epspt3, hundrd )
      $//' Parameters'
      $/ ' ----------' )
  2100 format(
-     $/ ' Linear constraints.....',     i10,   6x,
-     $  ' Linear feasibility.....', 1p, e10.2, 6x,
-     $  1x, a4, ' start.............'
-     $/ ' Variables..............',     i10,   6x,
-     $  ' Infinite bound size....', 1p, e10.2, 6x,
+     $/ ' Linear constraints.....',     i10,   2x,
+     $1x, a4,' start.............',     12x,
      $  ' Crash tolerance........',     e10.2
-     $/ ' Step limit.............', 1p, e10.2, 6x,
-     $  ' Infinite step size.....',     e10.2  )
+     $/ ' Variables..............',     i10,   2x,
+     $  ' Infinite bound size....', 1p, e10.2, 2x,
+     $  ' Minor Optimality tol...', 1p, e10.2
+     $/ ' Hessian................', 7x, a3,    2x,
+     $  ' Infinite step size.....', 1p, e10.2, 2x,
+     $  ' Linear feasibility tol.', 1p, e10.2
+     $/36x,
+     $  ' Step limit.............', 1p, e10.2 )
  2200 format(
-     $/ ' Nonlinear constraints..',     i10,   6x,
-     $  ' Optimality tolerance...', 1p, e10.2, 6x,
+     $/ ' Nonlinear constraints..',     i10,   2x,
+     $  ' Optimality tolerance...', 1p, e10.2, 2x,
      $  ' Function precision.....',     e10.2
-     $/ ' Nonlinear Jacobian vars',     i10,   6x,
-     $  ' Nonlinear feasibility..', 1p, e10.2, 6x,
-     $  ' eps (machine precision)', 1p, e10.2
-     $/ ' Nonlinear objectiv vars',     i10,   6x,
-     $  ' Linesearch tolerance...', 1p, e10.2, 6x,
+     $/ ' Nonlinear Jacobian vars',     i10,   2x,
+     $  ' Nonlinear feasibility..', 1p, e10.2, 2x,
+     $  ' Unit round-off.........', 1p, e10.2
+     $/ ' Nonlinear objectiv vars',     i10,   2x,
+     $  ' Line search tolerance..', 1p, e10.2, 2x,
      $  ' Print file.............',     i10
-     $/ ' Derivative level.......',     i10,   6x,
-     $  ' Verify level...........',     i10,   6x,
+     $/ ' Derivative level.......',     i10,   2x,
+     $  ' Verify level...........',     i10,   2x,
      $  ' Summary file...........',     i10)
  2300 format(
-     $/ ' Major iterations limit.',     i10, 6x,
+     $/ ' Major iterations limit.',     i10,   2x,
      $  ' Major print level......',     i10
-     $/ ' Minor iterations limit.',     i10, 6x,
+     $/ ' Minor iterations limit.',     i10,   2x,
      $  ' Minor print level......',     i10
-     $/ ' RUN loaded from file...',     i10, 6x,
-     $  ' RUN to be saved on file',     i10, 6x,
+     $/ ' RUN loaded from file...',     i10,   2x,
+     $  ' RUN to be saved on file',     i10,   2x,
      $  ' Save frequency.........',     i10)
 
  2400 format(/ ' Difference intervals to be computed.' )
- 2401 format(/ ' Difference interval....', 1p, e10.2, 6x,
+ 2401 format(/ ' Difference interval....', 1p, e10.2, 2x,
      $         ' Central diffce interval',     e10.2 )
  2402 format(/ ' User-supplied difference intervals.' )
 
@@ -2182,330 +1749,42 @@ C-->  condmx = max( one/epspt3, hundrd )
 
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-      subroutine npfd  ( centrl, inform,
-     $                   ldcJ, ldcJu, n, ncnln,
-     $                   bigbnd, cdint, fdint, fdnorm, objf,
-     $                   funcon, funobj, needc,
-     $                   bl, bu, c, c1, c2, cJac, cJacu,
-     $                   grad, gradu, hforwd, hcntrl, x,
-     $                   w, lenw )
-
-      implicit           double precision (a-h,o-z)
-      logical            centrl
-      integer            needc(*)
-
-      double precision   bl(n), bu(n), c(*), c1(*), c2(*),
-     $                   cJac(ldcJ,*), cJacu(ldcJu,*)
-      double precision   grad(n), gradu(n), hforwd(n), hcntrl(n), x(n)
-      double precision   w(lenw)
-      external           funcon, funobj
+      subroutine npfile( iOptns, inform )
+      integer            iOptns, inform
 
 *     ==================================================================
-*     npfd   evaluates any missing gradients.
-*
-*     Systems Optimization Laboratory, Stanford University, California.
-*     Original version written 3-July-1986.
-*     This version of npfd   dated 14-Sep-92.
-*     ==================================================================
-      common    /sol4cm/ epspt3, epspt5, epspt8, epspt9
-
-      common    /sol4np/ lvldif, ncdiff, nfdiff, lfdset
-
-      logical            npdbg
-      parameter         (ldbg = 5)
-      common    /npdebg/ inpdbg(ldbg), npdbg
-
-      intrinsic          abs   , max
-
-      parameter         (rdummy=-11111.0d+0)
-      parameter         (zero  = 0.0d+0, half  = 0.5d+0, one   = 1.0d+0)
-      parameter         (three = 3.0d+0, four  = 4.0d+0                )
-
-      inform = 0
-
-*     ==================================================================
-*     Use the pre-assigned difference intervals to approximate the
-*     derivatives.
-*     ==================================================================
-*     Use either the same interval for each component (lfdset = 1),
-*     or the intervals already in hforwd or hcntrl (lfdset = 0 or 2).
-
-      nstate =   0
-      mode   =   0
-
-      biglow = - bigbnd
-      bigupp =   bigbnd
-
-      fdnorm =   zero
-
-      do 340, j = 1, n
-         xj     = x(j)
-         nColj  = 0
-         if (ncdiff .gt. 0) then
-            do 310, i = 1, ncnln
-               if (cJacu(i,j) .eq. rdummy) then
-                  needc(i) = 1
-                  nColj    = nColj + 1
-               else
-                  needc(i) = 0
-               end if
-  310       continue
-         end if
-
-         if (nColj .gt. 0  .or.  gradu(j) .eq. rdummy) then
-            stepbl = biglow
-            stepbu = bigupp
-            if (bl(j) .gt. biglow) stepbl = bl(j) - xj
-            if (bu(j) .lt. bigupp) stepbu = bu(j) - xj
-
-            if (centrl) then
-               if (lfdset .eq. 1) then
-                  delta = cdint
-               else
-                  delta = hcntrl(j)
-               end if
-            else
-               if (lfdset .eq. 1) then
-                  delta = fdint
-               else
-                  delta = hforwd(j)
-               end if
-            end if
-
-            delta  = delta*(one + abs(xj))
-            fdnorm = max (fdnorm, delta)
-            if (half*(stepbl + stepbu) .lt. zero) delta =  - delta
-
-            x(j) = xj + delta
-            if (nColj .gt. 0) then
-               call funcon( mode, ncnln, n, ldcJu,
-     $                      needc, x, c1, cJacu, nstate )
-               if (mode .lt. 0) go to 999
-            end if
-
-            if (gradu(j) .eq. rdummy) then
-               call funobj( mode, n, x, objf1, gradu, nstate )
-               if (mode .lt. 0) go to 999
-            end if
-
-            if (centrl) then
-*              ---------------------------------------------------------
-*              Central differences.
-*              ---------------------------------------------------------
-               x(j)  = xj + delta + delta
-
-               if (nColj .gt. 0) then
-                  call funcon( mode, ncnln, n, ldcJu,
-     $                         needc, x, c2, cJacu, nstate )
-                  if (mode .lt. 0) go to 999
-
-                  do 320, i = 1, ncnln
-                     if (needc(i) .eq. 1)
-     $                  cJac(i,j) = (four*c1(i) - three*c(i) - c2(i))
-     $                                  / (delta + delta)
-  320             continue
-               end if
-
-               if (gradu(j) .eq. rdummy) then
-                  call funobj( mode, n, x, objf2, gradu, nstate )
-                  if (mode .lt. 0) go to 999
-
-                  grad(j) = (four*objf1 - three*objf - objf2)
-     $                                  / (delta + delta)
-
-               end if
-            else
-*              ---------------------------------------------------------
-*              Forward Differences.
-*              ---------------------------------------------------------
-               if (nColj .gt. 0) then
-                  do 330, i = 1, ncnln
-                     if (needc(i) .eq. 1)
-     $                  cJac(i,j) = (c1(i) -  c(i))/  delta
-  330             continue
-               end if
-
-               if (gradu(j) .eq. rdummy)
-     $            grad(j) = (objf1 - objf) /  delta
-
-            end if
-         end if
-         x(j) = xj
-
-  340 continue
-
-      return
-
-  999 inform = mode
-      return
-
-*     end of npfd
-      end
-
-*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-      subroutine npfeas( n, nclin, ncnln, istate,
-     $                   bigbnd, cvnorm, errmax, jmax, nviol,
-     $                   Ax, bl, bu, c, featol, x, work )
-
-      implicit           double precision (a-h,o-z)
-      integer            istate(n+nclin+ncnln)
-      double precision   Ax(*), bl(n+nclin+ncnln), bu(n+nclin+ncnln)
-      double precision   c(*), featol(n+nclin+ncnln), x(n)
-      double precision   work(n+nclin+ncnln)
-
-*     ==================================================================
-*     npfeas  computes the following...
-*     (1)  The number of constraints that are violated by more
-*          than  featol  and the 2-norm of the constraint violations.
-*
-*     Systems Optimization Laboratory, Stanford University.
-*     Original version      April    1984.
-*     This version of  npfeas  dated  16-October-1985.
-*     ==================================================================
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
-
-      logical            npdbg
-      parameter        ( ldbg = 5 )
-      common    /npdebg/ inpdbg(ldbg), npdbg
-
-      external           idamax, dnrm2
-      intrinsic          abs
-      parameter        ( zero = 0.0d+0 )
-
-      biglow = - bigbnd
-      bigupp =   bigbnd
-
-*     ==================================================================
-*     Compute nviol, the number of constraints violated by more than
-*     featol,  and cvnorm,  the 2-norm of the constraint
-*     violations and residuals of the constraints in the qp working set.
-*     ==================================================================
-      nviol  = 0
-
-      do 200, j = 1, n+nclin+ncnln
-         feasj  = featol(j)
-         res    = zero
-
-         if (j .le. n + nclin) then
-
-*           Bound or general linear constraint.
-
-            if (j .le. n) then
-               con =  x(j)
-            else
-               con = Ax(j-n)
-            end if
-
-            tolj   = feasj
-         else
-
-*           Nonlinear constraint.
-
-            con    = c(j-n-nclin)
-            tolj   = zero
-         end if
-
-*        Check for constraint violations.
-
-         if (bl(j) .gt. biglow) then
-            res    = bl(j) - con
-            if (res .gt.   feasj ) nviol = nviol + 1
-            if (res .gt.    tolj ) go to 190
-         end if
-
-         if (bu(j) .lt. bigupp) then
-            res    = bu(j) - con
-            if (res .lt. (-feasj)) nviol = nviol + 1
-            if (res .lt.  (-tolj)) go to 190
-         end if
-
-*        This constraint is satisfied,  but count the residual as a
-*        violation if the constraint is in the working set.
-
-         is     = istate(j)
-
-         if (is .eq. 0) then
-            res = zero
-         else if (is .eq. 1  .or.  is .le. -2) then
-            res = bl(j) - con
-         else if (is .ge. 2  .or.  is .eq. -1) then
-            res = bu(j) - con
-         end if
-
-         if (abs( res ) .gt. feasj) nviol = nviol + 1
-
-*        Set the array of violations.
-
-  190    work(j) = res
-  200 continue
-
-      jmax   = idamax( n+nclin+ncnln, work, 1 )
-      errmax = abs ( work(jmax) )
-
-      if (npdbg  .and.  inpdbg(1) .gt. 0)
-     $   write(iPrint, 1000) errmax, jmax
-
-      cvnorm = dnrm2 ( n+nclin+ncnln, work, 1 )
-
-      return
-
- 1000 format(/ ' //npfeas//  The maximum violation is ', 1p, e14.2,
-     $                     ' in constraint', i5 )
-
-*     end of npfeas
-      end
-
-*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-      subroutine npfile( ioptns, inform )
-      integer            ioptns, inform
-
-*     ==================================================================
-*     npfile  reads the options file from unit  ioptns  and loads the
+*     npfile  reads the options file from unit  iOptns  and loads the
 *     options into the relevant elements of  iprmnp  and  rprmnp.
 *
-*     If  ioptns .lt. 0  or  ioptns .gt. 99  then no file is read,
-*     otherwise the file associated with unit  ioptns  is read.
+*     If  iOptns .lt. 0  or  iOptns .gt. 99  then no file is read,
+*     otherwise the file associated with unit  iOptns  is read.
 *
-*     Output:
+*     output:
 *
 *         inform = 0  if a complete  options  file was found
 *                     (starting with  begin  and ending with  end);
-*                  1  if  ioptns .lt. 0  or  ioptns .gt. 99;
+*                  1  if  iOptns .lt. 0  or  iOptns .gt. 99;
 *                  2  if  begin  was found, but end-of-file
 *                     occurred before  end  was found;
 *                  3  if end-of-file occurred before  begin  or
 *                     endrun  were found;
 *                  4  if  endrun  was found before  begin.
 *     ==================================================================
-      logical             newopt
-      common     /sol7np/ newopt
-      save       /sol7np/
+      common    /sol1cm/ iPrint, iSumm , lines1, lines2
+      save      /sol1cm/ 
+      logical            newOpt, listOp
+      common    /sol7np/ newOpt, listOp, ncalls
+      save      /sol7np/
+      external           npkey
+*     ------------------------------------------------------------------
+*     Update ncalls, the number of calls of npoptn and npfile since the
+*     start of this problem.
+*     On the very first call, the default parameters are set.
 
-      double precision    wmach(15)
-      common     /solmch/ wmach
-      save       /solmch/
-
-      external            mchpar, npkey
-      logical             first
-      save                first , nout
-      data                first /.true./
-
-*     If first time in, set  nout.
-*     newopt is true first time into npfile or npoptn
-*     and just after a call to npsol.
-
-      if (first) then
-         first  = .false.
-         newopt = .true.
-         call mchpar()
-         nout   = wmach(11)
-      end if
-
-      call opfile( ioptns, nout, inform, npkey )
-
-      return
+      call npnkey()
+      call opfile( iOptns, iPrint, iSumm, 
+     $             listOp, newOpt, inform, npkey )
+      newOpt = .false.
 
 *     end of npfile
       end
@@ -2515,14 +1794,14 @@ C-->  condmx = max( one/epspt3, hundrd )
       subroutine npgetr( inform, unitQ, n, nclin, ncnln, ldR, ldQ,
      $                   nfree, iter, istate, kx,
      $                   hforwd, hcntrl,
-     $                   cmul, R, rho, x, Q )
+     $                   cmul, R, Pen, x, Q )
 
       implicit           double precision (a-h,o-z)
       logical            unitQ
       integer            istate(n+nclin+ncnln), kx(n)
       double precision   R(ldR,*), x(n), Q(ldQ,*)
       double precision   hforwd(*), hcntrl(*)
-      double precision   cmul(*), rho(*)
+      double precision   cmul(*), Pen(*)
 
 *     ==================================================================
 *     npgetr  loads details of a previous run from unit nload.
@@ -2533,52 +1812,53 @@ C-->  condmx = max( one/epspt3, hundrd )
       double precision   wmach
       common    /solmch/ wmach(15)
       save      /solmch/
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
+      common    /sol1cm/ iPrint, iSumm , lines1, lines2
+      save      /sol1cm/ 
       common    /sol4np/ lvldif, ncdiff, nfdiff, lfdset
       logical            incrun
-      common    /sol6np/ rhomax, rhonrm, rhodmp, scale, incrun
+      common    /sol6np/ PenMax, PenNrm, PenDmp, PenScl, incrun
 
-*     +Include lsparm+++++++++++++++++++++++++++++++++++++++++++++++++++
+*     +Include lsparm-Sep-95++++++++++++++++++++++++++++++++++++++++++++
       parameter         (mxparm = 30)
       integer            iprmls(mxparm), ipsvls
       double precision   rprmls(mxparm), rpsvls
 
       common    /lspar1/ ipsvls(mxparm),
-     $                   idbgls, iPrnt , iSumry, itmax1, itmax2, lcrash,
-     $	                 ldbgls, lprob , msgls , nn    , nnclin, nprob , 
-     $                   ipadls(18)
+     $                   itmax1, itmax2, lcrash, lformH, lprob , msgLS ,
+     $                   nn    , nnclin, nprob , ipadls(21)
 
       common    /lspar2/ rpsvls(mxparm),
      $                   bigbnd, bigdx , bndlow, bndupp, tolact, tolfea,
-     $                   tolrnk, rpadls(23)
+     $                   tolOpt, tolrnk, rpadls(22)
 
-      equivalence       (iprmls(1), idbgls), (rprmls(1), bigbnd)
+      equivalence       (iprmls(1), itmax1 ), (rprmls(1), bigbnd)
 
       save      /lspar1/, /lspar2/
-*     +Include npparm+++++++++++++++++++++++++++++++++++++++++++++++++++
+*     +Include npparm-Sep-95++++++++++++++++++++++++++++++++++++++++++++
       integer            iprmnp(mxparm), ipsvnp
       double precision   rprmnp(mxparm), rpsvnp
 
       common    /nppar1/ ipsvnp(mxparm),
-     $                   idbgnp, itmxnp, jvrfy1, jvrfy2, jvrfy3, jvrfy4,
-     $                   ldbgnp, lformH, lvlder, lverfy, msgNP , nlnf  ,
-     $                   nlnj  , nlnx  , nncnln, nsave , nload , ksave ,
-     $                   ipadnp(12)
+     $                   itmxnp, jvrfy1, jvrfy2, jvrfy3, jvrfy4, lvlder, 
+     $                   lverfy, msgNP , nlnf  , nlnj  , nlnx  , nncnln,
+     $                   nsave , nload , ksave , ipadnp(15)
 
       common    /nppar2/ rpsvnp(mxparm),
      $                   cdint , ctol  , dxlim , epsrf , eta   , fdint ,
-     $                   ftol  , hcndbd, rpadnp(22)
+     $                   ftol  , Hcndbd, rpadnp(22)
 
-      equivalence       (iprmnp(1), idbgnp), (rprmnp(1), cdint)
+      equivalence       (iprmnp(1), itmxnp), (rprmnp(1), cdint)
 
       save      /nppar1/, /nppar2/
 *     ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-      equivalence  (idbgnp, idbg  ), (itmxnp, nmajor), (itmax2, nminor)
-      equivalence  (ldbgls, mnrdbg), (ldbgnp, mjrdbg), (msgls , msgQP )
+      equivalence  (itmxnp, nmajor), (itmax2, nminor), (msgLS , msgQP )
 
       character*4        icrsh(0:2)
+      character*3        cHess(0:1)
       data                icrsh(0),  icrsh(1),  icrsh(2)
-     $                 / 'COLD'   , 'WARM'   , 'HOT '    /
+     $                 / 'cold'   , 'warm'   , 'hot '    /
+      data                cHess(0),  cHess(1)
+     $                 / ' no',      'yes'   /
 
       if (nload .le. 0) return
 
@@ -2609,7 +1889,7 @@ C-->  condmx = max( one/epspt3, hundrd )
          k = 1
          do 130, j = n+nclin+1, n+nclin+ncnln
             read(nload, 1030, end=999) jold, istate(j), cmul(k),
-     $                                 rho(k)
+     $                                 Pen(k)
             k = k + 1
   130    continue
 
@@ -2619,7 +1899,7 @@ C-->  condmx = max( one/epspt3, hundrd )
             return
          end if
      
-         read(nload, 1040, end=999) rhomax, rhonrm, rhodmp, scale,
+         read(nload, 1040, end=999) PenMax, PenNrm, PenDmp, PenScl,
      $                              incrun
       end if
 
@@ -2659,8 +1939,6 @@ C-->  condmx = max( one/epspt3, hundrd )
 
       if (iPrint .gt. 0) write(iPrint, 4010) n, iter
 
-      call mcclos( nload )
-
 *     ------------------------------------------------------------------
 *     Now that all values have been set, we can print the parameters.
 *     ------------------------------------------------------------------
@@ -2669,11 +1947,11 @@ C-->  condmx = max( one/epspt3, hundrd )
          write(iPrint, 2000)
          write(iPrint, 2100) nclin , tolfea, icrsh(lcrash) ,
      $                       n     , bigbnd, tolact,
-     $                       dxlim , bigdx
+     $                       dxlim , bigdx , cHess(lformH)
          write(iPrint, 2200) ncnln , ftol  , epsrf ,
      $                       nlnj  , ctol  , epsmch,
-     $                       nlnf  , eta   , iPrnt ,
-     $                       lvlder, lverfy, iSumry
+     $                       nlnf  , eta   , iPrint,
+     $                       lvlder, lverfy, iSumm
          write(iPrint, 2300) nmajor, msgNP ,
      $                       nminor, msgQP ,
      $                       nload , nsave , ksave
@@ -2707,38 +1985,39 @@ C-->  condmx = max( one/epspt3, hundrd )
      $//' Parameters'
      $/ ' ----------' )
  2100 format(
-     $/ ' Linear constraints.....',     i10  , 6x,
-     $  ' Linear feasibility.....', 1p, e10.2, 6x,
+     $/ ' Linear constraints.....',     i10  , 2x,
+     $  ' Linear feasibility.....', 1p, e10.2, 2x,
      $  1x, a4, ' start.............'
-     $/ ' Variables..............',     i10,   6x,
-     $  ' Infinite bound size....',     e10.2, 6x,
+     $/ ' Variables..............',     i10,   2x,
+     $  ' Infinite bound size....',     e10.2, 2x,
      $  ' Crash tolerance........',     e10.2
-     $/ ' Step limit.............',     e10.2, 6x,
-     $  ' Infinite step size.....',     e10.2  )
+     $/ ' Step limit.............',     e10.2, 2x,
+     $  ' Infinite step size.....',     e10.2, 2x,
+     $  ' Hessian................', 7x, a3  )
  2200 format(
-     $/ ' Nonlinear constraints..',     i10,   6x,
-     $  ' Optimality tolerance...', 1p, e10.2, 6x,
+     $/ ' Nonlinear constraints..',     i10,   2x,
+     $  ' Optimality tolerance...', 1p, e10.2, 2x,
      $  ' Function precision.....',     e10.2
-     $/ ' Nonlinear Jacobian vars',     i10,   6x,
-     $  ' Nonlinear feasibility..', 1p, e10.2, 6x,
-     $  ' eps (machine precision)', 1p, e10.2
-     $/ ' Nonlinear objectiv vars',     i10,   6x,
-     $  ' Linesearch tolerance...', 1p, e10.2, 6x,
+     $/ ' Nonlinear Jacobian vars',     i10,   2x,
+     $  ' Nonlinear feasibility..', 1p, e10.2, 2x,
+     $  ' Unit round-off.........', 1p, e10.2
+     $/ ' Nonlinear objectiv vars',     i10,   2x,
+     $  ' Line search tolerance..', 1p, e10.2, 2x,
      $  ' Print file.............',     i10
-     $/ ' Derivative level.......',     i10,   6x,
-     $  ' Verify level...........',     i10,   6x,
+     $/ ' Derivative level.......',     i10,   2x,
+     $  ' Verify level...........',     i10,   2x,
      $  ' Summary file...........',     i10)
  2300 format(
-     $/ ' Major iterations limit.',     i10, 6x,
+     $/ ' Major iterations limit.',     i10,   2x,
      $  ' Major print level......',     i10
-     $/ ' Minor iterations limit.',     i10, 6x,
+     $/ ' Minor iterations limit.',     i10,   2x,
      $  ' Minor print level......',     i10
-     $/ ' RUN loaded from file...',     i10, 6x,
-     $  ' RUN to be saved on file',     i10, 6x,
+     $/ ' RUN loaded from file...',     i10,   2x,
+     $  ' RUN to be saved on file',     i10,   2x,
      $  ' Save frequency.........',     i10)
 
  2400 format(/ ' Difference intervals to be computed.' )
- 2401 format(/ ' Difference interval....', 1p, e10.2, 6x,
+ 2401 format(/ ' Difference interval....', 1p, e10.2, 2x,
      $         ' Central diffce interval',     e10.2 )
  2402 format(/ ' User-supplied difference intervals.' )
  4000 format(/ ' OLD RUN to be loaded from file', i4)
@@ -2752,14 +2031,14 @@ C-->  condmx = max( one/epspt3, hundrd )
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
       subroutine npiqp ( feasqp, unitQ, nQPerr, majIts, minIts,
-     $                   n, nclin, ncnln, ldcJ, ldAqp, ldR,
+     $                   n, nclin, ncnln, ldJ, ldAqp, ldR,
      $                   linact, nlnact, nactiv, nfree, nZ, numinf,
      $                   istate, kactiv, kx,
      $                   dxnorm, gdx, qpcurv,
      $                   Aqp, Adx, Anorm, Ax, bl, bu,
      $                   c, cJac, clamda, cmul, cs,
      $                   dlam, dslk, dx, qpbl, qpbu, qptol,
-     $                   R, rho, slk, violn, x,
+     $                   R, Pen, slk, violn, x,
      $                   wtinf, iw, w )
 
       implicit           double precision (a-h,o-z)
@@ -2768,10 +2047,10 @@ C-->  condmx = max( one/epspt3, hundrd )
       integer            iw(*)
       double precision   Aqp(ldAqp,*), Adx(*), Anorm(*), Ax(*),
      $                   bl(*), bu(*),
-     $                   c(*), cJac(ldcJ,*), clamda(*), cmul(*), cs(*)
+     $                   c(*), cJac(ldJ,*), clamda(*), cmul(*), cs(*)
       double precision   dlam(*), dslk(*), dx(n)
       double precision   qpbl(*), qpbu(*),
-     $                   qptol(*), R(ldR,*), rho(*), slk(*),
+     $                   qptol(*), R(ldR,*), Pen(*), slk(*),
      $                   violn(*), x(n), wtinf(*)
       double precision   w(*)
 
@@ -2780,8 +2059,8 @@ C-->  condmx = max( one/epspt3, hundrd )
 *
 *     (1)  Generate the upper and lower bounds for the QP  subproblem.
 *
-*     (2)  Compute the  TQ  factors of the rows of  AQP  specified by
-*          the array  ISTATE.  The part of the factorization defined by
+*     (2)  Compute the  TQ  factors of the rows of  Aqp  specified by
+*          the array  istate.  The part of the factorization defined by
 *          the first contiguous group of linear constraints does not
 *          need to be recomputed.  The remaining rows (which could be
 *          comprised of both linear and nonlinear constraints) are
@@ -2808,82 +2087,63 @@ C-->  condmx = max( one/epspt3, hundrd )
 *
 *     Systems Optimization Laboratory, Stanford University.
 *     Fortran 66 version written 10-January-1983.
-*     This version of npiqp dated 23-Dec-92.
+*     This version of npiqp dated 19-May-95.
 *     ==================================================================
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
+      common    /sol1cm/ iPrint, iSumm , lines1, lines2
+      save      /sol1cm/ 
       common    /sol3cm/ lennam, ldT   , ncolT , ldQ
       common    /sol4cm/ epspt3, epspt5, epspt8, epspt9
       common    /sol5cm/ Asize , dTmax , dTmin
-      common    /sol6cm/ Rcndbd, Rfrobn, dRmax , dRmin
-      
+
       integer            locls
       parameter         (lenls = 20)
       common    /sol1ls/ locls(lenls)
 
       logical            incrun
-      common    /sol6np/ rhomax, rhonrm, rhodmp, scale, incrun
+      common    /sol6np/ PenMax, PenNrm, PenDmp, PenScl, incrun
 
-      logical            cmdbg, lsdbg, npdbg
-      parameter        ( ldbg = 5 )
-      common    /npdebg/ inpdbg(ldbg), npdbg
-      common    /lsdebg/ ilsdbg(ldbg), lsdbg
-      common    /cmdebg/ icmdbg(ldbg), cmdbg
-
-*     +Include lsparm+++++++++++++++++++++++++++++++++++++++++++++++++++
+*     +Include lsparm-Sep-95++++++++++++++++++++++++++++++++++++++++++++
       parameter         (mxparm = 30)
       integer            iprmls(mxparm), ipsvls
       double precision   rprmls(mxparm), rpsvls
 
       common    /lspar1/ ipsvls(mxparm),
-     $                   idbgls, iPrnt , iSumry, itmax1, itmax2, lcrash,
-     $	                 ldbgls, lprob , msgls , nn    , nnclin, nprob , 
-     $                   ipadls(18)
+     $                   itmax1, itmax2, lcrash, lformH, lprob , msgLS ,
+     $                   nn    , nnclin, nprob , ipadls(21)
 
       common    /lspar2/ rpsvls(mxparm),
      $                   bigbnd, bigdx , bndlow, bndupp, tolact, tolfea,
-     $                   tolrnk, rpadls(23)
+     $                   tolOpt, tolrnk, rpadls(22)
 
-      equivalence       (iprmls(1), idbgls), (rprmls(1), bigbnd)
+      equivalence       (iprmls(1), itmax1 ), (rprmls(1), bigbnd)
 
       save      /lspar1/, /lspar2/
-*     +Include npparm+++++++++++++++++++++++++++++++++++++++++++++++++++
+*     +Include npparm-Sep-95++++++++++++++++++++++++++++++++++++++++++++
       integer            iprmnp(mxparm), ipsvnp
       double precision   rprmnp(mxparm), rpsvnp
 
       common    /nppar1/ ipsvnp(mxparm),
-     $                   idbgnp, itmxnp, jvrfy1, jvrfy2, jvrfy3, jvrfy4,
-     $                   ldbgnp, lformH, lvlder, lverfy, msgNP , nlnf  ,
-     $                   nlnj  , nlnx  , nncnln, nsave , nload , ksave ,
-     $                   ipadnp(12)
+     $                   itmxnp, jvrfy1, jvrfy2, jvrfy3, jvrfy4, lvlder, 
+     $                   lverfy, msgNP , nlnf  , nlnj  , nlnx  , nncnln,
+     $                   nsave , nload , ksave , ipadnp(15)
 
       common    /nppar2/ rpsvnp(mxparm),
      $                   cdint , ctol  , dxlim , epsrf , eta   , fdint ,
-     $                   ftol  , hcndbd, rpadnp(22)
+     $                   ftol  , Hcndbd, rpadnp(22)
 
-      equivalence       (iprmnp(1), idbgnp), (rprmnp(1), cdint)
+      equivalence       (iprmnp(1), itmxnp), (rprmnp(1), cdint)
 
       save      /nppar1/, /nppar2/
 *     ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-      equivalence  (idbgnp, idbg  ), (itmxnp, nmajor), (itmax2, nminor)
-      equivalence  (ldbgls, mnrdbg), (ldbgnp, mjrdbg), (msgls , msgQP )
+      equivalence  (itmxnp, nmajor), (itmax2, nminor), (msgLS , msgQP )
 
-      character*8        names(1)
+      character*16       names(1)
       logical            linobj, overfl, qpnamd, vertex
       parameter         (qpnamd = .false., vertex = .false. )
       parameter         (zero   = 0.0d+0, one = 1.0d+0, two = 2.0d+0)
       parameter         (hundrd = 1.0d+2                            )
       character*4        line
       data               line /'----'/
-
-      idbgsv = idbg
-      if (npdbg) then
-         idbg   = 0
-      else
-         idbg = nminor + 1
-      end if
-      lsdbg  = npdbg
-      cmdbg  = npdbg
-      call icopy ( ldbg, ilsdbg, 1, icmdbg, 1 )
 
       lRpq   = locls( 5)
       lRpq0  = locls( 6)
@@ -2925,7 +2185,7 @@ C-->  condmx = max( one/epspt3, hundrd )
 *     violations.
 *     ==================================================================
       wscale = - one
-      do 170 j = 1, nctotl
+      do 170, j = 1, nctotl
 
          if (j .le. n) then                
             con = x(j)
@@ -2950,8 +2210,8 @@ C-->  condmx = max( one/epspt3, hundrd )
             if (bl(j) .gt. biglow) then
                if (blj .gt. zero) then
                   viol   = blj
-                  if (rho(i) .gt. zero) then
-                     weight =   viol*rho(i)
+                  if (Pen(i) .gt. zero) then
+                     weight =   viol*Pen(i)
                   else
                      weight =   viol
                   end if
@@ -2963,8 +2223,8 @@ C-->  condmx = max( one/epspt3, hundrd )
             if (bu(j) .lt. bigupp) then
                if (buj .lt. zero) then
                   viol   =   buj
-                  if (rho(i) .gt. zero) then
-                     weight = - viol*rho(i)
+                  if (Pen(i) .gt. zero) then
+                     weight = - viol*Pen(i)
                   else
                      weight = - viol
                   end if
@@ -2984,7 +2244,7 @@ C-->  condmx = max( one/epspt3, hundrd )
 
       if (wscale .gt. zero) then
          wscale = one/wscale
-         call dscal ( nctotl, (wscale), wtinf, 1 )
+         call dscal ( nctotl, wscale, wtinf, 1 )
       end if
 
       call dcond ( nctotl, wtinf, 1, wtmax, wtmin )
@@ -2997,7 +2257,9 @@ C-->  condmx = max( one/epspt3, hundrd )
 *     in the working set.  Note that a relatively well-conditioned
 *     working set is used to start the QP iterations.
 
-      condmx = max( one/epspt3, hundrd )
+C-->  condmx = max( one/epspt5, hundrd )
+C-->  condmx = max( one/epspt3, hundrd )
+      condmx = max( one/epspt5, hundrd )
 
       if (ncnln .gt. 0) then
 *        ===============================================================
@@ -3006,10 +2268,10 @@ C-->  condmx = max( one/epspt3, hundrd )
 *        Load the new Jacobian into the  QP  matrix  A.  Compute the
 *        2-norms of the rows of the Jacobian.
 
-         call f06qff( 'General', ncnln, n, cJac, ldcJ,
+         call f06qff( 'General', ncnln, n, cJac, ldJ,
      $                Aqp(nclin+1,1), ldAqp )
 
-         do 190 j = nclin+1, ncqp
+         do 190, j = nclin+1, ncqp
             Anorm(j) = dnrm2 ( n, Aqp(j,1), ldAqp )
   190    continue
 
@@ -3023,9 +2285,9 @@ C-->  condmx = max( one/epspt3, hundrd )
          Asize  = zero
          linact = 0
          k1     = nactiv + 1
-         do 200 k = 1, nactiv
-            i     = kactiv(k)
-            Asize = max( Asize, Anorm(i) )
+         do 200, k = 1, nactiv
+            i      = kactiv(k)
+            Asize  = max( Asize, Anorm(i) )
 
             if (i .le. nclin) then
                linact = linact + 1
@@ -3046,10 +2308,10 @@ C-->  condmx = max( one/epspt3, hundrd )
      $      call dcond ( ncqp, Anorm, 1, Asize, Amin )
 
 *        Compute the absolute values of the nonlinear constraints in
-*        the working set.  Use DX as workspace.
+*        the working set.  Use dx as workspace.
 
-         do 210 k = linact+1, nactiv
-            j = n + kactiv(k)
+         do 210, k = linact+1, nactiv
+            j      = n + kactiv(k)
             if (istate(j) .eq. 1) dx(k) = abs( qpbl(j) )
             if (istate(j) .ge. 2) dx(k) = abs( qpbu(j) )
   210    continue
@@ -3067,10 +2329,10 @@ C-->  condmx = max( one/epspt3, hundrd )
 *        Page 81.  It should be replaced by a faster sort if the
 *        number of active nonlinear constraints becomes large.
 
-         do 230 k = linact+2, nactiv
-            l     = k
-            viol  = dx(l)
-            kviol = kactiv(l)
+         do 230, k = linact+2, nactiv
+            l      = k
+            viol   = dx(l)
+            kviol  = kactiv(l)
 *           while (l .gt. linact+1  .and.  dx(l-1) .lt. viol) do
   220       if    (l .gt. linact+1                          ) then
                if (                        dx(l-1) .lt. viol) then
@@ -3135,9 +2397,6 @@ C-->  condmx = max( one/epspt3, hundrd )
      $                qpbl, qpbu, Aqp, clamda, Adx,
      $                qptol, R, dx, w )
 
-         if (npdbg  .and.  inpdbg(1) .gt. 0)
-     $      write(iPrint, 8000) nQPerr
-
          nviol = 0
          if (numinf .gt. 0) then
 
@@ -3200,7 +2459,7 @@ C-->  condmx = max( one/epspt3, hundrd )
       if (ncnln .gt. 0) then
          if (numinf .gt. 0) then
             feasqp = .false.
-            call dload ( nctotl, (zero), clamda, 1 )
+            call dload ( nctotl, zero, clamda, 1 )
 
             if (nZ .gt. 0) then
 *              ---------------------------------------------------------
@@ -3246,9 +2505,6 @@ C-->  condmx = max( one/epspt3, hundrd )
                if (ncqp .gt. 0)
      $            call dgemv ( 'N', ncqp, n, one, Aqp, ldAqp,
      $                         dx, 1, zero, Adx, 1 )
-
-               if (npdbg  .and.  inpdbg(2) .gt. 0)
-     $            write(iPrint, 8100) (dx(j), j = 1, n)
             end if
 
             call dcopy ( nlnx, w(lRpq), 1, w(lHpq), 1 )
@@ -3268,12 +2524,12 @@ C-->  condmx = max( one/epspt3, hundrd )
             con    = c(i)
 
             if (      .not. feasqp  .and.
-     $          violn(i) .ne. zero  .and.  rho(i) .le. zero )
-     $         rho(i) = one
+     $          violn(i) .ne. zero  .and.  Pen(i) .le. zero )
+     $         Pen(i) = one
 
-            quotnt = ddiv  ( cmul(i), scale*rho(i), overfl )
+            quotnt = ddiv  ( cmul(i), PenScl*Pen(i), overfl )
 
-*           Define the slack variable to be  CON - MULT / RHO.
+*           Define the slack variable to be  con - mult / Pen.
 *           Force each slack to lie within its upper and lower bounds.
 
             if (bl(j) .gt. biglow) then
@@ -3325,123 +2581,98 @@ C-->  condmx = max( one/epspt3, hundrd )
   600    continue
 
          if (.not. feasqp)
-     $      rhonrm = dnrm2 ( ncnln, rho, 1 )
-
-         if (npdbg  .and.  inpdbg(2) .gt. 0) then
-            write(iPrint, 8200) (violn(i), i=1,ncnln)
-            write(iPrint, 8300) (slk(i)  , i=1,ncnln)
-         end if
+     $      PenNrm = dnrm2 ( ncnln, Pen, 1 )
       end if
-
-      call icopy ( ldbg, inpdbg, 1, icmdbg, 1 )
-      idbg   = idbgsv
 
       return
 
  1010 format(  1x, 32a4 / ' Start of major itn', i4)
  1020 format(/ 1x, 16a4 / ' Start of major itn', i4)
- 8000 format(/ ' //npiqp // nQPerr'
-     $       / ' //npiqp // ',  i6 )
- 8100 format(/ ' //npiqp // dx recomputed with null space portion...'
-     $       / (5g12.3))
- 8200 format(/ ' //npiqp // Violations = '/ (1p, 5e15.6))
- 8300 format(/ ' //npiqp // Slacks     = '/ (1p, 5e15.6))
 
 *     end of npiqp
       end
 
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-      subroutine npkey ( nout, buffer, key )
+      subroutine npkey ( iPrint, iSumm, listOp, buffer, key )
 
       implicit           double precision (a-h,o-z)
       character*(*)      buffer
+      logical            listOp
 
 *     ==================================================================
 *     npkey   decodes the option contained in  buffer  in order to set
 *     a parameter value in the relevant element of the parameter arrays.
 *
-*
 *     Input:
-*
-*     nout   A unit number for printing error messages.
-*            if nout = 0 no error messages are printed.
-*
+*        iPrint   the print   file for error messages
+*        iSumm    the summary file for error messages.
 *     Output:
+*        key    The first keyword contained in buffer.
 *
-*     key    The first keyword contained in buffer.
-*
-*
-*     npkey  calls opnumb and the subprograms
-*                 lookup, scannr, tokens, upcase
-*     (now called oplook, opscan, optokn, opuppr)
-*     supplied by Informatics General, Inc., Palo Alto, California.
+*        npkey  calls opnumb and the subprograms
+*               lookup, scannrl tokens, upcase
+*        (now called oplook, opscan, optokn, opuppr)
+*        supplied by Informatics General, Inc., Palo Alto, California.
 *
 *     Systems Optimization Laboratory, Stanford University.
-*     This version of npkey  dated 21-Mar-93.
+*     This version of npkey  dated 18-Sep-95.
 *     ==================================================================
-*     +Include lsparm+++++++++++++++++++++++++++++++++++++++++++++++++++
+*     +Include lsparm-Sep-95++++++++++++++++++++++++++++++++++++++++++++
       parameter         (mxparm = 30)
       integer            iprmls(mxparm), ipsvls
       double precision   rprmls(mxparm), rpsvls
 
       common    /lspar1/ ipsvls(mxparm),
-     $                   idbgls, iPrnt , iSumry, itmax1, itmax2, lcrash,
-     $	                 ldbgls, lprob , msgls , nn    , nnclin, nprob , 
-     $                   ipadls(18)
+     $                   itmax1, itmax2, lcrash, lformH, lprob , msgLS ,
+     $                   nn    , nnclin, nprob , ipadls(21)
 
       common    /lspar2/ rpsvls(mxparm),
      $                   bigbnd, bigdx , bndlow, bndupp, tolact, tolfea,
-     $                   tolrnk, rpadls(23)
+     $                   tolOpt, tolrnk, rpadls(22)
 
-      equivalence       (iprmls(1), idbgls), (rprmls(1), bigbnd)
+      equivalence       (iprmls(1), itmax1 ), (rprmls(1), bigbnd)
 
       save      /lspar1/, /lspar2/
-*     +Include npparm+++++++++++++++++++++++++++++++++++++++++++++++++++
+*     +Include npparm-Sep-95++++++++++++++++++++++++++++++++++++++++++++
       integer            iprmnp(mxparm), ipsvnp
       double precision   rprmnp(mxparm), rpsvnp
 
       common    /nppar1/ ipsvnp(mxparm),
-     $                   idbgnp, itmxnp, jvrfy1, jvrfy2, jvrfy3, jvrfy4,
-     $                   ldbgnp, lformH, lvlder, lverfy, msgNP , nlnf  ,
-     $                   nlnj  , nlnx  , nncnln, nsave , nload , ksave ,
-     $                   ipadnp(12)
+     $                   itmxnp, jvrfy1, jvrfy2, jvrfy3, jvrfy4, lvlder, 
+     $                   lverfy, msgNP , nlnf  , nlnj  , nlnx  , nncnln,
+     $                   nsave , nload , ksave , ipadnp(15)
 
       common    /nppar2/ rpsvnp(mxparm),
      $                   cdint , ctol  , dxlim , epsrf , eta   , fdint ,
-     $                   ftol  , hcndbd, rpadnp(22)
+     $                   ftol  , Hcndbd, rpadnp(22)
 
-      equivalence       (iprmnp(1), idbgnp), (rprmnp(1), cdint)
+      equivalence       (iprmnp(1), itmxnp), (rprmnp(1), cdint)
 
       save      /nppar1/, /nppar2/
 *     ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-      equivalence  (idbgnp, idbg  ), (itmxnp, nmajor), (itmax2, nminor)
-      equivalence  (ldbgls, mnrdbg), (ldbgnp, mjrdbg), (msgls , msgQP )
+      equivalence  (itmxnp, nmajor), (itmax2, nminor), (msgLS , msgQP )
 
       external           opnumb
-      logical            first , more  , number, opnumb, sorted
-      save               first
+      logical            more  , number, opnumb, sorted
 
-      parameter         (     maxkey = 43,  maxtie = 22,   maxtok = 10)
+      parameter         (     maxkey = 43,  maxtie = 23,   maxtok = 10)
       character*16       keys(maxkey), ties(maxtie), token(maxtok)
       character*16       key, key2, key3, value
 
       parameter         (idummy = -11111,  rdummy = -11111.0d+0,
-     $                   sorted = .true.,  zero   =  0.0     )
+     $                   sorted = .true.,  zero   =  0.0d+0    )
 
-      data                first
-     $                  /.true./
       data   keys
      $ / 'BEGIN           ',
      $   'CENTRAL         ', 'COLD            ', 'CONDITION       ',
-     $   'CONSTRAINTS     ',
-     $   'CRASH           ', 'DEBUG           ', 'DEFAULTS        ',
+     $   'CONSTRAINTS     ', 'CRASH           ', 'DEFAULTS        ',
      $   'DERIVATIVE      ', 'DIFFERENCE      ', 'END             ',
      $   'FEASIBILITY     ', 'FUNCTION        ', 'HESSIAN         ',
      $   'HOT             ', 'INFINITE        ', 'IPRMLS          ',
      $   'ITERATIONS      ', 'ITERS:ITERATIONS', 'ITNS :ITERATIONS',
-     $   'LINEAR          ', 'LINESEARCH      ', 'LIST            ',
-     $   'LOAD            ',
+     $   'LINE            ', 'LINEAR          ', 'LINESEARCH:LINE ',
+     $   'LIST            ', 'LOAD            ',
      $   'LOWER           ', 'MAJOR           ', 'MINOR           ',
      $   'NOLIST          ', 'NONLINEAR       ', 'OPTIMALITY      ',
      $   'PRINT           ', 'PROBLEM         ', 'ROW             ',
@@ -3451,25 +2682,15 @@ C-->  condmx = max( one/epspt3, hundrd )
      $   'WARM            '/
 
       data   ties
-     $ / 'BOUND           ', 'CONSTRAINTS     ', 'DEBUG           ',
+     $ / 'BOUND           ', 'CONSTRAINTS     ', 
      $   'FEASIBILITY     ', 'FILE            ', 'FREQUENCY       ', 
      $   'GRADIENTS       ', 'ITERATIONS      ', 'ITERS:ITERATIONS',
      $   'ITNS :ITERATIONS', 'JACOBIAN        ', 'LEVEL           ',
-     $   'NO              ', 'NO.      :NUMBER',
-     $   'NUMBER          ', 'OBJECTIVE       ', 'PRINT           ',
-     $   'RUN             ', 'STEP            ', 'TOLERANCE       ',
-     $   'VARIABLES       ', 'YES             '/
+     $   'NO              ', 'NO.      :NUMBER', 'NUMBER          ',
+     $   'OBJECTIVE       ', 'OPTIMALITY      ', 'PRINT           ',
+     $   'RUN             ', 'SEARCH          ', 'STEP            ',
+     $   'TOLERANCE       ', 'VARIABLES       ', 'YES             '/
 *-----------------------------------------------------------------------
-
-      if (first) then
-         first  = .false.
-         do 10,     i = 1, mxparm
-            rprmls(i) = rdummy
-            iprmls(i) = idummy
-            rprmnp(i) = rdummy
-            iprmnp(i) = idummy
-   10    continue
-      end if
 
 *     Eliminate comments and empty lines.
 *     A '*' appearing anywhere in buffer terminates the string.
@@ -3544,15 +2765,15 @@ C-->  condmx = max( one/epspt3, hundrd )
          else if (key .eq. 'COLD        ') then
             lcrash = 0
          else if (key .eq. 'CONDITION   ') then
-            hcndbd = rvalue
+            Hcndbd = rvalue
          else if (key .eq. 'CONSTRAINTS ') then
             nnclin = rvalue
          else if (key .eq. 'CRASH       ') then
             tolact = rvalue
-         else if (key .eq. 'DEBUG       ') then
-            idbg   = rvalue
          else if (key .eq. 'DEFAULTS    ') then
-            do 20,     i = 1, mxparm
+            call mcout ( iPrint, iSumm )
+            listOp = .true.
+            do 20, i = 1, mxparm
                iprmls(i) = idummy
                rprmls(i) = rdummy
                iprmnp(i) = idummy
@@ -3580,10 +2801,11 @@ C-->  condmx = max( one/epspt3, hundrd )
          else if (key .eq. 'HOT         ') then
             lcrash = 2
          else if (key .eq. 'INFINITE    ') then
-              if (key2.eq. 'BOUND       ') bigbnd = rvalue * 0.99999
+              if (key2.eq. 'BOUND       ') bigbnd = rvalue * 0.99999d+0
               if (key2.eq. 'STEP        ') bigdx  = rvalue
               if (loc2.eq.  0            ) then
-                 if (nout .gt. 0)          write(nout, 2320) key2
+                 if (iPrint .gt. 0)        write(iPrint, 2320) key2
+                 if (iSumm  .gt. 0)        write(iSumm , 2320) key2
               end if
          else if (key .eq. 'IPRMLS      ') then
 *           Allow things like  iprmls 21 = 100  to set iprmls(21) = 100
@@ -3591,15 +2813,20 @@ C-->  condmx = max( one/epspt3, hundrd )
             if (ivalue .ge. 1  .and. ivalue .le. mxparm) then
                read (key3, '(bn, i16)') iprmls(ivalue)
             else
-               if (nout .gt. 0) write(nout, 2400) ivalue
+               if (iPrint .gt. 0) write(iPrint, 2400) ivalue
+               if (iSumm  .gt. 0) write(iSumm , 2400) ivalue
             end if
          else if (key .eq. 'ITERATIONS  ') then
             nmajor = rvalue
+         else if (key .eq. 'LINE        ') then
+            eta    = rvalue
          else if (key .eq. 'LINEAR      ') then
             if (key2  .eq. 'CONSTRAINTS ') nnclin = rvalue
             if (key2  .eq. 'FEASIBILITY ') tolfea = rvalue
+            if (key2  .eq. 'SEARCH      ') eta    = rvalue
             if (loc2 .eq.  0             ) then
-               if (nout .gt. 0)            write(nout, 2320) key2
+               if (iPrint .gt. 0)          write(iPrint, 2320) key2
+               if (iSumm  .gt. 0)          write(iSumm , 2320) key2
             end if
          else if (key .eq. 'LINESEARCH  ') then
             eta    = rvalue
@@ -3615,18 +2842,20 @@ C-->  condmx = max( one/epspt3, hundrd )
       if (more) then
          more   = .false.
          if      (key .eq. 'MAJOR       ') then
-              if (key2.eq. 'DEBUG       ') mjrdbg = rvalue
               if (key2.eq. 'ITERATIONS  ') nmajor = rvalue
               if (key2.eq. 'PRINT       ') msgNP  = rvalue
+              if (key2.eq. 'OPTIMALITY  ') ftol   = rvalue
               if (loc2.eq.  0            ) then
-                 if (nout .gt. 0)          write(nout, 2320) key2
+                 if (iPrint .gt. 0)        write(iPrint, 2320) key2
+                 if (iSumm  .gt. 0)        write(iSumm , 2320) key2
               end if
          else if (key .eq. 'MINOR       ') then
-              if (key2.eq. 'DEBUG       ') mnrdbg = rvalue
               if (key2.eq. 'ITERATIONS  ') nminor = rvalue
               if (key2.eq. 'PRINT       ') msgQP  = rvalue
+              if (key2.eq. 'OPTIMALITY  ') tolOpt = rvalue
               if (loc2.eq.  0            ) then
-                 if (nout .gt. 0)          write(nout, 2320) key2
+                 if (iPrint .gt. 0)        write(iPrint, 2320) key2
+                 if (iSumm  .gt. 0)        write(iSumm , 2320) key2
               end if
          else if (key .eq. 'NONLINEAR   ') then
               if (key2.eq. 'CONSTRAINTS ') nncnln = rvalue
@@ -3635,7 +2864,8 @@ C-->  condmx = max( one/epspt3, hundrd )
               if (key2.eq. 'OBJECTIVE   ') nlnf   = rvalue
               if (key2.eq. 'VARIABLES   ') nlnx   = rvalue
               if (loc2.eq.  0            ) then
-                 if (nout .gt. 0)          write(nout, 2320) key2
+                 if (iPrint .gt. 0)        write(iPrint, 2320) key2
+                 if (iSumm  .gt. 0)        write(iSumm , 2320) key2
               end if
          else if (key .eq. 'OPTIMALITY  ') then
             ftol   = rvalue
@@ -3647,17 +2877,19 @@ C-->  condmx = max( one/epspt3, hundrd )
       if (more) then
          more   = .false.
          if      (key .eq. 'PRINT       ') then
-              if (key2.eq. 'FILE        ') iPrnt  = rvalue
+              if (key2.eq. 'FILE        ') iPrint = rvalue
               if (key2.eq. 'LEVEL       ') msgNP  = rvalue
               if (loc2.eq.  0            ) then
-                 if (nout .gt. 0)          write(nout, 2320) key2
+                 if (iPrint .gt. 0)        write(iPrint, 2320) key2
+                 if (iSumm  .gt. 0)        write(iSumm , 2320) key2
               end if
          else if (key .eq. 'PROBLEM     ') then
               if (key2.eq. 'NUMBER      ') nprob  = rvalue
          else if (key .eq. 'ROW         ') then
               if (key2.eq. 'TOLERANCE   ') ctol   = rvalue
               if (loc2.eq.  0            ) then
-                 if (nout .gt. 0)          write(nout, 2320) key2
+                 if (iPrint .gt. 0)        write(iPrint, 2320) key2
+                 if (iSumm  .gt. 0)        write(iSumm , 2320) key2
               end if
          else if (key .eq. 'RPRMLS      ') then
 *           Allow things like  rprmls 21 = 2  to set rprmls(21) = 2.0
@@ -3665,7 +2897,8 @@ C-->  condmx = max( one/epspt3, hundrd )
             if (ivalue .ge. 1  .and. ivalue .le. mxparm) then
                read (key3, '(bn, e16.0)') rprmls(ivalue)
             else
-               if (nout .gt. 0) write(nout, 2400) ivalue
+               if (iPrint .gt. 0) write(iPrint, 2400) ivalue
+               if (iSumm  .gt. 0) write(iSumm , 2400) ivalue
             end if
          else if (key .eq. 'SAVE        ') then
               if (key2.eq. 'RUN         ') nsave  = rvalue
@@ -3674,7 +2907,8 @@ C-->  condmx = max( one/epspt3, hundrd )
               if (key2.eq. 'CONSTRAINTS ') jvrfy3 = rvalue
               if (key2.eq. 'OBJECTIVE   ') jvrfy1 = rvalue
               if (loc2.eq.  0            ) then
-                 if (nout .gt. 0)          write(nout, 2320) key2
+                 if (iPrint .gt. 0)        write(iPrint, 2320) key2
+                 if (iSumm  .gt. 0)        write(iSumm , 2320) key2
               end if
          else if (key .eq. 'STEP        ') then
             dxlim  = rvalue
@@ -3682,10 +2916,11 @@ C-->  condmx = max( one/epspt3, hundrd )
               if (key2.eq. 'CONSTRAINTS ') jvrfy4 = rvalue
               if (key2.eq. 'OBJECTIVE   ') jvrfy2 = rvalue
               if (loc2.eq.  0            ) then
-                 if (nout .gt. 0)          write(nout, 2320) key2
+                 if (iPrint .gt. 0)        write(iPrint, 2320) key2
+                 if (iSumm  .gt. 0)        write(iSumm , 2320) key2
               end if
          else if (key .eq. 'SUMMARY     ') then
-            iSumry = rvalue
+            iSumm  = rvalue
          else if (key .eq. 'UPPER       ') then
             bndupp = rvalue
          else if (key .eq. 'VARIABLES   ') then
@@ -3701,7 +2936,8 @@ C-->  condmx = max( one/epspt3, hundrd )
          else if (key .eq. 'WARM        ') then
             lcrash = 1
          else
-            if (nout .gt. 0) write(nout, 2300) key
+            if (iPrint .gt. 0) write(iPrint, 2300) key
+            if (iSumm  .gt. 0) write(iSumm , 2300) key
          end if
       end if
 
@@ -3736,18 +2972,14 @@ C-->  condmx = max( one/epspt3, hundrd )
       parameter         (lennp = 35)
       common    /sol1np/ locnp(lennp)
 
-      logical            npdbg
-      parameter         (ldbg = 5)
-      common    /npdebg/ inpdbg(ldbg), npdbg
-
       miniw     = litotl + 1
       minw      = lwtotl + 1
 
 *     Assign array lengths that depend upon the problem dimensions.
 
       if (nclin + ncnln .eq. 0) then
-         lenT     = 0
-         lenQ     = 0
+         lenT = 0
+         lenQ = 0
       else
          lenT = ldT *ncolT
          lenQ = ldQ*ldQ
@@ -3836,8 +3068,8 @@ C-->  condmx = max( one/epspt3, hundrd )
       lcJdx     = lcmul  + ncnln
       ldlam     = lcJdx  + ncnln
       ldslk     = ldlam  + ncnln
-      lrho      = ldslk  + ncnln
-      lwrk3     = lrho   + ncnln
+      lPen      = ldslk  + ncnln
+      lwrk3     = lPen   + ncnln
       lslk1     = lwrk3  + ncnln
       lslk      = lslk1  + ncnln
       minw      = lslk   + ncnln
@@ -3849,7 +3081,7 @@ C-->  condmx = max( one/epspt3, hundrd )
       locnp(17) = lcJdx
       locnp(18) = ldlam
       locnp(19) = ldslk
-      locnp(20) = lrho
+      locnp(20) = lPen
       locnp(21) = lwrk3
       locnp(22) = lslk1
       locnp(23) = lslk
@@ -3872,181 +3104,84 @@ C-->  condmx = max( one/epspt3, hundrd )
 
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-      subroutine npmrt ( feasqp, n, nclin, ncnln,
-     $                   objalf, grdalf, qpcurv,
-     $                   istate,
-     $                   cJdx, cmul, cs,
-     $                   dlam, rho, violn,
-     $                   work1, work2 )
+      subroutine npnkey( )
 
       implicit           double precision (a-h,o-z)
 
-      logical            feasqp
-
-      integer            istate(*)
-
-      double precision   cJdx(*), cmul(*), cs(*),
-     $                   dlam(*), rho(*), violn(*)
-      double precision   work1(*), work2(*)
-
 *     ==================================================================
-*     npmrt   computes the value and directional derivative of the
-*     augmented Lagrangian merit function.  The penalty parameters
-*     rho(j) are boosted if the directional derivative of the resulting
-*     augmented Lagrangian function is not sufficiently negative.  If
-*     rho needs to be increased,  the perturbation with minimum two-norm
-*     is found that gives a directional derivative equal to  - p'Hp.
+*     npnkey  counts  consecutive calls of npoptn or npfile.
 *
-*     Systems Optimization Laboratory, Stanford University, California.
-*     Original version written  27-May-1985.
-*     This version of  NPMRT  dated 14-November-1985.
+*     Original version written  11-Sep-95,
+*     This version of  npnkey  dated  14-Sep-95.
 *     ==================================================================
-      double precision   wmach
-      common    /solmch/ wmach(15)
-      save      /solmch/
+      common    /sol1cm/ iPrint, iSumm , lines1, lines2
+      save      /sol1cm/ 
+      logical            newOpt, listOp
+      common    /sol7np/ newOpt, listOp, ncalls
+      save      /sol7np/
 
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
+*     +Include lsparm-Sep-95++++++++++++++++++++++++++++++++++++++++++++
+      parameter         (mxparm = 30)
+      integer            iprmls(mxparm), ipsvls
+      double precision   rprmls(mxparm), rpsvls
 
-      logical            incrun
-      common    /sol6np/ rhomax, rhonrm, rhodmp, scale, incrun
+      common    /lspar1/ ipsvls(mxparm),
+     $                   itmax1, itmax2, lcrash, lformH, lprob , msgLS ,
+     $                   nn    , nnclin, nprob , ipadls(21)
 
-      logical            npdbg
-      parameter         (ldbg = 5)
-      common    /npdebg/ inpdbg(ldbg), npdbg
+      common    /lspar2/ rpsvls(mxparm),
+     $                   bigbnd, bigdx , bndlow, bndupp, tolact, tolfea,
+     $                   tolOpt, tolrnk, rpadls(22)
 
-      logical            boost , overfl
-      external           ddiv  , ddot  , dnrm2
-      intrinsic          abs   , max   , min   , sqrt
-      parameter        ( zero   = 0.0d+0, half = 0.5d+0, one = 1.0d+0 )
-      parameter        ( two    = 2.0d+0                              )
+      equivalence       (iprmls(1), itmax1 ), (rprmls(1), bigbnd)
 
-      if (ncnln .eq. 0) return
+      save      /lspar1/, /lspar2/
+*     +Include npparm-Sep-95++++++++++++++++++++++++++++++++++++++++++++
+      integer            iprmnp(mxparm), ipsvnp
+      double precision   rprmnp(mxparm), rpsvnp
 
-      rtmin  = wmach(6)
+      common    /nppar1/ ipsvnp(mxparm),
+     $                   itmxnp, jvrfy1, jvrfy2, jvrfy3, jvrfy4, lvlder, 
+     $                   lverfy, msgNP , nlnf  , nlnj  , nlnx  , nncnln,
+     $                   nsave , nload , ksave , ipadnp(15)
 
-      objalf = objalf - ddot  ( ncnln, cmul, 1, cs, 1 )
-      grdalf = grdalf - ddot  ( ncnln, dlam, 1, cs, 1 )
+      common    /nppar2/ rpsvnp(mxparm),
+     $                   cdint , ctol  , dxlim , epsrf , eta   , fdint ,
+     $                   ftol  , Hcndbd, rpadnp(22)
 
-      call dcopy ( ncnln, cs, 1, work1, 1 )
+      equivalence       (iprmnp(1), itmxnp), (rprmnp(1), cdint)
 
-      if (.not. feasqp) then
-         nplin  = n + nclin
+      save      /nppar1/, /nppar2/
+*     ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      parameter         (rdummy = -11111.0d+0, idummy = -11111)
 
-         do 100 i = 1, ncnln
-            if (istate(nplin+i) .lt. 0  .or.  violn(i) .ne. zero)
-     $         work1(i) = - cJdx(i)
-  100    continue
+      logical             first
+      save                first
+      data                first /.true./
+
+      if ( first ) then
+         nCalls = 0
+         first  = .false.
+         newOpt = .true.
+         listOp = .true.
+
+         call mcout ( iPrint, iSumm )
+         do 10,     i = 1, mxparm
+            rprmls(i) = rdummy
+            iprmls(i) = idummy
+            rprmnp(i) = rdummy
+            iprmnp(i) = idummy
+   10    continue
+         first  = .false.
       end if
 
-      grdalf = grdalf + ddot  ( ncnln, work1, 1, cmul, 1 )
-
-      if (npdbg  .and.  inpdbg(1) .gt. 0)
-     $   write(iPrint, 1000) qpcurv, grdalf
-
-      if (feasqp) then
-
-*        Find the quantities that define  rhomin, the vector of minimum
-*        two-norm such that the directional derivative is one half of
-*        approximate curvature   - (dx)'H(dx).
-
-         do 350, i = 1, ncnln
-            if (abs( cs(i) ) .le. rtmin) then
-               work2(i) = zero
-            else
-               work2(i) = cs(i)**2
-            end if
-  350    continue
-
-         qnorm  = dnrm2 ( ncnln, work2, 1 )
-         tscl   = ddiv  ( grdalf + half*qpcurv, qnorm, overfl )
-         if (abs( tscl ) .le. rhomax  .and.  .not. overfl) then
-*           ------------------------------------------------------------
-*           Bounded  rhomin  found.  The final value of  rho(J)  will
-*           never be less than  rhomin(j).  If the  QP  was feasible,  a
-*           trial value  rhonew  is computed that is equal to the
-*           geometric mean of the previous  rho  and a damped value of
-*           rhomin.  The new  rho  is defined as  rhonew  if it is less
-*           than half the previous  rho  and greater than  rhomin.
-*           ------------------------------------------------------------
-            scale  = one
-            do 400, i = 1, ncnln
-               rhomin = max(  (work2(i)/qnorm)*tscl, zero )
-               rhoi   = rho(i)
-
-               rhonew = sqrt( rhoi*(rhodmp + rhomin) )
-               if (rhonew .lt. half*rhoi  ) rhoi = rhonew
-               if (rhoi   .lt.      rhomin) rhoi = rhomin
-               rho(i) = rhoi
-  400       continue
-
-            rho1   = rhonrm
-            rhonrm = dnrm2 ( ncnln, rho, 1 )
-
-*           ------------------------------------------------------------
-*           If  incrun = true,  there has been a run of iterations in
-*           which the norm of  rho  has not decreased.  Conversely,
-*           incrun = false  implies that there has been a run of
-*           iterations in which the norm of rho has not increased.  If
-*           incrun changes during this iteration the damping parameter
-*           rhodmp is increased by a factor of two.  This ensures that
-*           rho(j) will oscillate only a finite number of times.
-*           ------------------------------------------------------------
-            boost  = .false.
-            if (      incrun  .and.  rhonrm .lt. rho1) boost = .true.
-            if (.not. incrun  .and.  rhonrm .gt. rho1) boost = .true.
-            if (boost) then
-               rhodmp = two*rhodmp
-               incrun = .not. incrun
-            end if
-         end if
-
-         if (npdbg  .and.  inpdbg(2) .gt. 0)
-     $      write(iPrint, 1200) (rho(l), l=1,ncnln)
-
+      if ( newOpt ) then
+         nCalls = 1
       else
-
-*        The  QP  was infeasible.  Do not alter the penalty parameters,
-*        but compute the scale factor so that the constraint violations
-*        are reduced.
-
-         call ddscl ( ncnln, rho, 1, work1, 1 )
-         pterm2 = ddot  ( ncnln, work1, 1, cs, 1 )
-
-         scale  = rhomax
-         tscl   = ddiv  ( grdalf, pterm2, overfl )
-         if (tscl .gt. scale  .and.  tscl .le. rhomax/(one+rhonrm)
-     $                        .and.  .not. overfl)
-     $      scale = tscl
-
-         call dcopy ( ncnln, cs, 1, work1, 1 )
+         nCalls = nCalls + 1
       end if
-
-*     ------------------------------------------------------------------
-*     Compute the new value and directional derivative of the
-*     merit function.
-*     ------------------------------------------------------------------
-      call ddscl ( ncnln, rho, 1, work1, 1 )
-
-      pterm  = ddot  ( ncnln, work1, 1, cs, 1 )
-      objalf = objalf + half*scale*pterm
-
-      if (feasqp)
-     $  pterm2 = pterm
-
-      grdalf = grdalf -      scale*pterm2
-
-      if (npdbg  .and.  inpdbg(1) .gt. 0)
-     $   write(iPrint, 1100) scale, rhonrm, grdalf
-
-      return
-
- 1000 format(/ ' //npmrt //        qpcurv        grdalf '
-     $       / ' //npmrt //', 1p, 2e14.2 )
- 1100 format(/ ' //npmrt //         scale        rhonrm        grdalf '
-     $       / ' //npmrt //', 1p, 3e14.2 )
- 1200 format(/ ' //npmrt //  Penalty parameters =       '/ (1p, 5e15.6))
-
-*     end of npmrt
+  
+*     end of npnkey
       end
 
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -4056,66 +3191,97 @@ C-->  condmx = max( one/epspt3, hundrd )
 
 *     ==================================================================
 *     npoptn  loads the option supplied in string into the relevant
-*     element of iprmls, rprmls, iprmnp or rprmnp.
+*     element of iprmlc, rprmlc, iprmnp or rprmnp.
 *     ==================================================================
-      logical             newopt
-      common     /sol7np/ newopt
-      save       /sol7np/
+      common    /sol1cm/ iPrint, iSumm , lines1, lines2
+      save      /sol1cm/ 
+      logical            newOpt, listOp
+      common    /sol7np/ newOpt, listOp, ncalls
+      save      /sol7np/
 
-      double precision    wmach(15)
-      common     /solmch/ wmach
-      save       /solmch/
-
-      external            mchpar
-      character*16        key
-      character*72        buffer
-      logical             first , prnt
-      save                first , nout  , prnt
-      data                first /.true./
-
-*     If first time in, set nout.
-*     newopt is true first time into npfile or npoptn
-*     and just after a call to an optimization routine.
-*     prnt is set to true whenever newopt is true.
-
-      if (first) then
-         first  = .false.
-         newopt = .true.
-         call mchpar()
-         nout   =  wmach(11)
-      end if
+      character*16       key
+      character*72       buffer
+*     ------------------------------------------------------------------
       buffer = string
 
-*     Call npkey to decode the option and set the parameter value.
-*     If newopt is true, reset prnt and test specially for nolist.
+*     If this is the first call of npnkey, set newOpt and default values
+*     of the optional parameters. The default is to list the options.
+*     Increment ncalls, the number of calls of npoptn and npfile for
+*     this optimization.
 
-      if (newopt) then
-         newopt = .false.
-         prnt   = .true.
-         call npkey ( nout, buffer, key )
+      call npnkey()
 
-         if (key .eq. 'NOLIST') then
-            prnt   = .false.
-         else
-            write(nout, '(// a / a /)')
-     $         ' Calls to Option Routine',
-     $         ' -----------------------'
-            write(nout, '( 6x, a )') buffer
+*     Call  npkey  to decode the option and set the parameter value.
+*     If required, print a heading at the start of a new run.
+*     Note that the following call to npkey may reset iPrint and iSumm.
+
+      call npkey ( iPrint, iSumm, listOp, buffer, key )
+      if (key .eq.  'LIST'  ) listOp = .true.
+      if (key .eq.  'NOLIST') listOp = .false.
+
+      if ( listOp ) then 
+         if ( newOpt ) then
+            if (iPrint .gt. 0) then
+               write ( iPrint, '(// a / a /)' )
+     $                         ' Optional Parameters',
+     $                         ' -------------------'
+            end if
+            newOpt = .false.
          end if
-      else
-         if (prnt) then
-            iPrint = nout
-            write(nout, '( 6x, a )') buffer
-         else
-            iPrint = 0
-         end if
-
-         call npkey ( iPrint, buffer, key )
-         if (key .eq.   'LIST') prnt = .true.
-         if (key .eq. 'NOLIST') prnt = .false.
+         if (iPrint .gt. 0) write ( iPrint, '( 6x, a )'    ) buffer
       end if
 
 *     end of npoptn
+      end
+
+*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+      subroutine npopti( string, ivalue )
+
+      implicit           double precision (a-h,o-z)
+      character*(*)      string
+      integer            ivalue
+
+*     ==================================================================
+*     npopti decodes the option contained in  string // ivalue.
+*
+*     14 Sep 1995: first version.
+*     ==================================================================
+      character*16       key
+      character*72       buff72
+
+      write(key, '(i16)') ivalue
+      lenbuf = len(string)
+      buff72 = string
+      buff72(lenbuf+1:lenbuf+16) = key
+      call npoptn( buff72 )
+
+*     end of npopti
+      end
+
+*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+      subroutine npoptr( string, rvalue )
+
+      implicit           double precision (a-h,o-z)
+      character*(*)      string
+      double precision   rvalue
+
+*     ==================================================================
+*     npoptr decodes the option contained in  string // rvalue.
+*
+*     14 Sep 1995: first version.
+*     ==================================================================
+      character*16       key
+      character*72       buff72
+
+      write(key, '(1p, e16.8)') rvalue
+      lenbuf = len(string)
+      buff72 = string
+      buff72(lenbuf+1:lenbuf+16) = key
+      call npoptn( buff72 )
+
+*     end of npoptr
       end
 
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -4124,8 +3290,7 @@ C-->  condmx = max( one/epspt3, hundrd )
      $                   ldR, ldT, n, nclin, ncnln,
      $                   nctotl, nactiv, linact, nlnact, nZ, nfree,
      $                   majit0, majIts, minIts, istate, alfa, nfun,
-     $                   condHz, condH, condT, objalf, objf,
-     $                   gfnorm, gznorm, cvnorm,
+     $                   condHz, condT, objalf, objf, gznorm, cvnorm,
      $                   Ax, c, R, T, violn, x, work )
 
       implicit           double precision (a-h,o-z)
@@ -4154,37 +3319,15 @@ C-->  condmx = max( one/epspt3, hundrd )
 *
 *        ge  30        diagonals of  T  and  R.
 *
-*     Debug print is performed depending on the logical variable npdbg.
-*     npdbg is set true when idbg major iterations have been performed.
-*     At this point,  printing is done according to a string of binary
-*     digits of the form clsvt (stored in the integer array inpdbg).
-*
-*     C  set 'on' gives detailed information from the checking routines.
-*     L  set 'on' gives information from the linesearch.
-*     S  set 'on' gives information from the maximum step routine npalf.
-*     V  set 'on' gives various vectors in  npcore  and its auxiliaries.
-*     T  set 'on' gives a trace of which routine was called and an
-*                 indication of the progress of the run.
-*     For example, `Major debug level 11000' gives much output from 
-*                  the checking routines and the linesearch.
-*
-*     Note: Much useless output can be generated by the uninitiated.
-*
 *     Systems Optimization Laboratory, Stanford University.
 *     Original Fortran 66 version written November-1982.
-*     This version of  npprt  dated  23-Dec-92.
+*     This version of  npprt  dated  14-Jul-94.
 *     ==================================================================
-      common    /sol1cm/ nout  , iPrint, iSumm, lines1, lines2
-
+      common    /sol1cm/ iPrint, iSumm, lines1, lines2
+      save      /sol1cm/ 
       logical            incrun
-      common    /sol6np/ rhomax, rhonrm, rhodmp, scale, incrun
-
-      logical            npdbg
-      parameter         (ldbg = 5)
-      common    /npdebg/ inpdbg(ldbg), npdbg
-
+      common    /sol6np/ PenMax, PenNrm, PenDmp, PenScl, incrun
       logical            first, nlnCon, newSet, prtHdr
-      intrinsic          mod
       external           dnrm2
 
       if (msgNP  .ge. 20  .and.  iPrint .gt. 0) then
@@ -4192,7 +3335,6 @@ C-->  condmx = max( one/epspt3, hundrd )
       end if
 
       if (msgNP  .ge. 5) then
-
          Mjr    = mod( majIts, 10000 )
          Mnr    = mod( minIts, 10000 )
          neval  = mod( nfun  , 10000 )
@@ -4223,17 +3365,17 @@ C-->  condmx = max( one/epspt3, hundrd )
 
             if (nlnCon) then
                write(iPrint, 2100) Mjr, Mnr, alfa, neval, objalf,
-     $                              cvnorm, gznorm, ndf, 
-     $                              n-nfree, linact,nlnact,scale*rhonrm,
-     $                              gfnorm, condH, condHz, condT,
-     $                              convrg, KTcond(1), KTcond(2), 
-     $                              MjrMsg
+     $                             gznorm, cvnorm, ndf, 
+     $                             n-nfree, linact,nlnact,PenScl*PenNrm,
+     $                             condHz, condT,
+     $                             convrg, KTcond(1), KTcond(2), 
+     $                             MjrMsg
             else
                write(iPrint, 3100) Mjr, Mnr, alfa, neval, objalf,
-     $                              gznorm, ndf, n-nfree, linact, 
-     $                              gfnorm, condH, condHz, condT,
-     $                              convrg, KTcond(1), KTcond(2), 
-     $                              MjrMsg
+     $                             gznorm, ndf, n-nfree, linact, 
+     $                             condHz, condT,
+     $                             convrg, KTcond(1), KTcond(2), 
+     $                             MjrMsg
             end if
             lines1 = lines1 + 1
          end if
@@ -4257,12 +3399,12 @@ C-->  condmx = max( one/epspt3, hundrd )
 
             if (nlnCon) then
                write(iSumm , 4100) Mjr, Mnr, alfa, neval, objalf,
-     $                              cvnorm, gznorm, ndf, scale*rhonrm,
-     $                              convrg, KTcond(1), KTcond(2), MjrMsg
+     $                             gznorm, cvnorm, ndf, PenScl*PenNrm,
+     $                             convrg, KTcond(1), KTcond(2), MjrMsg
             else
                write(iSumm , 5100) Mjr, Mnr, alfa, neval, objalf,
-     $                              gznorm, ndf, 
-     $                              convrg, KTcond(1), KTcond(2), MjrMsg
+     $                             gznorm, ndf, 
+     $                             convrg, KTcond(1), KTcond(2), MjrMsg
             end if
             lines2 = lines2 + 1
          end if
@@ -4276,7 +3418,7 @@ C-->  condmx = max( one/epspt3, hundrd )
             end if
 
 *           ------------------------------------------------------------
-*           Print the constraint values.
+*           Print the constraint functions.
 *           ------------------------------------------------------------
             write(iPrint, 9300)
             write(iPrint, 9400) (x(j), istate(j), j=1,n)
@@ -4310,23 +3452,20 @@ C-->  condmx = max( one/epspt3, hundrd )
 
  1000 format(/// ' Major iteration', i5
      $       /   ' ====================' )
- 2000 format(//  '  Maj  Mnr    Step  Fun  Merit function',
-     $           '  Violtn Norm gZ   nZ  Bnd  Lin  Nln', 
-     $           ' Penalty Norm Gf  Cond H Cond Hz',
-     $           '  Cond T Conv' )
- 2100 format(    2i5, 1p, e8.1, i5, e16.8, 2e8.1, 4i5, 2e8.1, 3e8.0,
+ 2000 format(//  ' Majr Minr    Step  Fun  Merit function',
+     $           ' Norm gZ  Violtn   nZ  Bnd  Lin  Nln', 
+     $           ' Penalty CondHz Cond T Conv' )
+ 2100 format(    2i5, 1p, e8.1, i5, e16.8, 2e8.1, 4i5, e8.1, 2e7.0,
      $           1x, l1, 1x, 2l1, a5 )
- 3000 format(//  '  Maj  Mnr    Step  Fun       Objective',
-     $                       ' Norm gZ   nZ  Bnd  Lin',
-     $                       ' Norm Gf  Cond H Cond Hz', 
-     $           '  Cond T Conv' )
- 3100 format(    2i5, 1p, e8.1, i5, e16.8,  e8.1, 3i5,  e8.1, 3e8.0,
+ 3000 format(//  ' Majr Minr    Step  Fun       Objective',
+     $           ' Norm gZ   nZ  Bnd  Lin CondHz Cond T Conv' )
+ 3100 format(    2i5, 1p, e8.1, i5, e16.8,  e8.1, 3i5,  2e7.0,
      $           1x, l1, 1x, 2l1, a5 )
- 4000 format(//  '  Maj  Mnr    Step  Fun  Merit function',
-     $           '  Violtn Norm gZ   nZ Penalty Conv' )
+ 4000 format(//  ' Majr Minr    Step  Fun  Merit function',
+     $           ' Norm gZ  Violtn   nZ Penalty Conv' )
  4100 format(    2i5, 1p, e8.1, i5, e16.8, 2e8.1, i5, e8.1, 
      $           1x, l1, 1x, 2l1, a5 )
- 5000 format(//  '  Maj  Mnr    Step  Fun       Objective',
+ 5000 format(//  ' Majr Minr    Step  Fun       Objective',
      $           ' Norm gZ   nZ Conv' )
  5100 format(    2i5, 1p, e8.1, i5, e16.8,  e8.1, i5, 
      $           1x, l1, 1x, 2l1, a5 )
@@ -4379,12 +3518,7 @@ C-->  condmx = max( one/epspt3, hundrd )
 *     ==================================================================
       common    /sol6cm/ Rcndbd, Rfrobn, dRmax, dRmin
 
-      logical            npdbg
-      parameter         (ldbg   = 5)
-      common    /npdebg/ inpdbg(ldbg), npdbg
-
-      intrinsic          max   , min   , log   , real  , sqrt
-      external           dnorm , idrank
+      external           f06bmf, idrank
       parameter        ( zero   =0.0d+0, half =0.5d+0, one    =1.0d+0 )
 
 *     ==================================================================
@@ -4449,14 +3583,12 @@ C-->  condmx = max( one/epspt3, hundrd )
 
 *     Recompute the Frobenius norm of R.
 
-      scle  = sqrt(real(n - nZ))*drgm
+      scle  = sqrt(dble(n - nZ))*drgm
       sumsq = one
       do 140, j = 1, nZ
-         call dssq  ( j, R(1,j), 1, scle, sumsq )
+         call f06fjf( j, R(1,j), 1, scle, sumsq )
   140 continue
-      Rfrobn = dnorm( scle, sumsq )
-
-      return
+      Rfrobn = f06bmf( scle, sumsq )
 
 *     end of nprset
       end
@@ -4466,14 +3598,14 @@ C-->  condmx = max( one/epspt3, hundrd )
       subroutine npsavr( unitQ, n, nclin, ncnln, ldR, ldQ,
      $                   nfree, nsave, iter, istate, kx,
      $                   hforwd, hcntrl,
-     $                   cmul, R, rho, x, Q )
+     $                   cmul, R, Pen, x, Q )
 
       implicit           double precision (a-h,o-z)
       logical            unitQ
       integer            istate(n+nclin+ncnln), kx(n)
       double precision   R(ldR,*), x(n), Q(ldQ,*)
       double precision   hforwd(*), hcntrl(*)
-      double precision   cmul(*), rho(*)
+      double precision   cmul(*), Pen(*)
 
 *     ==================================================================
 *     npsavr  saves the details of this run on unit nsave.
@@ -4481,10 +3613,11 @@ C-->  condmx = max( one/epspt3, hundrd )
 *     Original version   24-Nov-89.
 *     This version of  npsavr  dated  1-Dec-89.
 *     ==================================================================
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
+      common    /sol1cm/ iPrint, iSumm , lines1, lines2
+      save      /sol1cm/ 
       common    /sol4np/ lvldif, ncdiff, nfdiff, lfdset
       logical            incrun
-      common    /sol6np/ rhomax, rhonrm, rhodmp, scale, incrun
+      common    /sol6np/ PenMax, PenNrm, PenDmp, PenScl, incrun
 
       if (nsave .le. 0) return
 
@@ -4508,11 +3641,11 @@ C-->  condmx = max( one/epspt3, hundrd )
       if (ncnln .gt. 0) then
          k = 1
          do 130, j = n+nclin+1, n+nclin+ncnln
-            write(nsave, 1030) j, istate(j), cmul(k), rho(k)
+            write(nsave, 1030) j, istate(j), cmul(k), Pen(k)
             k = k + 1
   130    continue
 
-         write(nsave, 1040) rhomax, rhonrm, rhodmp, scale, incrun
+         write(nsave, 1040) PenMax, PenNrm, PenDmp, PenScl, incrun
       end if
 
 *     ------------------------------------------------------------------
@@ -4587,14 +3720,6 @@ C-->  condmx = max( one/epspt3, hundrd )
 *     Level 2 BLAS added 12-June-1986.
 *     This version of npsetx dated 11-June-1986.
 *     ==================================================================
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
-
-      logical            npdbg
-      parameter         (ldbg = 5)
-      common    /npdebg/ inpdbg(ldbg), npdbg
-
-      external           ddot, dnrm2
-      intrinsic          abs , min
       parameter        ( zero = 0.0d+0, one = 1.0d+0 )
 
       nfixed = n - nfree
@@ -4672,378 +3797,33 @@ C-->  condmx = max( one/epspt3, hundrd )
       if (ncqp .gt. 0)
      $   call dgemv ( 'N', ncqp, n, one, Aqp, ldAqp, dx, 1, zero,Adx,1)
 
-      if (npdbg  .and.  inpdbg(2) .gt. 0)
-     $   write(iPrint, 1200) (dx(j), j = 1, n)
-
-      return
-
- 1200 format(/ ' //npsetx// Variables after npsetx ... '/ (5g12.3))
-
 *     end of npsetx
-      end
-
-*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-      subroutine npsrch( needfd, inform, n, ncnln,
-     $                   ldcJ, ldcJu, nfun, ngrad,
-     $                   needc, funcon, funobj,
-     $                   alfa, alfbnd, alfmax, alfsml, dxnorm,
-     $                   epsrf, eta, gdx, grdalf, glf1, glf,
-     $                   objf, objalf, qpcurv, xnorm,
-     $                   c, c2, cJac, cJacu, cJdx, cJdx2,
-     $                   cmul1, cmul, cs1, cs, dx, dlam, dslk,
-     $                   grad, gradu, qpmul, rho, slk1, slk, x1, x,
-     $                   work, w, lenw )
-
-      implicit           double precision (a-h,o-z)
-      logical            needfd
-      integer            needc(*)
-      double precision   dx(n), grad(n), gradu(n), x1(n), x(n)
-      double precision   c(*), c2(*), cJac(ldcJ,*), cJacu(ldcJu,*),
-     $                   cJdx(*), cJdx2(*), cmul1(*), cmul(*)
-      double precision   cs1(*), cs(*), dlam(*), dslk(*), qpmul(*),
-     $                   rho(*), slk1(*), slk(*),  work(*)
-      double precision   w(lenw)
-      external           funobj, funcon
-
-*     ==================================================================
-*     npsrch finds the steplength alfa that gives sufficient decrease in
-*     the augmented Lagrangian merit function.
-*
-*     On exit, if inform = 1, 2 or 3,  alfa will be a nonzero steplength
-*     with an associated merit function value  objalf  which is lower
-*     than that at the base point. If  inform = 4, 5, 6, 7 or 8,  alfa
-*     is zero and  objalf will be the merit value at the base point.
-*
-*     Original version written  27-May-1985.
-*     Level 2 BLAS added 12-June-1986.
-*     This version of npsrch dated  14-Sep-92.
-*     ==================================================================
-      double precision   wmach
-      common    /solmch/ wmach(15)
-      save      /solmch/
-
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
-      common    /sol4cm/ epspt3, epspt5, epspt8, epspt9
-      common    /sol4np/ lvldif, ncdiff, nfdiff, lfdset
-      logical            incrun
-      common    /sol6np/ rhomax, rhonrm, rhodmp, scale, incrun
-
-      logical            npdbg
-      parameter        ( ldbg = 5 )
-      common    /npdebg/ inpdbg(ldbg), npdbg
-
-      logical            debug , done  , first , imprvd
-      external           ddot
-      intrinsic          abs   , max   , min   , sqrt
-      parameter        ( zero   =0.0d+0, half   =0.5d+0, one   =1.0d+0 )
-      parameter        ( two    =2.0d+0                                )
-      parameter        ( tolg   =1.0d-1                                )
-      parameter        ( rmu    =1.0d-4                                )
-
-      epsmch = wmach(3)
-
-      if (.not. needfd  .and.  ncnln .gt. 0)
-     $   cs1jdx = ddot( ncnln, cs1, 1, cJdx, 1 )
-
-*     ------------------------------------------------------------------
-*     Set the input parameters and tolerances for srchc and srchq.
-*
-*     tolrx   is the tolerance on relative changes in dx resulting from
-*             changes in alfa.
-*
-*     tolax   is the tolerance on absolute changes in dx resulting from
-*             changes in alfa.
-*
-*     tolabs  is the tolerance on absolute changes in alfa.
-*
-*     tolrel  is the tolerance on relative changes in alfa.
-*
-*     toltny  is the magnitude of the smallest allowable value of alfa.
-*             if  M(tolabs) - M(0) .gt. epsaf,  the linesearch tries
-*             steps in the range  toltny .le. alfa .le. tolabs.
-*     ------------------------------------------------------------------
-      nstate = 0
-      debug  = npdbg  .and.  inpdbg(4) .gt. 0
-
-      if (needfd) then
-         maxf = 15
-      else
-         maxf = 10
-      end if
-
-      epsaf  = epsrf*(one + abs( objalf ))
-      tolax  = epspt8
-      tolrx  = epspt8
-
-      if (tolrx*xnorm + tolax .lt. dxnorm*alfmax) then
-         tolabs = (tolrx*xnorm + tolax) /  dxnorm
-      else
-         tolabs = alfmax
-      end if
-      tolrel = max( tolrx , epsmch )
-
-      t      = zero
-      do 10, j = 1, n
-         s = abs( dx(j) )
-         q = abs( x(j) )*tolrx + tolax
-         if (s .gt. t*q) t = s / q
-   10 continue
-
-      if (t*tolabs .gt. one) then
-         toltny = one / t
-      else
-         toltny = tolabs
-      end if
-
-      oldf   = objalf
-      oldg   = grdalf
-      alfbst = zero
-      fbest  = zero
-      gbest  = (one - rmu)*oldg
-      targtg = (rmu - eta)*oldg
-      g0     = gbest
-
-      if (ncnln .gt. 0) call iload ( ncnln, (1), needc, 1 )
-
-      if (needfd) then
-         mode = 0
-      else
-         mode = 2
-      end if
-
-      first  = .true.
-
-*     ------------------------------------------------------------------
-*     Commence main loop, entering srchc or srchq two or more times.
-*     first = true for the first entry,  false for subsequent entries.
-*     done  = true indicates termination, in which case the value of
-*     inform gives the result of the search.
-*     inform = 1 if the search is successful and alfa < alfmax.
-*            = 2 if the search is successful and alfa = alfmax.
-*            = 3 if a better point was found but too many functions
-*                were needed (not sufficient decrease).
-*            = 4 if alfmax < tolabs (too small to do a search).
-*            = 5 if alfa < alfsml (srchq only -- maybe want to switch
-*                to central differences to get a better direction).
-*            = 6 if the search found that there is no useful step.
-*                The interval of uncertainty is less than 2*tolabs.
-*                The minimizer is very close to alfa = zero
-*                or the gradients are not sufficiently accurate.
-*            = 7 if there were too many function calls.
-*            = 8 if the input parameters were bad
-*                (alfmax le toltny  or  oldg ge 0).
-*     ------------------------------------------------------------------
-*+    repeat
-  100    if (needfd) then
-            call srchq ( first , debug , done  , imprvd, inform,
-     $                   maxf  , numf  , iPrint, 
-     $                   alfmax, alfsml, epsaf , 
-     $                   g0    , targtg, ftry  ,         
-     $                   tolabs, tolrel, toltny,
-     $                   alfa  , alfbst, fbest  )
-         else
-            call srchc ( first , debug , done  , imprvd, inform,
-     $                   maxf  , numf  , iPrint,
-     $                   alfmax,         epsaf , 
-     $                   g0    , targtg, ftry  , gtry  , 
-     $                   tolabs, tolrel, toltny,
-     $                   alfa  , alfbst, fbest , gbest )
-         end if
-
-         if (imprvd) then
-            objf   = tobj
-            objalf = tobjM
-
-            if (ncnln .gt. 0)
-     $         call dcopy ( ncnln, c2, 1, c, 1 )
-
-            if (.not. needfd) then
-               call dcopy ( n, gradu, 1, grad, 1 )
-               gdx    = tgdx
-               glf    = tglf
-
-               if (ncnln .gt. 0) then
-                  call dcopy ( ncnln, cJdx2, 1, cJdx, 1 )
-                  call f06qff( 'General', ncnln, n, cJacu, ldcJu,
-     $                         cJac, ldcJ )
-               end if
-            end if
-         end if
-
-*        ---------------------------------------------------------------
-*        If done = false,  the problem functions must be computed for
-*        the next entry to srchc or srchq.
-*        If done = true,   this is the last time through.
-*        ---------------------------------------------------------------
-         if (.not. done) then
-            call dcopy ( n,       x1, 1, x, 1 )
-            call daxpy ( n, alfa, dx, 1, x, 1 )
-
-            if (ncnln .gt. 0) then
-
-*              Compute the new estimates of the multipliers and slacks.
-*              If the step length is greater than one,  the multipliers
-*              are fixed as the QP-multipliers.
-
-               if (alfa .le. one) then
-                  call dcopy ( ncnln,       cmul1, 1, cmul, 1 )
-                  call daxpy ( ncnln, alfa, dlam , 1, cmul, 1 )
-               end if
-               call dcopy ( ncnln,       slk1, 1, slk, 1 )
-               call daxpy ( ncnln, alfa, dslk, 1, slk, 1 )
-
-*              ---------------------------------------------------------
-*              Compute the new constraint vector and Jacobian.
-*              ---------------------------------------------------------
-               call funcon( mode, ncnln, n, ldcJu,
-     $                      needc, x, c2, cJacu, nstate )
-               if (mode .lt. 0) go to 999
-
-               call dcopy ( ncnln,         c2 , 1, cs, 1 )
-               call daxpy ( ncnln, (-one), slk, 1, cs, 1 )
-
-               call dcopy ( ncnln, cs , 1,  work, 1 )
-               call ddscl ( ncnln, rho, 1,  work, 1 )
-
-               fterm  =            ddot( ncnln, cmul, 1, cs, 1 ) -
-     $                  half*scale*ddot( ncnln, work, 1, cs, 1 )
-            end if
-
-*           ------------------------------------------------------------
-*           Compute the value and gradient of the objective function.
-*           ------------------------------------------------------------
-            call funobj( mode, n, x, tobj, gradu, nstate )
-            if (mode .lt. 0) go to 999
-
-            if (ncnln .gt. 0) then
-               tobjM = tobj  - fterm
-            else
-               tobjM = tobj
-            end if
-
-            ftry  = tobjM - oldf - rmu*oldg*alfa 
-
-*           ------------------------------------------------------------
-*           Compute auxiliary gradient information.
-*           ------------------------------------------------------------
-            if (.not. needfd) then
-               gtry   = ddot( n, gradu, 1, dx, 1 )
-               tgdx   = gtry
-               tglf   = gtry
-               if (ncnln .gt. 0) then
-
-*                 Compute the Jacobian times the search direction.
-
-                  call dgemv ( 'n', ncnln, n, one, cJacu, ldcJu, dx, 1,
-     $                         zero, cJdx2, 1 )
-
-                  call dcopy ( ncnln,         cJdx2, 1, work, 1 )
-                  call daxpy ( ncnln, (-one), dslk , 1, work, 1 )
-
-                  gtry   = gtry - ddot( ncnln, cmul, 1, work, 1 )
-                  if (alfa .le. one)
-     $               gtry   = gtry - ddot( ncnln, dlam, 1, cs      , 1 )
-
-                  call ddscl ( ncnln, rho , 1, work, 1 )
-                  gtry = gtry  +
-     $                     scale*ddot( ncnln, work, 1, cs   , 1 )
-
-                  tglf = tgdx  - ddot( ncnln, cJdx2, 1, qpmul, 1 )
-
-*                 ------------------------------------------------------
-*                 If alfbnd .le. alfa .lt. alfmax and the norm of the
-*                 quasi-Newton update is bounded, set alfmax to be alfa.
-*                 This will cause the linesearch to stop if the merit
-*                 function is decreasing at the boundary.
-*                 ------------------------------------------------------
-                  if (alfbnd .le. alfa  .and.  alfa .lt. alfmax) then
-                     csjdx  = ddot   ( ncnln, cs, 1, cJdx2, 1 )
-                     curvlf = tglf  - glf1
-                     curvc  = abs( csjdx - cs1jdx )
-                     rhobfs = max( qpcurv*tolg - curvlf, zero )
-                     if (rhobfs .le. curvc*rhomax) then
-                        alfmax = alfa
-                     else
-                        alfbnd = min( two*alfa, alfmax )
-                     end if
-
-                     if (npdbg  .and.  inpdbg(1) .gt. 0) then
-                        write(iPrint, 1400) csjdx , cs1jdx, curvlf
-                        write(iPrint, 1300) alfbnd, alfa  , alfmax
-                     end if
-                  end if
-               end if
-
-               gtry = gtry  - rmu*oldg
-
-            end if
-         end if
-*+    until (      done)
-      if    (.not. done) go to 100
-
-      nfun = nfun + numf
-      if (.not. needfd) ngrad = ngrad + numf
-      alfa = alfbst
-
-      if (.not. imprvd) then
-         call dcopy ( n,       x1, 1, x, 1 )
-         call daxpy ( n, alfa, dx, 1, x, 1 )
-         if (ncnln .gt. 0) then
-            if (alfa .le. one) then
-               call dcopy ( ncnln,       cmul1, 1, cmul, 1 )
-               call daxpy ( ncnln, alfa, dlam , 1, cmul, 1 )
-            end if
-            call dcopy ( ncnln,         slk1 , 1, slk, 1 )
-            call daxpy ( ncnln,   alfa, dslk , 1, slk, 1 )
-            call dcopy ( ncnln,         c    , 1, cs , 1 )
-            call daxpy ( ncnln, (-one), slk  , 1, cs , 1 )
-         end if
-      end if
-
-      if (npdbg  .and.  inpdbg(1) .gt. 0)
-     $   write(iPrint, 1200) inform
-
-      return
-
-*     The user wants to stop.  Who am I to object?
-
-  999 inform = mode
-      return
-
- 1200 format(/ ' //npsrch// inform  = ', i4 )
- 1300 format(/ ' //npsrch//        alfbnd          alfa        alfmax'
-     $       / ' //npsrch//', 1p, 3e14.2 )
- 1400 format(/ ' //npsrch//         csjdx        cs1jdx        curvlf'
-     $       / ' //npsrch//', 1p, 3e14.2 )
-
-*     end of npsrch
       end
 
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
       subroutine npupdt( MjrMsg, unitQ,
      $                   n, ncnln, nfree, nZ,
-     $                   ldcJ1, ldcJ2, ldQ, ldR, kx,
-     $                   alfa, glf1, glf2, qpcurv,
+     $                   ldJ1, ldJ2, ldQ, ldR, kx,
+     $                   alfa, gL1, gL2, qpcurv,
      $                   cJac1, cJac2, cJdx1, cJdx2,
-     $                   cs1, cs2, gq1, gq2, Hpq, Rpq,
-     $                   qpmul, R, omega, Q, wrk1, wrk2 )
+     $                   viol1, viol2, gq1, gq2, Hpq, Rpq,
+     $                   qpmul, R, penU, Q, w, y )
 
       implicit           double precision (a-h,o-z)
       character*5        MjrMsg
       logical            unitQ
       integer            kx(n)
-      double precision   cJac1(ldcJ1,*), cJac2(ldcJ2,*),
-     $                   cJdx1(*), cJdx2(*), cs1(*), cs2(*),
+      double precision   cJac1(ldJ1,*), cJac2(ldJ2,*),
+     $                   cJdx1(*), cJdx2(*), viol1(*), viol2(*),
      $                   gq1(n), gq2(n), Hpq(n), Rpq(n), qpmul(*),
-     $                   R(ldR,*), omega(*), Q(ldQ,*)
-      double precision   wrk1(n+ncnln), wrk2(n)
+     $                   R(ldR,*), penU(*), Q(ldQ,*)
+      double precision   w(n+ncnln), y(n)
 
 *     ==================================================================
 *     npupdt  computes the BFGS update for the approximate Hessian of
 *     the Lagrangian.  If the approximate curvature of the Lagrangian
-*     function is negative,  a nonnegative penalty vector OMEGA(i) of
+*     function is negative,  a nonnegative penalty vector penU(i) of
 *     minimum two norm is computed such that the approximate curvature
 *     of the augmented Lagrangian will be positive. If no finite penalty
 *     vector exists,  the BFGS update is performed with the approximate
@@ -5053,168 +3833,155 @@ C-->  condmx = max( one/epspt3, hundrd )
 *     at x1 and x2,  Hpq contains  R'R(pq), the transformed Hessian
 *     times the transformed search direction.  The vectors gq1 and Hpq
 *     are not saved.  If the regular BFGS quasi-Newton update could not
-*     be performed, the first character of MjrMsg is loaded with 'M'.
+*     be performed, the first character of MjrMsg is loaded with 'm'.
+*
+*     Apr-92: Update always done. Negative curvL set to tinycL.
+*     Jul-94: Update skipping restored. Seems more stable.
 *
 *     Systems Optimization Laboratory, Stanford University.
 *     Original Fortran 66 version written April 1984.
 *     Level 2 BLAS added 12-June-1986.
-*     Level 2 matrix routines added 22-Apr-1988.
-*     This version of npuptd dated  22-Apr-1988.
+*     Level 2 matrix routines added 22-Apr-94.
+*     This version of npuptd dated  08-Jul-94.
 *     ==================================================================
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
       common    /sol6cm/ Rcndbd, Rfrobn, dRmax, dRmin
-
       logical            incrun
-      common    /sol6np/ rhomax, rhonrm, rhodmp, scale, incrun
+      common    /sol6np/ PenMax, PenNrm, PenDmp, PenScl, incrun
 
-      logical            npdbg
-      parameter        ( ldbg   = 5 )
-      common    /npdebg/ inpdbg(ldbg), npdbg
-
-      logical            overfl, ssbfgs
-      intrinsic          max   , min   , sqrt
-      external           idamax, ddiv  , dnrm2
-      parameter        ( zero   = 0.0d+0, one    = 1.0d+0 )
-      parameter        ( tolg   = 1.0d-1                  )
-
-      if (ncnln .gt. 0) call dload ( ncnln, zero, omega, 1 )
+      logical            gotPen, overfl, ssbfgs
+      parameter         (zero = 0.0d+0, one = 1.0d+0)
+      parameter         (tolg = 1.0d-1              )
 
 *     ------------------------------------------------------------------
-*     Set curvl = (g2 - g1)'dx,  the approximate curvature along dx of
-*     the (augmented) Lagrangian.  At first, the curvature is not scaled
+*     Set curvL = (gL2 - gL1)'dx,  the approximate curvature of the
+*     Lagrangian along dx.  At first, the curvature is not scaled
 *     by the steplength alfa.
 *     ------------------------------------------------------------------
-      curvl  = glf2 -   glf1
-      tinycl =        qpcurv * tolg
-      ssbfgs = curvl .le. alfa*tinycl
-      if (npdbg  .and.  inpdbg(1) .gt. 0)
-     $   write(iPrint, 1000) ssbfgs, tinycl, curvl
-
+      curvL  = gL2 - gL1
+      tinycL =          qpcurv*tolg
+      ssbfgs = curvL .le. alfa*tinycL
+      gotPen = .false.
 *     ------------------------------------------------------------------
-*     Test if curvl is sufficiently positive.  If there are no nonlinear
+*     Test if curvL is sufficiently positive.  If there are no nonlinear
 *     constraints,  no update can be performed.
 *     ------------------------------------------------------------------
-      if (curvl  .lt. tinycl) then
+      if (curvL  .lt. tinycL) then
          MjrMsg(1:1) = 'modified BFGS'
+
          if (ncnln .gt. 0) then
+            call dload ( ncnln, zero, penU, 1 )
             qmax = zero
-            do 200 i = 1, ncnln
-               qi    = cJdx2(i)*cs2(i) - cJdx1(i)*cs1(i)
-               qmax  = max( qmax, qi )
+            do 200, i = 1, ncnln
+               qi     = cJdx2(i)*viol2(i) - cJdx1(i)*viol1(i)
+               qmax   = max( qmax, qi )
                if (qi .le. zero) then
-                  wrk1(i) = zero
+                  w(i) = zero
                else
-                  wrk1(i) = qi
+                  w(i) = qi
                end if
   200       continue
 
-            qnorm = dnrm2 ( ncnln, wrk1, 1 )
+            qnorm = dnrm2 ( ncnln, w, 1 )
 
-            test  = max( tinycl - curvl, zero )
+            test  = max( tinycL - curvL, zero )
             beta  = ddiv  ( qmax*test, qnorm*qnorm, overfl )
-            if (beta .lt. rhomax  .and.  .not. overfl) then
+            if (beta .lt. PenMax  .and.  .not. overfl) then
+               gotPen = .true.
+*              -------------------------------------
+*              A modified update has been found.
+*              Compute the penalty parameters penU.
+*              -------------------------------------
                MjrMsg(1:1) = ' '
                beta  = test/(qnorm*qnorm)
-               do 210 i = 1, ncnln
-                  qi       = wrk1(i)
-                  omega(i) =            beta*qi
-                  curvl    = curvl    + beta*qi*qi
+               do 210,  i = 1, ncnln
+                  qi      = w(i)
+                  penU(i) =            beta*qi
+                  curvL   = curvL    + beta*qi*qi
   210          continue
-
-               if (npdbg) then
-                  imax = idamax( ncnln, omega, 1 )
-                  if (inpdbg(1) .gt. 0)
-     $               write(iPrint, 1250) omega(imax)
-
-                  if (inpdbg(2) .gt. 0)
-     $               write(iPrint, 1300) (omega(i), i=1,ncnln)
-               end if
+               if (curvL .lt. tinycL) curvL  = tinycL
             end if
          end if
       end if
 
-*     ------------------------------------------------------------------
-*     Compute the difference in the augmented Lagrangian gradient.
-*     ------------------------------------------------------------------
-*     Update gq1 to include the augmented Lagrangian terms.
+      if (curvL .ge. tinycL) then
 
-      if (ncnln .gt. 0) then
+*        ---------------------------------------------------------------
+*        Compute the difference in the Lagrangian gradient.
+*        ---------------------------------------------------------------
+*        Update gq1 to include the (augmented) Lagrangian terms.
 
-         do 310 i = 1, ncnln
-            wrk1(i) = - qpmul(i) + omega(i) * cs1(i)
-  310    continue
-         call dgemv ( 'T', ncnln, n, one, cJac1, ldcJ1, wrk1, 1,
-     $                zero, wrk2, 1 )
+         if (ncnln .gt. 0) then
+            if (gotPen) then
+               call dcopy ( ncnln, viol1, 1, w, 1 )
+               call ddscl ( ncnln, penU , 1, w, 1 )
+               call daxpy ( ncnln, (-one), qpmul, 1, w, 1 )
+            else
+               call dcopy ( ncnln, qpmul, 1, w, 1 )
+               call dscal ( ncnln, (-one),   w, 1 )
+            end if
+            call dgemv ( 'T', ncnln, n, one, cJac1, ldJ1, w, 1,
+     $                   zero, y, 1 )
+         
+            if (gotPen) then
+               call dcopy ( ncnln, viol2, 1, w, 1 )
+               call ddscl ( ncnln, penU , 1, w, 1 )
+               call daxpy ( ncnln, (-one), qpmul, 1, w, 1 )
+               call dscal ( ncnln, (-one),   w, 1 )
+            else
+               call dcopy ( ncnln, qpmul, 1, w, 1 )
+            end if
+            call dgemv ( 'T', ncnln, n, one, cJac2, ldJ2, w, 1,
+     $                   one, y, 1 )
 
-         do 320 i = 1, ncnln
-            wrk1(i) =   qpmul(i) - omega(i) * cs2(i)
-  320    continue
-         call dgemv ( 'T', ncnln, n, one, cJac2, ldcJ2, wrk1, 1,
-     $                one, wrk2, 1 )
+            call cmqmul( 6, n, nZ, nfree, ldQ, unitQ, kx, y, Q, w )
+            call daxpy ( n, one, y, 1, gq1, 1 )
+         end if
 
-         call cmqmul( 6, n, nZ, nfree, ldQ, unitQ, kx, wrk2, Q, wrk1 )
-         call daxpy ( n, one, wrk2, 1, gq1, 1 )
-      end if
+         call dcopy ( n,         gq2, 1, y, 1 )
+         call daxpy ( n, (-one), gq1, 1, y, 1 )
+         rtgtp  = sqrt(qpcurv)
+         rtyts  = sqrt(alfa*curvL)
 
-      if (npdbg  .and.  inpdbg(1) .gt. 0)
-     $   write(iPrint, 1100) alfa  , curvl
+         if (ssbfgs) then
+            eta = rtyts / (rtgtp*alfa)
+         else
+            eta = one
+         end if 
 
-      if (curvl .lt. tinycl) curvl  = tinycl
+         trace1 = dnrm2 ( n, Hpq, 1 ) /  rtgtp
+         trace2 = dnrm2 ( n, y  , 1 ) / (rtyts*eta)
+         Rfrobn = eta*sqrt( abs(  (Rfrobn - trace1)*(Rfrobn + trace1)
+     $                                    + trace2**2) )
 
-      do 330 j = 1, n
-         wrk2(j) = gq2(j) - gq1(j)
-  330 continue
+*        ===============================================================
+*        Update the Cholesky factor of  Q'HQ.
+*        ===============================================================
+*        Normalize   Rpq and Hpq.
 
-      rtgtp  = sqrt(qpcurv)
-      rtyts  = sqrt(alfa*curvl)
-      eta    = one
-      if (ssbfgs)
-     $   eta = rtyts / (rtgtp*alfa)
+         call dscal ( n, (one/rtgtp), Rpq, 1 )
+         call dscal ( n, (one/rtgtp), Hpq, 1 )
 
-      trace1 = dnrm2 ( n,  Hpq, 1 ) /  rtgtp
-      trace2 = dnrm2 ( n, wrk2, 1 ) / (rtyts*eta)
-      Rfrobn = eta*sqrt( abs(  (Rfrobn - trace1)*(Rfrobn + trace1)
-     $                                 + trace2**2) )
+*        Do the self-scaled or regular BFGS update.
+*        Form the vector w = gamma * (gq2 - gq1) - beta * R'R*pq,
+*        where  gamma = 1/sqrt( curv ) = 1/sqrt( (gq2 - gq1)'sq )
 
-*     ==================================================================
-*     Update the Cholesky factor of  Q'HQ.
-*     ==================================================================
-*     Normalize the vector  RPQ ( = R(pq) ).
+         if ( ssbfgs ) then
+            do 410, j  = 1, n
+               call dscal ( j, eta, R(1,j), 1 )
+               w(j) = y(j)/rtyts - Hpq(j)*eta
+  410       continue
+         else
+            do 420, j  = 1, n
+               w(j) = y(j)/rtyts - Hpq(j)
+  420       continue
+         end if
 
-      call dscal ( n, (one / rtgtp), Rpq, 1 )
+*        Perform the update to  R = R + Rpq*w'.
+*        Rpq is overwritten. Arrays  gq1  and  Hpq  are used to store
+*        the sines and cosines defined by the plane rotations.
 
-*     Do the self-scaled or regular BFGS update.
-*     Form the vector wrk1 = gamma * (gq2 - gq1) - beta * R'R*pq,
-*     where  gamma = 1/sqrt( curv ) = 1/sqrt( (gq2 - gq1)'sq )
-
-      call dscal ( n, (one / rtgtp), Hpq, 1 )
-
-      if (ssbfgs) then
-         do 410 j   = 1, n
-            call dscal ( j, eta, R(1,j), 1 )
-            wrk1(j) = wrk2(j)/rtyts  -  eta * Hpq(j)
-  410    continue
-      else
-         do 420 j   = 1, n
-            wrk1(j) = wrk2(j)/rtyts  -        Hpq(j)
-  420    continue
-      end if
-
-*     Perform the update to  R = R + Rpq*wrk1'.
-*     Rpq is overwritten. Arrays  gq1  and  Hpq  are used to store the
-*     sines and cosines defined by the plane rotations.
-
-      call cmr1md( n, 0, n, ldR, n, n, R, Hpq, Rpq, wrk1, gq1, Hpq )
-
-      return
-
- 1000 format(/ ' //npupdt// ssbfgs    min. curvl         curvl '
-     $       / ' //npupdt//   ', l4, 1p, 2e14.2 )
- 1100 format(/ ' //npupdt//          alfa         curvl '
-     $       / ' //npupdt//', 1p, 2e14.2 )
- 1250 format(/ ' //npupdt//   omega(imax)'
-     $       / ' //npupdt//', 1pe14.2 )
- 1300 format(/ ' //npupdt//  Penalty parameters = '  / (1p, 5e15.6))
+         call cmr1md( n, 0, n, ldR, n, n, R, Hpq, Rpq, w, gq1, Hpq )
+      end if 
 
 *     end of npupdt
       end

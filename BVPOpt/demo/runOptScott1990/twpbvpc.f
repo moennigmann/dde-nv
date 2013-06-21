@@ -1116,8 +1116,8 @@ c      write(*,*) 'succes after conv8', succes
 * Error exit---too many mesh points.
 
       iflbvp = 1
-c      write(msg,*) 'Terminated, too many mesh points'
-c      CALL rprint(msg)
+      write(msg,*) 'Terminated, too many mesh points'
+      CALL rprint(msg)
 
       if (iprint .ne. -1 .and. comp_c ) then
         if (linear .and. ill_cond) THEN

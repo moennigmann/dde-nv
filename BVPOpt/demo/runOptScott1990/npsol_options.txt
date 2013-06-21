@@ -8,5 +8,5 @@ begin
   step limit 0.2
   feasibility tolerance 1.0e-4
   linesearch tolerance 0.1
-  crash tolerance 0.001 
+  crash tolerance 0.001
 end

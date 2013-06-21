@@ -95,21 +95,14 @@ void calltides_(int *nvar1, int *npar1, double *p1, double *v1, double *xend, do
 
 
 	int sizematr;
-//	sizematr=1+nvar+(nvar+npar)*nvar+((nvar+npar)*(nvar+npar+1)*nvar)/2;
 	int ngen;
 	ngen=nvar+npar;
 	sizematr=1+nvar+ngen*nvar+(ngen*(ngen+1)*nvar)/2+(ngen*(ngen+1)*(ngen+2)*nvar)/6;
 
+
 	for( counter = 0; counter < sizematr; counter++)
 	{
-		// commented code checks if one derivative is not a number, which could
-		// occur, but couldn't be proved otherwise
-//		printf("%f\t",scott_DataMatrix[1][counter]);
-//		if(!isnan(scott_DataMatrix[1][counter]) && !isnan(-scott_DataMatrix[1][counter]))
-			outvals[counter]= scott_DataMatrix[1][counter];
-//		else
-//			outvals[counter]= 0;
-//		printf("%f\n",outvals[counter]);
+		outvals[counter]= scott_DataMatrix[1][counter];
 	}
 
 	fclose(fd); 

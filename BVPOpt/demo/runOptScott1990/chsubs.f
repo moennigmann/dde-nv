@@ -1,7 +1,9 @@
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+*
 *     File  chsubs.f
 *
 *     chcore   chfd     chfdlc   chfdls   chfgrd   chcJac   chfJac
+*
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
       subroutine chcore( debug, done, first, epsa, epsr, fx,
@@ -41,20 +43,19 @@
 *     94305, June 1983.
 *     
 *     Systems Optimization Laboratory, Stanford University.
+*     Department of Mathematics, University of California, San Diego.
 *     Based on Fortran 66 Version 2.1 of  fdcore  written June 1983.
 *     Fortran 77 Version written 25-May-1985.
-*     This version of  chcore  dated  27-Oct-92.
+*     This version of  chcore  dated  14-Sep-95.
 *     ==================================================================
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
+      common    /sol1cm/ iPrint, iSumm , lines1, lines2
+      save      /sol1cm/ 
 
       logical            ce1big, ce2big, te2big, overfl
       save               cdsave, fdsave, hsave, oldh, rho, sdsave
       save               ce1big, ce2big, te2big
-      external           ddiv
-      intrinsic          abs   , max   , min  , sqrt
 
       parameter         (bndlo  =1.0d-3, bndup  =1.0d-1                )
-
       parameter         (zero   =0.0d+0, sixth  =1.6d-1, fourth =2.5d-1)
       parameter         (half   =5.0d-1, two    =2.0d+0, three  =3.0d+0)
       parameter         (four   =4.0d+0, ten    =1.0d+1                )
@@ -298,8 +299,7 @@
      $                   bigbnd, epsrf, fdnorm, objf,
      $                   funobj, funcon, needc,
      $                   bl, bu, c, c1, c2, cJac, cJacu,
-     $                   grad, gradu, hforwd, hcntrl,
-     $                   x, y, w, lenw )
+     $                   grad, gradu, hforwd, hcntrl, x, y )
 
       implicit           double precision(a-h,o-z)
       integer            needc(*)
@@ -308,7 +308,7 @@
      $                   cJac(ldcJ,*), cJacu(ldcJu,*)
       double precision   grad(n), gradu(n)
       double precision   hforwd(*), hcntrl(*)
-      double precision   x(n), y(n), w(lenw)
+      double precision   x(n), y(n)
       external           funobj, funcon
 
 *     ==================================================================
@@ -331,35 +331,28 @@
 *        corresponding to constant derivatives, which are given the same
 *        values as cJac or grad.
 *
-*     The work array  w  is not used at present.
-*
 *     Systems Optimization Laboratory, Department of Operations Research
-*     Stanford University, Stanford, California 94305
+*     Department of Mathematics, University of California, San Diego.
 *     Original version written 28-July-1985.
-*     This version of  chfd  dated  13-Sep-92.
+*     This version of  chfd  dated  14-Sep-95.
 *     ==================================================================
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
+      common    /sol1cm/ iPrint, iSumm , lines1, lines2
+      save      /sol1cm/ 
       common    /sol4cm/ epspt3, epspt5, epspt8, epspt9
-
       common    /sol4np/ lvldif, ncdiff, nfdiff, lfdset
 
-      logical            npdbg
-      parameter         (ldbg = 5)
-      common    /npdebg/ inpdbg(ldbg), npdbg
-
       logical            debug , done  , first , prtHdr, needed
-      intrinsic          abs   , max   , min   , sqrt
-      parameter         (rdummy =-11111.0d+0              )
-      parameter         (factor =0.97d+0               )
-      parameter         (zero   =0.0d+0, half   =0.5d+0, one   =1.0d+0)
-      parameter         (two    =2.0d+0, four   =4.0d+0, ten   =1.0d+1)
+      parameter         (rdummy =-11111.0d+0)
+      parameter         (factor = 0.97d+0   )
+      parameter         (zero   = 0.0d+0, half   =0.5d+0, one   =1.0d+0)
+      parameter         (two    = 2.0d+0, four   =4.0d+0, ten   =1.0d+1)
 
       inform = 0
       needed = lvlder .eq. 0  .or.  lvlder .eq. 2
      $                        .or.  lvlder .eq. 1  .and.  ncnln .gt. 0
       if (.not. needed) return
 
-      debug  = npdbg  .and.  inpdbg(5) .gt. 0
+      debug  = .false. 
       if (lfdset .eq. 0) then
          if (msglvl .gt. 0) then
             if (iPrint .gt. 0) write(iPrint, 1000)
@@ -388,7 +381,7 @@
          bigupp =   bigbnd
 
          if (ncnln  .gt. 0)
-     $      call iload ( ncnln, (0), needc, 1 )
+     $      call iload ( ncnln, 0, needc, 1 )
 
          do 600, j = 1, n
             xj     = x(j)
@@ -635,11 +628,13 @@
      $            write(iPrint, 1400) nfcnst
             end if
 
-            if (ncdiff .eq. 0  .and.  lvlder .lt. 2) then
-               if (lvlder .eq. 0) lvlder = 2
-               if (lvlder .eq. 1) lvlder = 3
-               if (msglvl .gt. 0) then
-                  if (iPrint .gt. 0) write(iPrint, 1500) lvlder
+            if (ncnln .gt. 0) then
+               if (ncdiff .eq. 0  .and.  lvlder .lt. 2) then
+                  if (lvlder .eq. 0) lvlder = 2
+                  if (lvlder .eq. 1) lvlder = 3
+                  if (msglvl .gt. 0) then
+                     if (iPrint .gt. 0) write(iPrint, 1500) lvlder
+                  end if
                end if
             end if
 
@@ -660,6 +655,8 @@
             if (hforwd(j) .le. zero) then
                if (iPrint .gt. 0) 
      $            write(iPrint, 2000) j, hforwd(j), epspt5
+               if (iSumm  .gt. 0) 
+     $            write(iSumm , 2000) j, hforwd(j), epspt5
                hforwd(j) = epspt5
             end if
   900    continue
@@ -667,6 +664,8 @@
             if (hcntrl(j) .le. zero) then
                if (iPrint .gt. 0) 
      $            write(iPrint, 2100) j, hcntrl(j), epspt3
+               if (iSumm  .gt. 0) 
+     $            write(iSumm , 2100) j, hcntrl(j), epspt3
                hcntrl(j) = epspt3
             end if
   910    continue
@@ -693,7 +692,7 @@
  2100 format(' XXX  ', i4,'-th central-difference interval ',
      $          1p, e10.2, ' replaced by ', e10.2 )
 
-*     end of  chfd
+*     end of chfd
       end
 
 *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -701,14 +700,13 @@
       subroutine chfdlc( inform, msglvl, lvlder, n, 
      $                   bigbnd, epsrf, fdnorm, objf,
      $                   funobj, bl, bu, 
-     $                   grad, gradu, hforwd, hcntrl,
-     $                   x, y, w, lenw )
+     $                   grad, gradu, hforwd, hcntrl, x, y )
 
       implicit           double precision(a-h,o-z)
       double precision   bl(n), bu(n)
       double precision   grad(n), gradu(n)
       double precision   hforwd(*), hcntrl(*)
-      double precision   x(n), y(n), w(lenw)
+      double precision   x(n), y(n)
       external           funobj
 
 *     ==================================================================
@@ -730,32 +728,27 @@
 *       to constant derivatives, which are given values values found
 *       by differencing.
 *
-*     The work array  w  is not used at present.
-*
+*     Systems Optimization Laboratory, Stanford University.
+*     Department of Mathematics, University of California, San Diego.
 *     Original version written  5-July-1990.
-*     This version of  chfdlc  dated  13-Sep-92.
+*     This version of  chfdlc  dated  14-Sep-95.
 *     ==================================================================
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
+      common    /sol1cm/ iPrint, iSumm , lines1, lines2
+      save      /sol1cm/ 
       common    /sol4cm/ epspt3, epspt5, epspt8, epspt9
-
       common    /sol4np/ lvldif, ncdiff, nfdiff, lfdset
 
-      logical            npdbg
-      parameter         (ldbg = 5)
-      common    /npdebg/ inpdbg(ldbg), npdbg
-
       logical            debug , done  , first , prtHdr, needed
-      intrinsic          abs   , max   , min   , sqrt
-      parameter         (rdummy =-11111.0d+0              )
-      parameter         (factor =0.97d+0               )
-      parameter         (zero   =0.0d+0, half   =0.5d+0, one   =1.0d+0)
-      parameter         (two    =2.0d+0, ten    =1.0d+1)
+      parameter         (rdummy =-11111.0d+0)
+      parameter         (factor = 0.97d+0   )
+      parameter         (zero   = 0.0d+0, half =  0.5d+0, one = 1.0d+0)
+      parameter         (two    = 2.0d+0, ten  = 10.0d+0)
 
       inform = 0
       needed = lvlder .eq. 0  .or.  lvlder .eq. 2
       if (.not. needed) return
 
-      debug  = npdbg  .and.  inpdbg(5) .gt. 0
+      debug  = .false.
       if (lfdset .eq. 0) then
          if (msglvl .gt. 0  .and.  iPrint .gt. 0) write(iPrint, 1000)
 
@@ -915,6 +908,8 @@
             if (hforwd(j) .le. zero) then
                if (iPrint .gt. 0) 
      $            write(iPrint, 2000) j, hforwd(j), epspt5
+               if (iSumm  .gt. 0) 
+     $            write(iSumm , 2000) j, hforwd(j), epspt5
                hforwd(j) = epspt5
             end if
   900    continue
@@ -922,6 +917,8 @@
             if (hcntrl(j) .le. zero) then
                if (iPrint .gt. 0) 
      $            write(iPrint, 2100) j, hcntrl(j), epspt3
+               if (iSumm  .gt. 0) 
+     $            write(iSumm , 2100) j, hcntrl(j), epspt3
                hcntrl(j) = epspt3
             end if
   910    continue
@@ -955,17 +952,17 @@
      $                   funcon, funobj, needc,
      $                   bl, bu, c, c1, c2, cJac, cJacu,
      $                   f, f1, f2, fJac, fJacu, hforwd, hcntrl,
-     $                   x, y, w, lenw )
+     $                   x, y )
 
       implicit           double precision(a-h,o-z)
       integer            needc(*)
       double precision   bl(n), bu(n)
       double precision   c(*), c1(*), c2(*),
      $                   cJac(ldcJ,*), cJacu(ldcJu,*)
-      double precision   f(*), f1(*), f2(*),
+      double precision   f(m), f1(m), f2(m),
      $                   fJac(ldfJ,*), fJacu(ldfJu,*)
       double precision   hforwd(*), hcntrl(*)
-      double precision   x(n), y(n), w(lenw)
+      double precision   x(n), y(n)
       external           funobj, funcon
 
 *     ==================================================================
@@ -988,36 +985,28 @@
 *        corresponding to constant derivatives, which are given the same
 *        values as cJac or fJac.
 *
-*     The work array  w  is not used at present.
-*
-*     Systems Optimization Laboratory,
-*     Department of Operations Research,
-*     Stanford University, Stanford, California 94305
+*     Systems Optimization Laboratory, Stanford University.
+*     Department of Mathematics, University of California, San Diego.
 *     Original version written 10-May-1988.
-*     This version of  chfdls  dated  14-Sep-92.
+*     This version of  chfdls  dated  14-Sep-95.
 *     ==================================================================
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
+      common    /sol1cm/ iPrint, iSumm , lines1, lines2
+      save      /sol1cm/ 
       common    /sol4cm/ epspt3, epspt5, epspt8, epspt9
-
       common    /sol4np/ lvldif, ncdiff, nfdiff, lfdset
 
-      logical            npdbg
-      parameter         (ldbg = 5)
-      common    /npdebg/ inpdbg(ldbg), npdbg
-
       logical            debug , done  , first , prtHdr, needed
-      intrinsic          abs   , max   , min   , sqrt
-      parameter         (rdummy =-11111.0d+0              )
-      parameter         (factor =0.97d+0               )
-      parameter         (zero   =0.0d+0, half   =0.5d+0, one   =1.0d+0)
-      parameter         (two    =2.0d+0, four   =4.0d+0, ten   =1.0d+1)
+      parameter         (rdummy =-11111.0d+0)
+      parameter         (factor = 0.97d+0    )
+      parameter         (zero   = 0.0d+0, half = 0.5d+0, one =  1.0d+0)
+      parameter         (two    = 2.0d+0, four = 4.0d+0, ten = 10.0d+0)
 
       inform = 0
       needed = lvlder .eq. 0  .or.  lvlder .eq. 2
      $                        .or.  lvlder .eq. 1  .and.  ncnln .gt. 0
       if (.not. needed) return
 
-      debug  = npdbg  .and.  inpdbg(5) .gt. 0
+      debug  = .false.
       if (lfdset .eq. 0) then
          if (msglvl .gt. 0  .and.  iPrint .gt. 0) write(iPrint, 1000)
 
@@ -1046,7 +1035,7 @@
          bigupp =   bigbnd
 
          if (ncnln  .gt. 0)
-     $      call iload ( ncnln, (0), needc, 1 )
+     $      call iload ( ncnln, 0, needc, 1 )
 
          do 600, j = 1, n
             xj     = x(j)
@@ -1277,32 +1266,30 @@
 
 *              Now check the objective Jacobian.
 
-               if (m .gt. 0) then
-                  nColj = 0
-                  do 740, i = 1, m
-                     if (fJacu(i,j) .eq. - rdummy) then
-                        nColj = nColj + 1
-                     end if
-  740             continue
-
-                  if (nColj .gt. 0) then
-                     call funobj( mode, m, n, ldfJu,
-     $                            y, f1, fJacu, nstate )
-                     if (mode .lt. 0) go to 9999
-
-                     do 750, i = 1, m
-                        if (fJacu(i,j) .eq. - rdummy) then
-                           fjdiff = ( f1(i) -  f2(i) ) / dx
-                           if (fjdiff .eq. fJac(i,j)) then
-                              fJacu(i,j) = fjdiff
-                           else
-                              fJacu(i,j) = rdummy
-                              nfcnst     = nfcnst - 1
-                              nfdiff     = nfdiff + 1
-                           end if
-                        end if
-  750                continue
+               nColj = 0
+               do 740, i = 1, m
+                  if (fJacu(i,j) .eq. - rdummy) then
+                     nColj = nColj + 1
                   end if
+  740          continue
+
+               if (nColj .gt. 0) then
+                  call funobj( mode, m, n, ldfJu,
+     $                         y, f1, fJacu, nstate )
+                  if (mode .lt. 0) go to 9999
+
+                  do 750, i = 1, m
+                     if (fJacu(i,j) .eq. - rdummy) then
+                        fjdiff = ( f1(i) -  f2(i) ) / dx
+                        if (fjdiff .eq. fJac(i,j)) then
+                           fJacu(i,j) = fjdiff
+                        else
+                           fJacu(i,j) = rdummy
+                           nfcnst     = nfcnst - 1
+                           nfdiff     = nfdiff + 1
+                        end if
+                     end if
+  750             continue
                end if
 
                y(j)  = yj
@@ -1315,11 +1302,13 @@
      $            write(iPrint, 1400) nfcnst
             end if
 
-            if (ncdiff .eq. 0  .and.  lvlder .lt. 2) then
-               if (lvlder .eq. 0) lvlder = 2
-               if (lvlder .eq. 1) lvlder = 3
-               if (msglvl .gt. 0) then
-                  if (iPrint .gt. 0) write(iPrint, 1500) lvlder
+            if (ncnln .gt. 0) then
+               if (ncdiff .eq. 0  .and.  lvlder .lt. 2) then
+                  if (lvlder .eq. 0) lvlder = 2
+                  if (lvlder .eq. 1) lvlder = 3
+                  if (msglvl .gt. 0) then
+                     if (iPrint .gt. 0) write(iPrint, 1500) lvlder
+                  end if
                end if
             end if
 
@@ -1340,6 +1329,8 @@
             if (hforwd(j) .le. zero) then
                if (iPrint .gt. 0) 
      $            write(iPrint, 2000) j, hforwd(j), epspt5
+               if (iSumm  .gt. 0) 
+     $            write(iSumm , 2000) j, hforwd(j), epspt5
                hforwd(j) = epspt5
             end if
   900    continue
@@ -1347,6 +1338,8 @@
             if (hcntrl(j) .le. zero) then
                if (iPrint .gt. 0) 
      $            write(iPrint, 2100) j, hcntrl(j), epspt3
+               if (iSumm  .gt. 0) 
+     $            write(iSumm , 2100) j, hcntrl(j), epspt3
                hcntrl(j) = epspt3
             end if
   910    continue
@@ -1381,12 +1374,12 @@
       subroutine chfgrd( inform, msglvl, n,
      $                   bigbnd, epsrf, oktol, fdchk, objf, xnorm,
      $                   funobj,
-     $                   bl, bu, grad, gradu, dx, x, y, w, lenw )
+     $                   bl, bu, grad, gradu, dx, x, y )
 
       implicit           double precision(a-h,o-z)
 
       double precision   bl(n), bu(n), grad(n), gradu(n), dx(n)
-      double precision   x(n), y(n), w(lenw)
+      double precision   x(n), y(n)
       external           funobj
 
 *     ==================================================================
@@ -1423,24 +1416,19 @@
 *        1 or 3   do both cheap and full test.
 *
 *     Systems Optimization Laboratory, Stanford University.
+*     Department of Mathematics, University of California, San Diego.
 *     Original version written  19-May-1985.
-*     This version of  chfgrd  dated  19-Oct-92.
+*     This version of  chfgrd  dated  14-Sep-95.
 *     ==================================================================
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
+      common    /sol1cm/ iPrint, iSumm , lines1, lines2
+      save      /sol1cm/ 
       common    /sol4cm/ epspt3, epspt5, epspt8, epspt9
-
       common    /sol5np/ lvrfyc, jverfy(4)
-
-      logical            npdbg        
-      parameter         (ldbg = 5)
-      common    /npdebg/ inpdbg(ldbg), npdbg
 
       logical            const , debug , done  , first , prtHdr
       logical            needed, okay
       character*4        key   , lbad  , lgood
       character*18       result(0:4)
-      intrinsic          abs   , max   , min   , sqrt
-      external           ddot
       parameter         (rdummy =-11111.0d+0              )
       parameter         (zero   =0.0d+0, half  = 0.5d+0, point9 =0.9d+0)
       parameter         (one    =1.0d+0, two   = 2.0d+0, ten    =1.0d+1)
@@ -1455,7 +1443,7 @@
       if (.not. needed) return
  
       if (msglvl .gt. 0  .and.  iPrint .gt. 0) write(iPrint, 1000)
-      debug  = npdbg  .and.  inpdbg(5) .gt. 0
+      debug  = .false. 
       nstate = 0
 
       biglow = - bigbnd
@@ -1467,17 +1455,17 @@
       h =     (one + xnorm)*fdchk
 
       if (     n .le. 100) then
-         dxmult = 0.9
+         dxmult = 0.9d+0
       else if (n .le. 250) then
-         dxmult = 0.99
+         dxmult = 0.99d+0
       else 
-         dxmult = 0.999
+         dxmult = 0.999d+0
       end if
 
       dxj  = one / n
       do 110, j = 1, n
-         dx(j) =   dxj
-         dxj   = - dxj*dxmult
+         dx(j)  =   dxj
+         dxj    = - dxj*dxmult
   110 continue
 
 *     ------------------------------------------------------------------
@@ -1531,7 +1519,6 @@
       if (msglvl .gt. 0) then
          if ( okay ) then
             if (iPrint .gt. 0) write(iPrint, 1100)
-            if (iSumm  .gt. 0) write(iSumm , 1100)
          else
             if (iPrint .gt. 0) write(iPrint, 1200)
             if (iSumm  .gt. 0) write(iSumm , 1200)
@@ -1653,11 +1640,15 @@
 *        Done.
 *        ===============================================================
          inform = 0
-         if (msglvl .gt. 0  .and.  iPrint .gt. 0) then
+         if (msglvl .gt. 0) then
             if (nwrong .eq. 0) then
-               write(iPrint, 3200) ngood , ncheck, j1    , j2
+               if (iPrint .gt. 0) write(iPrint, 3200) ngood , ncheck,
+     $                                                j1    , j2
             else
-               write(iPrint, 3300) nwrong, ncheck, j1    , j2
+               if (iPrint .gt. 0) write(iPrint, 3300) nwrong, ncheck,
+     $                                                j1    , j2
+               if (iSumm  .gt. 0) write(iSumm , 3300) nwrong, ncheck,
+     $                                                j1    , j2
             end if
             write(iPrint, 3400) emax, jmax
          end if
@@ -1701,13 +1692,13 @@
      $                   bigbnd, epsrf, oktol, fdchk, xnorm,
      $                   funcon, needc,
      $                   bl, bu, c, c1, cJac, cJacu, cJdx,
-     $                   dx, err, x, y, w, lenw )
+     $                   dx, err, x, y )
 
       implicit           double precision(a-h,o-z)
       integer            needc(*)
       double precision   bl(n), bu(n), c(*), c1(*), cJdx(*),
      $                   cJac(ldcJ,*), cJacu(ldcJu,*), err(*)
-      double precision   dx(n), x(n), y(n), w(lenw)
+      double precision   dx(n), x(n), y(n)
       external           funcon
 
 *     ==================================================================
@@ -1734,24 +1725,20 @@
 *        2 or 3   do both cheap and full test.
 *
 *     Systems Optimization Laboratory, Stanford University.
+*     Department of Mathematics, University of California, San Diego.
 *     Original version written  19-May-1985.
-*     This version of  chcJac  dated  14-Sep-92.
+*     This version of  chcJac  dated  14-Sep-95.
 *     ==================================================================
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
+      common    /sol1cm/ iPrint, iSumm , lines1, lines2
+      save      /sol1cm/ 
       common    /sol4cm/ epspt3, epspt5, epspt8, epspt9
 
       common    /sol5np/ lvrfyc, jverfy(4)
-
-      logical            npdbg
-      parameter         (ldbg = 5)
-      common    /npdebg/ inpdbg(ldbg), npdbg
 
       logical            const , debug , done  , first , prtHdr
       logical            needed, okay
       character*4        key   , lbad  , lgood
       character*18       result(0:4)
-      intrinsic          abs   , max   , min   , sqrt
-      external           idamax
       parameter         (rdummy =-11111.0d+0              )
       parameter         (zero   =0.0d+0, half   =0.5d+0, point9 =0.9d+0)
       parameter         (one    =1.0d+0, two    =2.0d+0, ten    =1.0d+1)
@@ -1767,7 +1754,7 @@
       if (.not. needed) return
 
       if (msglvl .gt. 0  .and.  iPrint .gt. 0) write(iPrint, 1000)
-      debug  = npdbg  .and.  inpdbg(5) .gt. 0
+      debug  = .false.
       nstate = 0
 
       biglow = - bigbnd
@@ -1779,11 +1766,11 @@
       h = (one + xnorm)*fdchk
 
       if (     n .le. 100) then
-         dxmult = 0.9
+         dxmult = 0.9d+0
       else if (n .le. 250) then
-         dxmult = 0.99
+         dxmult = 0.99d+0
       else 
-         dxmult = 0.999
+         dxmult = 0.999d+0
       end if
 
       dxj  = one / n
@@ -1853,7 +1840,6 @@
          if (msglvl .gt. 0) then
             if (emax .le. oktol) then
                if (iPrint .gt. 0) write(iPrint, 2000)
-               if (iSumm  .gt. 0) write(iSumm , 2000)
             else
                if (iPrint .gt. 0) write(iPrint, 2100)
                if (iSumm  .gt. 0) write(iSumm , 2100)
@@ -1882,7 +1868,7 @@
             if (mode .lt. 0) go to 9999
          end if
 
-         call iload ( ncnln, (0), needc, 1 )
+         call iload ( ncnln, 0, needc, 1 )
 
          itmax  =   3
          ncheck =   0
@@ -2023,16 +2009,20 @@
          inform = 0
          if (colmax .ge. point9) inform = 1
 
-         if (msglvl .gt. 0  .and.  iPrint .gt. 0) then
+         if (msglvl .gt. 0) then
             if (ncheck .eq. 0) then
-               write(iPrint, 4600) ncset
+               if (iPrint .gt. 0) write(iPrint, 4600) ncset
             else
                if (nwrong .eq. 0) then
-                  write(iPrint, 4300) ngood , ncheck, j3, j4
+                  if (iPrint .gt. 0) write(iPrint, 4300) ngood , ncheck,
+     $                                                   j3, j4
                else
-                  write(iPrint, 4400) nwrong, ncheck, j3, j4
-               end if
-               write(iPrint, 4500) colmax, irow, jcol
+                  if (iPrint .gt. 0) write(iPrint, 4400) nwrong, ncheck,
+     $                                                   j3, j4
+                  if (iSumm  .gt. 0) write(iSumm , 4400) nwrong, ncheck,
+     $                                                   j3, j4
+                end if
+               if (iPrint .gt. 0) write(iPrint, 4500) colmax, irow, jcol
             end if
          end if
       end if
@@ -2081,12 +2071,12 @@
      $                   bigbnd, epsrf, oktol, fdchk, xnorm,
      $                   funobj,
      $                   bl, bu, f, f1, fJac, fJacu, fJdx,
-     $                   dx, err, x, y, w, lenw )
+     $                   dx, err, x, y )
 
       implicit           double precision(a-h,o-z)
-      double precision   bl(n), bu(n), f(*), f1(*), fJdx(*),
-     $                   fJac(ldfJ,*), fJacu(ldfJu,*), err(*)
-      double precision   dx(n), x(n), y(n), w(lenw)
+      double precision   bl(n), bu(n), dx(n), x(n), y(n)
+      double precision   f(m), f1(m), fJdx(m),
+     $                   fJac(ldfJ,*), fJacu(ldfJu,*), err(m)
       external           funobj
 
 *     ==================================================================
@@ -2113,24 +2103,19 @@
 *        2 or 3   do both cheap and full test.
 *
 *     Systems Optimization Laboratory, Stanford University.
+*     Department of Mathematics, University of California, San Diego.
 *     Original version written  10-May-1988.
-*     This version of  chfJac  dated  14-Sep-92.
+*     This version of  chfJac  dated  14-Sep-95.
 *     ==================================================================
-      common    /sol1cm/ nout  , iPrint, iSumm , lines1, lines2
+      common    /sol1cm/ iPrint, iSumm , lines1, lines2
+      save      /sol1cm/ 
       common    /sol4cm/ epspt3, epspt5, epspt8, epspt9
-
       common    /sol5np/ lvrfyc, jverfy(4)
-
-      logical            npdbg
-      parameter         (ldbg = 5)
-      common    /npdebg/ inpdbg(ldbg), npdbg
 
       logical            const , debug , done  , first , prtHdr
       logical            needed, okay
       character*4        key   , lbad  , lgood
       character*18       result(0:4)
-      intrinsic          abs   , max   , min   , sqrt
-      external           idamax
       parameter         (rdummy =-11111.0d+0              )
       parameter         (zero   =0.0d+0, half   =0.5d+0, point9 =0.9d+0)
       parameter         (one    =1.0d+0, two    =2.0d+0, ten    =1.0d+1)
@@ -2145,7 +2130,7 @@
       if (.not. needed) return
 
       if (iPrint .gt. 0) write(iPrint, 1000)
-      debug  = npdbg  .and.  inpdbg(5) .gt. 0
+      debug  = .false. 
       nstate = 0
 
       biglow = - bigbnd
@@ -2157,11 +2142,11 @@
       h = (one + xnorm)*fdchk
 
       if (     n .le. 100) then
-         dxmult = 0.9
+         dxmult = 0.9d+0
       else if (n .le. 250) then
-         dxmult = 0.99
+         dxmult = 0.99d+0
       else 
-         dxmult = 0.999
+         dxmult = 0.999d+0
       end if
 
       dxj  = one / n
@@ -2214,8 +2199,7 @@
          call daxpy ( n, h, dx, 1, y, 1 )
 
          mode   = 0
-         call funobj( mode, m, n, ldfJu,
-     $                y, f1, fJacu, nstate )
+         call funobj( mode, m, n, ldfJu, y, f1, fJacu, nstate )
          if (mode .lt. 0) go to 9999
 
 *        Set  err = (f1 - f)/h  - Jacobian*dx.  This should be small.
@@ -2229,7 +2213,6 @@
          if (msglvl .gt. 0  .and.  iPrint .gt. 0) then
             if (emax .le. oktol) then
                if (iPrint .gt. 0) write(iPrint, 2000)
-               if (iSumm  .gt. 0) write(iSumm , 2000)
             else
                if (iPrint .gt. 0) write(iPrint, 2100)
                if (iSumm  .gt. 0) write(iSumm , 2100)
@@ -2252,8 +2235,7 @@
 
             nstate = 0
             mode   = 2
-            call funobj( mode, m, n, ldfJu,
-     $                   x, f1, fJacu, nstate )
+            call funobj( mode, m, n, ldfJu, x, f1, fJacu, nstate )
             if (mode .lt. 0) go to 9999
          end if
 
@@ -2393,16 +2375,20 @@
          inform = 0
          if (colmax .ge. point9) inform = 1
 
-         if (msglvl .gt. 0  .and.  iPrint .gt. 0) then
+         if (msglvl .gt. 0) then
             if (ncheck .eq. 0) then
-               write(iPrint, 4600) nfset
+               if (iPrint .gt. 0) write(iPrint, 4600) nfset
             else
                if (nwrong .eq. 0) then
-                  write(iPrint, 4300) ngood , ncheck, j1, j2
+                  if (iPrint .gt. 0) write(iPrint, 4300) ngood , ncheck,
+     $                                                   j1, j2
                else
-                  write(iPrint, 4400) nwrong, ncheck, j1, j2
+                  if (iPrint .gt. 0) write(iPrint, 4400) nwrong, ncheck,
+     $                                                   j1, j2
+                  if (iSumm  .gt. 0) write(iSumm , 4400) nwrong, ncheck,
+     $                                                   j1, j2
                end if
-               write(iPrint, 4500) colmax, irow, jcol
+               if (iPrint .gt. 0) write(iPrint, 4500) colmax, irow, jcol
             end if
          end if
       end if
