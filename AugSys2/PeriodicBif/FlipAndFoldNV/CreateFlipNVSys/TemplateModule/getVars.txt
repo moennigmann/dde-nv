@@ -1,0 +1,10 @@
+#------------------------------------------------------------
+#
+# @path AugSys2/DiscreteBif/FlipAndFoldNV/CreateFlipNVSys/TemplateModule/getVars.txt
+#
+# @brief returns variables of the system
+#
+#------------------------------------------------------------
+    getVars:= proc()
+        return(eval(ExtendedSysInModule["Variables"])); 
+    end proc; # getVars
