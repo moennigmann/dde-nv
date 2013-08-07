@@ -1,5 +1,24 @@
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C
+C procedure printPars print information for parameters values
+C
+C input: NPAR - number of parameters
+C        PAR - array of parameter values
+C
+C revision:
+C 2012-07-26 written by dka
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+      SUBROUTINE printPars(NPAR,PAR)
+      INTEGER NPAR
+      DOUBLE PRECISION PAR(NPAR)
+      INTEGER I1
+
+      write(6,*) 'CURRENT PARS:', (PAR(I1),I1=1,NPAR)
+
+      END
+
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C
 C procedure printParConFun print information for critical parameters values
 C           from constraint function template
 C

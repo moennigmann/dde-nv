@@ -22,7 +22,7 @@ C         POUT - period for the periodic solution
 C         IFAIL - integer value which indicates if calculation of PERIOD is succeeded (TRUE if IFAIL=0)
 C         ERRY - value which indicates if solution of PERIOD is constant (TRUE if ERRY>10^(-7))
 C         FAL - matrix of derivarives with respect to parameters (Fp)
-C         FAL - tensor of derivarives with respect to variables and parameters (Fxp)
+C         FXAL - tensor of derivarives with respect to variables and parameters (Fxp)
 C         FXX - tensor of second derivatives with respect to variables (Fxx)
 C         FX - jacobian of the Poincare map
 C         FPP - tensor of second derivatives with respect to variables (Fpp)
@@ -101,9 +101,9 @@ C     FX is controlled to check if the obtained solution is not a constant
 c      FX(1,1) = 0
 
 C     if IFAIL!=0 and FX=0 then try to calculate solution for another period guess
-c      logPLim=.TRUE.
-c      iPstep = 0
-c      DO WHILE (logPLim)
+      logPLim=.TRUE.
+      iPstep = 0
+      DO WHILE (logPLim)
 
 C     if the discontinuous time case considered, then dimension of the problem =2*n+1
       NUDIM=2*NN+1
@@ -217,6 +217,9 @@ C     No initial mesh (a set of x values) are given, so
 C     this is .false. too
       GIVMSH = .TRUE.
 
+C     print for debugging
+C      call printPars(NPAR,TRPAR)      
+
       CALL TWPBVPC(NCOMP,NLBC,ALEFT,ARIGHT,NFXPNT,FIXPNT,NTOL,
      +            LTOL,TOL,LINEAR,GIVMSH,GIVEU,NMSH,NXXDIM,
      +            XX,NUDIM,U,NMAX,LWRKFL,WRK,LWRKIN,IWRK,
@@ -236,6 +239,9 @@ c         WRITE(6,*) 'The code failed to converge!'
 c         RETURN
 c      END IF
       IFAIL=iflbvp
+      
+C     print for debugging
+C      WRITE(6,*) 'IFAIL: ', IFAIL
 
 C     POUT IS CALCULATED PERIOD (which is (n+1)st variable)
       POUT=U(NN+1,1)
@@ -266,15 +272,15 @@ C     GET DERIVATIVES WITH TIDES
       ENDIF
 
 C     change initial period value guess if the solution is not found or constant
-c      offSetP=P/5D0
-c      stepSizeP=offSetP/10D0
-c      PGUESS= P-offSetP+stepSizeP*iPstep
-c      logFAIL =  .not. IFAIL .eq. 0
-c      logConst = logFAIL .or. ABS(FX(1,1)) .lt. 0.1D-9
-c      logPLim = logConst .and. PGUESS .lt. P+offSetP
-c      iPstep=iPstep+1
-c      logPLim=.false.
-c      ENDDO
+       offSetP=P/2D0
+       stepSizeP=offSetP/5D0
+       PGUESS= P-stepSizeP*iPstep
+       logFAIL =  .not. IFAIL .eq. 0
+       logConst = logFAIL .or. ABS(FX(1,1)) .lt. 0.1D-9
+       logPLim = logConst .and. PGUESS .gt. P-offSetP
+       iPstep=iPstep+1
+       logPLim=.false.
+       ENDDO
 
 c     if changing period guess does not return correct result, then vary initial point guess
 c     for variables which are not fixed in phase condition

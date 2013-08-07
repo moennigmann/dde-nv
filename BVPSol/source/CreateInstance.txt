@@ -8,8 +8,9 @@
 #         nodes, number of nodes in multi-shooting procedure,
 #         list of compilled objects obtaned from TIDES,
 #         optional argument method name which is 'period' [Deuflhard,1984] 
-#                  or 'twpbvp' [Capper&Cash,2007] (by default the method 
-#                  is set to 'period')  
+#                  'twpbvp' [Capper&Cash,2007] or
+#                  'twpbvpdisc' for the discontinuous time case 
+#                  (by default the method is set to 'period')  
 #         optional phase condition (nesessary to be defined for the method 
 #                  'twpbvp', if not given by default is set to x1(0)=0)
 #         optional list of boundary conditions for discontinuous time case        

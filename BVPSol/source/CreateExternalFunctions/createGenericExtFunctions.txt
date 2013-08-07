@@ -31,7 +31,7 @@
         FXderiv, MonMatrixGenList;
   
   #
-  # for both 'period' and 'twpbvp' create fortran file that contain
+  # for all methods create fortran file that contain
   # RHS of original BVP problem and its jacobian
   #
     NumDynVars:=nops(anBVPSys["ODEs"]);
