@@ -18,7 +18,7 @@ getVarsForFortranTemplate:=proc(aSys::DAESys)
 local internalVarsToSubsList, i, j, k, f_x, listForFxx, f_xx,
       numOfDynEqns, numOfUncParam, f_alpha, f_xalpha, f_T, x0p, f_TVals,
       X0pValsList, paramValsList, paramNames, dynVarsNames, rhsDynEqns,
-      listForFxAlpha, f_xT, jacOfSys;
+      listForFxAlpha, f_xT, jacOfSys, listForFxEsp, fEps_x;
 
   
 # number of dynamical and uncertain parameters in the ODE system
@@ -103,6 +103,24 @@ f_xT:=Matrix(numOfDynEqns,numOfDynEqns,symbol='Fxt');
 for i from 1 to numOfDynEqns do
   for j from 1 to numOfDynEqns do
     internalVarsToSubsList:=[op(internalVarsToSubsList),f_xT[i,j]=J0[i,j]];
+  end do;
+end do;
+
+
+# add values for fxEps
+
+listForFxEsp := []; 
+for i to numOfUncParam-1 do 
+  listForFxEsp := [op(listForFxEsp), convert(Matrix(numOfDynEqns, numOfDynEqns, symbol = 'FxEps[i]'), listlist)] 
+end do: 
+fEps_x := Array(listForFxEsp);
+
+
+for i from 1 to  numOfUncParam-1 do
+  for j from 1 to numOfDynEqns do
+    for k from 1 to numOfDynEqns do
+      internalVarsToSubsList:=[op(internalVarsToSubsList),fEps_x[i,j,k]=FXEPS[i,j,k]];
+    end do;
   end do;
 end do;
   

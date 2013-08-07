@@ -11,7 +11,11 @@
 #         initX0, the initial guess for first point X0 of the trajectory solution
 #         initP, the initial guess for period of the trajectory solution 
 #         list of compilled objects obtaned from TIDES,  
-#         phase condition              
+#         phase condition,
+#         optional argument method name 
+#                  'twpbvp' or 'twpbvpdisc' for the discontinuous time case 
+#                  (by default the method is set to 'twpbvp') 
+#         optional switching condition for 'twpbvpdisc'
 #
 # @return  procedure which starts bvpopt
 #
@@ -32,10 +36,14 @@
                        initX0::list(name= EvalsToFloat),
                        initP::EvalsToFloat,                       
                        objNames::list(string),
-                       phaseCondition)
+                       phaseCondition
+                       #optional methodName
+                       #optional listOfInitCond
+                       )
 
     local bvpopt, BVPOptInstance, NewValues, NewParsNames, Missing, 
-          Obsolete, i1, ParNames, X0, logicPhaseVarPresent; 
+          Obsolete, i1, ParNames, X0, logicPhaseVarPresent, methodName,
+          listOfInitCond; 
     
      #
      # prepare working dir
@@ -48,6 +56,37 @@
             "cwrap_npsol1.so already exists", WorkingDir
           );
         end if; 
+    
+    
+    if (nargs>8)
+    then 
+      methodName:=args[9];
+    else
+      methodName:=twpbvp;  
+    end if; 
+    
+    #
+    # validate input for the method name
+    #
+    if not ((methodName='twpbvp') or (methodName='twpbvpdisc'))
+      then error("Method name should be 'twpbvp' or 'twpbvpdisc'",methodName);
+    end if; 
+    
+    #
+    # switching condition for 'twpbvpdisc'
+    #
+    if  (nargs>9)
+    then
+       listOfInitCond:=args[10];
+       if(type(listOfInitCond,list)=false)
+	  then error("Initial conditions should be of a type of list",listOfInitCond); 
+       end if;
+       if(nops(listOfInitCond)!=nops(anBVPSys["DynVars"]))
+	  then error("Initial conditions should be of dimension",nops(anBVPSys["DynVars"]), listOfInitCond); 
+       end if;
+    else
+       listOfInitCond:=[];
+    end if; 
 
     
   
@@ -80,7 +119,10 @@
          X0:=[op(X0),NewValues[i1]];
       end do;
 
-
+      
+      
+    if (methodName='twpbvp')
+    then
     #
     # check if the phase condition is given in the form 'varible_i-constant' 
     #
@@ -88,6 +130,7 @@
       if(logicPhaseVarPresent=false)
         then error("Phase condition should be given in form 'var_i-constant'",phaseCondition);
       end if;
+    end if;  
 
     
     # 
@@ -97,10 +140,10 @@
       
     #
     # running of shared object with Maple, takes too much time here
-    # alternatively, copy source files directly to target folder
+    # alternatively, copy source files from TIDES to target folder
     # and run cwrap_npsol directly
     # 
-      copyFilesForDemo(WorkingDir,objNames);
+      copyFilesForDemo(WorkingDir,objNames,methodName);
      
     #
     # prepare interface for optimization
@@ -115,7 +158,9 @@
           initP,
           nodes,
           objNames,
-          phaseCondition
+          phaseCondition,
+          methodName,
+          listOfInitCond
         );
       catch:
 	printf("CreateSharedObject failed, \n");

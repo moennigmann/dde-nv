@@ -28,10 +28,11 @@
       xvec_swnpsolToBeSubs,           #X  
       LE_swnpsolToBeSubs,             #IW, LENW
       NumParamsToBeSubs,              # not npsol arguments but used to pass
-      ParamsToBeSubs                  # parameters to npsol via common block
+      ParamsToBeSubs,                 # parameters to npsol via common block
+      methodName                      # method name 'twpbvp' or 'twpbvpdisc'
   )
     local main, BseqToBeSubs, ind, i, j, cjacSeqToBeSubs, ASeqToBeSubs,
-          rSeqToBeSubs, systemCommand;
+          rSeqToBeSubs, systemCommand, externalLinks, objListTwpbvpdisc;
     
     #
     # for parsing transform matrices to lists 
@@ -100,19 +101,36 @@
           );
     
     
+    externalLinks:=getExtFilesLinks(methodName);
+    
+    #
+    # if nessesary create links to additional files that 
+    # calculate derivatives for the discontinuous time case 
+    #
+    if (methodName='twpbvp')
+    then
+      objListTwpbvpdisc:=``;
+    end if;
+    
+    if (methodName='twpbvpdisc')
+    then
+      objListTwpbvpdisc:=`fxderiv.o `;
+    end if;
       
     #
     # create executable run_npsol.o
     #
         systemCommand:= cat(
-          `gcc -O2 `,
-          `rtcomsubs.o npcomsubs.o nlssolsubs.o blas1.o blas2.o funcJ0P.o funcF0P.o `,
-          `get_params.o extrhs.o extjac.o defs.o boundcond.o boundjac.o mcsubs.o `,
-          `opsubs.o f06subs.o cmsubs.o qrsubs.o lssolsubs.o npsolsubs.o chsubs.o `,
-          `srsubs.o set_params.o npsol_close.o  npsol_open.o npsolconfun.o npsolobjfun.o `, 
-          `linalg_period.o zibconst.o zibsec.o period.o ftotides.o fortranjac.o `, 
-          `fortranrhs.o twpbvpc.o callperiod.o infoprint.o `,
-          `-g calltides.c scott.c cwrap_npsol_call.c cwrap_npsol_main.c -lTIDES -lm -lgfortran -o `, 
+          `gcc -O2 -C `,
+           externalLinks,
+          `funcJ0P.o funcF0P.o `,
+          `extrhs.o extjac.o boundcond.o boundjac.o `,
+          `npsolconfun.o npsolobjfun.o `, 
+          `fortranjac.o fortranrhs.o `,
+          objListTwpbvpdisc, 
+          `-g calltides.c objtides.c  `, 
+          _ModulesDirectory, `/BVPOpt/ext_routines/f2c/cwrap/cwrap_npsol_call.c `,
+          `cwrap_npsol_main.c -lTIDES -lm -lgfortran -o `,
           `run_npsol.o`
         );
     

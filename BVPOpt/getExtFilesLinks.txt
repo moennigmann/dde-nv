@@ -1,0 +1,85 @@
+#############################################################
+#
+# BVPOpt/source/getExtFilesLinks.txt
+#
+# @brief get links for external files of NPSOL and BVPSOL
+#
+# @param method name ('twpbvp' or 'twpbvpdisc')
+#
+# @notes get list of external compilled objects from NPSOL and BVPSOL
+#
+# @revision
+# 2011-12-11 created by dka
+#
+#############################################################
+  getExtFilesLinks:= proc(
+    methodName
+  )
+
+    local LinkerCommand; 
+
+    #
+    # links for files from BVPSOL
+    #
+    
+    if (methodName='twpbvp')
+    then
+      LinkerCommand:= cat(_ModulesDirectory, `/BVPSol/ext_routines/f2c/shared_obj/twpbvp/period.o `,
+			  _ModulesDirectory, `/BVPSol/ext_routines/f2c/shared_obj/twpbvp/linalg_period.o `,
+			  _ModulesDirectory, `/BVPSol/ext_routines/f2c/shared_obj/twpbvp/zibconst.o `,
+			  _ModulesDirectory, `/BVPSol/ext_routines/f2c/shared_obj/twpbvp/zibsec.o `,
+			  _ModulesDirectory, `/BVPSol/ext_routines/f2c/shared_obj/twpbvp/ftotides.o `,
+			  _ModulesDirectory, `/BVPSol/ext_routines/f2c/shared_obj/twpbvp/defs.o `,
+			  _ModulesDirectory, `/BVPSol/ext_routines/f2c/shared_obj/twpbvp/twpbvpc.o `,
+			  _ModulesDirectory, `/BVPSol/ext_routines/f2c/shared_obj/twpbvp/infoprint.o `,
+			  _ModulesDirectory, `/BVPSol/ext_routines/f2c/shared_obj/twpbvp/callperiod.o `
+			  );
+     end if;
+     
+    if (methodName='twpbvpdisc')
+    then
+      LinkerCommand:= cat(_ModulesDirectory, `/BVPSol/ext_routines/f2c/shared_obj/twpbvpdisc/period.o `,
+			  _ModulesDirectory, `/BVPSol/ext_routines/f2c/shared_obj/twpbvpdisc/linalg_period.o `,
+			  _ModulesDirectory, `/BVPSol/ext_routines/f2c/shared_obj/twpbvpdisc/zibconst.o `,
+			  _ModulesDirectory, `/BVPSol/ext_routines/f2c/shared_obj/twpbvpdisc/zibsec.o `,
+			  _ModulesDirectory, `/BVPSol/ext_routines/f2c/shared_obj/twpbvpdisc/ftotides.o `,
+			  _ModulesDirectory, `/BVPSol/ext_routines/f2c/shared_obj/twpbvpdisc/defs.o `,
+			  _ModulesDirectory, `/BVPSol/ext_routines/f2c/shared_obj/twpbvpdisc/twpbvpc.o `,
+			  _ModulesDirectory, `/BVPSol/ext_routines/f2c/shared_obj/twpbvpdisc/infoprint.o `,
+			  _ModulesDirectory, `/BVPSol/ext_routines/f2c/shared_obj/twpbvpdisc/callperiod.o `
+			  );
+     end if;
+     
+    #
+    # links for files from NPSOL
+    # 
+    
+    LinkerCommand:= cat(LinkerCommand,
+                        _ModulesDirectory, `/Npsol/ext_routines/f2c/shared_obj/blas1.o `,
+                        _ModulesDirectory, `/Npsol/ext_routines/f2c/shared_obj/blas2.o `,
+                        _ModulesDirectory, `/Npsol/ext_routines/f2c/shared_obj/mcsubs.o `,
+                        _ModulesDirectory, `/Npsol/ext_routines/f2c/shared_obj/opsubs.o `,
+                        _ModulesDirectory, `/Npsol/ext_routines/f2c/shared_obj/f06subs.o `,
+                        _ModulesDirectory, `/Npsol/ext_routines/f2c/shared_obj/cmsubs.o `,
+                        _ModulesDirectory, `/Npsol/ext_routines/f2c/shared_obj/qrsubs.o `,
+                        _ModulesDirectory, `/Npsol/ext_routines/f2c/shared_obj/lssolsubs.o `,
+                        _ModulesDirectory, `/Npsol/ext_routines/f2c/shared_obj/chsubs.o `,
+                        _ModulesDirectory, `/Npsol/ext_routines/f2c/shared_obj/srsubs.o `,
+                        _ModulesDirectory, `/Npsol/ext_routines/f2c/shared_obj/rtcomsubs.o `,
+                        _ModulesDirectory, `/Npsol/ext_routines/f2c/shared_obj/nlssolsubs.o `, 
+                        _ModulesDirectory, `/Npsol/ext_routines/f2c/shared_obj/npcomsubs.o `,
+                        _ModulesDirectory, `/Npsol/ext_routines/f2c/shared_obj/npsolsubs.o `
+                        );     
+
+                        
+    LinkerCommand:= cat(LinkerCommand,
+                        _ModulesDirectory, `/Npsol/ext_routines/f2c/cwrap/npsol_open.o `,
+                        _ModulesDirectory, `/Npsol/ext_routines/f2c/cwrap/npsol_close.o `,
+                        _ModulesDirectory, `/Npsol/ext_routines/f2c/cwrap/set_params.o `,
+                        _ModulesDirectory, `/Npsol/ext_routines/f2c/cwrap/get_params.o `
+                        ); 
+        
+  
+   RETURN(LinkerCommand);
+
+  end proc; # getExtFilesLinks

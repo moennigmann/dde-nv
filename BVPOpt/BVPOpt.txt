@@ -25,6 +25,7 @@ BVPOpt:=module()
     CreateInstance,
     createSharedObject,
     createOptionsFile,
+    getExtFilesLinks,
     Templates,
     InternalNVVars;
 
@@ -35,6 +36,7 @@ $include <createExternalDerivativesFuncs.txt>
 $include <CreateInstance.txt>     
 $include <createSharedObject.txt>
 $include <createOptionsFile.txt>
+$include <getExtFilesLinks.txt>
 $include <Templates.txt>
 $include <InternalNVVars.txt>
   

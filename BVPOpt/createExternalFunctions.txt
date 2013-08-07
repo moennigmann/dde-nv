@@ -32,7 +32,9 @@
       derivNamesSubstitutions, ConsFortran, varsNamesSubstitutions,
       JacConsFortran, counter2, oldJacVar, newJacVar, indexListOfCritVars,
       CostFuncFortran, GradOfCostFuncFortran, indexOfObjVar,
-      indexListOfObjVarsInNLP, indexOfObjPar, objParsNamesInNLP; 
+      indexListOfObjVarsInNLP, indexOfObjPar, objParsNamesInNLP,
+      pathConstraintsTemplate, indEpsCritParamsSubs, indListVarsEpsCritParamsSubs,
+      counter3, epsSubs, listOfMissingCritParams, listOfMissingObjParams; 
 
     #----------------------------------------------------------------------
     #
@@ -58,6 +60,12 @@
       NumDynVars:=nops(anBVPSys["ODEs"]);
       NumCritPars:=nops(anBVPSys["Parameters"]);
       CritParsNames:= map(lhs,anBVPSys["Parameters"]);
+     
+      listOfMissingCritParams:= convert(CritParsNames,set) minus convert(Vars,set);
+      if nops(listOfMissingCritParams)>0 
+      then
+         error("Critical parameters ",listOfMissingCritParams, " should occur in the variables of an NLP");
+      end if;
    
    #
    # list of variables in NLP that corresponds to critical parameters
@@ -69,6 +77,7 @@
 	indexListOfCritVars:=[op(indexListOfCritVars),indexOfCritVars];
 	indexListOfCritVarsSubs:=[op(indexListOfCritVarsSubs),x[indexOfCritVars]];
       end do:
+
    
    #
    # replace derivarives maple names for partial derivatives 
@@ -80,7 +89,7 @@
      varsNamesSubstitutions:=[];
      for counter1 from 1 to nops (Vars) do
 	varsNamesSubstitutions:=[op(varsNamesSubstitutions),Vars[counter1]=x[counter1]];
-     end do;       
+     end do;    
 
 
     #
@@ -111,6 +120,7 @@
             )],
             i1= 1..NumConsOfNLP
           )];
+      
         
         #
         # for derivatives with respect to critical parameters
@@ -125,18 +135,21 @@
 	                                                            NumDynVars, NumCritPars);
 	     ListListOfJacElements[counter2,indexListOfCritVars[counter1]]:=oldJacVar+newJacVar;
           end do;
-	end do;  
+	end do;
         
         ConsFortran:=subs(derivNamesSubstitutions,Cons);
         ConsFortran:=subs(varsNamesSubstitutions,ConsFortran);
         
         JacConsFortran:=subs(derivNamesSubstitutions,ListListOfJacElements);
-        JacConsFortran:=subs(varsNamesSubstitutions,JacConsFortran);
+        JacConsFortran:=subs(varsNamesSubstitutions,JacConsFortran); 
   
         #
         # generate confun by substituting values into ConfunTemplate
         #
 
+        if (op(anNLP["ConfunTemplatePath"])="ConfunTemplatePath")
+        then
+         
           npsolconfun:= subs(
         
             ParsToBeSubs=        op(Pars),        # subs exprseq, see template 
@@ -157,6 +170,57 @@
               
             eval(Templates:-confunTemplate)
           );
+        else 
+        
+        #
+        # if "pathConstraintsTemplate" is given
+        #
+        
+           pathConstraintsTemplate:=op(anNLP["ConfunTemplatePath"]);
+           if not Aux:-FileOperations:-fileExists(pathConstraintsTemplate)
+             then error("ConfunTemplatePath was not defined correctly");
+           else
+           
+           indEpsCritParamsSubs:=anNLP["IndexOfSpanCritParams"];
+           
+           if not (nops(indEpsCritParamsSubs)=NumCritPars-1)
+           then error(NumCritPars-1,"indexes of critical parameters for calculating tangent space should be provided"); 
+           end if;
+           
+           indListVarsEpsCritParamsSubs:=[seq(x[indEpsCritParamsSubs[counter3]],counter3=1..nops(indEpsCritParamsSubs))];
+           
+           epsSubs:=anNLP["Epsilon"];
+           if not type(op(epsSubs),numeric)
+           then epsSubs:=0.01;
+           end if;
+           
+           
+           read(pathConstraintsTemplate);
+           
+           npsolconfun:= subs(
+        
+            ParsToBeSubs=        op(Pars),        # subs exprseq, see template 
+            ConstraintsToBeSubs= map(evalf, ConsFortran),# only non-linear Constraints
+            EAEsToBeSubs=        op(map(evalf, EAEs)), 
+            NumParsToBeSubs=     NumParsOfNLP, 
+            NumVarsToBeSubs=     NumVarsOfNLP,
+            NumConsToBeSubs=     NumConsOfNLP,
+            NumEAEsToBeSubs=     NumEAEsOfNLP, 
+            ListListToBeSubs=    JacConsFortran,
+            NumDynVarsToBeSubs=  NumDynVars,
+            initX0ToBeSubs=      initX0,
+            initPToBeSubs= 	 initP,
+            NumCritParsToBeSubs= NumCritPars,
+            indsCritVarsToBeSubs=indexListOfCritVarsSubs,
+            NumOfNodesToBeSubs=  nodes,
+            indPhaseToBeSubs=    indPhaseCondVarible,
+            indEpsCritParamsToBeSubs= indListVarsEpsCritParamsSubs,
+            EpsToBeSubs=epsSubs,
+              
+            eval(confunTemplate)
+          );
+          end if;
+        end if; # not "pathConstraintsTemplate"
 
       end if; # not Cons= []
 
@@ -222,6 +286,13 @@
              if type(anNLP["ObjFunParameters"],list(name))
 		then 
 		     objParsNamesInNLP:=anNLP["ObjFunParameters"];
+		     
+		     listOfMissingObjParams:= convert(objParsNamesInNLP,set) minus convert(Vars,set);
+		     if nops(listOfMissingObjParams)>0 
+		     then
+			error("Objective function parameters ",listOfMissingObjParams, " should occur in the variables of an NLP");
+		     end if;
+		     
 		     for counter1 from 1 to nops(CritParsNames) do
 			member(objParsNamesInNLP[counter1], Vars, 'indexOfObjPar');
 			indexListOfObjVarsInNLP:=[op(indexListOfObjVarsInNLP),x[indexOfObjPar]];
