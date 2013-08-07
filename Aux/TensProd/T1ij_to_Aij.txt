@@ -1,0 +1,39 @@
+########################################################################
+#
+# @path Aux/TensProd/T1ij_to_Aij.txt
+#
+# @brief Transform tensor T_1ij to martix A_ij
+#
+########################################################################
+    T1ij_to_Aij:= proc(
+     Ten1::'array'(3)
+    )
+
+      local ListOfTen1Ranges, Result, i1, i2, i3;
+      
+      ListOfTen1Ranges:= op(2, eval(Ten1)); 
+
+        if not
+          op(ListOfTen1Ranges[1])[2]=1
+        then
+          error("first dimension of tensor should be equal to one"); 
+        end if;
+      
+      
+      Result:= Matrix(
+           op(ListOfTen1Ranges[2])[2],op(ListOfTen1Ranges[3])[2]
+        );
+    
+    
+       for i1 from 1 to 1 do
+          for i2 from 1 to op(ListOfTen1Ranges[2])[2] do
+            for i3 from 1 to op(ListOfTen1Ranges[3])[2] do
+              Result[i2, i3]:= Ten1[i1,i2,i3];
+            end do;
+          end do;
+        end do;   
+         
+
+      return(eval(Result)); 
+  
+    end proc; # TensProd:-T1ij_to_Aij 

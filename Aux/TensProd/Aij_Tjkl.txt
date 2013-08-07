@@ -1,13 +1,13 @@
 ########################################################################
 #
-# @path Aux/TensProd/Tijk_Akl.txt
+# @path Aux/TensProd/Aij_Tjkl.txt
 #
-# @brief Calculates tensor Tijk_Akl
+# @brief Calculates tensor Aij_Tjkl
 #
 ########################################################################
-    Tijk_Akl:= proc(
-      Ten3::'array'(3), 
-      AmatArg::{Matrix, 'array'(2)}
+    Aij_Tjkl:= proc(
+      AmatArg::{Matrix, 'array'(2)},
+      Ten3::'array'(3) 
     )
 
       local ListOfTen3Ranges, ListOfAmatRanges,Result, i1, i2, i3, i4, Amat;
@@ -22,8 +22,8 @@
         ListOfAmatRanges:= op(2, eval(Amat));
 
         if not
-          op(2, ListOfAmatRanges[1])=
-          op(2, ListOfTen3Ranges[3])
+          op(2, ListOfAmatRanges[2])=
+          op(2, ListOfTen3Ranges[1])
         then
           error("incompatible dimensions of 1st and 2nd argument"); 
         end if; 
@@ -32,15 +32,15 @@
       # calculate sum
       #
         Result:= array(
-          ListOfTen3Ranges[1], ListOfTen3Ranges[2], ListOfAmatRanges[2]
+          ListOfAmatRanges[1], ListOfTen3Ranges[2], ListOfTen3Ranges[3]
         );
 
-        for i1 from 1 to op(2, ListOfTen3Ranges[1]) do
-          for i2 from 1 to op(2, ListOfTen3Ranges[2]) do
-            for i4 from 1 to op(2, ListOfAmatRanges[2]) do
-              Result[i1, i2, i4]:= add(
-              Ten3[i1, i2, i3]* Amat[i3,i4], 
-              i3= 1..op(2,ListOfAmatRanges[1])
+        for i1 from 1 to op(2, ListOfAmatRanges[1]) do
+          for i3 from 1 to op(2, ListOfTen3Ranges[2]) do
+            for i4 from 1 to op(2, ListOfTen3Ranges[3]) do
+              Result[i1, i3, i4]:= add(
+              Amat[i1,i2]*Ten3[i2, i3, i4], 
+              i2= 1..op(2,ListOfAmatRanges[2])
             );
             end do;
           end do;
@@ -48,4 +48,4 @@
       
       return(eval(Result)); 
   
-    end proc; # TensProd:-Tijk_Akl 
+    end proc; # TensProd:-Aij_Tjkl 

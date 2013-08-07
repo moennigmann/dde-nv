@@ -1,0 +1,53 @@
+########################################################################
+#
+# @path Aux/TensProd/Ai1_T1jk.txt
+#
+# @brief Calculates multiplication of matrix A_i1 to tensor Matrix T_1jk
+#
+########################################################################
+    Ai1_T1jk:= proc(
+      AmatArg::{Matrix, 'array'(2)},
+      BmatArg::{Matrix, 'array'(2)} 
+    )
+
+      local ListOfAmatRanges, ListOfBmatRanges, Result, i1, i2, i3, Amat, Bmat, Btens;
+      
+      Amat:=convert(AmatArg,array);
+      Bmat:=convert(BmatArg,array); 
+      
+      #
+      # row dim of Bmat should be equal to one
+      #
+
+        ListOfAmatRanges:= op(2, eval(Amat));
+        ListOfBmatRanges:= op(2, eval(Bmat));
+
+        if not
+          op(2, ListOfAmatRanges[2])= 1
+        then
+          error("incompatible dimensions in 1st argument"); 
+        end if;
+      
+      
+      Btens:= array(
+           1..1, ListOfBmatRanges[1], ListOfBmatRanges[2]
+        );
+      #
+      # augment  B_jk till tensor T_1jk
+      # 
+       for i1 from 1 to 1 do
+          for i2 from 1 to op(2, ListOfBmatRanges[1]) do
+            for i3 from 1 to op(2, ListOfBmatRanges[2]) do
+              Btens[i1, i2, i3]:= Bmat[i2,i3];
+            end do;
+          end do;
+        end do;   
+         
+      #
+      # calculate multiplication
+      #
+        Result:= Aux:-TensProd:-Aij_Tjkl(AmatArg,Btens);
+
+      return(eval(Result)); 
+  
+    end proc; # TensProd:-Ai1_T1jk 

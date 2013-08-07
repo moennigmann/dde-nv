@@ -11,6 +11,7 @@
 # @authors mmo, dka
 #
 # @revision
+# 2013-07-16 added procedure Aij_Tjkl, const_Tijk and Sum_Tijk_Tijk, Tij1_A1k by dka
 # 2008-11-19 splited procedures into separate files by dka
 # 2008-02-28 changed by dka, NumRows, NumCols calculating without using LinearAlgebra
 # 2007-12-20 changed by dka, using instead of linalg LinearAlgebra
@@ -20,10 +21,16 @@
 TensProd:= module()
 
    export
+     Ai1_T1jk,
+     Aij_Tjkl,
      Tijk_xj,
      Tijk_Akl,
+     Tij1_A1k,
+     const_Tijk,
      Trans_Tijk_Tikj,
-     Sij_Tjk, 
+     Sij_Tjk,
+     Sum_Tijk_Tijk,
+     T1ij_to_Aij,
      Tij_xj, 
      Aij_xj, 
      xi_Tij, 
@@ -31,10 +38,16 @@ TensProd:= module()
      xi_Tij_yj, 
      xi_Aij_yj;
 
+$include <TensProd/Ai1_T1jk.txt>
+$include <TensProd/Aij_Tjkl.txt>
 $include <TensProd/Tijk_xj.txt>
 $include <TensProd/Tijk_Akl.txt>
+$include <TensProd/Tij1_A1k.txt>
+$include <TensProd/const_Tijk.txt>
 $include <TensProd/Trans_Tijk_Tikj.txt>
 $include <TensProd/Sij_Tjk.txt>
+$include <TensProd/Sum_Tijk_Tijk.txt>
+$include <TensProd/T1ij_to_Aij.txt>
 $include <TensProd/Tij_xj.txt>
 $include <TensProd/Aij_xj.txt>
 $include <TensProd/xi_Tij.txt>
