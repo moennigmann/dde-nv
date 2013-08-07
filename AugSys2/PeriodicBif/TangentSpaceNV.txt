@@ -1,0 +1,22 @@
+##############################################################
+#
+# @path AugSys2/PeriodicBif/TangentSpaceNV.txt
+#
+# @brief collects procedures for calculating normal vectors as
+#        orthogonals to a tangent space
+#
+# @authors dka
+#
+# @revision
+#    2013-08-07 Written by dka
+#
+##############################################################
+  TangentSpaceNV:=module()
+  
+    export
+      CreateFlipNVSys; 
+
+$include <PeriodicBif/TangentSpaceNV/CreateFlipNVSys.txt>
+
+
+  end module; # AugSys2:-TangentSpaceNV 

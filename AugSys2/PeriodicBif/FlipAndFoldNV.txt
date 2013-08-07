@@ -14,13 +14,9 @@
   FlipAndFoldNV:=module()
   
     export
-      CreateFlipNVSys,
-      CreateFlipOrFoldNVSys,
-      CreateFoldNVSys; 
+      CreateFlipNVSys; 
 
 $include <PeriodicBif/FlipAndFoldNV/CreateFlipNVSys.txt>
-$include <PeriodicBif/FlipAndFoldNV/CreateFlipOrFoldNVSys.txt>
-$include <PeriodicBif/FlipAndFoldNV/CreateFoldNVSys.txt>
 
   end module; # AugSys2:-PeriodicBif:-FlipAndFoldNV 
  

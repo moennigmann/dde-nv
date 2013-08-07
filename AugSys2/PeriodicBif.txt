@@ -8,16 +8,19 @@
   #  @authors dka
   #
   #  @revision
-  #  2011-11-07 Written by dka
+  #  2013-08-07 added TangentSpaceNV by dka
+  #  2011-11-07 written by dka
   #
   ##############################################################
   PeriodicBif:=module()
   
     export
       FlipAndFoldNV,
-      NeimarkSackerNV;
+      NeimarkSackerNV,
+      TangentSpaceNV;
 
 $include <PeriodicBif/FlipAndFoldNV.txt>
 $include <PeriodicBif/NeimarkSackerNV.txt>
+$include <PeriodicBif/TangentSpaceNV.txt>
 
   end module; # AugSys2:-PeriodicBif
