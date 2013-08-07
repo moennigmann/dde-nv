@@ -15,7 +15,7 @@ CC= gcc
 FF= gfortran
 
 all: npsol_open.o npsol_close.o cwrap_npsol.o npsolconfunad.o npsolobjfunad.o \
-	set_params.o
+	set_params.o get_params.o
 
 #
 # compile c and fortran files
@@ -28,6 +28,9 @@ npsol_close.o: npsol_close.f
 
 set_params.o: set_params.f
 	${FF}  $(FFFLAGS) set_params.f -o set_params.o
+
+get_params.o: get_params.f
+	${FF}  $(FFFLAGS) get_params.f -o get_params.o
 
 cwrap_npsol.o: cwrap_npsol.c
 	${CC}  $(CCFLAGS) cwrap_npsol.c -o cwrap_npsol.o
