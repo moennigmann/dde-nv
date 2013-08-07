@@ -8,11 +8,26 @@
 # 2013-06-19 created by dka
 #
 ###############################################################################
-createExecutableBVPOpt:= proc()
+createExecutableBVPOpt:= proc(#optional methodName
+                             )
 
-  local OldDir, B_swnpsol, LE_swnpsol; 
+  local OldDir, B_swnpsol, LE_swnpsol, methodName; 
 
-
+    if (nargs>0)
+    then 
+      methodName:=args[1];
+    else
+      methodName:=twpbvp;  
+    end if; 
+    
+    #
+    # validate input for the method name
+    #
+    if not ((methodName='twpbvp') or (methodName='twpbvpdisc'))
+      then error("Method name should be 'twpbvp' or 'twpbvpdisc'",methodName);
+    end if; 
+  
+  
     OldDir:= currentdir();
     currentdir(WorkingDir); 
 
@@ -36,13 +51,14 @@ createExecutableBVPOpt:= proc()
       istate_swnpsol,         #ISTATE 
       c_swnpsol,              #C
       cjac_swnpsol,           #CJAC     
-     'objf_swnpsol',         #OBJF      
+     'objf_swnpsol',          #OBJF      
       grad_swnpsol,           #OBJGRD
       r_swnpsol,              #R
       xvec_swnpsol,           #X  
       LE_swnpsol,             #IW, LENW
       NumParams,              # not npsol arguments but used to pass
-      Params                  # parameters to npsol via common block
+      Params,                 # parameters to npsol via common block
+      methodName
     );
 
   currentdir(OldDir); 
