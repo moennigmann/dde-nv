@@ -7,6 +7,7 @@
 # @authors mmo, dka
 #
 # @revision
+#  2013-08-07 added Goswami1996
 #  2013-02-20 added Lehman1994
 #  2011-11-24 added Disney2003, Scott1990, Olsen1983
 #  2008-07-16 added SOFC Reformer
@@ -20,6 +21,7 @@ Models:= module()
     Agrawal1982,
     Disney2002,
     Disney2003,
+    Goswami1996,
     John1994,
     Lehman1994,
     Olsen1983,
@@ -30,6 +32,7 @@ Models:= module()
 $include <source/Agrawal1982.txt>
 $include <source/Disney2002.txt>
 $include <source/Disney2003.txt>
+$include <source/Goswami1996.txt>
 $include <source/John1994.txt>
 $include <source/Lehman1994.txt>
 $include <source/Olsen1983.txt>
