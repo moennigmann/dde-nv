@@ -1,6 +1,6 @@
 /****************************************************************************
 	Driver file of the dp_tides program
-	This file has been created by MathTIDES (1.20) June 13, 2013, 11:46
+	This file has been created by MathTIDES (1.20) July 8, 2013, 19:32
 
 	Copyright (C) 2010 A. Abad, R. Barrio, F. Blesa, M. Rodriguez
 	Grupo de Mecanica Espacial
@@ -50,8 +50,8 @@ int main() {
 /************************************************************/
 
 /* --- PARAMETERS VALUE --- */
-	p[0] = 1. ; 
-	p[1] = 2. ; 
+	p[0] = 2. ; 
+	p[1] = 3. ; 
 
 /* --- INITIAL VALUES --- */
 	v[0] = -0.3233 ; 
