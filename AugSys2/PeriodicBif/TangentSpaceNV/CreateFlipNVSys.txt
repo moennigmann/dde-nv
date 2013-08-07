@@ -1,0 +1,69 @@
+##########################################################################
+# 
+# @path AugSys2/PeriodicBif/TangentSpaceNV/CreateFlipNVSys.txt
+#
+# @brief Creates a normal vector system, where normal vectors are 
+#        calculated as orthogonals to a tangent space 
+# 
+# @authors dka
+#
+# @param  
+#   dimension of ODEs,  
+#   names of the critical paramters that suppose to stay free while calculating the tangent space
+#
+# @return 
+#   a system for finding normal vectors (symbolical)
+#
+# @revision
+# 2013-08-07 Written by dka
+# 
+##########################################################################
+    CreateFlipNVSys:=proc(
+      numOfDynEqns::integer,
+      freeCritParams::list
+    )
+
+      local FlipNVmodule, standardFlipConstrs, i1, i2, dimNV;
+      
+      #
+      # dimension of normal vectors
+      #
+      dimNV:=nops(freeCritParams)
+      
+      #
+      # get generic equations for flip NV system
+      #
+      FlipNVmodule:=AugSys2:-PeriodicBif:-FlipAndFoldNV:-CreateFlipNVSys(numOfDynEqns,dimNV);
+      standardFlipConstrs:=[seq(FlipNVmodule:-getEquations()[i1],i1=1..numOfDynEqns+1)];
+      
+      for i2 from 1 to dimNV do
+      
+      end do;
+        
+
+
+
+  
+      #------------------------------------------------------------
+      #
+      # build table for augmented system from lists
+      #
+      #------------------------------------------------------------
+      
+      #
+      # apart from vars listed explicitly, the following vars
+      # are passed on to template:
+      #   numOfDynEqns -> NumDynEqns
+      #
+        ExtendedSysToBeSubs:= table();
+        ExtendedSysToBeSubs["Equations"]:= ExtendedSystemEquations;
+        ExtendedSysToBeSubs["Variables"]:= ExtendedSystemVariables;
+        ExtendedSysToBeSubs["Internal"]:= InternalVariables;
+     
+        
+#$include <PeriodicBif/TangentSpaceNV/CreateFlipNVSys/TemplateModule.txt>
+
+
+    return result;
+
+       end proc;  #AugSys2:-PeriodicBif:-TangentSpaceNV:-CreateFlipNVSys

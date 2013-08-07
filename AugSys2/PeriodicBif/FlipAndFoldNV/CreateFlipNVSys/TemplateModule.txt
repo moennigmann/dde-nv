@@ -1,0 +1,43 @@
+###########################################################################
+# 
+# @path AugSys2/PeriodicBif/FlipAndFoldNV/CreateFlipNVSys/TemplateModule.txt 
+#
+# @brief Template for the module CreateFlipNVSys
+#
+# @param none
+#
+# @return NV system for flip critical boundaries of periodic soltutions of ODEs
+# 
+# @notes
+#   (1) local var names of module which are similar to names 
+#   which occur in constructor AugSys2:-PeriodicBif:-FlipAndFoldNV are 
+#   appended by "InModule" 
+#
+###########################################################################
+      result := module() # Template
+  
+        export 
+          getSys,
+          getInternalVars,
+          getVars,
+          getEquations; 
+  
+        local 
+          ExtendedSysInModule, NumNVparamsInModule, NumOfDynEqnsInModule; 
+  
+        #
+        # receive information from constructor
+        #
+          ExtendedSysInModule:= copy(ExtendedSysToBeSubs);
+          NumOfDynEqnsInModule:= numOfDynEqns; 
+          NumNVparamsInModule:= numOfUncParam; 
+ 
+
+$include <PeriodicBif/FlipAndFoldNV/CreateFlipNVSys/TemplateModule/getSys.txt>
+$include <PeriodicBif/FlipAndFoldNV/CreateFlipNVSys/TemplateModule/getInternalVars.txt>
+$include <PeriodicBif/FlipAndFoldNV/CreateFlipNVSys/TemplateModule/getVars.txt>
+$include <PeriodicBif/FlipAndFoldNV/CreateFlipNVSys/TemplateModule/getEquations.txt>
+
+
+
+      end module; # Template  
