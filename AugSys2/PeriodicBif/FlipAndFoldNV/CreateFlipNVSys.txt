@@ -24,7 +24,7 @@
 ##########################################################################
     CreateFlipNVSys:=proc(
       numOfDynEqns::integer,
-      numOfUncParam::integer,
+      numOfUncParam::integer
       # optional radius
     )
 

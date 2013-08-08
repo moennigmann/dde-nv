@@ -10,9 +10,13 @@
 # @param  
 #   dimension of ODEs,  
 #   names of the critical paramters that suppose to stay free while calculating the tangent space
+#   epsilon (optional, by default epsilon=0.01)
 #
 # @return 
 #   a system for finding normal vectors (symbolical)
+#
+# @notes 
+#   freeCritParams should be given in the order [alpha_m,aplhaEps_m[1],aplhaEps_m[2],...]
 #
 # @revision
 # 2013-08-07 Written by dka
@@ -21,14 +25,32 @@
     CreateFlipNVSys:=proc(
       numOfDynEqns::integer,
       freeCritParams::list
+      # optional epsilon
     )
 
-      local FlipNVmodule, standardFlipConstrs, i1, i2, dimNV;
+      local FlipNVmodule, standardFlipConstrs, i1, i2, dimNV,
+      ExtendedSystemEquations, ExtendedSystemVariables, InternalVariables,
+      epsilonVarsList, lastCoeff, i3, epsilonNV, standardFlipVars,
+      standardFlipIntVars, ExtendedSysToBeSubs, result;
+      
+      #
+      # extract optional arguments
+      #
+        if 
+          nargs>2
+        then 
+          epsilonNV:= args[3];
+          if not (epsilonNV>0)
+  	  then error("Value for epsilon is given not correct",epsilonNV);
+   	  end if;
+        else
+          epsilonNV:=0.01; 
+        end if; 
       
       #
       # dimension of normal vectors
       #
-      dimNV:=nops(freeCritParams)
+      dimNV:=nops(freeCritParams);
       
       #
       # get generic equations for flip NV system
@@ -36,13 +58,51 @@
       FlipNVmodule:=AugSys2:-PeriodicBif:-FlipAndFoldNV:-CreateFlipNVSys(numOfDynEqns,dimNV);
       standardFlipConstrs:=[seq(FlipNVmodule:-getEquations()[i1],i1=1..numOfDynEqns+1)];
       
-      for i2 from 1 to dimNV do
+      #
+      # equations for the tangent space
+      #
+      ExtendedSystemEquations:=standardFlipConstrs;
       
+      for i2 from 1 to dimNV-1 do
+	epsilonVarsList:=[Fx=FxEps[i2],w=wEps[i2]];
+	ExtendedSystemEquations:=[op(ExtendedSystemEquations),op(subs(epsilonVarsList,standardFlipConstrs))];
       end do;
-        
-
-
-
+      
+      #
+      # equations for the normal vector
+      #
+      lastCoeff:=1/(sum(((freeCritParams[i3]-freeCritParams[1])/epsilonNV)^2,i3=2..dimNV)+1)^(1/2);
+      
+      for i2 from 2 to dimNV do
+	ExtendedSystemEquations:=[op(ExtendedSystemEquations),0=r[i2-1]+lastCoeff/epsilonNV*(freeCritParams[i2]-freeCritParams[1])];
+      end do;
+      ExtendedSystemEquations:=[op(ExtendedSystemEquations),0=r[dimNV]-lastCoeff];
+      
+      #
+      # variables in the normal vector system
+      #
+      standardFlipVars:=[seq(w[i1],i1=1..numOfDynEqns)];
+      ExtendedSystemVariables:=standardFlipVars;
+      
+      for i2 from 1 to dimNV-1 do
+	epsilonVarsList:=[w=wEps[i2]];
+	ExtendedSystemVariables:=[op(ExtendedSystemVariables),op(subs(epsilonVarsList,standardFlipVars))];
+      end do;
+      
+      ExtendedSystemVariables:=[op(ExtendedSystemVariables),seq(r[i1],i1=1..dimNV)];
+      
+      #
+      # internal variables in the normal vector system
+      # (values that are culculated by the BVP solver)
+      #
+      standardFlipIntVars:=[seq(FlipNVmodule:-getInternalVars()[i1],i1=1..numX*numX)];
+      InternalVariables:=standardFlipIntVars;
+      
+      for i2 from 1 to dimNV-1 do
+	epsilonVarsList:=[Fx=FxEps[i2]];
+	InternalVariables:=[op(InternalVariables),op(subs(epsilonVarsList,standardFlipIntVars))];
+      end do;
+      
   
       #------------------------------------------------------------
       #
@@ -61,7 +121,7 @@
         ExtendedSysToBeSubs["Internal"]:= InternalVariables;
      
         
-#$include <PeriodicBif/TangentSpaceNV/CreateFlipNVSys/TemplateModule.txt>
+$include <PeriodicBif/TangentSpaceNV/CreateFlipNVSys/TemplateModule.txt>
 
 
     return result;
