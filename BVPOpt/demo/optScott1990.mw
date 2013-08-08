@@ -300,7 +300,7 @@ startingPoint:=subs([dist = 0.5e-1, mu0Star = .4283839183, gStar = .2453231704, 
 <Group labelreference="L992" drawlabel="true">
 <Input>
 <Text-field prompt="&gt; " style="Maple Input" layout="Normal">#
-# create instance of BVPOpt, which uses NPSOL and inegration of a BVP problem with TWPBVP
+# create instance of BVPOpt, which uses NPSOL and integration of a BVP problem with TWPBVP
 # parameters: ODE system which will be integrated internally with TWPBVP,
 #             NLP, where derivatives that should be calculated with TIDES are declared as &quot;Internal&quot;,
 #             directory, where NPSOL output files will be stored,
@@ -343,7 +343,8 @@ BVPOptProc:-createExecutableBVPOpt();</Text-field>
 </Group>
 <Group labelreference="L1159" drawlabel="true">
 <Input>
-<Text-field prompt="&gt; " style="Maple Input" layout="Normal">currentdir(&quot;./tmpScott1&quot;): </Text-field>
+<Text-field prompt="&gt; " style="Maple Input" layout="Normal">oldDir:=currentdir():
+currentdir(&quot;./tmpScott1&quot;): </Text-field>
 </Input>
 </Group>
 <Group labelreference="L1160" drawlabel="true">
@@ -351,7 +352,8 @@ BVPOptProc:-createExecutableBVPOpt();</Text-field>
 <Text-field prompt="&gt; " style="Maple Input" layout="Normal">#
 # run optimization procedure
 #
-system(&quot;./run_npsol.o&quot;);</Text-field>
+system(&quot;./run_npsol.o&quot;);
+currentdir(oldDir):</Text-field>
 </Input>
 </Group>
 <Group labelreference="L1124" drawlabel="true">
@@ -363,7 +365,7 @@ system(&quot;./run_npsol.o&quot;);</Text-field>
 <Input>
 <Text-field prompt="&gt; " style="Maple Input" layout="Normal">#
 # objective function value
-# (scaled in integral objective function template for better performance)
+# (scaled in the integral objective function template for better performance)
 #
 objF := -6068.866:
 objFResult:=objF/10000;</Text-field>
@@ -479,7 +481,7 @@ uncertOfPointPlot:=polygon(uncertOfPoint, color = gray):</Text-field>
 </Group>
 <Group labelreference="L1120" drawlabel="true">
 <Input>
-<Text-field prompt="&gt; " style="Maple Input" layout="Normal"><Equation executable="true" style="2D Input" input-equation="" display="LUklbXJvd0c2Iy9JK21vZHVsZW5hbWVHNiJJLFR5cGVzZXR0aW5nR0koX3N5c2xpYkdGJzYlLUkjbWlHRiQ2JVEhRicvJSdpdGFsaWNHUSV0cnVlRicvJSxtYXRodmFyaWFudEdRJ2l0YWxpY0YnLyUrZXhlY3V0YWJsZUdRJmZhbHNlRicvRjNRJ25vcm1hbEYn">JSFH</Equation></Text-field>
+<Text-field prompt="&gt; " style="Maple Input" layout="Normal"><Equation executable="true" style="2D Input" input-equation="" display="LUklbXJvd0c2Iy9JK21vZHVsZW5hbWVHNiJJLFR5cGVzZXR0aW5nR0koX3N5c2xpYkdGJzYlLUkjbWlHRiQ2JVEhRicvJSdpdGFsaWNHUSV0cnVlRicvJSxtYXRodmFyaWFudEdRJ2l0YWxpY0YnLyUrZXhlY3V0YWJsZUdRJmZhbHNlRicvRjNRJ25vcm1hbEYn">LUklbXJvd0c2Iy9JK21vZHVsZW5hbWVHNiJJLFR5cGVzZXR0aW5nR0koX3N5c2xpYkdGJzYjLUkjbWlHRiQ2JVEhRicvJSdpdGFsaWNHUSV0cnVlRicvJSxtYXRodmFyaWFudEdRJ2l0YWxpY0Yn</Equation></Text-field>
 </Input>
 </Group>
 </Worksheet>
