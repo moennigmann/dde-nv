@@ -1,0 +1,657 @@
+###########################################################################
+# 
+# @path AugSys2/SdDelayBif/GenEigNV/CreateGenEigNVSys.txt
+#
+# @brief Creates an augmented NV system for Generalized critical boundaries
+#        for DDESys with state dependent delay without algebraic equations
+#
+# @param  
+#   a model (state dependent DDESys) to be augmented by system for finding normal vectors to generalized eigenvalue constraints,
+#   list of names of free parameters Alpha
+#
+# @notes
+#    (i) DelVars in DDESys should contain N*M names of variables that correspond to the order: 
+#        [var1(t-tau1),var2(t-tau1),...,varN(t-tau1),
+#         var1(t-tau2),var2(t-tau2),...,varN(t-tau2),
+#         ..., var1(t-tauM),var2(t-tauM),...,varN(t-tauM)],
+#         where N=dim(DDESys["DynVars"]) and M is number of delays
+#    (ii) We refer to delays as tau[j] and collect them in a vector of delays 
+#        
+#
+# @authors dka, jot
+#
+# @return 
+#     normal vector system for DDEs
+# 
+# @revision
+#     2015-04-30 removed some bugs, coming from mistakes made during last change by jot	
+#     2015-02-18 modification which enable generalized eigenvaule constraints by jot
+#     2015-02-10 Created from a copy of SdDelayBif/HopfNV/CreateHopfNVSys by jot 
+# 
+###########################################################################
+    CreateGenEigNVSys:=proc(
+      aSys::DDESys,
+      ListOfNVparams::list(name)
+    )
+
+      local ListofNames, item, ComplexRightEigSys, ExtendedSysToBeSubs,
+     	ExtendedSystemEquations, ExtendedSystemVariables,
+	ExtendedSystemParameters, DESys, A0, A0Transp, A0x,
+	A0alpha, f_p, A0pTransp, V1, V2, U, R, NewVariables, NewEquations, 
+        f_alpha,f_alphaTransp,W1,W2,fxx_w1,v1_fxx_w1,fxx_w2,v2_fxx_w2,
+        fxalpha_w1,v1_fxalpha_w1,fxalpha_w2,v2_fxalpha_w2,
+        NumNVparamsToBeSubs, ParsOfModel, VarsOfModel, result, 
+        DynEqnsOfModel, NumOfEqnsOfModel, i2, NumOfDynEqnsInModule,
+        listofDelVars, numberOfDelays, listofDelays,tau, Atau, AtauTransp, AtauX, AtauAlpha, 
+        itTau, VarsDelTau, V1Vec, V2Vec, W1Vec, W2Vec, UVec, RVec,
+        replacementForDelayVars, partialSum, delayTerm, j1, 
+        A1x_w1, A1x_w2, v1_A1x_w1, v2_A1x_w1, v1_A1x_w2, v2_A1x_w2,
+        A1alpha_w1, A1alpha_w2, v1_A1alpha_w1, v2_A1alpha_w1, 
+        v1_A1alpha_w2, v2_A1alpha_w2;
+        
+
+       #
+       # make sure entries of ListOfNVparams exist in first arg
+       #
+
+        ListofNames:=map(lhs,aSys["Parameters"]);
+
+        for item in ListOfNVparams do
+          if not member(item,ListofNames)
+	  then
+	    error(
+	      "requested normal vector parameter %1 does not exist in model",
+	      item
+	    );
+	  end if;
+	end do; 
+
+	
+	
+
+      
+
+       #
+       # make sure that dimension of aSys["DelVars"] is equal to N*M
+       #
+
+       listofDelVars:=aSys["DelVars"];
+       numberOfDelays:=nops(listofDelVars)/nops(aSys["DynVars"]);
+
+       if not type(numberOfDelays,integer)
+	 then
+	   error(
+	     "dimension of names for delayed variables \"DynVars\" which is equal to %1 should result from the number of delays multiplied by %2",
+	      nops(listofDelVars),
+	      nops(aSys["DynVars"])
+	   );
+       end if;
+
+      #
+      # make sure, that the number of entries in aSys["Delays"] is equal to number of Delays
+      #
+ 
+      listofDelays:=aSys["Delays"];
+
+      if not evalb(nops(listofDelays)=numberOfDelays)
+	 then
+	   error("number of delays in DDE and number of elements in delay vector are not equal",nops(listofDelays),numberOfDelays);
+       end if;
+       
+      #
+      # assign the elements of listofDelays to the variables tau[]
+      #      
+       for j1 from 1 to numberOfDelays do
+
+	    tau[j1]:=rhs(listofDelays[j1]);
+      end do;
+ 
+      #
+      # substitude into DynEqns AlgEqns, prepare some variables
+      # 
+       
+        DESys := Aux:-SystemClasses:-subsExplicitAEsIntoDAESys(aSys); 
+        
+
+        DynEqnsOfModel:= DESys["ODEs"]; 
+        NumOfEqnsOfModel:= nops(DynEqnsOfModel);
+        VarsOfModel:= DESys["DynVars"];
+        ParsOfModel:= DESys["Parameters"]; 
+
+      #
+      # A0 equals df/dx(t)
+      #
+  
+        A0:= Aux:-Derivs:-f_x(
+          DynEqnsOfModel,
+          VarsOfModel
+        );
+
+        A0Transp:= LinearAlgebra[Transpose](A0); 
+
+        f_alpha:= Aux:-Derivs:-f_p(
+          DynEqnsOfModel,
+          ListOfNVparams
+        );
+
+        f_alphaTransp:= LinearAlgebra[Transpose](
+          f_alpha
+        ); 
+
+        A0x:= Aux:-Derivs:-f_xx(
+          DynEqnsOfModel,
+          VarsOfModel
+        ); 
+
+        A0alpha:= Aux:-Derivs:-f_xp(
+	  DynEqnsOfModel,
+          VarsOfModel,
+          ListOfNVparams
+ 	);         
+ 
+
+      #
+      # Atau[i] equals df/dx(t-tau[i])
+      #
+
+      for itTau from 1 to numberOfDelays do
+        
+
+        VarsDelTau:=[seq(listofDelVars[jTau],
+                     jTau=NumOfEqnsOfModel*(itTau-1)+1..NumOfEqnsOfModel*(itTau))];
+
+	
+	Atau[itTau]:= Aux:-Derivs:-f_x(
+          DynEqnsOfModel,
+          VarsDelTau
+        );
+
+        AtauTransp[itTau]:= LinearAlgebra[Transpose](Atau[itTau]); 
+
+        AtauX[itTau]:= Aux:-Derivs:-f_xp(
+          DynEqnsOfModel,
+          VarsDelTau,
+          VarsOfModel
+        ); 
+
+        AtauAlpha[itTau]:= Aux:-Derivs:-f_xp(
+	  DynEqnsOfModel,
+          VarsDelTau,
+          ListOfNVparams
+ 	);         
+
+      end do;
+
+      
+      #------------------------------------------------------------
+      #
+      # start construction of normal vector system
+      #
+      #------------------------------------------------------------
+        #
+        # v1, v2, w1, w2 
+        #
+          V1:= [seq(
+            v1[i1], 
+            i1=1..NumOfEqnsOfModel)
+          ]; 
+
+          V2:= [seq(
+            v2[i1], 
+            i1=1..NumOfEqnsOfModel)
+          ];
+  
+          W1:= [seq(
+            w1[i1], 
+            i1=1..NumOfEqnsOfModel)
+          ]; 
+
+          W2:= [seq(
+            w2[i1], 
+            i1=1..NumOfEqnsOfModel)
+          ];
+  
+        #
+        # u and r 
+        #
+          U:= [seq(
+          u[i1], 
+            i1=1..NumOfEqnsOfModel)
+          ]; 
+  
+          R:= [seq(
+          r[i1], 
+            i1=1..nops(ListOfNVparams))
+          ]; 
+  
+          V1Vec:= convert(V1,Vector);
+          V2Vec:= convert(V2,Vector);
+          W1Vec:= convert(W1,Vector);
+          W2Vec:= convert(W2,Vector);
+          UVec:= convert(U,Vector);
+          RVec:= convert(R,Vector);    
+
+       
+      # augmented system will be in ExtendedSystemEquations, 
+      # ExtendedSystemVariables etc., 
+      # lists NewEquations, NewVariables are used to build next block 
+      #
+
+       #--------------------
+       #
+       # model equations f=0
+       #
+       #--------------------
+
+          NewEquations:= [seq(
+            0= rhs(DESys["ODEs"][i1]),
+            i1= 1..nops(DESys["ODEs"])
+          )];
+          
+          # replace delayed variables with steady states
+    
+          replacementForDelayVars:=[];
+
+          for itTau from 1 to numberOfDelays do
+	    replacementForDelayVars:=[op(replacementForDelayVars),
+	                              seq(listofDelVars[jTau]=VarsOfModel[jTau],
+	                                 jTau=NumOfEqnsOfModel*(itTau-1)+1..NumOfEqnsOfModel*(itTau))];
+          end do;
+          
+          NewEquations:=subs(replacementForDelayVars,NewEquations);
+  
+          NewVariables:= DESys["DynVars"];
+
+          #
+          # ExtendedSystem with NewEquations, NewVariables
+          #
+            ExtendedSystemEquations:= NewEquations;
+            ExtendedSystemVariables:= NewVariables; 
+
+        
+   
+        #----------------------------------------
+        #
+        # A0 w1 + A1 exp(sigma tau) cos(omega tau) w1 + A1 exp(sigma tau) sin(omega tau) w2 + omega w2 =0
+        #
+        #----------------------------------------
+
+    
+         partialSum:=Vector(NumOfEqnsOfModel);
+         for j1 from 1 to numberOfDelays do
+	    partialSum:=partialSum+(Atau[j1].W1Vec)*exp(sigma*tau[j1])*cos(omega*tau[j1])+(Atau[j1].W2Vec)*exp(sigma*tau[j1])*sin(omega*tau[j1]);
+         end do;         
+        
+         NewEquations := A0.W1Vec + partialSum + omega*W2Vec - sigma*W1Vec;
+         
+         NewEquations:=[seq(0=NewEquations[i1],i1=1..NumOfEqnsOfModel)];
+         NewEquations:=subs(replacementForDelayVars,NewEquations);
+
+         NewVariables:=[sigma,omega,op(W1),op(W2)];
+          
+          ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            op(NewEquations)                    
+          ];
+  
+          ExtendedSystemVariables:= [
+            op(ExtendedSystemVariables),
+            op(NewVariables)
+          ];
+
+        
+        #----------------------------------------
+        #
+        # A0 w2 + A1 exp(sigma tau) cos(omega tau) w2 - A1 exp(sigma tau) sin(omega tau) w1 - omega w1 =0
+        #
+        #----------------------------------------
+
+         
+        partialSum:=Vector(NumOfEqnsOfModel);
+        for j1 from 1 to numberOfDelays do
+	    partialSum:=partialSum+(Atau[j1].W2Vec)*exp(sigma*tau[j1])*cos(omega*tau[j1])-(Atau[j1].W1Vec)*exp(sigma*tau[j1])*sin(omega*tau[j1]);
+        end do;         
+        
+        NewEquations := A0.W2Vec + partialSum - omega*W1Vec - sigma*W2Vec;
+
+        NewEquations:=[seq(0=NewEquations[i1],i1=1..NumOfEqnsOfModel)];
+        NewEquations:=subs(replacementForDelayVars,NewEquations);
+
+        ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            op(NewEquations)                    
+          ];
+
+
+        #----------------------------------------
+        #
+        # (w1-Iw2)^T(w1+Iw2) -1 =0
+        #
+        #----------------------------------------
+
+        
+
+       NewEquations := LinearAlgebra[Transpose](W1Vec).W1Vec
+                       +LinearAlgebra[Transpose](W2Vec).W2Vec-1;
+
+
+       ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            0=NewEquations                    
+          ];
+
+        #----------------------------------------
+        #
+        # w1^T w2 =0
+        #
+        #----------------------------------------
+       
+
+        NewEquations := LinearAlgebra[Transpose](W1Vec).W2Vec;
+
+        ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            0=NewEquations                    
+          ];
+
+
+        #----------------------------------------
+        #
+        # m(sigma,omega)=0
+        #
+        #----------------------------------------
+	
+	NewEquations := sigma + 0.1;
+
+        ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            0=NewEquations                    
+          ];
+
+
+        #----------------------------------------
+        #
+        # A0^T v1 + A1^T v1 exp(sigma tau) cos(omega tau) - A1^T v2 exp(sigma tau) sin (omega tau) - omega v2 - sigma v1 + g1 w1 - g2 w2 =0
+        #
+        #----------------------------------------
+
+        partialSum:=Vector(NumOfEqnsOfModel);
+        for j1 from 1 to numberOfDelays do
+	    partialSum:=partialSum
+	                +(AtauTransp[j1].V1Vec)*exp(sigma*tau[j1])*cos(omega*tau[j1])
+                        -(AtauTransp[j1].V2Vec)*exp(sigma*tau[j1])*sin(omega*tau[j1]);
+        end do;
+
+         NewEquations := A0Transp.V1Vec + partialSum
+                        -omega*V2Vec
+                        -sigma*V1Vec
+                        +g1*W1Vec
+                        -g2*W2Vec;
+         
+         NewEquations:=[seq(0=NewEquations[i1],i1=1..NumOfEqnsOfModel)];
+         NewEquations:=subs(replacementForDelayVars,NewEquations);
+
+         NewVariables:=[op(V1),op(V2),g1,g2];
+          
+          ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            op(NewEquations)                    
+          ];
+  
+          ExtendedSystemVariables:= [
+            op(ExtendedSystemVariables),
+            op(NewVariables)
+          ];
+
+
+        #----------------------------------------
+        #
+        # A0^T v2 + A1^T v2 exp(sigma tau) cos(omega tau) + A1^T v1 exp(sigma tau) sin (omega tau) + omega v1 - sigma v2  + g1 w2 + g2 w1 =0
+        #
+        #----------------------------------------
+
+        partialSum:=Vector(NumOfEqnsOfModel);
+        for j1 from 1 to numberOfDelays do
+	    partialSum:=partialSum
+	                +(AtauTransp[j1].V2Vec)*exp(sigma*tau[j1])*cos(omega*tau[j1])
+	                +(AtauTransp[j1].V1Vec)*exp(sigma*tau[j1])*sin(omega*tau[j1]);
+        end do;
+
+         NewEquations := A0Transp.V2Vec + partialSum
+                        +omega*V1Vec
+                        -sigma*V2Vec
+                        +g1*W2Vec
+                        +g2*W1Vec;
+
+        NewEquations:=[seq(0=NewEquations[i1],i1=1..NumOfEqnsOfModel)];
+        NewEquations:=subs(replacementForDelayVars,NewEquations);
+
+        ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            op(NewEquations)                    
+          ];
+
+
+        #----------------------------------------
+        #
+        # v1^T w1 + v2^T w2 -m_sigma=0
+        #
+        #----------------------------------------
+
+   partialSum:=0;
+     for j1 from 1 to numberOfDelays do
+	    partialSum:=partialSum
+                        +(LinearAlgebra[Transpose](V1Vec).(Atau[j1].W1Vec))*cos(sigma*tau[j1])*tau[j1]
+                        -(LinearAlgebra[Transpose](V1Vec).(Atau[j1].W2Vec))*sin(sigma*tau[j1])*tau[j1]
+                        +(LinearAlgebra[Transpose](V2Vec).(Atau[j1].W2Vec))*cos(sigma*tau[j1])*tau[j1]
+                        +(LinearAlgebra[Transpose](V2Vec).(Atau[j1].W1Vec))*sin(sigma*tau[j1])*tau[j1];
+        end do; 
+        
+        NewEquations := -LinearAlgebra[Transpose](V1Vec).W1Vec
+                        -LinearAlgebra[Transpose](V2Vec).W2Vec
+                        -1
+                        +partialSum;
+
+        NewEquations:=subs(replacementForDelayVars,NewEquations);
+
+        ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            0=NewEquations                    
+          ];
+  
+         
+        #----------------------------------------
+        #
+        # v1^T w2 -v2^T w1 + m_omega
+	#		   - v1^T A1 w1 tau exp(sigma tau) sin(omega tau) + v1^T A1 w2 tau exp(sigma tau) cos(omega tau) 
+        #                  - v2^T A1 w2 tau exp(sigma tau) sin(omega tau) - v2^T A1 w1 tau exp(sigma tau) cos(omega tau) =0
+        #
+        #----------------------------------------
+       
+
+        partialSum:=0;
+        for j1 from 1 to numberOfDelays do
+	    partialSum:=partialSum
+                        -(LinearAlgebra[Transpose](V1Vec).(Atau[j1].W1Vec))*exp(sigma*tau[j1])*sin(omega*tau[j1])*tau[j1]
+                        +(LinearAlgebra[Transpose](V1Vec).(Atau[j1].W2Vec))*exp(sigma*tau[j1])*cos(omega*tau[j1])*tau[j1]
+                        -(LinearAlgebra[Transpose](V2Vec).(Atau[j1].W2Vec))*exp(sigma*tau[j1])*sin(omega*tau[j1])*tau[j1]
+                        -(LinearAlgebra[Transpose](V2Vec).(Atau[j1].W1Vec))*exp(sigma*tau[j1])*cos(omega*tau[j1])*tau[j1];
+        end do; 
+        
+        NewEquations := LinearAlgebra[Transpose](V1Vec).W2Vec
+                        -LinearAlgebra[Transpose](V2Vec).W1Vec
+                        +partialSum;
+
+        NewEquations:=subs(replacementForDelayVars,NewEquations);
+
+        ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            0=NewEquations                    
+          ];
+
+
+        #----------------------------------------
+        #
+        # A0^T u + v1^T A0x w1+ v2^T A0x w2 + v1^T A1x w1 exp(sigma tau) cos(omega tau) + v1^T A1x w2 exp(sigma tau) sin (omega tau) 
+        #                                   + v2^T A1x w2 exp(sigma tau) cos(omega tau) - v2^T A1x w1 exp(sigma tau) sin (omega tau) =0
+        #
+        #----------------------------------------
+          fxx_w1:= Aux:-TensProd:-Tijk_xj(
+            A0x, W1
+          );
+
+          v1_fxx_w1:= Aux:-TensProd:-xi_Aij(
+            V1,
+            fxx_w1
+          );
+
+          fxx_w2:= Aux:-TensProd:-Tijk_xj(
+            A0x, W2
+          );
+
+          v2_fxx_w2:= Aux:-TensProd:-xi_Aij(V2,fxx_w2);
+          
+          partialSum:=Vector(NumOfEqnsOfModel);
+          
+          for j1 from 1 to numberOfDelays do
+	     
+	     A1x_w1[j1]:= Aux:-TensProd:-Tijk_xj(AtauX[j1], W1);
+	     A1x_w2[j1]:= Aux:-TensProd:-Tijk_xj(AtauX[j1], W2);
+	     
+	     v1_A1x_w1[j1]:= Aux:-TensProd:-xi_Aij(V1,A1x_w1[j1]);
+	     v2_A1x_w1[j1]:= Aux:-TensProd:-xi_Aij(V2,A1x_w1[j1]);
+	     v1_A1x_w2[j1]:= Aux:-TensProd:-xi_Aij(V1,A1x_w2[j1]);
+	     v2_A1x_w2[j1]:= Aux:-TensProd:-xi_Aij(V2,A1x_w2[j1]); 
+
+	     partialSum:=partialSum
+	                 +convert(v1_A1x_w1[j1],Vector)*exp(sigma*tau[j1])*cos(omega*tau[j1])
+	                 +convert(v1_A1x_w2[j1],Vector)*exp(sigma*tau[j1])*sin(omega*tau[j1])
+	                 +convert(v2_A1x_w2[j1],Vector)*exp(sigma*tau[j1])*cos(omega*tau[j1])
+	                 -convert(v2_A1x_w1[j1],Vector)*exp(sigma*tau[j1])*sin(omega*tau[j1]);
+          end do; 
+
+          NewEquations:= A0Transp.UVec 
+                         + convert(v1_fxx_w1,Vector)
+                         + convert(v2_fxx_w2,Vector);
+
+          NewEquations:=[seq(0=NewEquations[i1],i1=1..NumOfEqnsOfModel)];
+          NewEquations:=subs(replacementForDelayVars,NewEquations);   
+          
+          NewVariables:= U;
+          
+          ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            op(NewEquations)                    
+          ];
+  
+          ExtendedSystemVariables:= [
+            op(ExtendedSystemVariables),
+            op(NewVariables)
+          ];
+
+
+
+        #----------------------------------------
+        #
+        # f_alpha^T u + v1^T A0alpha w1 + v2^T A0alpha w2 
+        #             + v1^T A1alpha w1 exp(sigma tau) cos(omega tau) + v1^T A1alpha w2 exp(sigma tau) sin(omega tau)
+        #             + v2^T A1alpha w2 exp(sigma tau) cos(omega tau) - v2^T A1alpha w1 exp(sigma tau) sin(omega tau) - r =0
+        #
+        #----------------------------------------
+          fxalpha_w1:= Aux:-TensProd:-Tijk_xj(
+            A0alpha, W1
+          );
+
+          v1_fxalpha_w1:= Aux:-TensProd:-xi_Tij(
+            V1,
+            fxalpha_w1
+          ); 
+
+          fxalpha_w2:= Aux:-TensProd:-Tijk_xj(
+            A0alpha, W2
+          );
+
+          v2_fxalpha_w2:= Aux:-TensProd:-xi_Tij(
+            V2,
+            fxalpha_w2
+          ); 
+
+          partialSum:=Vector(NumOfEqnsOfModel);
+          
+          for j1 from 1 to numberOfDelays do
+	     
+	     A1alpha_w1[j1]:= Aux:-TensProd:-Tijk_xj(AtauAlpha[j1], W1);
+	     A1alpha_w2[j1]:= Aux:-TensProd:-Tijk_xj(AtauAlpha[j1], W2);
+	     
+	     v1_A1alpha_w1[j1]:= Aux:-TensProd:-xi_Aij(V1,A1alpha_w1[j1]);
+	     v2_A1alpha_w1[j1]:= Aux:-TensProd:-xi_Aij(V2,A1alpha_w1[j1]);
+	     v1_A1alpha_w2[j1]:= Aux:-TensProd:-xi_Aij(V1,A1alpha_w2[j1]);
+	     v2_A1alpha_w2[j1]:= Aux:-TensProd:-xi_Aij(V2,A1alpha_w2[j1]); 
+
+	     partialSum:=partialSum
+	                 +convert(v1_A1alpha_w1[j1],Vector)*exp(sigma*tau[j1])*cos(omega*tau[j1])
+	                 +convert(v1_A1alpha_w2[j1],Vector)*exp(sigma*tau[j1])*sin(omega*tau[j1])
+	                 +convert(v2_A1alpha_w2[j1],Vector)*exp(sigma*tau[j1])*cos(omega*tau[j1])
+	                 -convert(v2_A1alpha_w1[j1],Vector)*exp(sigma*tau[j1])*sin(omega*tau[j1]);
+          end do; 
+
+          NewEquations:= f_alphaTransp.UVec 
+                         + convert(v1_fxalpha_w1,Vector) 
+                         + convert(v2_fxalpha_w2,Vector)
+                         + partialSum
+                         - RVec;
+
+
+          NewEquations:=[seq(0=NewEquations[i1],i1=1..nops(ListOfNVparams))];
+          NewEquations:=subs(replacementForDelayVars,NewEquations);   
+
+          NewVariables:= R; 
+
+
+           ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            op(NewEquations)                    
+          ];
+
+
+           ExtendedSystemVariables:= [
+            op(ExtendedSystemVariables),
+            op(NewVariables)
+          ];
+         
+      #------------------------------------------------------------
+      #
+      # insert delays
+      #   
+      #------------------------------------------------------------
+      
+      # ExtendedSystemEquations:=Aux:-ListOperations:-subsEqnListIntoEqn(
+      #  aSys["Delays"],
+      #  ExtendedSystemEquations
+      #);
+      
+      
+      #------------------------------------------------------------
+      #
+      # build table for augmented system from lists
+      #
+      #------------------------------------------------------------
+      
+      #
+      # apart from vars listed explicitly, the following vars
+      # are passed on to template:
+      #   A0 -> Jac
+      #   NumOfEqnsOfModel -> NumDynEqns
+      #
+        ExtendedSysToBeSubs:= table();
+        ExtendedSysToBeSubs["Equations"]:= ExtendedSystemEquations;
+        ExtendedSysToBeSubs["Variables"]:= ExtendedSystemVariables;
+        ExtendedSysToBeSubs["Parameters"]:= [op(DESys["Parameters"])];
+    
+        NumNVparamsToBeSubs:= nops(ListOfNVparams); 
+
+$include <SdDelayBif/GenEigNV/CreateGenEigNVSys/TemplateModule.txt>
+
+    return result;
+
+       end proc;  #AugSys2:-SdDelayBif:-GenEigNV:-CreateGenEigNVSys

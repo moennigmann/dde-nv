@@ -1,0 +1,22 @@
+##############################################################
+#
+#  @path AugSys2/SdDelayBif/GenEigNV.txt
+#
+#  @brief collects procedures for augmenting generalized critical boundaries
+#         of continuous ODEs with one delay by normal vector system 
+#
+#  @author jot
+#
+#  @revision
+#  #  2015-02-10 Created out a copy of SdDelayBif/HopfNV.txt by jot
+#
+##############################################################
+  GenEigNV:=module()
+  
+    export
+      CreateGenEigNVSys; 
+
+$include <SdDelayBif/GenEigNV/CreateGenEigNVSys.txt>
+
+
+  end module; # AugSys2:-SdDelayBif:-GenEigNV

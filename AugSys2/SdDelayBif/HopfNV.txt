@@ -1,0 +1,20 @@
+##############################################################
+#
+#  @path AugSys2/SdDelayBif/HopfNV.txt
+#
+#  @brief collects procedures for augmenting Hopf critical boundaries
+#         of continuous ODEs with one delay by normal vector system 
+#
+#  @revision
+#  2015-01-19 Created out a copy of DelayBif/HopfNV.txt by jot
+#
+##############################################################
+  HopfNV:=module()
+  
+    export
+      CreateHopfNVSys; 
+
+$include <SdDelayBif/HopfNV/CreateHopfNVSys.txt>
+
+
+  end module; # AugSys2:-SdDelayBif:-HopfNV
