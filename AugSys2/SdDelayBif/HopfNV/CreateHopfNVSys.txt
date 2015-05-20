@@ -630,18 +630,7 @@
             op(NewVariables)
           ];
          
-      #------------------------------------------------------------
-      #
-      # insert delays
-      #   
-      #------------------------------------------------------------
-      
-      # ExtendedSystemEquations:=Aux:-ListOperations:-subsEqnListIntoEqn(
-      #  aSys["Delays"],
-      #  ExtendedSystemEquations
-      #);
-      
-      
+     
       #------------------------------------------------------------
       #
       # build table for augmented system from lists
