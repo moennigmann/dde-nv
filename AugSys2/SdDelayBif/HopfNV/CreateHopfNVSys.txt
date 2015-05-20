@@ -88,6 +88,10 @@
        end if;
 
       #
+      # here comes the core of state dependency:
+      #
+      
+      #
       # make sure, that the number of entries in aSys["Delays"] is equal to number of Delays
       #
  
