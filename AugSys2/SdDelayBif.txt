@@ -1,0 +1,34 @@
+##############################################################
+#
+#  @path AugSys2/SdDelayBif.txt
+#  
+#  @brief collects procedures for obtaining normal vector systems
+#         for continuous ODE systems with state dependent time delays
+# @notes
+#    (i)  a model of DDEs belongs to maple class DDESys
+#    (ii) DelVars in DDESys should contain N*M names of variables that correspond to the order: 
+#        [var1(t-tau1),var2(t-tau1),...,varN(t-tau1),
+#         var1(t-tau2),var2(t-tau2),...,varN(t-tau2),
+#         ..., var1(t-tauM),var2(t-tauM),...,varN(t-tauM)],
+#         where N=dim(DDESys["DynVars"]) and M is number of delays
+#
+#  @authors dka, jot
+#
+#  @revision
+#  2015-02-10 added GenEigNV by jot
+#  2015-01-19 Created from a copy of DelayBif by jot
+#
+##############################################################
+  SdDelayBif:=module()
+  
+    export
+      HopfNV,
+      HopfNVB,
+      GenEigNV;
+      
+$include <SdDelayBif/HopfNV.txt>
+$include <SdDelayBif/HopfNVB.txt>
+$include <SdDelayBif/GenEigNV.txt>
+
+
+  end module; # AugSys2:-SdDelayBif
