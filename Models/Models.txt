@@ -4,9 +4,12 @@
 #
 # @brief Collects all Models into one module. 
 #
-# @authors mmo, dka
+# @authors mmo, dka, jot
 #
 # @revision
+#  2015-03-06 added Luzyanina2001 by jot
+#  2015-02-19 added Minimal by jot
+#  2015-01-30 added Aiello1992 by jot
 #  2013-08-07 added Goswami1996
 #  2013-02-20 added Lehman1994
 #  2011-11-24 added Disney2003, Scott1990, Olsen1983
@@ -18,23 +21,29 @@
 Models:= module()
 
   export
+    Aiello1992,
     Agrawal1982,
     Disney2002,
     Disney2003,
     Goswami1996,
     John1994,
     Lehman1994,
+    Luzyanina2001,
+    Minimal,
     Olsen1983,
     Scott1990,
     SOFC,
     Teymour1989b;
 
 $include <source/Agrawal1982.txt>
+$include <source/Aiello1992.txt>
 $include <source/Disney2002.txt>
 $include <source/Disney2003.txt>
 $include <source/Goswami1996.txt>
 $include <source/John1994.txt>
+$include <source/Minimal.txt>
 $include <source/Lehman1994.txt>
+$include <source/Luzyanina2001.txt>
 $include <source/Olsen1983.txt>
 $include <source/Scott1990.txt>
 $include <source/SOFC.txt>

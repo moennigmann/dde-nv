@@ -1,0 +1,43 @@
+###############################################################################
+#
+# @path Models/source/Luzyanina2001/Sys.txt
+#
+# @brief Implements state dependently delayed system which is a modified version of example 1 in Luzyanina2001
+#
+# @authors jot
+#
+# @revision history:
+# 2015-03-06 Created by jot 
+#
+###############################################################################
+Sys:= module()
+
+  local aSys;
+
+  export
+    getSys; 
+
+  aSys:= table():
+
+  aSys["ODEs"]:= [`x1'` = -(k+alpha^2)*x1Del];
+  
+  aSys["ExplicitAEs"]:= [];
+  
+  aSys["AlgVars"]:= [];
+  aSys["DynVars"]:= [x1];
+  aSys["DelVars"]:= [x1Del];
+
+  aSys["Parameters"]:= [k=0.5, alpha=0.5];
+  aSys["AEs"]:= [];
+
+  #------------------------------------------------------------
+  #
+  # getSys
+  #
+  #------------------------------------------------------------
+  getSys:= proc()
+    return(eval(aSys)); 
+  end proc;    
+
+end module; 
+
