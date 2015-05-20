@@ -29,7 +29,6 @@ Models:= module()
     John1994,
     Lehman1994,
     Luzyanina2001,
-    Minimal,
     Olsen1983,
     Scott1990,
     SOFC,
@@ -41,7 +40,6 @@ $include <source/Disney2002.txt>
 $include <source/Disney2003.txt>
 $include <source/Goswami1996.txt>
 $include <source/John1994.txt>
-$include <source/Minimal.txt>
 $include <source/Lehman1994.txt>
 $include <source/Luzyanina2001.txt>
 $include <source/Olsen1983.txt>
