@@ -10,9 +10,11 @@
 #   have been substituted into list ODEs and AEs in
 #   aModel
 #
-# @authors mmo, dka
+# @ notes state dependet delay ["Delays"] are treated as ExplicitAEs, but still occur in NewDAESys, because they are needed for the NVSystem construction.
+# @authors mmo, dka, jot
 #
 # @revision
+#   2015-01-30 added the option for state dependent delays by jot
 #   2008-05-15  instead of aSys[...] using aSys["..."] 
 #   2008-05-15 copied from ModelPack by dka
 #   020306 (1) removed check for ODEs and AEs since this
@@ -53,7 +55,8 @@ subsExplicitAEsIntoDAESys:= proc(
     # treat entries which are affected by substitution
     #          
       NewDAESys["ExplicitAEs"]:=[];
-    
+      
+    # at first, the normal ExplicitAEs...
       NewDAESys["ODEs"]:= Aux:-ListOperations:-subsEqnListIntoEqn(
         aDAESys["ExplicitAEs"],
         aDAESys["ODEs"]
@@ -62,7 +65,22 @@ subsExplicitAEsIntoDAESys:= proc(
       NewDAESys["AEs"]:= Aux:-ListOperations:-subsEqnListIntoEqn(
         aDAESys["ExplicitAEs"],
         aDAESys["AEs"]
+      );  
+      
+    # ... and now the Delays!     
+     if assigned(aDAESys["Delays"]) then
+     
+      NewDAESys["ODEs"]:= Aux:-ListOperations:-subsEqnListIntoEqn(
+        aDAESys["Delays"],
+        NewDAESys["ODEs"]
       );
+
+      NewDAESys["AEs"]:= Aux:-ListOperations:-subsEqnListIntoEqn(
+        aDAESys["Delays"],
+        NewDAESys["AEs"]
+      );
+      
+    end if;
   
   RETURN(eval(NewDAESys));
 

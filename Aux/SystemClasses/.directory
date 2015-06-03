@@ -1,4 +1,6 @@
 [Dolphin]
-Timestamp=2013,2,19,16,35,7
-Version=2
+HeaderColumnWidths=364,62,124,110,82,110,164,115,251
+Timestamp=2015,1,30,10,16,3
+Version=3
 ViewMode=1
+VisibleRoles=Details_text,Details_size,Details_date,Details_permissions,Details_owner,Details_group,Details_type,Details_destination,Details_path,CustomizedDetails

@@ -7,6 +7,7 @@
 # @authors mmo, dka, jot
 #
 # @revision
+#  2015-06-01 added Population by jot
 #  2015-03-06 added Luzyanina2001 by jot
 #  2015-02-19 added Minimal by jot
 #  2015-01-30 added Aiello1992 by jot
@@ -30,6 +31,7 @@ Models:= module()
     Lehman1994,
     Luzyanina2001,
     Olsen1983,
+    Population,
     Scott1990,
     SOFC,
     Teymour1989b;
@@ -43,6 +45,7 @@ $include <source/John1994.txt>
 $include <source/Lehman1994.txt>
 $include <source/Luzyanina2001.txt>
 $include <source/Olsen1983.txt>
+$include <source/Population.txt>
 $include <source/Scott1990.txt>
 $include <source/SOFC.txt>
 $include <source/Teymour1989b.txt>
