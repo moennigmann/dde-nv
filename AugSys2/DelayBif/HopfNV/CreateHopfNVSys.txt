@@ -583,7 +583,7 @@
         ExtendedSysToBeSubs:= table();
         ExtendedSysToBeSubs["Equations"]:= ExtendedSystemEquations;
         ExtendedSysToBeSubs["Variables"]:= ExtendedSystemVariables;
-        ExtendedSysToBeSubs["Parameters"]:= [op(DESys["Parameters"]),seq(tau[jTau]=jTau,jTau=1..numberOfDelays)];
+        ExtendedSysToBeSubs["Parameters"]:= [op(DESys["Parameters"]),seq(tau[jTau]=2*jTau,jTau=1..numberOfDelays)];
     
         NumNVparamsToBeSubs:= nops(ListOfNVparams); 
 

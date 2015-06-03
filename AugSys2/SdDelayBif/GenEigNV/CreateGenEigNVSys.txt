@@ -24,6 +24,7 @@
 #     normal vector system for DDEs
 # 
 # @revision
+#     2015-06-02 removed a sign error in exp(-sigma*tau)
 #     2015-04-30 removed some bugs, coming from mistakes made during last change by jot	
 #     2015-02-18 modification which enable generalized eigenvaule constraints by jot
 #     2015-02-10 Created from a copy of SdDelayBif/HopfNV/CreateHopfNVSys by jot 
@@ -272,14 +273,14 @@
    
         #----------------------------------------
         #
-        # A0 w1 + A1 exp(sigma tau) cos(omega tau) w1 + A1 exp(sigma tau) sin(omega tau) w2 + omega w2 =0
+        # A0 w1 + A1 exp(-sigma tau) cos(omega tau) w1 + A1 exp(-sigma tau) sin(omega tau) w2 + omega w2 =0
         #
         #----------------------------------------
 
     
          partialSum:=Vector(NumOfEqnsOfModel);
          for j1 from 1 to numberOfDelays do
-	    partialSum:=partialSum+(Atau[j1].W1Vec)*exp(sigma*tau[j1])*cos(omega*tau[j1])+(Atau[j1].W2Vec)*exp(sigma*tau[j1])*sin(omega*tau[j1]);
+	    partialSum:=partialSum+(Atau[j1].W1Vec)*exp(-sigma*tau[j1])*cos(omega*tau[j1])+(Atau[j1].W2Vec)*exp(-sigma*tau[j1])*sin(omega*tau[j1]);
          end do;         
         
          NewEquations := A0.W1Vec + partialSum + omega*W2Vec - sigma*W1Vec;
@@ -302,14 +303,14 @@
         
         #----------------------------------------
         #
-        # A0 w2 + A1 exp(sigma tau) cos(omega tau) w2 - A1 exp(sigma tau) sin(omega tau) w1 - omega w1 =0
+        # A0 w2 + A1 exp(-sigma tau) cos(omega tau) w2 - A1 exp(-sigma tau) sin(omega tau) w1 - omega w1 =0
         #
         #----------------------------------------
 
          
         partialSum:=Vector(NumOfEqnsOfModel);
         for j1 from 1 to numberOfDelays do
-	    partialSum:=partialSum+(Atau[j1].W2Vec)*exp(sigma*tau[j1])*cos(omega*tau[j1])-(Atau[j1].W1Vec)*exp(sigma*tau[j1])*sin(omega*tau[j1]);
+	    partialSum:=partialSum+(Atau[j1].W2Vec)*exp(-sigma*tau[j1])*cos(omega*tau[j1])-(Atau[j1].W1Vec)*exp(-sigma*tau[j1])*sin(omega*tau[j1]);
         end do;         
         
         NewEquations := A0.W2Vec + partialSum - omega*W1Vec - sigma*W2Vec;
@@ -371,15 +372,15 @@
 
         #----------------------------------------
         #
-        # A0^T v1 + A1^T v1 exp(sigma tau) cos(omega tau) - A1^T v2 exp(sigma tau) sin (omega tau) - omega v2 - sigma v1 + g1 w1 - g2 w2 =0
+        # A0^T v1 + A1^T v1 exp(-sigma tau) cos(omega tau) - A1^T v2 exp(-sigma tau) sin (omega tau) - omega v2 - sigma v1 + g1 w1 - g2 w2 =0
         #
         #----------------------------------------
 
         partialSum:=Vector(NumOfEqnsOfModel);
         for j1 from 1 to numberOfDelays do
 	    partialSum:=partialSum
-	                +(AtauTransp[j1].V1Vec)*exp(sigma*tau[j1])*cos(omega*tau[j1])
-                        -(AtauTransp[j1].V2Vec)*exp(sigma*tau[j1])*sin(omega*tau[j1]);
+	                +(AtauTransp[j1].V1Vec)*exp(-sigma*tau[j1])*cos(omega*tau[j1])
+                        -(AtauTransp[j1].V2Vec)*exp(-sigma*tau[j1])*sin(omega*tau[j1]);
         end do;
 
          NewEquations := A0Transp.V1Vec + partialSum
@@ -406,15 +407,15 @@
 
         #----------------------------------------
         #
-        # A0^T v2 + A1^T v2 exp(sigma tau) cos(omega tau) + A1^T v1 exp(sigma tau) sin (omega tau) + omega v1 - sigma v2  + g1 w2 + g2 w1 =0
+        # A0^T v2 + A1^T v2 exp(-sigma tau) cos(omega tau) + A1^T v1 exp(-sigma tau) sin (omega tau) + omega v1 - sigma v2  + g1 w2 + g2 w1 =0
         #
         #----------------------------------------
 
         partialSum:=Vector(NumOfEqnsOfModel);
         for j1 from 1 to numberOfDelays do
 	    partialSum:=partialSum
-	                +(AtauTransp[j1].V2Vec)*exp(sigma*tau[j1])*cos(omega*tau[j1])
-	                +(AtauTransp[j1].V1Vec)*exp(sigma*tau[j1])*sin(omega*tau[j1]);
+	                +(AtauTransp[j1].V2Vec)*exp(-sigma*tau[j1])*cos(omega*tau[j1])
+	                +(AtauTransp[j1].V1Vec)*exp(-sigma*tau[j1])*sin(omega*tau[j1]);
         end do;
 
          NewEquations := A0Transp.V2Vec + partialSum
@@ -434,23 +435,26 @@
 
         #----------------------------------------
         #
-        # v1^T w1 + v2^T w2 -m_sigma=0
+        # v1^T w1 + v2^T w2 -m_sigma
+        #                   + v1^T A1 w2 tau exp(-sigma tau) cos(omega tau) - v1^T A1 w1 tau exp(-sigma tau) sin(omega tau) 
+        #                   + v2^T A1 w2 tau exp(-sigma tau) sin(omega tau) + v2^T A1 w1 tau exp(-sigma tau) cos(omega tau) =0
+        #
         #
         #----------------------------------------
 
    partialSum:=0;
      for j1 from 1 to numberOfDelays do
 	    partialSum:=partialSum
-                        +(LinearAlgebra[Transpose](V1Vec).(Atau[j1].W1Vec))*cos(sigma*tau[j1])*tau[j1]
-                        -(LinearAlgebra[Transpose](V1Vec).(Atau[j1].W2Vec))*sin(sigma*tau[j1])*tau[j1]
-                        +(LinearAlgebra[Transpose](V2Vec).(Atau[j1].W2Vec))*cos(sigma*tau[j1])*tau[j1]
-                        +(LinearAlgebra[Transpose](V2Vec).(Atau[j1].W1Vec))*sin(sigma*tau[j1])*tau[j1];
+                        +(LinearAlgebra[Transpose](V1Vec).(Atau[j1].W1Vec))*exp(-sigma*tau[j1])*cos(omega*tau[j1])*tau[j1]
+                        -(LinearAlgebra[Transpose](V1Vec).(Atau[j1].W2Vec))*exp(-sigma*tau[j1])*sin(omega*tau[j1])*tau[j1]
+                        +(LinearAlgebra[Transpose](V2Vec).(Atau[j1].W2Vec))*exp(-sigma*tau[j1])*cos(omega*tau[j1])*tau[j1]
+                        +(LinearAlgebra[Transpose](V2Vec).(Atau[j1].W1Vec))*exp(-sigma*tau[j1])*sin(omega*tau[j1])*tau[j1];
         end do; 
         
-        NewEquations := -LinearAlgebra[Transpose](V1Vec).W1Vec
-                        -LinearAlgebra[Transpose](V2Vec).W2Vec
-                        -1
-                        +partialSum;
+        NewEquations := - LinearAlgebra[Transpose](V1Vec).W1Vec
+                        - LinearAlgebra[Transpose](V2Vec).W2Vec
+                        - 1 						# this is m_sigma
+                        + partialSum;
 
         NewEquations:=subs(replacementForDelayVars,NewEquations);
 
@@ -463,8 +467,8 @@
         #----------------------------------------
         #
         # v1^T w2 -v2^T w1 + m_omega
-	#		   - v1^T A1 w1 tau exp(sigma tau) sin(omega tau) + v1^T A1 w2 tau exp(sigma tau) cos(omega tau) 
-        #                  - v2^T A1 w2 tau exp(sigma tau) sin(omega tau) - v2^T A1 w1 tau exp(sigma tau) cos(omega tau) =0
+	#		   - v1^T A1 w1 tau exp(-sigma tau) sin(omega tau) + v1^T A1 w2 tau exp(-sigma tau) cos(omega tau) 
+        #                  - v2^T A1 w2 tau exp(-sigma tau) sin(omega tau) - v2^T A1 w1 tau exp(-sigma tau) cos(omega tau) =0
         #
         #----------------------------------------
        
@@ -472,10 +476,10 @@
         partialSum:=0;
         for j1 from 1 to numberOfDelays do
 	    partialSum:=partialSum
-                        -(LinearAlgebra[Transpose](V1Vec).(Atau[j1].W1Vec))*exp(sigma*tau[j1])*sin(omega*tau[j1])*tau[j1]
-                        +(LinearAlgebra[Transpose](V1Vec).(Atau[j1].W2Vec))*exp(sigma*tau[j1])*cos(omega*tau[j1])*tau[j1]
-                        -(LinearAlgebra[Transpose](V2Vec).(Atau[j1].W2Vec))*exp(sigma*tau[j1])*sin(omega*tau[j1])*tau[j1]
-                        -(LinearAlgebra[Transpose](V2Vec).(Atau[j1].W1Vec))*exp(sigma*tau[j1])*cos(omega*tau[j1])*tau[j1];
+                        -(LinearAlgebra[Transpose](V1Vec).(Atau[j1].W1Vec))*exp(-sigma*tau[j1])*sin(omega*tau[j1])*tau[j1]
+                        +(LinearAlgebra[Transpose](V1Vec).(Atau[j1].W2Vec))*exp(-sigma*tau[j1])*cos(omega*tau[j1])*tau[j1]
+                        -(LinearAlgebra[Transpose](V2Vec).(Atau[j1].W2Vec))*exp(-sigma*tau[j1])*sin(omega*tau[j1])*tau[j1]
+                        -(LinearAlgebra[Transpose](V2Vec).(Atau[j1].W1Vec))*exp(-sigma*tau[j1])*cos(omega*tau[j1])*tau[j1];
         end do; 
         
         NewEquations := LinearAlgebra[Transpose](V1Vec).W2Vec
@@ -492,8 +496,8 @@
 
         #----------------------------------------
         #
-        # A0^T u + v1^T A0x w1+ v2^T A0x w2 + v1^T A1x w1 exp(sigma tau) cos(omega tau) + v1^T A1x w2 exp(sigma tau) sin (omega tau) 
-        #                                   + v2^T A1x w2 exp(sigma tau) cos(omega tau) - v2^T A1x w1 exp(sigma tau) sin (omega tau) =0
+        # A0^T u + v1^T A0x w1+ v2^T A0x w2 + v1^T A1x w1 exp(-sigma tau) cos(omega tau) + v1^T A1x w2 exp(-sigma tau) sin (omega tau) 
+        #                                   + v2^T A1x w2 exp(-sigma tau) cos(omega tau) - v2^T A1x w1 exp(-sigma tau) sin (omega tau) =0
         #
         #----------------------------------------
           fxx_w1:= Aux:-TensProd:-Tijk_xj(
@@ -524,10 +528,10 @@
 	     v2_A1x_w2[j1]:= Aux:-TensProd:-xi_Aij(V2,A1x_w2[j1]); 
 
 	     partialSum:=partialSum
-	                 +convert(v1_A1x_w1[j1],Vector)*exp(sigma*tau[j1])*cos(omega*tau[j1])
-	                 +convert(v1_A1x_w2[j1],Vector)*exp(sigma*tau[j1])*sin(omega*tau[j1])
-	                 +convert(v2_A1x_w2[j1],Vector)*exp(sigma*tau[j1])*cos(omega*tau[j1])
-	                 -convert(v2_A1x_w1[j1],Vector)*exp(sigma*tau[j1])*sin(omega*tau[j1]);
+	                 +convert(v1_A1x_w1[j1],Vector)*exp(-sigma*tau[j1])*cos(omega*tau[j1])
+	                 +convert(v1_A1x_w2[j1],Vector)*exp(-sigma*tau[j1])*sin(omega*tau[j1])
+	                 +convert(v2_A1x_w2[j1],Vector)*exp(-sigma*tau[j1])*cos(omega*tau[j1])
+	                 -convert(v2_A1x_w1[j1],Vector)*exp(-sigma*tau[j1])*sin(omega*tau[j1]);
           end do; 
 
           NewEquations:= A0Transp.UVec 
@@ -554,8 +558,8 @@
         #----------------------------------------
         #
         # f_alpha^T u + v1^T A0alpha w1 + v2^T A0alpha w2 
-        #             + v1^T A1alpha w1 exp(sigma tau) cos(omega tau) + v1^T A1alpha w2 exp(sigma tau) sin(omega tau)
-        #             + v2^T A1alpha w2 exp(sigma tau) cos(omega tau) - v2^T A1alpha w1 exp(sigma tau) sin(omega tau) - r =0
+        #             + v1^T A1alpha w1 exp(-sigma tau) cos(omega tau) + v1^T A1alpha w2 exp(-sigma tau) sin(omega tau)
+        #             + v2^T A1alpha w2 exp(-sigma tau) cos(omega tau) - v2^T A1alpha w1 exp(-sigma tau) sin(omega tau) - r =0
         #
         #----------------------------------------
           fxalpha_w1:= Aux:-TensProd:-Tijk_xj(
@@ -589,10 +593,10 @@
 	     v2_A1alpha_w2[j1]:= Aux:-TensProd:-xi_Aij(V2,A1alpha_w2[j1]); 
 
 	     partialSum:=partialSum
-	                 +convert(v1_A1alpha_w1[j1],Vector)*exp(sigma*tau[j1])*cos(omega*tau[j1])
-	                 +convert(v1_A1alpha_w2[j1],Vector)*exp(sigma*tau[j1])*sin(omega*tau[j1])
-	                 +convert(v2_A1alpha_w2[j1],Vector)*exp(sigma*tau[j1])*cos(omega*tau[j1])
-	                 -convert(v2_A1alpha_w1[j1],Vector)*exp(sigma*tau[j1])*sin(omega*tau[j1]);
+	                 +convert(v1_A1alpha_w1[j1],Vector)*exp(-sigma*tau[j1])*cos(omega*tau[j1])
+	                 +convert(v1_A1alpha_w2[j1],Vector)*exp(-sigma*tau[j1])*sin(omega*tau[j1])
+	                 +convert(v2_A1alpha_w2[j1],Vector)*exp(-sigma*tau[j1])*cos(omega*tau[j1])
+	                 -convert(v2_A1alpha_w1[j1],Vector)*exp(-sigma*tau[j1])*sin(omega*tau[j1]);
           end do; 
 
           NewEquations:= f_alphaTransp.UVec 

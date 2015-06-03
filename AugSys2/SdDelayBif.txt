@@ -23,11 +23,9 @@
   
     export
       HopfNV,
-      HopfNVB,
       GenEigNV;
       
 $include <SdDelayBif/HopfNV.txt>
-$include <SdDelayBif/HopfNVB.txt>
 $include <SdDelayBif/GenEigNV.txt>
 
 
