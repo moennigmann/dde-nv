@@ -15,6 +15,7 @@
 #  @authors dka, jot
 #
 #  @revision
+#  2016-04-28 remove GenEigNV by jot
 #  2016-03-23 added modFoldNV by jot
 #  2016-03-22 added modHopfNV to replace GenEigNV by jot
 #  2015-11-05 added FoldNV by jot
@@ -27,13 +28,11 @@
     export
       HopfNV,
       FoldNV,
-      GenEigNV,
       ModHopfNV,
       ModFoldNV;
       
 $include <SdDelayBif/HopfNV.txt>
 $include <SdDelayBif/FoldNV.txt>
-$include <SdDelayBif/GenEigNV.txt>
 $include <SdDelayBif/ModHopfNV.txt>
 $include <SdDelayBif/ModFoldNV.txt>
 
