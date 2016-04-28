@@ -15,6 +15,9 @@
 #  @authors dka, jot
 #
 #  @revision
+#  2016-03-23 added modFoldNV by jot
+#  2016-03-22 added modHopfNV to replace GenEigNV by jot
+#  2015-11-05 added FoldNV by jot
 #  2015-02-10 added GenEigNV by jot
 #  2015-01-19 Created from a copy of DelayBif by jot
 #
@@ -23,10 +26,16 @@
   
     export
       HopfNV,
-      GenEigNV;
+      FoldNV,
+      GenEigNV,
+      ModHopfNV,
+      ModFoldNV;
       
 $include <SdDelayBif/HopfNV.txt>
+$include <SdDelayBif/FoldNV.txt>
 $include <SdDelayBif/GenEigNV.txt>
+$include <SdDelayBif/ModHopfNV.txt>
+$include <SdDelayBif/ModFoldNV.txt>
 
 
   end module; # AugSys2:-SdDelayBif
