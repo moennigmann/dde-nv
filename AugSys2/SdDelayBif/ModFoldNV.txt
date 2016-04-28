@@ -1,0 +1,22 @@
+##############################################################
+#
+#  @path AugSys2/SdDelayBif/ModFoldNV.txt
+#
+#  @brief collects procedures for augmenting generalized critical boundaries
+#         of continuous ODEs with one delay by normal vector system 
+#
+#  @author jot
+#
+#  @revision
+#  #  2016-03-23 Created out a copy of SdDelayBif/ModHopfNV.txt by jot
+#
+##############################################################
+  ModFoldNV:=module()
+  
+    export
+      CreateModFoldNVSys; 
+
+$include <SdDelayBif/ModFoldNV/CreateModFoldNVSys.txt>
+
+
+  end module; # AugSys2:-SdDelayBif:-ModFoldNV
