@@ -1,0 +1,341 @@
+###########################################################################
+# 
+# @path AugSys2/SdDelayBif/FoldNV/CreateFoldNVSys.txt
+#
+# @brief Creates an augmented NV system for Fold critical boundaries
+#        for DDESys with state dependent delay without algebraic equations
+#
+# @param  
+#   a model (state dependent DDESys) to be augmented by system for finding Fold normal vectors,
+#   list of names of free parameters Alpha
+#
+# @notes
+#    (i) DelVars in DDESys should contain N*M names of variables that correspond to the order: 
+#        [var1(t-tau1),var2(t-tau1),...,varN(t-tau1),
+#         var1(t-tau2),var2(t-tau2),...,varN(t-tau2),
+#         ..., var1(t-tauM),var2(t-tauM),...,varN(t-tauM)],
+#         where N=dim(DDESys["DynVars"]) and M is number of delays
+#    (ii) We refer to delays as tau[j] and collect them in a vector of delays 
+#        
+#
+# @authors dka, jot
+#
+# @return 
+#     normal vector system for DDEs
+# 
+# @revision
+#     2015-10-23 created from a copy of the equivalent file for Hopf bifurcations by jot
+# 
+###########################################################################
+    CreateFoldNVSys:=proc(
+      aSys::DDESys,
+      ListOfNVparams::list(name)
+    )
+
+      local ListofNames, item, ComplexRightEigSys, ExtendedSysToBeSubs,
+     	ExtendedSystemEquations, ExtendedSystemVariables,
+	ExtendedSystemParameters, DESys, A0, A0Transp, A0xTransp,
+	A0alpha, f_p, A0pTransp, W1, U, R, NewVariables, NewEquations, 
+        f_alpha,f_alphaTransp, NumNVparamsToBeSubs, ParsOfModel, VarsOfModel, result, 
+        DynEqnsOfModel, NumOfEqnsOfModel, i2, NumOfDynEqnsInModule,
+        listofDelVars, numberOfDelays, listofDelays,tau, Atau, AtauTransp, AtauAlpha, 
+        itTau, VarsDelTau, W1Vec,RVec,
+        replacementForDelayVars, partialSum, delayTerm, j1, tau_x, tau_alpha;
+        
+
+       #
+       # make sure entries of ListOfNVparams exist in first arg
+       #
+
+        ListofNames:=map(lhs,aSys["Parameters"]);
+
+        for item in ListOfNVparams do
+          if not member(item,ListofNames)
+	  then
+	    error(
+	      "requested normal vector parameter %1 does not exist in model",
+	      item
+	    );
+	  end if;
+	end do; 
+
+
+       #
+       # make sure that dimension of aSys["DelVars"] is equal to N*M
+       #
+
+       listofDelVars:=aSys["DelVars"];
+       numberOfDelays:=nops(listofDelVars)/nops(aSys["DynVars"]);
+
+       if not type(numberOfDelays,integer)
+	 then
+	   error(
+	     "dimension of names for delayed variables \"DynVars\" which is equal to %1 should result from the number of delays multiplied by %2",
+	      nops(listofDelVars),
+	      nops(aSys["DynVars"])
+	   );
+       end if;
+
+
+      #
+      # make sure, that the number of entries in aSys["Delays"] is equal to number of Delays
+      #
+ 
+      listofDelays:=aSys["Delays"];                        # taking state dependency into account...
+
+      if not evalb(nops(listofDelays)=numberOfDelays)
+	 then
+	   error("number of delays in DDE and number of elements in delay vector are not equal",nops(listofDelays),numberOfDelays);
+       end if;
+       
+      #
+      # assign the elements of listofDelays to the variables tau[]
+      #      
+       for j1 from 1 to numberOfDelays do
+
+	    tau[j1]:=rhs(listofDelays[j1]);
+      end do;
+ 
+      #
+      # substitude into DynEqns AlgEqns, prepare some variables
+      # 
+       
+        DESys := Aux:-SystemClasses:-subsExplicitAEsIntoDAESys(aSys); 
+        
+
+        DynEqnsOfModel:= DESys["ODEs"]; 
+        NumOfEqnsOfModel:= nops(DynEqnsOfModel);
+        VarsOfModel:= DESys["DynVars"];
+        ParsOfModel:= DESys["Parameters"]; 
+
+      #
+      # A0 equals df/dx(t)
+      #
+  
+        A0:= Aux:-Derivs:-f_x(
+          DynEqnsOfModel,
+          VarsOfModel
+        );
+        
+        A0Transp:= LinearAlgebra[Transpose](A0); 
+
+        f_alpha:= Aux:-Derivs:-f_p(
+          DynEqnsOfModel,
+          ListOfNVparams
+        );
+
+        
+        f_alphaTransp:= LinearAlgebra[Transpose](
+          f_alpha
+        ); 
+
+
+
+
+      #
+      # Atau[i] equals df/dx(t-tau[i])
+      #
+
+      for itTau from 1 to numberOfDelays do
+        
+
+        VarsDelTau:=[seq(listofDelVars[jTau],
+                     jTau=NumOfEqnsOfModel*(itTau-1)+1..NumOfEqnsOfModel*(itTau))];
+
+	
+	Atau[itTau]:= Aux:-Derivs:-f_x(
+          DynEqnsOfModel,
+          VarsDelTau
+        );
+
+        AtauTransp[itTau]:= LinearAlgebra[Transpose](Atau[itTau]); 
+
+        AtauAlpha[itTau]:= Aux:-Derivs:-f_xp(
+	  DynEqnsOfModel,
+          VarsDelTau,
+          ListOfNVparams
+ 	);         
+
+      end do;
+
+      #
+      # derivations of tau
+      #
+      
+      for itTau from 1 to numberOfDelays do
+      
+        tau_x[itTau]:= Aux:-Derivs:-f_p(
+          [tau[itTau]],
+          VarsOfModel);
+      
+	tau_alpha[itTau]:= Aux:-Derivs:-f_p(
+          [tau[itTau]],
+          ListOfNVparams
+        );
+      
+      end do;
+      
+
+      #------------------------------------------------------------
+      #
+      # start construction of normal vector system
+      #
+      #------------------------------------------------------------
+
+  
+          W1:= [seq(
+            w1[i1], 
+            i1=1..NumOfEqnsOfModel)
+          ]; 
+
+  
+        #
+        # u and r 
+        #
+
+          R:= [seq(
+          r[i1], 
+            i1=1..nops(ListOfNVparams))
+          ]; 
+
+          W1Vec:= convert(W1,Vector);
+          RVec:= convert(R,Vector);    
+
+       
+      # augmented system will be in ExtendedSystemEquations, 
+      # ExtendedSystemVariables etc., 
+      # lists NewEquations, NewVariables are used to build next block 
+      #
+
+       #--------------------
+       #
+       # model equations f=0
+       #
+       #--------------------
+
+          NewEquations:= [seq(
+            0= rhs(DESys["ODEs"][i1]),
+            i1= 1..nops(DESys["ODEs"])
+          )];
+          
+          # replace delayed variables with steady states
+          
+          replacementForDelayVars:=[];
+
+          for itTau from 1 to numberOfDelays do
+      	      replacementForDelayVars:=[op(replacementForDelayVars),
+	                              seq(listofDelVars[jTau]=VarsOfModel[ modp(jTau-1,NumOfEqnsOfModel)+1],
+	                                 jTau=NumOfEqnsOfModel*(itTau-1)+1..NumOfEqnsOfModel*(itTau))];
+          end do;
+
+          NewEquations:=subs(replacementForDelayVars,NewEquations);
+
+          NewVariables:= DESys["DynVars"];
+
+          #
+          # ExtendedSystem with NewEquations, NewVariables
+          #
+            ExtendedSystemEquations:= NewEquations;
+            ExtendedSystemVariables:= NewVariables; 
+
+        
+        #----------------------------------------
+        #
+        # A0^T w1 + A1^T w1 +A2^T w1 +...+ Am^T w1 =0
+        #
+        #----------------------------------------
+
+    
+         partialSum:=Vector(NumOfEqnsOfModel);
+         for j1 from 1 to numberOfDelays do
+	    partialSum:=partialSum+(AtauTransp[j1].W1Vec);
+         end do;         
+        
+         NewEquations := A0Transp.W1Vec + partialSum;
+         
+         NewEquations:=[seq(0=NewEquations[i1],i1=1..NumOfEqnsOfModel)];
+         NewEquations:=subs(replacementForDelayVars,NewEquations);
+
+         NewVariables:=[op(W1)];
+          
+          ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            op(NewEquations)                    
+          ];
+  
+          ExtendedSystemVariables:= [
+            op(ExtendedSystemVariables),
+            op(NewVariables)
+          ];
+
+        
+       
+        #----------------------------------------
+        #
+        # w1^Tw1 -1 =0
+        #
+        #----------------------------------------
+
+        
+
+       NewEquations := LinearAlgebra[Transpose](W1Vec).W1Vec-1;
+
+
+       ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            0=NewEquations                    
+          ];
+
+
+
+        #----------------------------------------
+        #
+        # f_alpha^T w1 - r =0
+        #
+        #----------------------------------------
+
+          NewEquations := f_alphaTransp.W1Vec - RVec;
+                         
+                         
+          NewEquations:=[seq(0=NewEquations[i1],i1=1..nops(ListOfNVparams))];
+          NewEquations:=subs(replacementForDelayVars,NewEquations);   
+
+          NewVariables:= R; 
+
+
+           ExtendedSystemEquations:= [
+            op(ExtendedSystemEquations),   
+            op(NewEquations)                    
+          ];
+
+
+           ExtendedSystemVariables:= [
+            op(ExtendedSystemVariables),
+            op(NewVariables)
+          ];
+         
+      
+      #------------------------------------------------------------
+      #
+      # build table for augmented system from lists
+      #
+      #------------------------------------------------------------
+      
+      #
+      # apart from vars listed explicitly, the following vars
+      # are passed on to template:
+      #   A0 -> Jac
+      #   NumOfEqnsOfModel -> NumDynEqns
+      #
+        ExtendedSysToBeSubs:= table();
+        ExtendedSysToBeSubs["Equations"]:= ExtendedSystemEquations;
+        ExtendedSysToBeSubs["Variables"]:= ExtendedSystemVariables;
+        ExtendedSysToBeSubs["Parameters"]:= [op(DESys["Parameters"])];
+    
+        NumNVparamsToBeSubs:= nops(ListOfNVparams); 
+
+$include <SdDelayBif/FoldNV/CreateFoldNVSys/TemplateModule.txt>
+
+    return result;
+
+       end proc;  #AugSys2:-SdDelay:-FoldNV:-CreateFoldNVSys
