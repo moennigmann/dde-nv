@@ -14,6 +14,7 @@
 # @authors mmo, dka, jot
 #
 # @revision
+#   2015-07-28 differing between „inserting state dependent delay in ODEs/AEs“ and inserting explicitAEs in delays by jot
 #   2015-01-30 added the option for state dependent delays by jot
 #   2008-05-15  instead of aSys[...] using aSys["..."] 
 #   2008-05-15 copied from ModelPack by dka
@@ -44,7 +45,7 @@ subsExplicitAEsIntoDAESys:= proc(
     #
       ListOfUnaffectedEntries:= map(op, [indices(aDAESys)]);
       ListOfUnaffectedEntries:= Aux:-ListOperations:-removeItemFromList(
-        ["ExplicitAEs", "ODEs", "AEs"],
+        ["ExplicitAEs", "ODEs", "AEs", "Delays"],
          ListOfUnaffectedEntries
       ); 
       for item in ListOfUnaffectedEntries do
@@ -67,18 +68,23 @@ subsExplicitAEsIntoDAESys:= proc(
         aDAESys["AEs"]
       );  
       
-    # ... and now the Delays!     
      if assigned(aDAESys["Delays"]) then
      
+      NewDAESys["Delays"]:= Aux:-ListOperations:-subsEqnListIntoEqn(
+        aDAESys["ExplicitAEs"],
+        aDAESys["Delays"]
+      );
+      
+# ... and now the Delays!   
       NewDAESys["ODEs"]:= Aux:-ListOperations:-subsEqnListIntoEqn(
-        aDAESys["Delays"],
-        NewDAESys["ODEs"]
+      NewDAESys["Delays"],
+      NewDAESys["ODEs"]
       );
 
       NewDAESys["AEs"]:= Aux:-ListOperations:-subsEqnListIntoEqn(
-        aDAESys["Delays"],
-        NewDAESys["AEs"]
-      );
+      NewDAESys["Delays"],
+      NewDAESys["AEs"]
+      );  
       
     end if;
   

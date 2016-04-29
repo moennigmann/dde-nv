@@ -54,7 +54,7 @@
        if not
           NumRows= NumCols
         then
-          error("2nd  argument is not square Matrix."); 
+          error("2nd  argument is not square Matrix. It has %1 rows and %2 columns.",NumRows,NumCols); 
         end if; 
    
       #
