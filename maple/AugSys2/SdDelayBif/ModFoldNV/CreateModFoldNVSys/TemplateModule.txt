@@ -37,7 +37,7 @@ result:=module() # Template
           VarsOfModelInModule:= VarsOfModel;
           ParsOfModelInModule:= ParsOfModel;
 
-$include <DelayBif/HopfNV/CreateHopfNVSys/TemplateModule/getSys.txt>
+$include <SdDelayBif/HopfNV/CreateHopfNVSys/TemplateModule/getSys.txt>
 
 
       end module; # Template  
