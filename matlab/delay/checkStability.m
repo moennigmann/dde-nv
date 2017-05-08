@@ -11,12 +11,8 @@ function [maxEig,steadyState,eigs] = checkStability(funcs,parameter,x0,numMinEig
 %
 % - x0: intial guess for steady state
 
-if nargin < 4
+if (nargin < 4) || (isempty(numMinEig))
     numMinEig = -5;
-else
-    if isempty(numMinEig);
-        numMinEig = -5;
-    end
 end
 
 enableOutput = 1;
@@ -54,7 +50,8 @@ else
     
     % extract biggest real part
     eigs = stst.stability.l1;
-    maxEig = max(real(stst.stability.l1));
+    [~,index] = max(real(stst.stability.l1));
+    maxEig = stst.stability.l1(index);
     steadyState = stst.x;
     
 end
