@@ -1,6 +1,7 @@
 classdef StStConstraint < EqualityConstraint
-    %UNTITLED4 Summary of this class goes here
-    %   Detailed explanation goes here
+    % This class describes equality constraints representing the steady
+    % state condition for the nominal parameters. It also contains a
+    % procedure to initialize the constraint
     
     properties(SetAccess=protected)
 
@@ -8,7 +9,7 @@ classdef StStConstraint < EqualityConstraint
     
     methods
         function aStStCon=StStConstraint(aDDE,vars)
-            
+            % constructs the instances of the class StStConstraint
             conEq=@(y)aDDE.rhs(y(vars.x.index),...
                 repmat(y(vars.x.index),1,aDDE.ntau),...
                 y(vars.alpha.index),...
@@ -32,8 +33,11 @@ classdef StStConstraint < EqualityConstraint
             aStStCon.vars.x.values=x;
             if exitflag>0
                 aStStCon.status=1;
-                fprintf('steady state constraint for nominal point successfully initialized!\n')
-            else
+                callerFunction = dbstack;
+                if ~strcmp(callerFunction(3).name, 'DDENLP.moveAwayFromManifolds') % supress success message when automatically called.
+                    fprintf('steady state constraint for nominal point successfully initialized!\n')
+                end
+                else
                 warning(['initialization of steady state contsraint with default options for fsolve not successful, exitflag = ',num2str(exitflag)]);
             end
         end
