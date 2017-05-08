@@ -62,19 +62,15 @@ classdef DDENLP < handle
     end
     
     methods
-        function aDDENLP = DDENLP(aCostFunction,aDDE,xNomGuess,stateLB,stateUB,uncertParamLB,uncertParamUB,varargin) % constructor
+        function aDDENLP = DDENLP(aCostFunction,aDDE,xNomGuess,stateLB,stateUB,uncertParamLB,uncertParamUB,certOptParamLB,certOptParamUB, varargin) % constructor
             % CONSTRUCTOR OF THE CLASS DDENLP
             % the simplest properties are assigned:
             
             
             % make sure all inputs are defined
-            
-            certOptParamLB=[];
-            certOptParamUB=[];
-            
-            if nargin>=9
-                certOptParamLB=varargin{1};
-                certOptParamUB=varargin{2};
+            if nargin<9
+                certOptParamLB=[];
+                certOptParamUB=[];
             end
             
             % the basics: cost function and dynamics:
@@ -119,14 +115,19 @@ classdef DDENLP < handle
             if all(size(certOptParamLB)==[aDDE.certOptParam.nVar,1])
                 aDDENLP.lowerBoxCons = [aDDENLP.lowerBoxCons;certOptParamLB];
             else
-                warning('lower boundaries for certain optimization parameters have to be handed over as a column vector with as many entries as parameters in the DDE. Using a vector of -Inf instead')
+                if aDDE.certOptParam.nVar > 0
+                    warning('lower boundaries for certain optimization parameters have to be handed over as a column vector with as many entries as parameters in the DDE. Using a vector of -Inf instead')
+                end
                 aDDENLP.lowerBoxCons = [aDDENLP.lowerBoxCons;-Inf(aDDE.certOptParam.nVar,1)];
             end
             
             if all(size(certOptParamUB)==[aDDE.certOptParam.nVar,1])
                 aDDENLP.upperBoxCons = [aDDENLP.upperBoxCons;certOptParamUB];
             else
-                warning('upper boundaries for certain optimization parameters have to be handed over as a column vector with as many entries as parameters in the DDE. Using a vector of Inf instead')
+                if aDDE.certOptParam.nVar > 0
+                    
+                    warning('upper boundaries for certain optimization parameters have to be handed over as a column vector with as many entries as parameters in the DDE. Using a vector of Inf instead')
+                end
                 aDDENLP.upperBoxCons = [aDDENLP.upperBoxCons;Inf(aDDE.certOptParam.nVar,1)];
             end
             
@@ -229,6 +230,65 @@ classdef DDENLP < handle
             
         end
         
+        
+        function moveAwayFromManifolds(aDDENLP, steppingFactor, distanceFactor,...
+                iterations,varargin)
+            % shifts nominal point further away from critical manifolds
+            % this process works iteratively
+     
+            
+            % if not handed over, assign default values
+            if nargin==1
+                steppingFactor = 0.7;
+                distanceFactor = 1.8;
+                iterations = 20;
+            else
+                if distanceFactor<1
+                    warning('distanceFactor > 1 recommended ')
+                end
+            end
+            
+            refernceDistance = distanceFactor*aDDENLP.minDist*sqrt(aDDENLP.nAlpha);
+            
+            distance = NaN(1,length(aDDENLP.NVCon));            
+            normalVectors = NaN(aDDENLP.nAlpha,length(aDDENLP.NVCon));
+            
+            
+            for jj = 1:length(aDDENLP.NVCon)
+                distance(1,jj) = aDDENLP.vars.critical(jj).l.values;
+                normalVectors(:,jj) = aDDENLP.vars.critical(jj).r.values;
+%                 quiver(aDDENLP.vars.critical(jj).alpha.values(1),aDDENLP.vars.critical(jj).alpha.values(2),...
+%                 normalVectors(1,jj),normalVectors(2,jj),'k')
+            end
+            
+            
+            
+            for ii=1:iterations
+                % leave for loop when far away from critical manifolds
+                if all(distance>=aDDENLP.minDist*sqrt(aDDENLP.nAlpha))
+%                     plot(newNomPoint(1),newNomPoint(2),'k.');                    
+%                     [uncertRegionAlpha, uncertRegionGamma] = circle( sqrt(2), aDDENLP.vars.nominal.alpha.values(1), aDDENLP.vars.nominal.alpha.values(2) );
+%                     plot(uncertRegionAlpha, uncertRegionGamma);
+                    fprintf('\nstopping to move the nominal point, %i iterations necessary to move nominal point sufficiently far away from critical maninfolds\n',ii-1);
+                    break
+                end
+                newNomPoint = aDDENLP.vars.nominal.alpha.values +...
+                    steppingFactor*normalVectors*...
+                    max(zeros(1,length(aDDENLP.NVCon)),(refernceDistance-distance))';
+%                 plot(newNomPoint(1),newNomPoint(2),'b.');
+%                 drawnow        
+                aDDENLP.vars.nominal.alpha.values = newNomPoint;
+                
+                %% update 
+                aDDENLP.initializeStSt();
+                aDDENLP.initNVCons();
+                for jj = 1:length(aDDENLP.NVCon)
+                    distance(1,jj) = aDDENLP.vars.critical(jj).l.values;
+                    normalVectors(:,jj) = aDDENLP.vars.critical(jj).r.values;
+                end
+            end
+        end
+        
         function evaluateStatus(aDDENLP)
             % checks the status of all existing constraints and assign the
             % status of the whole optimization problem
@@ -236,6 +296,7 @@ classdef DDENLP < handle
                 aDDENLP.status=min(arrayfun(@(x)x.status,aDDENLP.NVCon));
             end
         end
+        
         
         function concatConstraints(aDDENLP)
             % concatenates the existing constraints
@@ -315,12 +376,12 @@ classdef DDENLP < handle
             disp(aDDENLP.allNLIneqConstraints(aDDENLP.initVal)<0)
         end
         
-        function runOptim(aDDENLP,varargin)
+        function runOptim(aDDENLP,userDefinedOptions,varargin)
             % this function starts the main optimization without
             % intermediate stability checks
             
             if nargin > 1
-                options = varargin{1};
+                options = userDefinedOptions;
             else
                 options = aDDENLP.optionsMainOptim;
             end
@@ -357,25 +418,22 @@ classdef DDENLP < handle
             beq=x0(aDDENLP.fixedUncertParamIndex);
             
             [c,ceq]=nonlinCon(x0);
-            
             if any(c>0)
                 if ~strcmp(callerFunction(2).name, 'DDENLP.runOptimWithStabChecks')
+                    fprintf('\n values of  inequality constraint values (which should be < 0)are: \n %f \n',c);
                     warning('nonlinear inequality constraints violated at initial point')
                 end
             end
             
-            %             if (norm(ceq,2)>options.TolCon)
-            %                 fprintf('%d\n',ceq);
-            %                 error('nonlinear equality constraints violated at initial point (measured by TolCon = %d).',(options.TolCon))
-            %             end
+            if max(abs(ceq))>options.TolCon
+                fprintf('%d\n',ceq);
+                warning('nonlinear equality constraints violated at initial point (measured by TolCon = %d).',(options.TolCon))
+            end
             
             % run optimization
+            
             [aDDENLP.optimVal,aDDENLP.optJ,aDDENLP.exitflag,aDDENLP.optimOutput,aDDENLP.lambda] = ...
                 fmincon(J,x0,[],[],Aeq,beq,lb,ub,nonlinCon,options);
-            
-            aDDENLP.vars.nominal.x.values = aDDENLP.optimVal(aDDENLP.vars.nominal.x.index);
-            aDDENLP.vars.nominal.alpha.values = aDDENLP.optimVal(aDDENLP.vars.nominal.alpha.index);
-            aDDENLP.vars.nominal.p.values = aDDENLP.optimVal(aDDENLP.vars.nominal.p.index);
             
             if aDDENLP.exitflag>0
                 aDDENLP.status = 6;
@@ -390,7 +448,7 @@ classdef DDENLP < handle
         
         %% WORK IN PROGRESS: STARTING MARK
         
-        function [init, final, maxEig] = runOptimWithStabChecks(aDDENLP,nIterBetweenStabChecks)
+        function [init, final, maxEig,eigs] = runOptimWithStabChecks(aDDENLP,nIterBetweenStabChecks)
             % this function starts the main optimization with
             % intermediate stability checks
             
@@ -398,22 +456,30 @@ classdef DDENLP < handle
             maxIter = options.MaxIter;
             
             options.MaxIter = nIterBetweenStabChecks;
-            options.Display = 'off';
+            options.Display = 'off';%iter-detailed';
             
             for ii = 1:ceil(maxIter/nIterBetweenStabChecks)
                 aDDENLP.concatInitPoints();
                 aDDENLP.runOptim(options);
-                init = aDDENLP.deconstructInit()
+                init = aDDENLP.deconstructInit();
                 final = aDDENLP.deconstructOptimum();
+                cost = aDDENLP.optJ;
+                %                 [maxEig,eigs] = aDDENLP.checkStabilityPoint('nominal');
+                [maxEig,eigs] = aDDENLP.checkStabilityPoint(aDDENLP.vars.nominal);
+                fprintf('%d iterations completed, current cost is %d, eigenvalue with biggest real part was %d\n',ii*nIterBetweenStabChecks,cost,maxEig)
                 
-                [maxEig,~] = aDDENLP.checkStabilityPoint('nominal');
-                
+                callerFunction = dbstack;
                 if real(maxEig) > aDDENLP.maxAllowedRealPart
-                    warning('System lost desired stability properties during optimization. You can use the properies DDENLP.initVal and DDENLP.opitimVal to find out were stability was lost')
+                    if ~strcmp(callerFunction(2).name, 'DDENLP.runOptimAddingNewManifolds')
+                        warning('system lost desired stability properties during optimization. You can use the properies DDENLP.initVal and DDENLP.optimVal to find out were stability was lost')
+                    else
+                        fprintf('system lost desired stability properties during optimization. Adding a new critical manifold to optimization problem');
+                    end
                     break
                 end
                 % leave loop if optimization finished
                 if aDDENLP.exitflag > 0
+                    aDDENLP.runOptim();
                     break
                 end
                 
@@ -422,11 +488,8 @@ classdef DDENLP < handle
         
         function runOptimAddingNewManifolds(aDDENLP,nIterBetweenStabChecks)
             
-            
             for ii = 1:10
-                [init,final,maxEig] = aDDENLP.runOptimWithStabChecks(nIterBetweenStabChecks);
-                init.nominal.alpha.values
-                final.nominal.alpha.values
+                [init,final,maxEig,~] = aDDENLP.runOptimWithStabChecks(nIterBetweenStabChecks);
                 if real(maxEig) > aDDENLP.maxAllowedRealPart
                     if imag(maxEig) == 0
                         subtype = 'fold';
@@ -438,17 +501,24 @@ classdef DDENLP < handle
                     else
                         type = subtype;
                     end
-                    disp(type)
+                    
                     [handleManifold,handleNV] = aDDENLP.problemDDE.getHandles(type);
                     intermediatePoint = aDDENLP.findManifoldPointOnLine(type, handleManifold, init, final);
                     
-                    %add new NVCON                    
-                    aDDENLP.addNV(type,handleManifold,handleNV,intermediatePoint.x,intermediatePoint.alpha,init.p)
+                    %add new NVCON
+                    aDDENLP.addNVCon(type,handleManifold,handleNV,intermediatePoint.x,intermediatePoint.alpha,init.p)
+                    fprintf('\nadded new %s manifold', type);
+                    
                     % and initialize it:
+                    aDDENLP.deconstructInit('nom');
+                    aDDENLP.concatInitPoints;                    
+                    
                     aDDENLP.NVCon(end).findManifoldPoint(aDDENLP.NVCon(end).vars);
-                    aDDENLP.NVCon(end).findClosestCriticalPoint(alphaNom);
-                    aDDENLP.NVCon(end).findNormalVector(alphaNom);
-                    aDDENLP.NVCon(end).findConnection(alphaNom);
+                    aDDENLP.NVCon(end).findClosestCriticalPoint(aDDENLP.vars.nominal.alpha);
+                    aDDENLP.NVCon(end).findNormalVector(aDDENLP.vars.nominal.alpha);
+                    aDDENLP.NVCon(end).findConnection(aDDENLP.vars.nominal.alpha);
+                    
+                    aDDENLP.concatConstraints;
                 else
                     break
                 end
@@ -456,7 +526,7 @@ classdef DDENLP < handle
         end
         
         
-        function  intermediatePoint = findManifoldPointOnLine(aDDENLP, type, manifoldHandle, point1, point2 )
+        function  intermediatePoint = findManifoldPointOnLine(~, type, manifoldHandle, point1, point2 )
             % This method looks for a crossing of a critical manifold between two given
             % points
             
@@ -499,68 +569,85 @@ classdef DDENLP < handle
                 ones(size(point1.x.values));...
                 zeros(size(point1.x.values)) ];
             
+            options=optimoptions('fsolve','Algorithm','levenberg-marquardt','MaxIter',2000,'MaxFunEvals',2000000,'display','off','TolFun',1e-7,'TolX',1e-9);
             
-            [y,~,exitflag] = fsolve(rhs,y0,aDDENLP.optionsInitEqCons);
-            
-            if exitflag > 0
-                x = y(1:point1.x.nVar);
-                lambda = y(point1.x.nVar+1);
-                alpha = alphaInterp( lambda );
-                p =  pInterp( lambda);
-                omega = y(point1.x.nVar+2);
-                w1 = y(point1.x.nVar+3:2*point1.x.nVar+2);
-                w2 = y(2*point1.x.nVar+3:3*point1.x.nVar+2);
-                
-                intermediatePoint.x = VariableVector(x,Inf,point1.x.names);
-                intermediatePoint.alpha = VariableVector(alpha, Inf,point1.alpha.names);
-                intermediatePoint.p = VariableVector(p, Inf,point1.p.names);
-                intermediatePoint.omega = VariableVector(omega, Inf);
-                intermediatePoint.w1 = VariableVector(w1, Inf);
-                intermediatePoint.w2 = VariableVector(w2, Inf);
+            [y,res,localexitflag] = fsolve(rhs,y0,options);
+            if localexitflag > 0
+                fprintf('\nlooked for a %s point on the line between optimization points and appearantly found one, exitflag was %d\n', type, localexitflag)
             else
-                warning('did not find critical point on the given line, fsolve exitflag was %d',exitflag)
+                disp(res);
+                warning('did not find critical point (%s) on the given line, fsolve exitflag was %d',type,localexitflag)
             end
+
+            x = y(1:point1.x.nVar);
+            mu = y(point1.x.nVar+1);
+            if (mu < 0) || (mu > 1)
+                warning('converged to a point that is not between the given points, mu = %d', mu)
+            end
+            alpha = alphaInterp( mu );
+            p =  pInterp( mu );
+            omega = y(point1.x.nVar+2);
+            w1 = y(point1.x.nVar+3:2*point1.x.nVar+2);
+            w2 = y(2*point1.x.nVar+3:3*point1.x.nVar+2);
             
+            intermediatePoint.x = VariableVector(x,Inf,point1.x.names);
+            intermediatePoint.alpha = VariableVector(alpha, Inf,point1.alpha.names);
+            intermediatePoint.p = VariableVector(p, Inf,point1.p.names);
+            intermediatePoint.omega = VariableVector(omega, Inf);
+            intermediatePoint.w1 = VariableVector(w1, Inf);
+            intermediatePoint.w2 = VariableVector(w2, Inf);
         end
         
         
         %% FROM HERE UPWARDS: ENDING MARK
         
-        function [varargout] = deconstructInit(aDDENLP)
-            if nargout > 0
-                varargout{1} = 1;
-            end
+        function [varargout] = deconstructInit(aDDENLP, type, varargin)
+            
             init = aDDENLP.initVal;
             outputVars = aDDENLP.vars;
-            outputVars.nominal.x.values = init(outputVars.nominal.x.index);
-            outputVars.nominal.alpha.values = init(outputVars.nominal.alpha.index);
-            outputVars.nominal.p.values = init(outputVars.nominal.p.index);
             
-            for i=1:length(aDDENLP.NVCon)
-                outputVars.critical(i).x.values = init(outputVars.critical(i).x.index);
-                outputVars.critical(i).alpha.values = init(outputVars.critical(i).alpha.index);
-                outputVars.critical(i).omega.values = init(outputVars.critical(i).omega.index);
-                outputVars.critical(i).w1.values = init(outputVars.critical(i).w1.index);
-                outputVars.critical(i).w2.values = init(outputVars.critical(i).w2.index);
-                outputVars.critical(i).v1.values = init(outputVars.critical(i).v1.index);
-                outputVars.critical(i).v2.values = init(outputVars.critical(i).v2.index);
-                outputVars.critical(i).g1.values = init(outputVars.critical(i).g1.index);
-                outputVars.critical(i).g2.values = init(outputVars.critical(i).g2.index);
-                outputVars.critical(i).u.values = init(outputVars.critical(i).u.index);
-                outputVars.critical(i).r.values = init(outputVars.critical(i).r.index);
-                outputVars.critical(i).l.values = init(outputVars.critical(i).l.index);
+            if nargin == 1
+                type='all';
             end
-            aDDENLP.vars=outputVars;
+            
+            if strcmp(type,'all') || strcmp(type,'nom')
+                outputVars.nominal.x.values = init(outputVars.nominal.x.index);
+                outputVars.nominal.alpha.values = init(outputVars.nominal.alpha.index);
+                outputVars.nominal.p.values = init(outputVars.nominal.p.index);
+            end
+            
+            
+            if strcmp(type,'all') || strcmp(type,'crit')
+                for i=1:length(aDDENLP.NVCon)
+                    outputVars.critical(i).x.values = init(outputVars.critical(i).x.index);
+                    outputVars.critical(i).alpha.values = init(outputVars.critical(i).alpha.index);
+                    outputVars.critical(i).omega.values = init(outputVars.critical(i).omega.index);
+                    outputVars.critical(i).w1.values = init(outputVars.critical(i).w1.index);
+                    outputVars.critical(i).w2.values = init(outputVars.critical(i).w2.index);
+                    outputVars.critical(i).v1.values = init(outputVars.critical(i).v1.index);
+                    outputVars.critical(i).v2.values = init(outputVars.critical(i).v2.index);
+                    outputVars.critical(i).g1.values = init(outputVars.critical(i).g1.index);
+                    outputVars.critical(i).g2.values = init(outputVars.critical(i).g2.index);
+                    outputVars.critical(i).u.values = init(outputVars.critical(i).u.index);
+                    outputVars.critical(i).r.values = init(outputVars.critical(i).r.index);
+                    outputVars.critical(i).l.values = init(outputVars.critical(i).l.index);
+                end
+            end
+            
+            if nargout > 0
+                varargout{1} = varCollection( 'nominal', NaN, outputVars.nominal.x, outputVars.nominal.alpha, outputVars.nominal.p);
+            else
+                aDDENLP.vars = outputVars;
+            end
         end
         
         function varargout = deconstructOptimum(aDDENLP)
             
-            if nargout > 0
-                varargout{1} = 1;
-            end
-
+            
             opt = aDDENLP.optimVal;
+            
             outputVars = aDDENLP.vars;
+            
             outputVars.nominal.x.values = opt(outputVars.nominal.x.index);
             outputVars.nominal.alpha.values = opt(outputVars.nominal.alpha.index);
             outputVars.nominal.p.values = opt(outputVars.nominal.p.index);
@@ -579,7 +666,11 @@ classdef DDENLP < handle
                 outputVars.critical(i).r.values = opt(outputVars.critical(i).r.index);
                 outputVars.critical(i).l.values = opt(outputVars.critical(i).l.index);
             end
-            aDDENLP.vars=outputVars;
+            if nargout > 0
+                varargout{1} =  varCollection( 'nominal', NaN, outputVars.nominal.x, outputVars.nominal.alpha, outputVars.nominal.p);
+            else
+                aDDENLP.vars = outputVars;
+            end
             
         end
         
@@ -617,17 +708,23 @@ classdef DDENLP < handle
                     error('did not find an eigevalue with Re(lambda)>aDDENLP.numMinEig. Please chose a smaller value for aDDENLP.numMinEig')
                 end
                 maxRealPart(ii) = maxRealPartTMP;
-                switch type
-                    case 'nominal'
-                        aDDENLP.vars.nominal(ii,1).maxEig = maxRealPart(ii);
-                    case 'critical'
-                        aDDENLP.vars.critical(ii,1).maxEig = maxRealPart(ii);
-                    case 'vertex'
-                        aDDENLP.vars.vertex(ii,1).x.values = xCorr;
-                        aDDENLP.vars.vertex(ii,1).maxEig = maxRealPart(ii);
-                    case 'random'
-                        aDDENLP.vars.random(ii,1).x.values = xCorr;
-                        aDDENLP.vars.random(ii,1).maxEig = maxRealPart(ii);
+                if exist('type','var')
+                    switch type
+                        case 'nominal'
+                            aDDENLP.vars.nominal(ii,1).maxEig = maxRealPart(ii);
+                            aDDENLP.vars.nominal(ii,1).eigs = eigs;
+                        case 'critical'
+                            aDDENLP.vars.critical(ii,1).maxEig = maxRealPart(ii);
+                            aDDENLP.vars.critical(ii,1).eigs = eigs;
+                        case 'vertex'
+                            aDDENLP.vars.vertex(ii,1).x.values = xCorr;
+                            aDDENLP.vars.vertex(ii,1).maxEig = maxRealPart(ii);
+                            aDDENLP.vars.vertex(ii,1).eigs = eigs;
+                        case 'random'
+                            aDDENLP.vars.random(ii,1).x.values = xCorr;
+                            aDDENLP.vars.random(ii,1).maxEig = maxRealPart(ii);
+                            aDDENLP.vars.random(ii,1).eigs = eigs;
+                    end
                 end
             end
             %             switch type
@@ -674,7 +771,7 @@ classdef DDENLP < handle
             % the uncertainty region
             
             if nargin > 2
-                rng(varargin{2});
+                rng(seedForRandomNumbers);
             else
                 if nargin == 1
                     baseForNumberOfPoints = 2;
@@ -709,24 +806,6 @@ classdef DDENLP < handle
             
             sol = ddesd(myDDE,myDelays,history,tspan,options) ;
         end
-        
-        
-        %         generateDDE % f(t,x,xtau,alpha)
-        %         generateDelayVec % tau(x,alpha)
-        
-        %         generateHopfMani
-        %         generateHopfNV
-        %
-        %         generateFoldMani
-        %         generateFoldNV
-        %
-        %         generateModHopfMani
-        %         generateModHopfNV
-        %
-        %         generateModFoldMani
-        %         generateModFoldNV
-        
-        %         verifyRobustness
         
         %         export2DDEBIFTOOL % nicht bei class DDE, damit Box
         %         constraints auch übergeben werden können
