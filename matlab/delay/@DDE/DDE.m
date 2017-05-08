@@ -73,7 +73,7 @@ classdef DDE < handle
                     error('unknown manifold type requested');
             end
             if all(size(handleMani) == [0 0])
-                error('the requested manifold handle was not found')
+                error('the requested manifold function handle (%s) was not found',type)
             end
             if all(size(handleMani) == [0 0])
                 error('the requested normal vector system handle was not found')
