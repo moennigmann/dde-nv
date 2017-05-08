@@ -1,6 +1,5 @@
 function [ vars ] = varCollection( type, offset, x, alpha, p)
 %VARCOLLETION creates variable collections for different manifold types
-%   Detailed explanation goes here
 
 
 vars.x=VariableVector(x.values,offset,x.names);
@@ -18,6 +17,8 @@ vars.r=VariableVector([],offset+x.nVar,{});
 vars.l=VariableVector([],offset+x.nVar,{});
 
 switch type
+    case 'nominal'
+        vars.nVar=x.nVar+alpha.nVar;    
     case 'fold'
         vars.w1=VariableVector(ones(x.nVar,1),offset+x.nVar+alpha.nVar,{'w1'});
         vars.r=VariableVector(zeros(alpha.nVar,1),offset+2*x.nVar+alpha.nVar,{'r'});
