@@ -94,6 +94,33 @@ classdef NVConstraint < EqualityConstraint
             
         end
         
+        function prepareInitialGuess(aNVCon,aVarCollection)
+            % rotates complex eigenvector to make real and imaginary part
+            % orthogonal
+            % cf. Proof of Lemma 1 in
+            % [https://doi.org/10.1109/CDC.2016.7798469]
+            
+            % get real and imaginary part
+            realW = aVarCollection.w1.values;
+            imagW = aVarCollection.w2.values;
+            
+            w = realW +1i*imagW;            
+            phi = 0;
+            
+            if ~isreal(w)
+                % find rotational angle
+                f=@(PHI)cos(2*PHI)*real(w)'*imag(w) + 0.5*sin(2*PHI)*(real(w)'*real(w)-imag(w)'*imag(w)); 
+                phi=fsolve(f,phi,aNVCon.optionsEqConsInit);
+            end
+            % make the transform
+            w = exp(1i*phi)*w;
+            
+            % reassign numerical values
+            aVarCollection.w1.values = real(w);
+            aVarCollection.w2.values = imag(w);
+            
+        end
+        
         function findManifoldPoint(aNVCon,aVarCollection)
             % tries to find a point on the critical manifold
             
@@ -129,7 +156,7 @@ classdef NVConstraint < EqualityConstraint
                 aNVCon.status = 2;
                 
                 callerFunction = dbstack;
-                if ~strcmp(callerFunction(3).name, 'DDENLP.moveAwayFromManifolds')
+                if (length(callerFunction)>2) && ~strcmp(callerFunction(3).name, 'DDENLP.moveAwayFromManifolds')
                     fprintf('\nfound point on critical manifold, fsolve exitflag was %d\n', exitflag)
                 end
             else
@@ -174,7 +201,7 @@ classdef NVConstraint < EqualityConstraint
             if exitflag>0
                 aNVCon.status=3;
                 callerFunction = dbstack;
-                if ~strcmp(callerFunction(3).name, 'DDENLP.moveAwayFromManifolds')
+                if (length(callerFunction)>2) && ~strcmp(callerFunction(3).name, 'DDENLP.moveAwayFromManifolds')
                     fprintf('found closest point on critical manifold at distance l = %f, fmincon exitflag was %d\n',l,exitflag)
                 end
             else
@@ -279,7 +306,7 @@ classdef NVConstraint < EqualityConstraint
                 if aNVCon.status == 3
                     aNVCon.status=4;
                     callerFunction = dbstack;
-                    if ~strcmp(callerFunction(3).name, 'DDENLP.moveAwayFromManifolds')
+                    if (length(callerFunction)>2) && ~strcmp(callerFunction(3).name, 'DDENLP.moveAwayFromManifolds')
                         fprintf('found normal vector on closest critical manifold point, fsolve exitflag was %d\n',exitflag)
                     end
                 else
