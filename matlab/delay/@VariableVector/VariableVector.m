@@ -1,3 +1,13 @@
+%> @file VariableVector.m
+%> @brief The instances of this class contain information for a VariableVector used in DDENLP
+% ======================================================================
+%> @brief The instances of this class contain information for a VariableVector used in DDENLP
+%
+%>   Those instances collect human-readable information on the variables
+%>   (their names and values) as well as the information which is used
+%>   by other objects to adress those variables.
+% ======================================================================
+
 classdef VariableVector < handle
     % The instances of this class contain information for a variable used
     % in DDENLP
@@ -6,20 +16,33 @@ classdef VariableVector < handle
     %   by other objects to adress those variables.
 
     
-    
     properties
-              values % column vector containing the numerical values of the Variables
+         %> column vector containing the numerical values of the Variables
+         values
     end
     
     properties (SetAccess = protected)
-        names % column array of strings containing the description of the 
-                % variables
-        index % indexes of variable within superordinate concatenation of
-                % variables
-        nVar% number of variables
+        %> column array of strings containing the description of the variables
+        names
+        %> indexes of variable within superordinate concatenation of variables
+        index
+        %> number of variables
+        nVar
     end
     
     methods
+        
+    % ======================================================================
+    %> @brief Class constructor
+    %>
+    %> This function constructs instances of the class VariableVector
+    %> @param values Description of first parameter
+    %> @param offset Description of the second parameter
+    %> @param nameInput Description of the second parameter
+    %>
+    %> @return instance of the VariableVector class.
+    % ======================================================================
+        
         function aVariables = VariableVector( values,offset,nameInput ) % constructor
             % This function constructs instances of the class Variable Vector
             %
@@ -58,6 +81,17 @@ classdef VariableVector < handle
                 error('length of ''nameInput'' and ''values'' have to be identical')
             end
         end
+        
+        
+    % ======================================================================
+    %> @brief shift the index of the variables stored in this vector
+    %>
+    %> @param aVariableVec Instance of VariableVector, where the variable indices
+    %> will be shifted
+    %> @param shift how far the index will be shifted
+    %>
+    %> @return instance of the VariableVector class.
+    % ====================================================================== 
         
         function shiftIndex(aVariableVec , shift)
             % this method shifts the index of the Variables in the
