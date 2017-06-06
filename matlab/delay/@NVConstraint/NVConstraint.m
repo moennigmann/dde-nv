@@ -1,32 +1,65 @@
+%> @file NVConstraint.m
+%> @brief the instances of this class are objects representing
+%> normal vector constraints. The procedures initialize those constraints
+% ======================================================================
+%> @brief the instances of this class are objects representing
+%> normal vector constraints. The procedures initialize those constraints
+% ======================================================================
+
+
+
 classdef NVConstraint < EqualityConstraint
-    %NVCONSTRAINT the instances of this class are objects representing
-    %normal vector constraints. The procedures initialize those constraints
     
     properties
+        %> critical manifold type, string
+        type
         
-        type % string
+        %> augmented system equations (manifold), a EqualityConstraint object
+        eqAugSys 
+        %> normal vector system equations, a EqualityConstraint object
+        eqNVSys
+        %> connection constraints, a EqualityConstraint object
+        eqConnect 
         
-        eqAugSys % EqualityConstraint object
-        eqNVSys % EqualityConstraint object
-        eqConnect % EqualityConstraint object
+        %> number of variables in augemented system
+        nVarAugSys 
+        %> number of variables in normal vector system
+        nVarNVSys
         
-        nVarAugSys % number of variables in augemented system
-        nVarNVSys % number of variables in normal vector system
-        
-        inequalities % function handle
-        optionsEqConsInit % options for numerical solver
-        optionsInitOptim % options for auxiliary optimization
-        
+        %> function handle of inequalities
+        inequalities
+        %> options for numerical solver
+        optionsEqConsInit
+        %> options for auxiliary optimization
+        optionsInitOptim
     end
     
     
     properties(SetAccess=protected)
-        inequalityIndex % index of the inequality constraint of this NVConstraint within all constaints
-        problemDDE % differential equation for calculation of stability
-        numMinEig % numerical constant for the ODE approximation of the DDE
+        %> index of the inequality constraint of this NVConstraint within all constaints
+        inequalityIndex
+        %> differential equation for calculation of stability
+        problemDDE 
+        %> numerical constant for the ODE approximation of the DDE
+        numMinEig
     end
     
     methods
+        
+    % ======================================================================
+    %> @brief Class constructor
+    %>
+    %> This function constructs instances of the class NVConstraint
+    %>
+    %> @param aDDENLP superordinate optimization problem
+    %> @param type type of critical manifold (string)
+    %> @param augSysHandle function handle to critical manifold
+    %> @param nVSysHandle function handle to normal vector system
+    %> @param nVvars collection of instances of VariableVector
+    % 
+    %> @return instance of the NVConstraint class.
+    % ======================================================================
+        
         function aNVCon = NVConstraint(aDDENLP,type,augSysHandle,nVSysHandle,nVvars) % constructor
             
             %% translate human readable input format to solver readable format
@@ -66,7 +99,7 @@ classdef NVConstraint < EqualityConstraint
                 nEqAugSys+nEqNVSys+aDDENLP.vars.nominal.alpha.nVar,...
                 nVvars,...
                 aDDENLP.occupiedEqs);
-
+            
             %% define solver options
             aNVCon.optionsEqConsInit= aDDENLP.optionsInitEqCons;
             aNVCon.optionsInitOptim = aDDENLP.optionsInitOptim;
@@ -94,6 +127,21 @@ classdef NVConstraint < EqualityConstraint
             
         end
         
+                
+        % ======================================================================
+        %> @brief  rotates complex eigenvector to make real and imaginary part
+        %> orthogonal
+        %> cf. Proof of Lemma 1 in [https://doi.org/10.1109/CDC.2016.7798469]
+        %> 
+        %> @param aNVCon instance of NVConstraint that will initialized
+        %> @param aVarCollection collection of instances of VariableVector
+        %> containing numerical values for initial guess
+        %>
+        %> @return instance of NVConstraint with potentially known critical point
+        %> @return collection of instances of VariableVector with
+        %> orthogonalized real part and imaginary part of eigenvector
+        % =========
+        
         function prepareInitialGuess(aNVCon,aVarCollection)
             % rotates complex eigenvector to make real and imaginary part
             % orthogonal
@@ -104,12 +152,12 @@ classdef NVConstraint < EqualityConstraint
             realW = aVarCollection.w1.values;
             imagW = aVarCollection.w2.values;
             
-            w = realW +1i*imagW;            
+            w = realW +1i*imagW;
             phi = 0;
             
             if ~isreal(w)
                 % find rotational angle
-                f=@(PHI)cos(2*PHI)*real(w)'*imag(w) + 0.5*sin(2*PHI)*(real(w)'*real(w)-imag(w)'*imag(w)); 
+                f=@(PHI)cos(2*PHI)*real(w)'*imag(w) + 0.5*sin(2*PHI)*(real(w)'*real(w)-imag(w)'*imag(w));
                 phi=fsolve(f,phi,aNVCon.optionsEqConsInit);
             end
             % make the transform
@@ -120,6 +168,17 @@ classdef NVConstraint < EqualityConstraint
             aVarCollection.w2.values = imag(w);
             
         end
+        
+        % ======================================================================
+        %> @brief find a point on the critical manifold
+        %>
+        %> @param aNVCon instance of NVConstraint that will initialized
+        %> @param aVarCollection collection of instances of VariableVector
+        %> containing numerical values for initial guess
+        %>
+        %> @return instance of NVConstraint with potentially known critical point
+        % =========
+        
         
         function findManifoldPoint(aNVCon,aVarCollection)
             % tries to find a point on the critical manifold
@@ -165,6 +224,19 @@ classdef NVConstraint < EqualityConstraint
             end
         end
         
+        
+        % ======================================================================
+        %> @brief find closest critical point
+        %>
+        %> @param aNVCon instance of NVConstraint with a know point on the
+        %> critical manifold
+        %> @param alphaNom nominal point stored in an instance of
+        %> VariableVector
+        %>
+        %> @return instance of NVConstraint with potentially known closest critical point
+        % =========
+        
+        
         function findClosestCriticalPoint(aNVCon,alphaNom)
             
             % check current status
@@ -209,9 +281,24 @@ classdef NVConstraint < EqualityConstraint
             end
         end
         
-        function  findNormalVector(aNVCon,alphaNom)
+        % ======================================================================
+        %> @brief find normal vector at given closest critical point
+        %>
+        %> @param aNVCon instance of NVConstraint with known closest critical point
+        %> @param alphaNom nominal point stored in an instance of
+        %> VariableVector
+        %> @param directionMode optional input to manipulate orientation of
+        %the normal vector
+        %> @param varargin 
+        %>
+        %> @return instance of NVConstraint with normal vectors etc. found 
+        % =========
+        
+        function  findNormalVector( aNVCon, alphaNom, directionMode, varargin )
             
-            directionMode = 2;
+            if nargin<3
+                directionMode = 2;
+            end
             
             if aNVCon.status < 2
                 error('cannot search for normal vector without a critical point');
@@ -258,7 +345,7 @@ classdef NVConstraint < EqualityConstraint
                     r = x(aNVCon.vars.r.index-offset);
                     r = r/norm(r,2);
                     
-                    alpha1 = aNVCon.vars.alpha.values - shiftLength*r;                    
+                    alpha1 = aNVCon.vars.alpha.values - shiftLength*r;
                     alpha2 = aNVCon.vars.alpha.values + shiftLength*r;
                     
                     xStSt = aNVCon.vars.x.values;
@@ -285,7 +372,7 @@ classdef NVConstraint < EqualityConstraint
                     end
                     
                     %% evaluate
-                    direction = sign(lambda1-lambda2);
+                    direction = sign(real(lambda1)-real(lambda2));
                     if direction == 0
                         warning('could not determine which region is stable and which is unstable')
                     end
@@ -318,6 +405,17 @@ classdef NVConstraint < EqualityConstraint
                 warning('did not find normal vector on critical point, fsolve exitflag was %d\n', exitflag)
             end
         end
+        
+        % ======================================================================
+        %> @brief initialize connection constraint
+        %>
+        %> @param aNVCon instance of NVConstraint with everything but connection constraint initialized
+        %> @param alphaNom nominal point stored in an instance of
+        %> VariableVector
+        %>
+        %> @return instance of NVConstraint with potentially initialized connection
+        %> constraint
+        % ======================================================================
         
         function findConnection(aNVCon,alphaNom)
             
@@ -364,7 +462,7 @@ classdef NVConstraint < EqualityConstraint
             if exitflag>0
                 aNVCon.status=5;
                 callerFunction = dbstack;
-                if ~strcmp(callerFunction(3).name, 'DDENLP.moveAwayFromManifolds')
+                if (length(callerFunction)>2) && (~strcmp(callerFunction(3).name, 'DDENLP.moveAwayFromManifolds'))
                     fprintf('found connection of nominal and critical point, fsolve exitflag was %d \n\n',exitflag)
                 end
             else

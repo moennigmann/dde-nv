@@ -1,13 +1,34 @@
+%> @file StStConstraint.m
+%> @brief class that inherits its properities from EqualityConstraints. It
+%> represents steady state constraints.
+% ======================================================================
+%> @brief     This class describes equality constraints representing the steady
+%> state condition for the nominal parameters. It also contains a
+%> procedure to initialize the constraint
+% ======================================================================
+
+
+
+
 classdef StStConstraint < EqualityConstraint
-    % This class describes equality constraints representing the steady
-    % state condition for the nominal parameters. It also contains a
-    % procedure to initialize the constraint
     
     properties(SetAccess=protected)
 
     end
     
     methods
+    % ======================================================================
+    %> @brief Class constructor
+    %>
+    %> This function constructs instances of the class StStConstraint
+    %>
+    %> @param aDDE instance of class DDE
+    %> @param vars collection of instances of VariableVector (at least
+    %> state, uncertain parameters and certain parameters)
+    % 
+    %> @return instance of the StStConstraint class.
+    % ======================================================================
+        
         function aStStCon=StStConstraint(aDDE,vars)
             % constructs the instances of the class StStConstraint
             conEq=@(y)aDDE.rhs(y(vars.x.index),...
@@ -16,6 +37,16 @@ classdef StStConstraint < EqualityConstraint
                 y(vars.p.index));
             aStStCon=aStStCon@EqualityConstraint(conEq,vars.x.nVar,vars,0);
         end
+        
+    % ======================================================================
+    %> @brief look for a steady state as initialization of this
+    %> StStConstraint instance
+    %>
+    %> @param aStStCon instance of StStConstraint which will be initialized
+    %> @param options options for numerical solver fsolve 
+    %>
+    %> @return initialized instance of the StStConstraint class.
+    % ====================================================================== 
         
         
         function aStStCon=initStStConstraint(aStStCon,options)
