@@ -1,0 +1,13 @@
+to do
+31.5
+in codeGenDefSys letzten part in codeGenFolf Hopf modFold modHopf schneiden  			--- ok
+
+zusätzliche abfrage für modFold modHopf -> maximal real part for exponential stability		--- ok
+
+namen in fold modHopf aendern									--- ok
+
+mexWrapper für DDE
+
+in mexWrapper liste mit geforderten inputs ausgeben (bei der error msg)
+
+in mexWrapper zahlen - größe der martix variabel machen!?					--- ok
