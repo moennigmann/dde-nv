@@ -77,7 +77,7 @@ classdef DDE < handle
             
             aDDE.delays = delays; 
             
-            aDDE.ntau = length(delays(xNomGuess.values,uncParam.values));
+            aDDE.ntau = length(delays(xNomGuess.values,uncParam.values,certOptParam.values));
               
             
             %% define state specific properties
