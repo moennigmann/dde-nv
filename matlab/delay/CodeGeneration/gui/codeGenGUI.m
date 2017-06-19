@@ -21,20 +21,20 @@ system('maple codegen.txt');
 %% code manipulation to make it compilable for matlab
 
 if y(1) % Fold
-    mexWrapper_Fold;
-    mexWrapper_FoldNV;
+    mexWrapperGen_Fold;
+    mexWrapperGen_FoldNV;
 end
 if y(2) % modFold
-    mexWrapper_Modfold;
-    mexWrapper_ModfoldNV;
+    mexWrapperGen_Modfold;
+    mexWrapperGen_ModfoldNV;
 end
 if y(3) % Hopf
-    mexWrapper_HopfMani;
-    mexWrapper_HopfNV;
+    mexWrapperGen_HopfMani;
+    mexWrapperGen_HopfNV;
 end
 if y(4) % modHopf
-    mexWrapper_ModHopf;
-    mexWrapper_ModHopfNV;
+    mexWrapperGen_ModHopf;
+    mexWrapperGen_ModHopfNV;
 end
 
 %% Compile for matlab
