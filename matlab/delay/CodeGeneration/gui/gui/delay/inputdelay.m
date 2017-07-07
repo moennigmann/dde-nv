@@ -56,7 +56,7 @@ dnum = evalin('base','i');
 handles.output = hObject;
 handles.data = '_';
 % handles.text2 = ['Enter Delay' num2str(2) ':'];
-set(handles.text2,'String',['Enter Delay' num2str(dnum) ' :']);
+set(handles.text2,'String',['Enter expression for Delay' num2str(dnum) ' :']);
 % Update handles structure
 guidata(hObject, handles);
 

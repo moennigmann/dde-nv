@@ -1,2 +1,0 @@
-lpha*xMat-gamma*xJuv-alpha*exp(-gamma*(tau[1]))*xMattau1
-alpha*exp(-gamma*(tau[1]))*xMattau1-beta*xMat^2]

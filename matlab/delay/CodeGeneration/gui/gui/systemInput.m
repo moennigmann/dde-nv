@@ -10,6 +10,10 @@
 clear
 anum = 0;
 xnum = 0;
+
+%% Name project
+p_name = name_project;
+
 %% Directory einlesen
 % Pfad in path.txt und WS-variable way speichern
 
@@ -81,6 +85,12 @@ end
 
 clear change check
 
+%% input dialog for additional explicit algebraic equations
+% if additional equations are needed (eg:system equations have additional
+% parameter)
+explicitAEs;
+
+
 %% ask for kind of mannifold
 % choiceMani will be 4-digit array entry 2 and 4 indicate mod
 
@@ -89,3 +99,5 @@ choiceMani = askManifold;
 if choiceMani(2) || choiceMani(4)   % if mod fold or modhopf read extra value for max real part
     maxrealpart = ask_maxrealpart;  % open input dialog, save value to maxrealpart
 end
+
+clear delvars

@@ -1,1 +1,0 @@
-c-files von maple geben w als skalar an, bei der mex-compilierung wird w aber als vektor (*w) erwartet - wo fehler?  
