@@ -2,12 +2,16 @@
 
 
 function check_input
-% SIMPLE_GUI2 Select a data set from the pop-up menu, then
-% click one of the plot-type push buttons. Clicking the button
-% plots the selected data in the axes.
 a = evalin('base','xnum');
 b = evalin('base','anum');
 c = evalin('base','delnum');
+% for better eqaution reading
+xdote = evalin('base','xdot');
+% xdoteqn = cell(a,1);
+for i=1:a
+xdoteqn{i} = [cell2mat(xdote(i,1)) '=' cell2mat(xdote(i,2))];
+end
+%
 % l = a+b+c;
 h = 40;
 % h01 = (l+1)*h-35;
@@ -55,25 +59,27 @@ hpath2 = uicontrol('Style','text','Position',[0,h02,300,25],'String',evalin('bas
 % hzvec3 = uicontrol('Style','text','Position',[70,200,50,40],'String',evalin('base','xnames(:,2)'));
 hzvec1 = uicontrol('Style','text','Position',[0,h11,100,25],'String','States:');
 hzvec2 = uicontrol('Style','text','Position',[30,h12,50,a*20],'String',evalin('base','xnames(:,1)'));
-hzvec3 = uicontrol('Style','text','Position',[70,h12,50,a*20],'String',evalin('base','xnames(:,2)'));
+hzvec3 = uicontrol('Style','text','Position',[80,h12,150,a*20],'String',evalin('base','xnames(:,2)'));
 % htauvec1 = uicontrol('Style','text','Position',[0,170,100,25],'String','Delays:');
 % htauvec2 = uicontrol('Style','text','Position',[0,140,100,25],'String',evalin('base','del'));
 htauvec1 = uicontrol('Style','text','Position',[0,h21,100,25],'String','Delays:');
-htauvec2 = uicontrol('Style','text','Position',[0,h22,150,c*20],'String',evalin('base','del'));
+htauvec2 = uicontrol('Style','text','Position',[0,h22,250,c*20],'String',evalin('base','del'));
 % halphavec1 = uicontrol('Style','text','Position',[0,100,100,25],'String','Parameters:');
 % halphavec2 = uicontrol('Style','text','Position',[0,70,100,25],'String',evalin('base','alphavec(:,1)'));
 % halphavec3 = uicontrol('Style','text','Position',[100,70,50,25],'String',evalin('base','alphavec(:,2)'));
 % halphavec4 = uicontrol('Style','text','Position',[150,70,100,25],'String',evalin('base','alphavec(:,3)'));
 halphavec1 = uicontrol('Style','text','Position',[0,h31,100,25],'String','Parameters:');
 halphavec2 = uicontrol('Style','text','Position',[0,h32,100,b*20],'String',evalin('base','alphavec(:,1)'));
-halphavec3 = uicontrol('Style','text','Position',[100,h32,50,b*20],'String',evalin('base','alphavec(:,2)'));
-halphavec4 = uicontrol('Style','text','Position',[150,h32,100,b*20],'String',evalin('base','alphavec(:,3)'));
+halphavec3 = uicontrol('Style','text','Position',[100,h32,100,b*20],'String',evalin('base','alphavec(:,2)'));
+halphavec4 = uicontrol('Style','text','Position',[200,h32,100,b*20],'String',evalin('base','alphavec(:,3)'));
 % heqn1 = uicontrol('Style','text','Position',[0,50,100,25],'String','Equations:');
 % heqn2 = uicontrol('Style','text','Position',[0,0,50,50],'String',evalin('base','xdot(:,1)'));
 % heqn3 = uicontrol('Style','text','Position',[50,0,100,50],'String',evalin('base','xdot(:,2)'));
 heqn1 = uicontrol('Style','text','Position',[0,h41,100,25],'String','Equations:');
-heqn2 = uicontrol('Style','text','Position',[0,h42,50,a*20],'String',evalin('base','xdot(:,1)'));
-heqn3 = uicontrol('Style','text','Position',[50,h42,350,a*20],'String',evalin('base','xdot(:,2)'));
+% heqn2 = uicontrol('Style','text','Position',[0,h42,50,a*20],'String',evalin('base','xdot(:,1)'));
+% heqn3 = uicontrol('Style','text','Position',[50,h42,350,a*20],'String',evalin('base','xdot(:,2)'));
+heqn2 = uicontrol('Style','listbox','Position',[0,h42,500,a*20],'String',xdoteqn(:));
+% heqn3 = uicontrol('Style','text','Position',[50,h42,350,a*20],'String',evalin('base','xdot(:,2)'));
 hpushok = uicontrol('Style','pushbutton','String','OK','Position',[350-h,0,150,25],...
     'Callback',@okbutton_Callback);
 hpushcp = uicontrol('Style','pushbutton','String','Change Path','Position',[350-h,h01,150,25],...
