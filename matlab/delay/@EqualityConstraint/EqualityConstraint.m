@@ -1,5 +1,7 @@
 %> @file EqualityConstraint.m
 %> @brief (abstract) class that inherits its properities to equality constraints
+%> @author Jonas Otten
+%> @date 18 Jul 2017
 % ======================================================================
 %> @brief (abstract) class that inherits its properities to equality constraints
 %
