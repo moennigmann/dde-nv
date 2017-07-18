@@ -1,6 +1,8 @@
 %> @file StStConstraint.m
 %> @brief class that inherits its properities from EqualityConstraints. It
 %> represents steady state constraints.
+%> @author Jonas Otten
+%> @date 18 Jul 2017
 % ======================================================================
 %> @brief     This class describes equality constraints representing the steady
 %> state condition for the nominal parameters. It also contains a
