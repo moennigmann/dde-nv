@@ -1,5 +1,7 @@
 %> @file DDE.m
 %> @brief The instances of this class contain information for a DDE used in DDENLP
+%> @author Jonas Otten
+%> @date 18 Jul 2017
 % ======================================================================
 %> @brief The instances of this class contain information for a DDE used in DDENLP
 %
