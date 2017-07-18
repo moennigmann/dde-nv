@@ -1,3 +1,24 @@
+%> @file  varCollection.m
+%> @brief creates variable collections for different manifold types
+%> @author Jonas Otten
+%> @date 18 Jul 2017
+%======================================================================
+
+%======================================================================
+%> @brief creates variable collections for different manifold types
+%>
+%> the structs are allways created the same, but for some manifolds 
+%> with empty entries
+%>
+%> @param type requested manifold type
+%> @param offset index offset
+%> @param x state vector, instance of class VariableVector
+%> @param alpha uncertain variables, instance of class VariableVector
+%> @param p certain optimization variables, instance of class VariableVector
+%>
+%> @retval vars variables vector to return
+%======================================================================
+
 function [ vars ] = varCollection( type, offset, x, alpha, p)
 %VARCOLLETION creates variable collections for different manifold types
 
