@@ -1,6 +1,8 @@
 %> @file NVConstraint.m
 %> @brief the instances of this class are objects representing
 %> normal vector constraints. The procedures initialize those constraints
+%> @author Jonas Otten
+%> @date 18 Jul 2017
 % ======================================================================
 %> @brief the instances of this class are objects representing
 %> normal vector constraints. The procedures initialize those constraints
@@ -317,21 +319,32 @@ classdef NVConstraint < EqualityConstraint
             
             rhs = @(y)aNVCon.eqNVSys.conFun([otherVariables; maniPoint; y]);
             
+            if ~strcmp(aNVCon.type,'fold')
+                offset = aNVCon.vars.v1.index(1)-1;
+            else
+                offset = aNVCon.vars.w1.index(end);
+            end
+            
             x0 = ones(aNVCon.nVarNVSys,1);
+            
+%             x0(aNVCon.vars.g1.index-offset) = 0;
+%             x0(aNVCon.vars.g2.index-offset) = 0;
+%             
+%             x0(aNVCon.vars.r.index-offset) = -(alphaNom.values-aNVCon.vars.alpha.values)./norm((alphaNom.values-aNVCon.vars.alpha.values),2);
             
             [x,res,exitflag] = fsolve(rhs,x0,aNVCon.optionsEqConsInit);
             
-            if ~strcmp(aNVCon.type,'fold')
-                offset=aNVCon.vars.v1.index(1)-1;
-            else
-                offset=aNVCon.vars.w1.index(end);
-            end
             %% THIS IS A TEMPORARY CODE SEGMENT WHICH ASSUMES THE NOMINAL POINT IS IN THE STABLE REGION
             % IT FLIPS THE NORMAL VECTOR ALLWAYS TOWARDS THE NOMINAL POINT. LATER THE NORMAL VECTOR HAS TO POINT TO THE STABLE REGION
             
             switch directionMode
-                case 1      % FLIPS THE NORMAL VECTOR ALLWAYS TOWARDS THE NOMINAL POINT
+                case -1     % ALLWAYS FLIP THE NORMAL VECTOR 
+                    direction = -1;
+                
+                case 0      % DO NOT FLIP THE NORMAL VECTOR AT All
+                    direction = 1;
                     
+                case 1      % FLIPS THE NORMAL VECTOR ALLWAYS TOWARDS THE NOMINAL POINT
                     r = x(aNVCon.vars.r.index-offset);
                     r = r/norm(r,2);
                     alphaNom = alphaNom.values;
@@ -339,7 +352,6 @@ classdef NVConstraint < EqualityConstraint
                     direction = sign((r'*r)\r'*(alphaNom-alphaCrit));
                     
                 case 2  % FLIPS THE NORMAL VECTOR ALLWAYS TOWARDS THE STABLE REGION, determined by eigenvalues
-                    
                     shiftLength = 1e-3;
                     
                     r = x(aNVCon.vars.r.index-offset);
@@ -380,8 +392,7 @@ classdef NVConstraint < EqualityConstraint
             end
             
             % END OF THE TEMPORARY SEGMENT
-            
-            
+
             aNVCon.vars.v1.values = direction*x(aNVCon.vars.v1.index-offset);
             aNVCon.vars.v2.values = direction*x(aNVCon.vars.v2.index-offset);
             aNVCon.vars.g1.values = direction*x(aNVCon.vars.g1.index-offset);
@@ -416,7 +427,7 @@ classdef NVConstraint < EqualityConstraint
         %> @return instance of NVConstraint with potentially initialized connection
         %> constraint
         % ======================================================================
-        
+
         function findConnection(aNVCon,alphaNom)
             
             if aNVCon.status<4
