@@ -1,7 +1,47 @@
+%> @file DDENLP.m
+%> @brief this class desribes the whole optimization problem for delayed systems
+%> 
+%> @mainpage Documentation of the Toolbox DDENLP for robust steady state optimization of delayed systems.
+%>
+%> @section use Using this toolbox
+%> This toolbox aids with the optimization of delayed systems using normal vector constraints for robust stability properties.
+%>
+%> The code documentation can be found in this file.
+%>
+%> Additionally, there are some example files.
+%>
+%> @section funding Funding 
+%> The development of this toolbox was funded by  Deutsche Forschungsgemeinschaft (grant MO 1086/13).
+%>
+%> @author Jonas Otten and Martin Moennigmann
+%> @date 18 Jul 2017
+%>
+%>======================================================================
+%> @brief this class desribes the whole optimization problem for delayed systems
+%
+%>  this class is intended to for the robust stable steady state of
+%>  delayed systems
+%> 
+%>     status:
+%>     1: input initial guess and might not solve the equations
+%>     2: parameter is on critical manifold
+%>     3: parameter is closest critical point
+%>     4: Normal Vector at closest critical point was found
+%>     5: connection of closest critical point and nominal point by normal
+%>     vector verified
+%>     6: all nonlinear constraints have been concatenated
+%>     >6: values were handed back by optimization algorithm
+%>
+%> @author Jonas Otten
+%> @date 18 Jul 2017 ======================================================================
+
+
+
+
 classdef DDENLP < handle
-    %this class is intended to for the robust stable steady state o
-    %   Detailed explanation goes here
-    
+    %this class is intended to for the robust stable steady state of
+    %delayed systems
+      
     % NV-status:
     % 1: input initial guess and might not solve the equations
     % 2: parameter is on critical manifold
@@ -13,57 +53,106 @@ classdef DDENLP < handle
     % >6: values were handed back by optimization algorithm
     
     properties
-        aCostFunction % cost function of the main steady state optimization problem
-        problemDDE % object of class DDE, contains all relevant DDE information
+        %> cost function of the main steady state optimization problem
+        aCostFunction 
+        %> object of class DDE, contains all relevant DDE information
+        problemDDE
+        %> structure containing the cell array of variables, find entries with  ind=find(ismember...
+        vars 
         
-        vars % structure containing the
-        % cell array, find entries with  ind=find(ismember...
+        %> steady state constraint class StStConstraint
+        stStCon = []; 
         
-        stStCon = []; % of class equality constraints
+        %> lower boundaries of box constraints
+        lowerBoxCons
+        %> lower boundaries of box constraints
+        upperBoxCons
+        %> parameter uncertainty
+        minDist = 1;
+        %> the highest eigenvalue real part which is allowed 
+        maxAllowedRealPart = 0;
+        %> normal vector constraints, vector of objects of class NVConstraint
+        NVCon = [];
         
-        lowerBoxCons % low boundaries of box constraints
-        upperBoxCons % upper boundaries of box contraints
-        minDist = 1; % parameter uncertainy
-        maxAllowedRealPart = 0; % the highest eigenvalue real part which is allowed.
-        NVCon = []; % of class NVCon
+        %> function handle that collects all nonlinear equality constraints
+        allNLEqConstraints 
+        %> function handle that collects all nonlinear inequality constraints
+        allNLIneqConstraints = @(y)[]; 
         
-        allNLEqConstraints % collects all nonlinear equality constraints
-        allNLIneqConstraints = @(y)[]; % collects all nonlinear inequality constraints
+        %> contains the indices of parameters that are uncertain, but fixed
+        fixedUncertParamIndex 
         
-        fixedUncertParamIndex % contains the indices of parameters that are uncertain, but fixed
-        
-        nlcon % is filled with the nonlinear constraints (inequality and equality)
+        %> function handle with the nonlinear constraints (inequality and equality)
+        nlcon 
         
         % numerical properties
+        %> options for initialization numerics (fsolve)
         optionsInitEqCons = optimoptions('fsolve','Algorithm','levenberg-marquardt');
+        %> options for initialization numerics (auxiliary optimization)
         optionsInitOptim = optimoptions('fmincon','Algorithm','active-set');
+        %> options for the main optimization
         optionsMainOptim = optimoptions('fmincon','Algorithm','active-set');
         
         % properties for stability/robustness check
+        %> real number, for DDE-BIFTOOL numerics
         numMinEig=[];
-        verifyStabPoints = 2; %  $$ {verifyStabPoints}^{nAlpha} $$ random points are generated and evaluated
-        useLHS=1; % use latin hypercube sample for evaluating the uncertainty region
+        %>  $$ {verifyStabPoints}^{nAlpha} $$ random points are generated and evaluated
+        verifyStabPoints = 2; 
+        %> flag for using latin hypercube sample for evaluating the uncertainty region
+        useLHS=1;
     end
-    
+
     properties(SetAccess=protected)
-        nX % number of states
-        nAlpha % number of uncertain parameters
-        nP = 0 % number of optimization parameters without uncertainty
-        occupiedVars = 0; % number of variables in whole optimization problem
-        occupiedEqs = 0; % number of equality constraints in whole optimization problem
-        occupiedIneqs = 0; % number of inequality constraints  in whole optimization problem
-        initVal % initial value, length(initVal)==occupiedVars
-        optimVal % optimal value, should be a vector of  length(optimVal)==occupiedVars
-        optJ % cost at optimum
-        exitflag % exitflag of main optimization
-        optimOutput % status message of main optimization
-        lambda % lagrange multiplier of main optimization
-        status = 0 % 0: nothing initialized
+        %> number of states
+        nX
+        %> number of uncertain parameters 
+        nAlpha
+        %> number of optimization parameters without uncertainty
+        nP = 0 
+        %> number of variables in whole optimization problem 
+        occupiedVars = 0;
+        %> number of equality constraints in whole optimization problem
+        occupiedEqs = 0; 
+        %> number of inequality constraints  in whole optimization problem
+        occupiedIneqs = 0; 
+        %> initial value, length(initVal)==occupiedVars
+        initVal
+        %> optimal value, should be a vector of  length(optimVal)==occupiedVars
+        optimVal
+        %> cost at optimum
+        optJ
+        %> exitflag of main optimization
+        exitflag
+        %> status message of main optimization
+        optimOutput
+        %> lagrange multiplier of main optimization
+        lambda
+        %> status of this optimization problem, (key in main description)
+        status = 0 
     end
     
     methods
-        function aDDENLP = DDENLP(aCostFunction,aDDE,xNomGuess,stateLB,stateUB,uncertParamLB,uncertParamUB,certOptParamLB,certOptParamUB, varargin) % constructor
-            % CONSTRUCTOR OF THE CLASS DDENLP
+        
+    % ======================================================================
+    %> @brief Class constructor
+    %>
+    %> This function constructs instances of the class DDENLP
+    %>
+    %> @param aCostFunction function handle for cost function
+    %> @param aDDE underlying DDE, instance of class DDE
+    %> @param xNomGuess collection of instances of VariableVector, nominal
+    %>        state guess
+    %> @param stateLB lower bounds for states
+    %> @param stateUB upper bounds for states
+    %> @param uncertParamLB lower bounds for uncertain optimization parameters
+    %> @param uncertParamUB upper bounds for uncertain optimization parameters
+    %> @param certOptParamLB lower bounds for certain optimization parameters (optional input)
+    %> @param certOptParamUB upper bounds for certain optimization parameters (optional input)
+    % 
+    %> @return instance of the DDENLP class.
+    % ======================================================================
+        
+        function aDDENLP = DDENLP( aCostFunction, aDDE, xNomGuess, stateLB, stateUB, uncertParamLB, uncertParamUB, certOptParamLB, certOptParamUB, varargin ) % constructor
             % the simplest properties are assigned:
             
             
@@ -162,14 +251,33 @@ classdef DDENLP < handle
             
         end
         
-        function initializeStSt(aDDENLP)
+        
+    % ======================================================================
+    %> @brief intialize steady state constraint within a DDENLP instance
+    %>
+    %> @param aDDENLP instance of DDENLP
+    % ====================================================================== 
+        
+        function initializeStSt( aDDENLP )
             % the initial guess for the steady state is corrected to find
             % an actual steady state
             options=aDDENLP.optionsInitEqCons;
             aDDENLP.stStCon = initStStConstraint(aDDENLP.stStCon,options);
         end
         
-        function addNVCon(aDDENLP,type,augSysHandle,nVSysHandle,xGuess,alphaGuess,pGuess)
+   	% ======================================================================
+    %> @brief add a normal vector constraint to the optimization Problem
+    %>
+    %> @param aDDENLP instance of DDENLP
+    %> @param type a string containing the requested manifold type
+    %> @param augSynVSysHandlesHandle function handle describing the critical manifold
+    %> @param nVSysHandle function handle describing the normal vectors of the critical manifold
+    %> @param xGuess guess for critical state, instance of VariableVector
+    %> @param alphaGuess guess for critical parameters, instance of VariableVector
+    %> @param pGuess current certain parameters,  instance of VariableVector
+    % ====================================================================== 
+        
+        function addNVCon( aDDENLP, type, augSysHandle, nVSysHandle, xGuess, alphaGuess, pGuess )
             %point type (stst,fold,modfold,hopf,modhopf)
             % exist stst existAug existNV existConnection
             % entries
@@ -200,7 +308,14 @@ classdef DDENLP < handle
             
         end
         
-        function initNVCons(aDDENLP)
+    % ======================================================================
+    %> @brief initializes normal vector constraints by using a series of
+    %>        methods of the class NVConstraint
+    %>
+    %> @param aDDENLP instance of DDENLP
+    % ====================================================================== 
+        
+        function initNVCons( aDDENLP )
             % this function conducts the steps necessary for the
             % initialization of all normal vector constraints i.e.
             % - finding a critical point
@@ -231,8 +346,20 @@ classdef DDENLP < handle
         end
         
         
-        function moveAwayFromManifolds(aDDENLP, steppingFactor, distanceFactor,...
-                iterations,varargin)
+    % ======================================================================
+    %> @brief moves the nominal point away from known critical manifolds
+    %>        methods of the class NVConstraint
+    %>
+    %> @param aDDENLP instance of DDENLP
+    %> @param steppingFactor (optional) step width of moving nominal point.
+    %>        Smaller value means slower convergence but better numerics, default is 0.7
+    %> @param distanceFactor (optional) desired final minimal distance
+    % >       compared to property minDist. Default is 1.8
+    %> @param iterations (optional) number of iterations. Default is 20
+    % ====================================================================== 
+        
+        function moveAwayFromManifolds( aDDENLP, steppingFactor, distanceFactor,...
+                iterations, varargin )
             % shifts nominal point further away from critical manifolds
             % this process works iteratively
      
@@ -289,7 +416,14 @@ classdef DDENLP < handle
             end
         end
         
-        function evaluateStatus(aDDENLP)
+        
+    % ======================================================================
+    %> @brief evaluates the status of DDENLP
+    %>
+    %> @param aDDENLP instance of DDENLP
+    % ====================================================================== 
+        
+        function evaluateStatus( aDDENLP )
             % checks the status of all existing constraints and assign the
             % status of the whole optimization problem
             if aDDENLP.stStCon.status==1
@@ -298,7 +432,15 @@ classdef DDENLP < handle
         end
         
         
-        function concatConstraints(aDDENLP)
+        
+        
+    % ======================================================================
+    %> @brief concatenates the various constraints in this DDENLP instance
+    %>        for later optimitzation
+    %>
+    %> @param aDDENLP instance of DDENLP
+    % ====================================================================== 
+        function concatConstraints( aDDENLP )
             % concatenates the existing constraints
             % fmincon expects nonlinear constraints to have the form
             % [c,ceq]=nlcon(x). The different nonlinear constraints are
@@ -331,7 +473,34 @@ classdef DDENLP < handle
             
         end
         
-        function concatInitPoints(aDDENLP)
+        
+        
+    % ======================================================================
+    %> @brief compares connection and normal vector
+    %>
+    %> @param aDDENLP instance of DDENLP
+    %> @param indexCrit index of critical point for which comparison takes place
+    % ====================================================================== 
+        function compareConnectionNV(aDDENLP, indexCrit )
+            % compares connection and normal vector
+            
+            connection = aDDENLP.vars.nominal.alpha.values - aDDENLP.vars.critical(indexCrit).alpha.values;
+            connection = connection./norm(connection,2);
+            
+            r = aDDENLP.vars.critical.r.values;
+            r = r/norm(r,2);
+            disp([connection,r]);
+                      
+        end
+        
+        
+    % ======================================================================
+    %> @brief concatenates the various variables in this DDENLP instance
+    %>        for later optimitzation
+    %>
+    %> @param aDDENLP instance of DDENLP
+    % ====================================================================== 
+        function concatInitPoints( aDDENLP )
             % the critical points and normal vectors have been stored
             % distributed in different object. This function gathers all of
             % them and saves them as a variable to be used in the main
@@ -362,7 +531,12 @@ classdef DDENLP < handle
             end
         end
         
-        function checkConstraints(aDDENLP)
+    % ======================================================================
+    %> @brief check if constraints hold for inital point
+    %>
+    %> @param aDDENLP instance of DDENLP
+    % ====================================================================== 
+        function checkConstraints( aDDENLP )
             % displays which constraints might be violated at initial point
             %
             %             fprintf('\nLower Box Contstraints: \n')
@@ -376,7 +550,18 @@ classdef DDENLP < handle
             disp(aDDENLP.allNLIneqConstraints(aDDENLP.initVal)<0)
         end
         
-        function runOptim(aDDENLP,userDefinedOptions,varargin)
+        
+    	% ======================================================================
+    %> @brief run optimization of DDENLP instance
+    %>
+    %> @param aDDENLP instance of DDENLP
+    %> @param userDefinedOptions (optional) user defined optimization
+    %>        options    
+    %> @param Aineq (optional) user defined linear inequality constraints
+    %> @param bineq (optional) user defined linear inequality constraints
+    % ====================================================================== 
+        
+        function runOptim( aDDENLP, userDefinedOptions, Aineq, bineq, varargin )
             % this function starts the main optimization without
             % intermediate stability checks
             
@@ -384,6 +569,11 @@ classdef DDENLP < handle
                 options = userDefinedOptions;
             else
                 options = aDDENLP.optionsMainOptim;
+            end
+            
+            if nargin<=2
+                Aineq=[];
+                bineq=[];
             end
             
             % store, how this function was called (for later use)
@@ -425,15 +615,16 @@ classdef DDENLP < handle
                 end
             end
             
-            if max(abs(ceq))>options.TolCon
+            [maxCeq,position] = max(abs(ceq));
+            if (maxCeq>options.TolCon) && (~strcmp(callerFunction(2).name, 'DDENLP.runOptimWithStabChecks'))
                 fprintf('%d\n',ceq);
-                warning('nonlinear equality constraints violated at initial point (measured by TolCon = %d).',(options.TolCon))
+                warning('nonlinear equality constraints violated at initial point for equality constraint no. %i, i.e. %d (measured by TolCon = %d).',position,abs(ceq(position)),(options.TolCon))
             end
             
             % run optimization
             
             [aDDENLP.optimVal,aDDENLP.optJ,aDDENLP.exitflag,aDDENLP.optimOutput,aDDENLP.lambda] = ...
-                fmincon(J,x0,[],[],Aeq,beq,lb,ub,nonlinCon,options);
+                fmincon(J,x0,Aineq,bineq,Aeq,beq,lb,ub,nonlinCon,options);
             
             if aDDENLP.exitflag>0
                 aDDENLP.status = 6;
@@ -448,7 +639,23 @@ classdef DDENLP < handle
         
         %% WORK IN PROGRESS: STARTING MARK
         
-        function [init, final, maxEig,eigs] = runOptimWithStabChecks(aDDENLP,nIterBetweenStabChecks)
+    % ======================================================================
+    %> @brief run optimization of DDENLP instance with intermediate
+    %>        stability checks. Less iterations between stability checks
+    %>        lead to slower optimization, because optimizer has to cold
+    %>        start more frequently
+    %>
+    %> @param aDDENLP instance of DDENLP
+    %> @param nIterBetweenStabChecks number of iterations between stability
+    %>        checks
+    %>    
+    %> @return init initial point of  optimization
+    %> @return final final point of optimization 
+    %> @return maxEig biggest eigenvalue real part after optimization
+    %> @return eigs rightmost eigenvalues after stability loss
+    % ====================================================================== 
+        
+        function [init, final, maxEig, eigs] = runOptimWithStabChecks( aDDENLP, nIterBetweenStabChecks )
             % this function starts the main optimization with
             % intermediate stability checks
             
@@ -486,7 +693,19 @@ classdef DDENLP < handle
             end
         end
         
-        function runOptimAddingNewManifolds(aDDENLP,nIterBetweenStabChecks)
+        
+                
+    % ======================================================================
+    %> @brief run optimization of DDENLP instance with intermediate
+    %>        stability checks. Algorithm tries to add new critical
+    %>        manifold if one was crossed
+    %>
+    %> @param aDDENLP instance of DDENLP
+    %> @param nIterBetweenStabChecks number of iterations between stability
+    %>        checks and potential manifold adding
+    % ====================================================================== 
+        
+        function runOptimAddingNewManifolds( aDDENLP, nIterBetweenStabChecks )
             
             for ii = 1:10
                 [init,final,maxEig,~] = aDDENLP.runOptimWithStabChecks(nIterBetweenStabChecks);
@@ -525,8 +744,22 @@ classdef DDENLP < handle
             end
         end
         
+                        
+    % ======================================================================
+    %> @brief look for a manifold point between two given points
+    %>
+    %> @param ~ (ignore first input)
+    %> @param type string of expected manifold type
+    %> @param manifoldHandle function handle of manifold
+    %> @param point1 first point
+    %> @param point2 second point
+    %> 
+    %> @return intermediate Point
+    % ====================================================================== 
         
-        function  intermediatePoint = findManifoldPointOnLine(~, type, manifoldHandle, point1, point2 )
+        
+        
+        function  intermediatePoint = findManifoldPointOnLine( ~, type, manifoldHandle, point1, point2 )
             % This method looks for a crossing of a critical manifold between two given
             % points
             
@@ -601,6 +834,16 @@ classdef DDENLP < handle
         
         %% FROM HERE UPWARDS: ENDING MARK
         
+                                
+    % ======================================================================
+    %> @brief reconstruct inital variables from single vector
+    %>
+    %> @param aDDENLP instance of DDENLP class
+    %> @param type (optional) string describing which points to reconstruct
+    %> 
+    %> @return (optional) return reconstruction to external variable
+    % ====================================================================== 
+        
         function [varargout] = deconstructInit(aDDENLP, type, varargin)
             
             init = aDDENLP.initVal;
@@ -641,6 +884,14 @@ classdef DDENLP < handle
             end
         end
         
+    % ======================================================================
+    %> @brief reconstruct optimal variables from single vector
+    %>
+    %> @param aDDENLP instance of DDENLP class
+    %> 
+    %> @return (optional) return reconstruction to external variable
+    % ====================================================================== 
+        
         function varargout = deconstructOptimum(aDDENLP)
             
             
@@ -674,7 +925,17 @@ classdef DDENLP < handle
             
         end
         
-        function [maxRealPart,eigs] = checkStabilityPoint(aDDENLP,point)
+    % ======================================================================
+    %> @brief calculate eigenvalues at a given point in parameter space
+    %>
+    %> @param aDDENLP instance of DDENLP class
+    %> @param point string desribing at which point type the stability shall be evaluated
+    %> 
+    %> @return maxRealPart maximal real part of all eigenvalues
+    %> @return eigs some rightmost eigenvalues
+    % ====================================================================== 
+        
+        function [ maxRealPart, eigs ] = checkStabilityPoint( aDDENLP, point )
             if ischar(point)
                 type=point;
                 switch point
@@ -702,7 +963,7 @@ classdef DDENLP < handle
                 'sys_ntau',myNtau,...
                 'sys_tau',myDelays);
             
-            for ii = 1 : size(point,1);
+            for ii = 1 : size(point,1)
                 [maxRealPartTMP, xCorr, eigs] = checkStability(funcs,point(ii).alpha.values,point(ii).x.values,aDDENLP.numMinEig);
                 if isempty(maxRealPartTMP)
                     error('did not find an eigevalue with Re(lambda)>aDDENLP.numMinEig. Please chose a smaller value for aDDENLP.numMinEig')
@@ -741,7 +1002,15 @@ classdef DDENLP < handle
             %             end
         end
         
-        function maxRealPart = checkStabilityAtVertices(aDDENLP)
+    % ======================================================================
+    %> @brief calculate stability an vertices of uncertianty region
+    %>
+    %> @param aDDENLP instance of DDENLP class
+    %> 
+    %> @return maxRealPart maximal real part of all eigenvalues
+    % ====================================================================== 
+        
+        function maxRealPart = checkStabilityAtVertices( aDDENLP )
             
             myNAlpha=aDDENLP.nAlpha;
             
@@ -766,8 +1035,19 @@ classdef DDENLP < handle
             maxRealPart = checkStabilityPoint(aDDENLP,'vertex');
         end
         
-        function maxRealPart = checkStabilityAtRandom(aDDENLP, baseForNumberOfPoints, seedForRandomNumbers, varargin)
-            % calculates max(real(eigenvalues)) for random points within
+    % ======================================================================
+    %> @brief calculate stability at random points within uncertianty region
+    %>
+    %> @param aDDENLP instance of DDENLP class
+    %> @param baseForNumberOfPoints base for the number of random points
+    %> @param seedForRandomNumbers (optional) seed for pseudo random number
+    %>        generator
+    %>
+    %> @return maxRealPart maximal real part of all eigenvalues
+    % ====================================================================== 
+        
+        function maxRealPart = checkStabilityAtRandom( aDDENLP, baseForNumberOfPoints, seedForRandomNumbers, varargin )
+            % calculates max(real(eigenvalues)) for random points within 
             % the uncertainty region
             
             if nargin > 2
@@ -799,7 +1079,20 @@ classdef DDENLP < handle
             [maxRealPart,~] = checkStabilityPoint(aDDENLP,'random');
         end
         
-        function sol = ddesd(aDDENLP,point,history,tspan,options)
+        
+    % ======================================================================
+    %> @brief run a simulation of the optimum. Overloading of ddesd
+    %>
+    %> @param aDDENLP instance of DDENLP class
+    %> @param point parameters to use for simulation
+    %> @param history for simulation (like inital point ODE, but for DDE)
+    %> @param tspan time spaned by simulation
+    %> @param options options for solver
+    %>
+    %> @return sol is solution struct as known from ode45 etc
+    % ====================================================================== 
+        
+        function sol = ddesd( aDDENLP, point, history, tspan, options )
             
             myDDE=@(~,x,xtau)aDDENLP.problemDDE.rhs(x,xtau,point.alpha.values,point.p.values)';
             myDelays=@(t,x)t-aDDENLP.problemDDE.delays(x,point.alpha.values,point.p.values)';
