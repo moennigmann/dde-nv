@@ -1,0 +1,93 @@
+#initialisation
+restart; 
+#define paths
+_ModulesDirectory:="/home/users/pme/Downloads/MapleModules/";
+#load modules 
+ cat(_ModulesDirectory, "/Aux/Aux.mpl");
+ read(cat(_ModulesDirectory, "/Aux/Aux.mpl")): 
+ read(cat(_ModulesDirectory, "/AugSys2/AugSys2.mpl")): 
+
+#define system
+Sys["DynVars"]:=[x1,x2]; 
+Sys["Parameters"]:=[alpha1=5,alpha2=2]; 
+Sys["AEs"]:=[];
+Sys["ODEs"]:=[`x1'` = alpha*xMat-gamma*xJuv-alpha*exp(-gamma*(tau[1]))*xMattau1,
+`x2'` = alpha*exp(-gamma*(tau[1]))*xMattau1-beta*xMat^2]; 
+Sys["DelVars"]:=[x1tau1, x2tau1]; 
+Sys["AlgVars"]:=[];
+Sys["ExplicitAEs"]:=[xJuv=x1, xMat=x2, alpha=alpha1, gamma=alpha2, p1=1, beta=p1, xJuvtau1=x1tau1, xMattau1=x2tau1];
+Sys["Delays"]:=[tau[1]=1.5-0.5*exp(-xMat)];
+ 
+#insert fixed parameters
+#
+Sys:=Aux:-SystemClasses:-subsExplicitAEsIntoDAESys(Sys);
+# look for errors
+Aux:-SystemClasses:-listOfErrorsInDDESys(Sys, strict);
+#define Normal Vextor System
+AugSys:=AugSys2:-SdDelayBif:-ModHopfNV:-CreateModHopfNVSys(Sys,[ alpha1, alpha2],-0.1):-getSys();
+
+# pick relevant equations of Normal Vectors System
+manifoldEq:=[]:
+for i from 1 by 1 to 8 do
+ithRhs:=rhs(AugSys["Equations"][i]);
+for jj from 1 by 1 to nops(Sys["DynVars"]) do
+ithRhs:=subs(Sys["DynVars"][jj]=x[jj],ithRhs): # ...states, ...
+end do:
+for jj from 1 by 1 to nops(Sys["Parameters"]) do
+ithRhs:=subs(lhs(Sys["Parameters"][jj])=alpha[jj],ithRhs): # and parameters...
+end do:
+manifoldEq:=[op(manifoldEq),ithRhs]:
+end do:
+# create frame for code generation
+Procedure4CodeGen:=proc(x, alpha, omega, w1, w2 )
+m;
+end proc;
+ManifoldEquation:=subs([m=manifoldEq],eval(Procedure4CodeGen));
+# generate C code
+CodeGeneration:-C(ManifoldEquation,returnvariablename="residuum",defaulttype=numeric,output="ModHopfManifold.c",deducetypes=false);
+
+# pick relevant equations of Normal Vectors System
+manifoldEq:=[]:
+for i from 9 by 1 to nops(AugSys["Equations"]) do
+ithRhs:=rhs(AugSys["Equations"][i]);
+for jj from 1 by 1 to nops(Sys["DynVars"]) do
+ithRhs:=subs(Sys["DynVars"][jj]=x[jj],ithRhs): # ...states, ...
+end do:
+for jj from 1 by 1 to nops(Sys["Parameters"]) do
+ithRhs:=subs(lhs(Sys["Parameters"][jj])=alpha[jj],ithRhs): # and parameters...
+end do:
+manifoldEq:=[op(manifoldEq),ithRhs]:
+end do:
+# create frame for code generation
+Procedure4CodeGen:=proc(x, alpha, omega, w1, w2, v1, v2, g1, g2, u, r)
+m;
+end proc;
+ManifoldEquation:=subs([m=manifoldEq],eval(Procedure4CodeGen));
+# generate C code
+CodeGeneration:-C(ManifoldEquation,returnvariablename="residuum",defaulttype=numeric,output="ModHopfNV.c",deducetypes=false);
+
+
+
+
+#get dde equations
+dderhs:=[]; # create space for dde right hand side
+for ii from 1 by 1 to nops(Sys["DynVars"]) do
+ithRhs:=rhs(Sys["ODEs"][ii]): # get one entry and replace...
+for jj from 1 by 1 to nops(Sys["DynVars"]) do
+ithRhs:=subs(Sys["DynVars"][jj]=x[jj],ithRhs): # ...states, ...
+end do:
+for jj from 1 by 1 to nops(Sys["DelVars"]) do
+ithRhs:=subs(Sys["DelVars"][jj]=xtau[jj],ithRhs); # ...delayed states,...
+end do:
+for jj from 1 by 1 to nops(Sys["Parameters"]) do
+ithRhs:=subs(lhs(Sys["Parameters"][jj])=alpha[jj],ithRhs): # and parameters...
+end do:
+dderhs:=[op(dderhs),ithRhs]; # and concatenate it with the existing entries
+end do:
+# create frame for code generation
+Procedure4CodeGen:=proc(x,xtau,alpha)
+m;
+end proc;
+DDErightHandSide:=subs([m=dderhs],eval(Procedure4CodeGen));
+# generate C code
+CodeGeneration:-C(DDErightHandSide,returnvariablename="xdot",defaulttype=numeric,output="DDE.c",deducetypes=false);
