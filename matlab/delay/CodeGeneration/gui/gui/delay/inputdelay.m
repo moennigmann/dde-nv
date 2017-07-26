@@ -1,3 +1,8 @@
+%> @file inputdelay.m
+%> @brief opens inputwindow to enter expression for delay
+%> @return expression for delay
+
+
 function varargout = inputdelay(varargin)
 % INPUTDELAY MATLAB code for inputdelay.fig
 %      INPUTDELAY, by itself, creates a new INPUTDELAY or raises the existing

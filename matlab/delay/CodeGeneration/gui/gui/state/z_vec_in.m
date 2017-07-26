@@ -1,3 +1,8 @@
+%> @file z_vec_in.m
+%> @brief reads in number of states, creats counted states and opens function to read in
+%names of states
+
+
 %% z_vec_in_ob
 % einlesen der zustandsvariablen ohne beschränkung der anzahl
 

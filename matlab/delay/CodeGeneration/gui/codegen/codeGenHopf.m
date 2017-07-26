@@ -1,6 +1,10 @@
+%> @file codeHopf.m
+%> @brief if hopf manifold was chosen, this code will be added to the maple
+%> code
+
 %% Code generation Hopf
 
-fileID = fopen('codegen.txt','a');
+fileID = fopen(cg_name,'a');
 fprintf(fileID,'# define normal vector system\n');
 fprintf(fileID,'AugSys:=AugSys2:-SdDelayBif:-HopfNV:-CreateHopfNVSys(Sys,[ '); %%%%
 for i=1:anum-1

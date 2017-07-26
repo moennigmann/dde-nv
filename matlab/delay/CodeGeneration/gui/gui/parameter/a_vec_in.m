@@ -1,3 +1,7 @@
+%> @file a_vec_in.m
+%> @brief code to read number of parameter and opens functions to enter
+%> name and value
+
 %% a_vec_in_ob
 % einlesen der zustandsvariablen ohne beschränkung der anzahl
 % alphavec wird noch nicht richtig erstellt! probleme bei aval

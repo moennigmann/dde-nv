@@ -1,3 +1,7 @@
+%> @file inputAEs.m
+%> @brief input dialog for additional eqautions
+%> @return equation
+
 function varargout = inputAEs(varargin)
 % INPUTAES MATLAB code for inputAEs.fig
 %      INPUTAES, by itself, creates a new INPUTAES or raises the existing

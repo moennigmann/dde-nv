@@ -1,7 +1,10 @@
+%> @file mexWrapperGen_ModfoldNV.m
+%> @brief if modfold manifold was chosen, this code will be added to the compiled 
+%> maple code, to make it compilable to matlabcode - here for normalvector
+%> system
+
 %% Mex Wrapper - modFold NV
 % generates c-code to be compilable in mex-file for matlab
-% -> mod fold?
-
 
 fileID = fopen('modfold_NV.c','w');
 fprintf(fileID,'#include "mex.h"\n');
@@ -37,9 +40,9 @@ fprintf(fileID,' double g1 = mxGetScalar(prhs[5]);\n');
 fprintf(fileID,' double *uPointer = mxGetPr(prhs[6]);\n');
 fprintf(fileID,' double *rPointer = mxGetPr(prhs[7]);\n\n\n');
 fprintf(fileID,' /* create the output matrix */\n');
-fprintf(fileID,' plhs[0] = mxCreateDoubleMatrix(1,(mwSize)%d,mxREAL);\n\n',(4*xnum+2*anum+1)); % war 7
+fprintf(fileID,' plhs[0] = mxCreateDoubleMatrix(1,(mwSize)%d,mxREAL);\n\n',(4*xnum+2*anum+1)); 
 fprintf(fileID,' /* get a pointer to the real data in the output matrix */\n');
 fprintf(fileID,' double *residuumPointer = mxGetPr(plhs[0]);\n\n');
 fprintf(fileID,' /* call the computational routine */\n');
-fprintf(fileID,' ManifoldEquation(xPointer,alphaPointer, pPointer, wPointer,vPointer,g1,uPointer,rPointer, residuumPointer);\n');
+fprintf(fileID,' ManifoldEquation(xPointer,alphaPointer, wPointer,vPointer,g1,uPointer,rPointer, residuumPointer);\n');
 fprintf(fileID,'}');

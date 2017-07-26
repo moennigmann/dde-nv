@@ -1,14 +1,19 @@
-%% Code generation for maple - control
-% to do: codeGenModHopf, codeGenFold
-% to do: mexWrapper_ModHopdf _ModHopfNV _Fold _FoldNV
+%> @file codeGeneration.m
+%> @brief main code for generating the maple code. first the name of the
+%> txt file is defined with the name of the project
 
+
+%% Code generation for maple - control
+
+% define name for code generation files
+cg_name = ['mapleCodeGeneration_' p_name '.txt'];
 
 % initialisation
 codeGenInit;
-% get p vector (later not necessary)
-% getp;
+
 % define system
 codeGenDefSys;
+
 % pick relevant equations of normal vector system - Fold
 if choiceMani(1)
     codeGenFold;

@@ -1,7 +1,11 @@
+%> @file codeGenModHopf.m
+%> @brief if modhopf manifold was chosen, this code will be added to the maple
+%> code
+
 %% Code generation modHopf
 % was noch zu aendern?
 
-fileID = fopen('codegen.txt','a');
+fileID = fopen(cg_name,'a');
 fprintf(fileID,'#define Normal Vextor System\n');
 fprintf(fileID,'AugSys:=AugSys2:-SdDelayBif:-ModHopfNV:-CreateModHopfNVSys(Sys,[ '); %%%%
 for i=1:anum-1

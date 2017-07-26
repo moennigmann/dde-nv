@@ -1,4 +1,9 @@
-%% c-code fuer matrlab holen -> ziel: sc3hopfNV.c
+%> @file mexWrapperGen_HopfNV.m
+%> @brief if hopf manifold was chosen, this code will be added to the compiled 
+%> maple code, to make it compilable to matlabcode - here for normalvector
+%> system
+
+%% c-code fuer matrlab holen 
 % generates c-code to be compilable in mex-file for matlab
 
 
@@ -40,7 +45,7 @@ fprintf(fileID,' double g2 = mxGetScalar(prhs[9]);\n');
 fprintf(fileID,' double *uPointer = mxGetPr(prhs[10]);\n');
 fprintf(fileID,' double *rPointer = mxGetPr(prhs[11]);\n\n\n');
 fprintf(fileID,' /* create the output matrix */\n');
-fprintf(fileID,' plhs[0] = mxCreateDoubleMatrix(1,(mwSize)%d,mxREAL);\n\n',(6*xnum+anum+4)); % vorher 47
+fprintf(fileID,' plhs[0] = mxCreateDoubleMatrix(1,(mwSize)%d,mxREAL);\n\n',(6*xnum+anum+4)); 
 fprintf(fileID,' /* get a pointer to the real data in the output matrix */\n');
 fprintf(fileID,' double *residuumPointer = mxGetPr(plhs[0]);\n\n');
 fprintf(fileID,' /* call the computational routine */\n');

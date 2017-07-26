@@ -1,3 +1,7 @@
+%> @file mexWrapperGen_Fold.m
+%> @brief if fold manifold was chosen, this code will be added to the compiled 
+%> maple code, to make it compilable to matlabcode
+
 %% Mex-Wrapper - Fold
 % generates c-code to be compilable in mex-file for matlab
 
@@ -33,10 +37,10 @@ fprintf(fileID,' double *pPointer = mxGetPr(prhs[2]);\n');
 fprintf(fileID,' double *wPointer = mxGetPr(prhs[3]);\n\n\n');
 fprintf(fileID,' /* create the output matrix */\n');
 fprintf(fileID,' plhs[0] = mxCreateDoubleMatrix(1,(mwSize)\n');
-fprintf(fileID,'%d\n',(2*xnum+1));                          %%% vorher 5 
+fprintf(fileID,'%d\n',(2*xnum+1));                    
 fprintf(fileID,',mxREAL);\n\n');
 fprintf(fileID,' /* get a pointer to the real data in the output matrix */\n');
 fprintf(fileID,' double *residuumPointer = mxGetPr(plhs[0]);\n\n');
 fprintf(fileID,' /* call the computational routine */\n');
-fprintf(fileID,' ManifoldEquation(xPointer, alphaPointer, pPointer, wPointer, residuumPointer);\n');
+fprintf(fileID,' ManifoldEquation(xPointer, alphaPointer, wPointer, residuumPointer);\n'); % pPointer entfernt
 fprintf(fileID,'}');

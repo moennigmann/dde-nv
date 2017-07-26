@@ -1,3 +1,9 @@
+%> @file ask_maxrealpart.m
+%> @brief opens input dialog for modified manifolds to enter the maximal
+%> real part for exponential stability
+%> @return maximal real part
+
+
 %% ask_maxrealpart
 % function to ask for the maximal real part for exponential stability at
 % modfold and modhopf

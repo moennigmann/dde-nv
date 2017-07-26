@@ -11,17 +11,12 @@ editpath = uicontrol('Style','edit','String','../../../../maple/','Position',[50
     'Callback',@editMaxReal_Callback);
 % set the ok-pushbutton to leave
 okpush = uicontrol('Position',[550,20,50,50],'String','OK','Callback',@OKbutton_Callback);
-
-
+% set visible
 f.Visible = 'on';
-% y = zeros(1,4);
+
 waitfor(findobj('-regexp','Tag','path'));
 
-function editMaxReal_Callback(source,eventdata)
-%     y = editMaxReal.String;
-end
 function OKbutton_Callback(source,eventdata)
-%     y = get(handles.editMaxReal,'string');
 y = editpath.String;     % set input text to outputvariable
 close all;                  % close window -> continue
 end

@@ -1,3 +1,7 @@
+%> @file inputalpha.m
+%> @brief opens input window to enter name and value of parameter
+%> @return name and value
+
 function varargout = inputalpha(varargin)
 % INPUTALPHA MATLAB code for inputalpha.fig
 %      INPUTALPHA, by itself, creates a new INPUTALPHA or raises the existing

@@ -1,6 +1,9 @@
-%% c-code (Hopfmani) holen -> ziel: SC3HopfMani.c
+%> @file mexWrapperGen_HopfMani.m
+%> @brief if hopf manifold was chosen, this code will be added to the compiled 
+%> maple code, to make it compilable to matlabcode
+
+%% c-code (Hopfmani) holen 
 % generates c-code to be compilable in mex-file for matlab
-% funktioniert in oneCSTROptim
 
 fileID = fopen('hopf_Manifold.c','w');
 fprintf(fileID,'#include "mex.h"\n');
@@ -34,7 +37,7 @@ fprintf(fileID,' double *w1Pointer = mxGetPr(prhs[4]);\n');
 fprintf(fileID,' double *w2Pointer = mxGetPr(prhs[5]);\n');
 fprintf(fileID,'\n\n\n');
 fprintf(fileID,' /* create the output matrix */\n');
-fprintf(fileID,' plhs[0] = mxCreateDoubleMatrix(1,(mwSize)%d,mxREAL);\n\n',(3*xnum+2)); % vorher 20
+fprintf(fileID,' plhs[0] = mxCreateDoubleMatrix(1,(mwSize)%d,mxREAL);\n\n',(3*xnum+2)); 
 fprintf(fileID,' /* get a pointer to the real data in the output matrix */\n');
 fprintf(fileID,' double *residuumPointer = mxGetPr(plhs[0]);\n\n');
 fprintf(fileID,' /* call the computational routine */\n');

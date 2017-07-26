@@ -1,3 +1,8 @@
+%> @file inputx.m
+%> @brief opens the inputwindow for entering the names of the states
+%> @return name of state
+
+
 function varargout = inputx(varargin)
 % INPUTX MATLAB code for inputx.fig
 %      INPUTX, by itself, creates a new INPUTX or raises the existing

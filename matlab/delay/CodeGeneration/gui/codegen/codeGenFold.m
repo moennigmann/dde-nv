@@ -1,7 +1,11 @@
+%> @file codeGenFold.m
+%> @brief if fold manifold was chosen, this code will be added to the maple
+%> code
+
 %% Code generation pick relevant equations of Normal Vector System
 % FoldManifold
 
-fileID = fopen('codegen.txt','a');
+fileID = fopen(cg_name,'a');
 fprintf(fileID,'# define normal vector system\n');
 fprintf(fileID,'AugSys:=AugSys2:-SdDelayBif:-FoldNV:-CreateFoldNVSys(Sys,[ '); %%%%
 for i=1:anum-1
@@ -17,7 +21,7 @@ fprintf(fileID,'for jj from 1 by 1 to nops(Sys["DynVars"]) do\n');
 fprintf(fileID,'ithRhs:=subs(Sys["DynVars"][jj]=x[jj],ithRhs): # ...states, ...\n');
 fprintf(fileID,'end do:\n');
 fprintf(fileID,'for jj from 1 by 1 to nops(Sys["Parameters"]) do\n');
-fprintf(fileID,'ithRhs:=subs(Sys["Parameters"][jj]=alpha[jj],ithRhs): # and parameters...\n');
+fprintf(fileID,'ithRhs:=subs(lhs(Sys["Parameters"][jj])=alpha[jj],ithRhs): # and parameters...\n');
 fprintf(fileID,'end do:\n');
 fprintf(fileID,'manifoldEq:=[op(manifoldEq),ithRhs]:\n');
 fprintf(fileID,'end do:\n');

@@ -1,3 +1,7 @@
+%> @file enter_eqn.m
+%> @brief input dialog for entering the equations
+%> @return equation
+
 %% enter_equation
 % function to ask for the maximal real part for exponential stability at
 % modfold and modhopf
@@ -10,16 +14,30 @@ xdotname = evalin('base','xxdot');
 xdot = evalin('base','xnames(:,2)');
 alvec = evalin('base','alphavec(:,2)');
 delvec = evalin('base','del')';
-delstates = evalin('base','delvars');
+delstate = evalin('base','delvars');
 % headtext =
+i=1;
+delstates = cell(length(delvec)*length(delstate),1);
+% for i=1:(length(delvec)+length(delstate))
+    for k=1:length(delstate)
+        for j=1:length(delvec)
+    delstates(i) = delstate(k,j);
+    i=i+1;
+        end
+    end
+% end
+% explanation text
 uicontrol('Style','text','Position',[50,200,500,60],'String','Here you are asked to enter the equations for the system. Listed below are the earlier entered states, parameter, delays and delayed states. You can click on them to add them to the equation.');
+% dynamic text for the input field
 text = ['Enter the right hand side for ' xdotname ':'];
+% text for input field
 eqntext = uicontrol('Style','text','Position',[50,30,300,50],'String',text);
 % set input text
 listheaderstates = uicontrol('Style','text','Position',[50,120,100,60],'String','Possible States');
 listheaderparam = uicontrol('Style','text','Position',[200,120,100,60],'String','Possible parameter');
 listheaderdelays = uicontrol('Style','text','Position',[350,120,100,60],'String','Possible delays');
 listheaderdelstates = uicontrol('Style','text','Position',[500,120,100,60],'String','Possible delayed states');
+% input field
 editeqn = uicontrol('Style','edit','String','equation','Position',[50,20,500,25],...
     'Callback',@editMaxReal_Callback);
 % set the ok-pushbutton to leave
@@ -32,7 +50,7 @@ delstateslist = uicontrol('Style','listbox','Position',[500,100,100,50],'String'
 f.Visible = 'on';
 % y = zeros(1,4);
 waitfor(findobj('-regexp','Tag','eqn'));
-
+% define callbackfunctions - expression clicked on will be added to text
 function stateslist_Callback(source,eventdata)
         editeqn.String = [editeqn.String stateslist.String(stateslist.Value,:)];
 end

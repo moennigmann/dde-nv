@@ -1,3 +1,9 @@
+%> @file check_input
+%> @brief displays the entries entered by the user to check whether they
+%> are correct, if not the necessary input dialog can be opened directly
+%> from the check_input window
+
+
 % display input to check if correct
 
 

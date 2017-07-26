@@ -1,3 +1,7 @@
+%> @file codeGenGUI.m
+%> @brief Programm to control input dialogs (gui), code generation and
+%> compiling
+
 %% Program to open input dialogs (gui), code generation, code manipulation and compiling
 % add folders gui and codegen to matlab
 
@@ -10,7 +14,7 @@ systemInput;
 
 codeGeneration;
 %%
-clear aes alphavec ans answer del fileID i j l tauname way x xdot xnames maxrealpart
+% clear aes alphavec ans answer del fileID i j l tauname way x xdot xnames maxrealpart
 
 system_order = ['maple ' cg_name];
 

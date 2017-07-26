@@ -1,10 +1,13 @@
+%> @file mexWrapperGen_ModHopf.m
+%> @brief if modhopf manifold was chosen, this code will be added to the compiled 
+%> maple code, to make it compilable to matlabcode
+
 %% mex Wrapper modHopf
 % generates c-code to be compilable in mex-file for matlab
 
-
 fileID = fopen('modhopf_Manifold.c','w');
 fprintf(fileID,'#include "mex.h"\n');
-addID = fopen('ModHopfManifold.c','r'); % aendern - ok
+addID = fopen('ModHopfManifold.c','r'); 
 text = fread(addID,'*char');
 fclose(addID);
 fprintf(fileID,text);
@@ -34,7 +37,7 @@ fprintf(fileID,' double *w1Pointer = mxGetPr(prhs[4]);\n');
 fprintf(fileID,' double *w2Pointer = mxGetPr(prhs[5]);\n');
 fprintf(fileID,'\n\n\n');
 fprintf(fileID,' /* create the output matrix */\n');
-fprintf(fileID,' plhs[0] = mxCreateDoubleMatrix(1,(mwSize)%d,mxREAL);\n\n',(3*xnum+2)); % war 20
+fprintf(fileID,' plhs[0] = mxCreateDoubleMatrix(1,(mwSize)%d,mxREAL);\n\n',(3*xnum+2)); 
 fprintf(fileID,' /* get a pointer to the real data in the output matrix */\n');
 fprintf(fileID,' double *residuumPointer = mxGetPr(plhs[0]);\n\n');
 fprintf(fileID,' /* call the computational routine */\n');

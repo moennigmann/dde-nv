@@ -1,3 +1,7 @@
+%> @file mexWrapperGen_DDE.m
+%> @brief adds code to maple code for DDE to make it compilable to
+%> matlabcode
+
 %% mex-Wrapper for DDE
 
 fileID = fopen('DDE_wrapped.c','w');
@@ -26,7 +30,7 @@ fprintf(fileID,'double *xtau = mxGetPr(prhs[1]);\n');
 fprintf(fileID,'double *alpha = mxGetPr(prhs[2]);\n');
 fprintf(fileID,'double *p = mxGetPr(prhs[3]);\n');
 fprintf(fileID,'/* create the output matrix */\n');
-fprintf(fileID,'plhs[0] = mxCreateDoubleMatrix(1,(mwSize)%d,mxREAL);\n',xnum);       %%% %d vorher 12
+fprintf(fileID,'plhs[0] = mxCreateDoubleMatrix(1,(mwSize)%d,mxREAL);\n',xnum); 
 fprintf(fileID,'/* get a pointer to the real data in the output matrix */\n');
 fprintf(fileID,'double *xdot = mxGetPr(plhs[0]);\n');
 fprintf(fileID,'DDErightHandSide(x, xtau, alpha, xdot);\n');

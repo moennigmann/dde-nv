@@ -1,6 +1,10 @@
+%> @file codeGenInit.m
+%> @brief initialisation code is generated, including inserting the path to
+%> the maple files
+
 %% Code generation initialisation
 
-fileID = fopen('codegen.txt','w');
+fileID = fopen(cg_name,'w');
 fprintf(fileID,'#initialisation\n');
 fprintf(fileID,'restart; \n');
 fprintf(fileID,'#define paths\n');

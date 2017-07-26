@@ -1,3 +1,17 @@
+%> @file systemInput.m
+%> @brief This code opens the input dialogs for defining the system.
+%> @param p_name name of the project
+%> @param way directory of maple files
+%> @param xnames vector with states (names and number)
+%> @param xnum number of states
+%> @param del contains expressions for delays
+%> @param delnum number of delays
+%> @param alphavec vector with uncertain parameter (name, velue, number)
+%> @param anum number of parameter
+%> @param xdot contains equations (rhs) for the states
+%> @param choiceMani contains the choice of the manifold (fold,modfold,..)
+
+
 %% Gui ablauf
 % 1.) Initialisierung - Directory eingeben
 % 2.) Define System - Variablen und Parameter einlesen
@@ -7,20 +21,24 @@
 %% set matlab
 % later anum will contain number of parameters (alpha-vector) and xnum
 % number of states
+
 clear
 anum = 0;
 xnum = 0;
 
 %% Name project
+% p_name will contain the name of project -> later use for naming generated
+% code
+
 p_name = name_project;
 
-%% Directory einlesen
+%% Directory einlesen - get directory to maple files
 % Pfad in path.txt und WS-variable way speichern
+% path saved in variable way
 
 enter_path;
 
 %% Define system
-
 % Dynamische variablen und Namen einlesen
 % xnames contains name and number of states
 % first column number (xi) second column name
@@ -99,5 +117,3 @@ choiceMani = askManifold;
 if choiceMani(2) || choiceMani(4)   % if mod fold or modhopf read extra value for max real part
     maxrealpart = ask_maxrealpart;  % open input dialog, save value to maxrealpart
 end
-
-clear delvars

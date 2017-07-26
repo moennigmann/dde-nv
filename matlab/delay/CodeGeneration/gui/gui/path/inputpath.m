@@ -1,3 +1,7 @@
+%> @file inputpath.m
+%> @brief opens the input window and writes input in path.txt
+
+
 %% Function to ask for the input path/directory.
 % The path will be saved to the file path.txt
 

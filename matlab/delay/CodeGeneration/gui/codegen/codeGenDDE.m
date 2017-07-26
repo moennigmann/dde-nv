@@ -1,6 +1,9 @@
+%> @file codeGenDDE.m
+%> @brief adds the dde-code to the maple code
+
 %% Code generation - get dde equations
 
-fileID = fopen('codegen.txt','a');
+fileID = fopen(cg_name,'a');
 fprintf(fileID,'#get dde equations\n');
 fprintf(fileID,'dderhs:=[]; # create space for dde right hand side\n');
 fprintf(fileID,'for ii from 1 by 1 to nops(Sys["DynVars"]) do\n');

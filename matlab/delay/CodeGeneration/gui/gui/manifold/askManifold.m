@@ -1,3 +1,8 @@
+%> @file askManifold.m
+%> @brief input window for asking for the type of manifold
+%> [1000] - fold;[0100] - modfold; [0010] - hopf; [0001] - modhopf
+%> @return 4bit vector with information for manifold
+
 %% ask Manifold
 
 function y = askManifold

@@ -1,7 +1,11 @@
-%% Code generation - maple
-% Manifold - modFold!?!
+%> @file codeGenModFold.m
+%> @brief if modfold manifold was chosen, this code will be added to the maple
+%> code
 
-fileID = fopen('codegen.txt','a');
+%% Code generation - maple
+% Manifold - modFold
+
+fileID = fopen(cg_name,'a');
 fprintf(fileID,'# define normal vector system\n');
 fprintf(fileID,'AugSys:=AugSys2:-SdDelayBif:-ModFoldNV:-CreateModFoldNVSys(Sys,[ '); %%%%
 for i=1:anum-1
@@ -22,7 +26,7 @@ fprintf(fileID,'end do:\n');
 fprintf(fileID,'manifoldEq:=[op(manifoldEq),ithRhs]:\n');
 fprintf(fileID,'end do:\n');
 fprintf(fileID,'#create frame for code generation\n');
-fprintf(fileID,'Procedure4CodeGen:=proc(x, alpha ,w )\n'); % vorher w statt w1
+fprintf(fileID,'Procedure4CodeGen:=proc(x, alpha ,w )\n');
 fprintf(fileID,'m;\n');
 fprintf(fileID,'end proc;\n');
 fprintf(fileID,'ManifoldEquation:=subs([m=manifoldEq],eval(Procedure4CodeGen));\n');
@@ -43,7 +47,7 @@ fprintf(fileID,'end do:\n');
 fprintf(fileID,'manifoldEq:=[op(manifoldEq),ithRhs]:\n');
 fprintf(fileID,'end do:\n');
 fprintf(fileID,'# create frame for code generation\n');
-fprintf(fileID,'Procedure4CodeGen:=proc(x, alpha, w1, v1, g1, u, r)\n'); % vorher w,v
+fprintf(fileID,'Procedure4CodeGen:=proc(x, alpha, w, v, g1, u, r)\n');
 fprintf(fileID,'m;\n');
 fprintf(fileID,'end proc;\n');
 fprintf(fileID,'ManifoldEquation:=subs([m=manifoldEq],eval(Procedure4CodeGen));\n');

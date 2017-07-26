@@ -1,3 +1,9 @@
+%> @file explicitAEs.m
+%> @brief opens input dialog for additionally needed equations
+%> if you used in the systems equations parameter wich need a numerical
+%> value, you can add theese equations here.
+%> @param aes contains the equations
+
 %% Input for exlpicit AEs
 
 clear aes
