@@ -71,6 +71,9 @@ classdef DDENLP < handle
         minDist = 1;
         %> the highest eigenvalue real part which is allowed 
         maxAllowedRealPart = 0;
+        %> accepted eigenvalues in the closed right halfplane (for eigenvalues on the imaginary axis)
+        allowedEigsInClosedRightHP = 0;
+        
         %> normal vector constraints, vector of objects of class NVConstraint
         NVCon = [];
         
@@ -672,7 +675,8 @@ classdef DDENLP < handle
                 final = aDDENLP.deconstructOptimum();
                 cost = aDDENLP.optJ;
                 %                 [maxEig,eigs] = aDDENLP.checkStabilityPoint('nominal');
-                [maxEig,eigs] = aDDENLP.checkStabilityPoint(aDDENLP.vars.nominal);
+                [~,eigs] = aDDENLP.checkStabilityPoint(aDDENLP.vars.nominal);
+                maxEig=eigs(aDDENLP.allowedEigsInClosedRightHP+1);
                 fprintf('%d iterations completed, current cost is %d, eigenvalue with biggest real part was %d\n',ii*nIterBetweenStabChecks,cost,maxEig)
                 
                 callerFunction = dbstack;
@@ -680,7 +684,7 @@ classdef DDENLP < handle
                     if ~strcmp(callerFunction(2).name, 'DDENLP.runOptimAddingNewManifolds')
                         warning('system lost desired stability properties during optimization. You can use the properies DDENLP.initVal and DDENLP.optimVal to find out were stability was lost')
                     else
-                        fprintf('system lost desired stability properties during optimization. Adding a new critical manifold to optimization problem');
+                        fprintf('system lost desired stability properties during optimization. Adding a new critical manifold to optimization problem\n');
                     end
                     break
                 end
