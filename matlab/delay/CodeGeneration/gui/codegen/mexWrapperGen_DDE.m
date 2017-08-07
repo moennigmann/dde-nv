@@ -17,7 +17,7 @@ fprintf(fileID,'void mexFunction (int nlhs, mxArray *plhs[],\n');
 fprintf(fileID,'int nrhs, const mxArray *prhs[])\n');
 fprintf(fileID,'{\n');
 fprintf(fileID,'if(nrhs!=4) {\n');
-fprintf(fileID,'mexErrMsgIdAndTxt("MyToolbox:DDEWrapped:nrhs","4 inputs required (state vector, matrix with delayed states and vector with parameters).");\n');
+fprintf(fileID,'mexErrMsgIdAndTxt("MyToolbox:DDEWrapped:nrhs","4 inputs required (state vector, matrix with delayed states, vector with uncertain parameters and vector with certain parameters).");\n');
 fprintf(fileID,'}\n');
 fprintf(fileID,'if(nlhs==0) {\n');
 fprintf(fileID,'mexErrMsgIdAndTxt("MyToolbox:DDEWrapped:nlhs","Please define an output!");\n');
