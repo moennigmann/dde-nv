@@ -37,6 +37,8 @@ p_name = name_project;
 % path saved in variable way
 
 enter_path;
+% alternative:
+% way = enter_path_2.m
 
 %% Define system
 % Dynamische variablen und Namen einlesen

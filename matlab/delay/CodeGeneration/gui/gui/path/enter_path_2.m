@@ -1,5 +1,10 @@
 %% enter_path_2
 % function to enter the path
+% you can replace enter_path.m with this function, then you can click
+% directly OK in the dialog. You also need to change the call during
+% systemInput, this function will give the path as return value, add
+% therefor way = enter_path_2.m and remove enter_path.m in systemInput
+
 
 function y = enter_path_2
 
