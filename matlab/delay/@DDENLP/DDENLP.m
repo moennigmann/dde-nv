@@ -1029,7 +1029,7 @@ classdef DDENLP < handle
             
             
             for i=1:2^myNAlpha
-                vertices(i).alpha.values = aDDENLP.vars.nominal.alpha.values+errorvector(i,:)';
+                vertices(i).alpha.values = aDDENLP.vars.nominal.alpha.values+aDDENLP.maxDist*errorvector(i,:)';
                 vertices(i).x.values = aDDENLP.vars.nominal.x.values;
                 
                 aDDENLP.vars.vertex(i,1).alpha=VariableVector(vertices(i).alpha.values,NaN,{'alphaAtVertex'});
