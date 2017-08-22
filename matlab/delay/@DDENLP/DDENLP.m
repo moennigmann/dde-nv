@@ -730,6 +730,7 @@ classdef DDENLP < handle
                     
                     %add new NVCON
                     aDDENLP.addNVCon(type,handleManifold,handleNV,intermediatePoint.x,intermediatePoint.alpha,init.p)
+                   
                     fprintf('\nadded new %s manifold', type);
                     
                     % and initialize it:
@@ -738,7 +739,7 @@ classdef DDENLP < handle
                     
                     aDDENLP.NVCon(end).findManifoldPoint(aDDENLP.NVCon(end).vars);
                     aDDENLP.NVCon(end).findClosestCriticalPoint(aDDENLP.vars.nominal.alpha);
-                    aDDENLP.NVCon(end).findNormalVector(aDDENLP.vars.nominal.alpha);
+                    aDDENLP.NVCon(end).findNormalVector(aDDENLP.vars.nominal.alpha,1);
                     aDDENLP.NVCon(end).findConnection(aDDENLP.vars.nominal.alpha);
                     
                     aDDENLP.concatConstraints;
@@ -803,7 +804,7 @@ classdef DDENLP < handle
             y0 = [ point1.x.values-0.5*(point1.x.values-point2.x.values);...
                 0.5;...
                 0;...
-                ones(size(point1.x.values));...
+                ones(size(point1.x.values))./sqrt(point1.x.nVar);...
                 zeros(size(point1.x.values)) ];
             
             options=optimoptions('fsolve','Algorithm','levenberg-marquardt','MaxIter',2000,'MaxFunEvals',2000000,'display','off','TolFun',1e-7,'TolX',1e-9);
@@ -812,7 +813,7 @@ classdef DDENLP < handle
             if localexitflag > 0
                 fprintf('\nlooked for a %s point on the line between optimization points and appearantly found one, exitflag was %d\n', type, localexitflag)
             else
-                disp(res);
+                disp(res');
                 warning('did not find critical point (%s) on the given line, fsolve exitflag was %d',type,localexitflag)
             end
 
