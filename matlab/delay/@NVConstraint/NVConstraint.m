@@ -325,7 +325,7 @@ classdef NVConstraint < EqualityConstraint
                 offset = aNVCon.vars.w1.index(end);
             end
             
-            x0 = ones(aNVCon.nVarNVSys,1);
+            x0 = zeros(aNVCon.nVarNVSys,1);
             
 %             x0(aNVCon.vars.g1.index-offset) = 0;
 %             x0(aNVCon.vars.g2.index-offset) = 0;
@@ -417,6 +417,8 @@ classdef NVConstraint < EqualityConstraint
             end
         end
         
+        
+        
         % ======================================================================
         %> @brief initialize connection constraint
         %>
@@ -431,7 +433,7 @@ classdef NVConstraint < EqualityConstraint
         function findConnection(aNVCon,alphaNom)
             
             if aNVCon.status<4
-                error('cannot search for connection without normal vector');
+                warning('starting to search for connection without normal vector');
             end
             
             offset=aNVCon.vars.x.index(1)-1;
@@ -480,6 +482,33 @@ classdef NVConstraint < EqualityConstraint
                 disp(res)
                 warning('no connection found, fsolve exitflag was %d',exitflag)
             end
+        end
+    
+     % ======================================================================
+        %> @brief checks if a solution fits the requested manifold type
+        %>
+        %> @param aNVCon instance of NVConstraint
+       
+        %> @return 
+        % ======================================================================
+
+        function checkSolution(aNVCon)
+            
+          switch aNVCon.type
+              case 'fold'
+              case 'modfold'
+              case 'hopf'
+                  if norm(aNVCon.w2.values,2)/norm(aNVCon.w1.values,2) < 1e-4
+                      warning(' norm of imaginary part (w2) is much smaller than norm of  real part (w1). Possibly converged to a fold manifold. Be carefull when proceeding ')
+                  end;
+              case 'modhopf'
+                  if norm(aNVCon.w2.values,2)/norm(aNVCon.w1.values,2) < 1e-4                      
+                      warning(' norm of imaginary part (w2) is much smaller than norm of  real part (w1). Possibly converged to a modfold manifold. Be carefull when proceeding ')
+                  end;
+              otherwise
+                  error(['invalid manifold type ',type])
+            end
+            
         end
     end
     
