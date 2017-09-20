@@ -1,5 +1,4 @@
 %> @file DDENLP.m
-%> @brief this class desribes the whole optimization problem for delayed systems
 %> 
 %> @mainpage Documentation of the Toolbox DDENLP for robust steady state optimization of delayed systems.
 %>
@@ -8,14 +7,33 @@
 %>
 %> The code documentation can be found in this file.
 %>
+%> Some common application/coding problems can be found in the @ref FAQ.
+%>
 %> Additionally, there are some example files.
 %>
 %> @section funding Funding 
 %> The development of this toolbox was funded by  Deutsche Forschungsgemeinschaft (grant MO 1086/13).
 %>
+%>
 %> @author Jonas Otten and Martin Moennigmann
 %> @date 18 Jul 2017
 %>
+%> @page FAQ Frequently Asked Questions
+%>
+%> @section convergence Convergence of Initialization
+%> Why does my initial value of for a (mod)Hopf converge to a (mod)fold? \n
+%> Check if you have specified omega ~= 0
+%> 
+%> @section ddebiftool DDE-BIFTOOL
+%>
+%> Why does the calculation of eigenvalues using DDE-BIFTOOL throw the error message @c
+%> "Input to EIG must not contain NaN or Inf."? \n
+%> The DDE-BIFTOOL-Parameter @c method.stability.minimal_real_part is too big. Try reducing it.
+%>
+%> @author Jonas Otten and Martin Moennigmann
+%> @date 20 Sep 2017
+%> 
+
 %>======================================================================
 %> @brief this class desribes the whole optimization problem for delayed systems
 %
@@ -712,7 +730,7 @@ classdef DDENLP < handle
         function runOptimAddingNewManifolds( aDDENLP, nIterBetweenStabChecks )
             
             for ii = 1:10
-                [init,final,maxEig,~] = aDDENLP.runOptimWithStabChecks(nIterBetweenStabChecks);
+                [init,final,maxEig,eigs] = aDDENLP.runOptimWithStabChecks(nIterBetweenStabChecks);
                 if real(maxEig) > aDDENLP.maxAllowedRealPart
                     if imag(maxEig) == 0
                         subtype = 'fold';
@@ -726,7 +744,7 @@ classdef DDENLP < handle
                     end
                     
                     [handleManifold,handleNV] = aDDENLP.problemDDE.getHandles(type);
-                    intermediatePoint = aDDENLP.findManifoldPointOnLine(type, handleManifold, init, final);
+                    intermediatePoint = aDDENLP.findManifoldPointOnLine(type, handleManifold, init, final,maxEig);
                     
                     %add new NVCON
                     aDDENLP.addNVCon(type,handleManifold,handleNV,intermediatePoint.x,intermediatePoint.alpha,init.p)
@@ -764,7 +782,7 @@ classdef DDENLP < handle
         
         
         
-        function  intermediatePoint = findManifoldPointOnLine( ~, type, manifoldHandle, point1, point2 )
+        function  intermediatePoint = findManifoldPointOnLine( ~, type, manifoldHandle, point1, point2,maxEig )
             % This method looks for a crossing of a critical manifold between two given
             % points
             
@@ -800,14 +818,14 @@ classdef DDENLP < handle
                     error('unknown type requested')
             end
             
+            mu=0.2;
+            y0 = [ point1.x.values-mu*(point1.x.values-point2.x.values);...
+                mu;...
+                imag(maxEig);...
+                ones(size(point1.x.values))./sqrt(2*point1.x.nVar);...
+                ones(size(point1.x.values))./sqrt(2*point1.x.nVar)];
             
-            y0 = [ point1.x.values-0.5*(point1.x.values-point2.x.values);...
-                0.5;...
-                0;...
-                ones(size(point1.x.values))./sqrt(point1.x.nVar);...
-                zeros(size(point1.x.values)) ];
-            
-            options=optimoptions('fsolve','Algorithm','levenberg-marquardt','MaxIter',2000,'MaxFunEvals',2000000,'display','off','TolFun',1e-7,'TolX',1e-9);
+            options=optimoptions('fsolve','Algorithm','levenberg-marquardt','MaxIter',5000,'MaxFunEvals',2000000,'display','iter','TolFun',1e-7,'TolX',1e-9, 'OptimalityTolerance', 1e-10);
             
             [y,res,localexitflag] = fsolve(rhs,y0,options);
             if localexitflag > 0
