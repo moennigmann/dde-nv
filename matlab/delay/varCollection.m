@@ -36,6 +36,8 @@ vars.g2=VariableVector([], offset+x.nVar,{});
 vars.u=VariableVector([], offset+x.nVar,{});
 vars.r=VariableVector([],offset+x.nVar,{});
 vars.l=VariableVector([],offset+x.nVar,{});
+vars.maxEig=[];
+vars.eigs=[];
 
 switch type
     case 'nominal'
