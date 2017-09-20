@@ -70,7 +70,8 @@ classdef StStConstraint < EqualityConstraint
                 if ~strcmp(callerFunction(3).name, 'DDENLP.moveAwayFromManifolds') % supress success message when automatically called.
                     fprintf('steady state constraint for nominal point successfully initialized!\n')
                 end
-                else
+            else                    
+                aStStCon.status=0;
                 warning(['initialization of steady state contsraint with default options for fsolve not successful, exitflag = ',num2str(exitflag)]);
             end
         end
