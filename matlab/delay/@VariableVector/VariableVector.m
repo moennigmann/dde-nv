@@ -104,6 +104,21 @@ classdef VariableVector < handle
             end
             aVariableVec.index = aVariableVec.index + shift;
         end
+        
+    % ======================================================================
+    %> @brief this method creates a copy of an instance of VariableVector,
+    %>        necessary, because the superclass is the  pointerlike handle-class
+    %>
+    %> @param instance of the VariableVector class.
+    %>
+    %> @return new instance of the VariableVector class.
+    % ====================================================================== 
+        
+        function anotherVariableVec = copy(aVariableVec);
+            % this method creates a copy of an instance of VariableVector,
+            % necessary, because the superclass is the  pointerlike handle-class
+            anotherVariableVec = VariableVector(aVariableVec.values, aVariableVec.index-1, aVariableVec.names);
+        end
             
     end
 end
