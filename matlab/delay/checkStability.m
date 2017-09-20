@@ -38,7 +38,7 @@ if (~success)&&enableOutput
     warning('correction failed');
     maxEig = NaN;
     steadyState = stst.x;
-    eigs=NaN;
+    eigs=NaN(100,1);
 else
     if (norm(stst.x,2) < 0.01)&&enableOutput
         warning('possibly converged to trivial steady state');
