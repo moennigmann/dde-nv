@@ -66,12 +66,40 @@ classdef StStConstraint < EqualityConstraint
             aStStCon.vars.x.values=x;
             if exitflag>0
                 aStStCon.status=1;
-                callerFunction = dbstack;
-                if ~strcmp(callerFunction(3).name, 'DDENLP.moveAwayFromManifolds') % supress success message when automatically called.
-                    fprintf('steady state constraint for nominal point successfully initialized!\n')
-                end
-            else                    
-                aStStCon.status=0;
+                fprintf('steady state constraint for nominal point successfully initialized!\n')
+            else
+                warning(['initialization of steady state contsraint with default options for fsolve not successful, exitflag = ',num2str(exitflag)]);
+            end
+        end
+        
+        
+    % ======================================================================
+    %> @brief look for a steady state as initialization of this
+    %> StStConstraint instance while allowing rotating coordinates
+    %>
+    %> @param aStStCon instance of StStConstraint which will be initialized
+    %> @param options options for numerical solver fsolve 
+    %>
+    %> @return initialized instance of the StStConstraint class.
+    % ====================================================================== 
+           function aStStCon=initStStConstraintRot(aStStCon,options)
+            %create function handle to search for initial state and rotation frequency while
+            %holding the parameters alpha fixed
+            
+            indexX=aStStCon.vars.x.index;
+            alpha=aStStCon.vars.alpha.values;
+            p=aStStCon.vars.p.values;
+            conEqFixedAlpha=@(y)aStStCon.conFun([y(indexX);alpha;y(aStStCon.vars.x.nVar+1:aStStCon.vars.x.nVar+aStStCon.vars.p.nVar)]);
+            
+            x0=[aStStCon.vars.x.values;aStStCon.vars.p.values];
+            % try to initialize steady state constraint
+            [x,~,exitflag]=fsolve(conEqFixedAlpha,x0,options);
+            aStStCon.vars.x.values=x(indexX);
+            aStStCon.vars.p.values=x(indexX(end)+1:indexX(end)+aStStCon.vars.p.nVar);
+            if exitflag>0
+                aStStCon.status=1;
+                fprintf('steady state constraint for nominal point successfully initialized!\n')
+            else
                 warning(['initialization of steady state contsraint with default options for fsolve not successful, exitflag = ',num2str(exitflag)]);
             end
         end

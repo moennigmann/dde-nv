@@ -265,7 +265,7 @@ classdef DDENLP < handle
             %% steady state constraint
             % add steady state constraint
             aDDENLP.stStCon = StStConstraint(aDDENLP.problemDDE,aDDENLP.vars.nominal);
-            aDDENLP.initVal = [aDDENLP.stStCon.vars.x.values; aDDENLP.stStCon.vars.alpha.values];
+            aDDENLP.initVal = [aDDENLP.stStCon.vars.x.values; aDDENLP.stStCon.vars.alpha.values; aDDENLP.stStCon.vars.p.values];
             aDDENLP.occupiedVars = aDDENLP.occupiedVars+aDDENLP.stStCon.vars.x.nVar+aDDENLP.stStCon.vars.alpha.nVar+aDDENLP.vars.nominal.p.nVar;
             aDDENLP.occupiedEqs = aDDENLP.vars.nominal.x.nVar;
             aDDENLP.allNLEqConstraints = [aDDENLP.allNLEqConstraints; aDDENLP.stStCon.conFun]; %
@@ -284,6 +284,19 @@ classdef DDENLP < handle
             % an actual steady state
             options=aDDENLP.optionsInitEqCons;
             aDDENLP.stStCon = initStStConstraint(aDDENLP.stStCon,options);
+        end
+        
+    % ======================================================================
+    %> @brief intialize rotating steady state constraint within a DDENLP instance
+    %>
+    %> @param aDDENLP instance of DDENLP
+    % ====================================================================== 
+ 
+        function initializeStStRot(aDDENLP)
+            % the initial guess for the steady state is corrected to find
+            % an actual steady state
+            options=aDDENLP.optionsInitEqCons;
+            aDDENLP.stStCon = initStStConstraintRot(aDDENLP.stStCon,options);
         end
         
    	% ======================================================================
@@ -359,7 +372,7 @@ classdef DDENLP < handle
                         return
                     end
                 end
-                aDDENLP.NVCon(i).findNormalVector(alphaNom);
+                aDDENLP.NVCon(i).findNormalVector(alphaNom,0);
                 aDDENLP.NVCon(i).findConnection(alphaNom);
             end
             
@@ -537,6 +550,7 @@ classdef DDENLP < handle
                 newVars = [...
                     aDDENLP.NVCon(i).vars.x.values;...
                     aDDENLP.NVCon(i).vars.alpha.values;...
+                    aDDENLP.NVCon(i).vars.p.values;...
                     aDDENLP.NVCon(i).vars.omega.values;...
                     aDDENLP.NVCon(i).vars.w1.values;...
                     aDDENLP.NVCon(i).vars.w2.values;...
@@ -684,7 +698,7 @@ classdef DDENLP < handle
             maxIter = options.MaxIter;
             
             options.MaxIter = nIterBetweenStabChecks;
-            options.Display = 'off';%iter-detailed';
+            options.Display = 'off';
             
             for ii = 1:ceil(maxIter/nIterBetweenStabChecks)
                 aDDENLP.concatInitPoints();
@@ -729,9 +743,10 @@ classdef DDENLP < handle
         
         function runOptimAddingNewManifolds( aDDENLP, nIterBetweenStabChecks )
             
-            for ii = 1:10
-                [init,final,maxEig,eigs] = aDDENLP.runOptimWithStabChecks(nIterBetweenStabChecks);
-                if real(maxEig) > aDDENLP.maxAllowedRealPart
+            [init,final,maxEig,eigs] = aDDENLP.runOptimWithStabChecks(nIterBetweenStabChecks);
+            for ii = 1:20
+               
+                if real(eigs(aDDENLP.allowedEigsInClosedRightHP)) > aDDENLP.maxAllowedRealPart
                     if imag(maxEig) == 0
                         subtype = 'fold';
                     else
@@ -761,6 +776,8 @@ classdef DDENLP < handle
                     aDDENLP.NVCon(end).findConnection(aDDENLP.vars.nominal.alpha);
                     
                     aDDENLP.concatConstraints;
+                    
+                    [init,final,maxEig,eigs] = aDDENLP.runOptimWithStabChecks(nIterBetweenStabChecks);
                 else
                     break
                 end
@@ -787,33 +804,37 @@ classdef DDENLP < handle
             % points
             
             alphaInterp = @(lambda)point1.alpha.values-lambda*(point1.alpha.values-point2.alpha.values);
-            pInterp = @(lambda)point1.p.values-lambda*(point1.p.values-point2.p.values);
+            %pInterp = @(lambda)point1.p.values-lambda*(point1.p.values-point2.p.values);
             
             switch type
                 case 'fold'
-                    funHandle = @(x,lambda,w1)manifoldHandle(x,alphaInterp(lambda),pInterp(lambda),w1);
+                    funHandle = @(x,lambda,p,w1)manifoldHandle(x,alphaInterp(lambda),p,w1);
                     rhs = @(y)funHandle(y(1:point1.x.nVar),...
                         y(point1.x.nVar+1),...
-                        y(point1.x.nVar+2:2*point1.x.nVar+1));
+                        y(point1.x.nVar+2:point1.x.nVar+point1.p.nVar+1),...
+                        y(point1.x.nVar+point1.p.nVar+2:2*point1.x.nVar+point1.p.nVar+1));
                 case 'modfold'
-                    funHandle = @(x,lambda,w1)manifoldHandle(x,alphaInterp(lambda),pInterp(lambda),w1);
+                    funHandle = @(x,lambda,p,w1)manifoldHandle(x,alphaInterp(lambda),p,w1);
                     rhs = @(y)funHandle(y(1:point1.x.nVar),...
-                        y(point1.x.nVar+1),...
-                        y(point1.x.nVar+2:2*point1.x.nVar+1));
+                        y(point1.x.nVar+1),...                        
+                        y(point1.x.nVar+2:point1.x.nVar+point1.p.nVar+1),...
+                        y(point1.x.nVar+point1.p.nVar+2:2*point1.x.nVar+point1.p.nVar+1));
                 case 'hopf'
-                    funHandle = @(x,lambda,omega,w1,w2)manifoldHandle(x,alphaInterp(lambda),pInterp(lambda),omega,w1,w2);
+                    funHandle = @(x,lambda,p,omega,w1,w2)manifoldHandle(x,alphaInterp(lambda),p,omega,w1,w2);
                     rhs = @(y)funHandle(y(1:point1.x.nVar),...
                         y(point1.x.nVar+1),...
-                        y(point1.x.nVar+2),...
-                        y(point1.x.nVar+3:2*point1.x.nVar+2),...
-                        y(2*point1.x.nVar+3:3*point1.x.nVar+2));
+                        y(point1.x.nVar+2:point1.x.nVar+point1.p.nVar+1),...
+                        y(point1.x.nVar+point1.p.nVar+2),...
+                        y(point1.x.nVar+point1.p.nVar+3:2*point1.x.nVar+point1.p.nVar+2),...
+                        y(2*point1.x.nVar+point1.p.nVar+3:3*point1.x.nVar+point1.p.nVar+2));
                 case 'modhopf'
-                    funHandle = @(x,lambda,omega,w1,w2)manifoldHandle(x,alphaInterp(lambda),pInterp(lambda),omega,w1,w2);
+                    funHandle = @(x,lambda,p,omega,w1,w2)manifoldHandle(x,alphaInterp(lambda),p,omega,w1,w2);
                     rhs = @(y)funHandle(y(1:point1.x.nVar),...
                         y(point1.x.nVar+1),...
-                        y(point1.x.nVar+2),...
-                        y(point1.x.nVar+3:2*point1.x.nVar+2),...
-                        y(2*point1.x.nVar+3:3*point1.x.nVar+2));
+                        y(point1.x.nVar+2:point1.x.nVar+point1.p.nVar+1),...
+                        y(point1.x.nVar+point1.p.nVar+2),...
+                        y(point1.x.nVar+point1.p.nVar+3:2*point1.x.nVar+point1.p.nVar+2),...
+                        y(2*point1.x.nVar+point1.p.nVar+3:3*point1.x.nVar+point1.p.nVar+2));
                 otherwise
                     error('unknown type requested')
             end
@@ -821,6 +842,7 @@ classdef DDENLP < handle
             mu=0.2;
             y0 = [ point1.x.values-mu*(point1.x.values-point2.x.values);...
                 mu;...
+                point1.p.values-mu*(point1.p.values-point2.p.values);...
                 imag(maxEig);...
                 ones(size(point1.x.values))./sqrt(2*point1.x.nVar);...
                 ones(size(point1.x.values))./sqrt(2*point1.x.nVar)];
@@ -837,14 +859,15 @@ classdef DDENLP < handle
 
             x = y(1:point1.x.nVar);
             mu = y(point1.x.nVar+1);
+            p = y(point1.x.nVar+2:point1.x.nVar+point1.p.nVar+1);
             if (mu < 0) || (mu > 1)
                 warning('converged to a point that is not between the given points, mu = %d', mu)
             end
             alpha = alphaInterp( mu );
-            p =  pInterp( mu );
-            omega = y(point1.x.nVar+2);
-            w1 = y(point1.x.nVar+3:2*point1.x.nVar+2);
-            w2 = y(2*point1.x.nVar+3:3*point1.x.nVar+2);
+            %p =  pInterp( mu );
+            omega = y(point1.x.nVar+point1.p.nVar+2);
+            w1 = y(point1.x.nVar+point1.p.nVar+3:2*point1.x.nVar+point1.p.nVar+2);
+            w2 = y(2*point1.x.nVar+point1.p.nVar+3:3*point1.x.nVar+point1.p.nVar+2);
             
             intermediatePoint.x = VariableVector(x,Inf,point1.x.names);
             intermediatePoint.alpha = VariableVector(alpha, Inf,point1.alpha.names);
@@ -887,6 +910,7 @@ classdef DDENLP < handle
                 for i=1:length(aDDENLP.NVCon)
                     outputVars.critical(i).x.values = init(outputVars.critical(i).x.index);
                     outputVars.critical(i).alpha.values = init(outputVars.critical(i).alpha.index);
+                    outputVars.critical(i).p.values = init(outputVars.critical(i).p.index);
                     outputVars.critical(i).omega.values = init(outputVars.critical(i).omega.index);
                     outputVars.critical(i).w1.values = init(outputVars.critical(i).w1.index);
                     outputVars.critical(i).w2.values = init(outputVars.critical(i).w2.index);
@@ -929,6 +953,7 @@ classdef DDENLP < handle
             for i=1:length(aDDENLP.NVCon)
                 outputVars.critical(i).x.values = opt(outputVars.critical(i).x.index);
                 outputVars.critical(i).alpha.values = opt(outputVars.critical(i).alpha.index);
+                outputVars.critical(i).p.values = opt(outputVars.critical(i).p.index);
                 outputVars.critical(i).omega.values = opt(outputVars.critical(i).omega.index);
                 outputVars.critical(i).w1.values = opt(outputVars.critical(i).w1.index);
                 outputVars.critical(i).w2.values = opt(outputVars.critical(i).w2.index);
@@ -976,18 +1001,23 @@ classdef DDENLP < handle
             end
             maxRealPart = NaN(size(point,1),1);
             
-            p=aDDENLP.vars.nominal.p.values;
             
-            myDDE = @(xx,alpha)aDDENLP.problemDDE.rhs(xx(:,1),xx(:,2:end),alpha,p)';
+            paramIndex = point(1).alpha.index-(point(1).alpha.index(1)-1);
+            algebVarIndex = point(1).p.index-(point(1).alpha.index(1)-1);
+            %p=point.p.values;
+            %Hier muss das p noch übergeben werden,
+            %da es nun ja auch variabel sein darf 
+            
+            myDDE = @(xx,alpha)aDDENLP.problemDDE.rhs(xx(:,1),xx(:,2:end),alpha(paramIndex),alpha(algebVarIndex))';
             myNtau = aDDENLP.problemDDE.ntau;
-            myDelays = @(k,xx,alpha)(k==(1:myNtau))*aDDENLP.problemDDE.delays(xx,alpha,p);
+            myDelays = @(k,xx,alpha)(k==(1:myNtau))*aDDENLP.problemDDE.delays(xx,alpha(paramIndex),alpha(algebVarIndex));
             
             funcs = set_funcs('sys_rhs',myDDE,...
                 'sys_ntau',myNtau,...
                 'sys_tau',myDelays);
             
             for ii = 1 : size(point,1)
-                [maxRealPartTMP, xCorr, eigs] = checkStability(funcs,point(ii).alpha.values,point(ii).x.values,aDDENLP.numMinEig);
+                [maxRealPartTMP, xCorr, eigs] = checkStability(funcs,[point(ii).alpha.values; point(ii).p.values],point(ii).x.values,aDDENLP.numMinEig,algebVarIndex);
                 if isempty(maxRealPartTMP)
                     error('did not find an eigevalue with Re(lambda)>aDDENLP.numMinEig. Please chose a smaller value for aDDENLP.numMinEig')
                 end

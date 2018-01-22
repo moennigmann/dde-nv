@@ -17,14 +17,14 @@ classdef NVConstraint < EqualityConstraint
         type
         
         %> augmented system equations (manifold), a EqualityConstraint object
-        eqAugSys 
+        eqAugSys
         %> normal vector system equations, a EqualityConstraint object
         eqNVSys
         %> connection constraints, a EqualityConstraint object
-        eqConnect 
+        eqConnect
         
         %> number of variables in augemented system
-        nVarAugSys 
+        nVarAugSys
         %> number of variables in normal vector system
         nVarNVSys
         
@@ -41,26 +41,26 @@ classdef NVConstraint < EqualityConstraint
         %> index of the inequality constraint of this NVConstraint within all constaints
         inequalityIndex
         %> differential equation for calculation of stability
-        problemDDE 
+        problemDDE
         %> numerical constant for the ODE approximation of the DDE
         numMinEig
     end
     
     methods
         
-    % ======================================================================
-    %> @brief Class constructor
-    %>
-    %> This function constructs instances of the class NVConstraint
-    %>
-    %> @param aDDENLP superordinate optimization problem
-    %> @param type type of critical manifold (string)
-    %> @param augSysHandle function handle to critical manifold
-    %> @param nVSysHandle function handle to normal vector system
-    %> @param nVvars collection of instances of VariableVector
-    % 
-    %> @return instance of the NVConstraint class.
-    % ======================================================================
+        % ======================================================================
+        %> @brief Class constructor
+        %>
+        %> This function constructs instances of the class NVConstraint
+        %>
+        %> @param aDDENLP superordinate optimization problem
+        %> @param type type of critical manifold (string)
+        %> @param augSysHandle function handle to critical manifold
+        %> @param nVSysHandle function handle to normal vector system
+        %> @param nVvars collection of instances of VariableVector
+        %
+        %> @return instance of the NVConstraint class.
+        % ======================================================================
         
         function aNVCon = NVConstraint(aDDENLP,type,augSysHandle,nVSysHandle,nVvars) % constructor
             
@@ -119,7 +119,7 @@ classdef NVConstraint < EqualityConstraint
             
             aNVCon.inequalities = @(y)aDDENLP.minDist*sqrt(aDDENLP.nAlpha)-y(aNVCon.vars.l.index);
             
-            aNVCon.nVarAugSys=nVvars.x.nVar+nVvars.alpha.nVar+nVvars.omega.nVar+nVvars.w1.nVar+nVvars.w2.nVar;
+            aNVCon.nVarAugSys=nVvars.x.nVar+nVvars.alpha.nVar+nVvars.p.nVar+nVvars.omega.nVar+nVvars.w1.nVar+nVvars.w2.nVar;
             aNVCon.nVarNVSys=nVvars.v1.nVar+nVvars.v2.nVar+nVvars.g1.nVar+nVvars.g2.nVar+nVvars.u.nVar+nVvars.r.nVar;
             
             aNVCon.inequalityIndex=aDDENLP.occupiedIneqs+1;
@@ -129,12 +129,12 @@ classdef NVConstraint < EqualityConstraint
             
         end
         
-                
+        
         % ======================================================================
         %> @brief  rotates complex eigenvector to make real and imaginary part
         %> orthogonal
         %> cf. Proof of Lemma 1 in [https://doi.org/10.1109/CDC.2016.7798469]
-        %> 
+        %>
         %> @param aNVCon instance of NVConstraint that will initialized
         %> @param aVarCollection collection of instances of VariableVector
         %> containing numerical values for initial guess
@@ -190,13 +190,14 @@ classdef NVConstraint < EqualityConstraint
             offset=aNVCon.vars.x.index(1)-1;
             
             otherVariables=zeros(offset,1);
-            otherVariables(aVarCollection.p.index)=aVarCollection.p.values;
+            %otherVariables(aVarCollection.p.index)=aVarCollection.p.values;
             
             rhs = @(y)aNVCon.eqAugSys.conFun([otherVariables;y]);
             
             if nargin>1
                 x0=[aVarCollection.x.values;
                     aVarCollection.alpha.values;
+                    aVarCollection.p.values;
                     aVarCollection.omega.values;
                     aVarCollection.w1.values;
                     aVarCollection.w2.values;];
@@ -209,6 +210,7 @@ classdef NVConstraint < EqualityConstraint
             
             aNVCon.vars.x.values = x(aNVCon.vars.x.index-offset);
             aNVCon.vars.alpha.values = x(aNVCon.vars.alpha.index-offset);
+            aNVCon.vars.p.values = x(aNVCon.vars.p.index-offset);
             aNVCon.vars.omega.values = x(aNVCon.vars.omega.index-offset);
             aNVCon.vars.w1.values = x(aNVCon.vars.w1.index-offset);
             aNVCon.vars.w2.values = x(aNVCon.vars.w2.index-offset);
@@ -249,12 +251,13 @@ classdef NVConstraint < EqualityConstraint
             offset = aNVCon.vars.x.index(1)-1;
             
             otherVariables=zeros(offset,1);
-            otherVariables(aNVCon.vars.p.index)=aNVCon.vars.p.values;
+            %otherVariables(aNVCon.vars.p.index)=aNVCon.vars.p.values;
             
             manifoldCon = @(y)deal([],aNVCon.eqAugSys.conFun([otherVariables;y]));
             
             x0 = [aNVCon.vars.x.values;...
                 aNVCon.vars.alpha.values;...
+                aNVCon.vars.p.values;...
                 aNVCon.vars.omega.values;...
                 aNVCon.vars.w1.values;...
                 aNVCon.vars.w2.values];
@@ -266,6 +269,7 @@ classdef NVConstraint < EqualityConstraint
             % extract values
             aNVCon.vars.x.values = x(aNVCon.vars.x.index-offset);
             aNVCon.vars.alpha.values = x(aNVCon.vars.alpha.index-offset);
+            aNVCon.vars.p.values = x(aNVCon.vars.p.index-offset);
             aNVCon.vars.omega.values = x(aNVCon.vars.omega.index-offset);
             aNVCon.vars.w1.values = x(aNVCon.vars.w1.index-offset);
             aNVCon.vars.w2.values = x(aNVCon.vars.w2.index-offset);
@@ -291,9 +295,9 @@ classdef NVConstraint < EqualityConstraint
         %> VariableVector
         %> @param directionMode optional input to manipulate orientation of
         %the normal vector
-        %> @param varargin 
+        %> @param varargin
         %>
-        %> @return instance of NVConstraint with normal vectors etc. found 
+        %> @return instance of NVConstraint with normal vectors etc. found
         % =========
         
         function  findNormalVector( aNVCon, alphaNom, directionMode, varargin )
@@ -309,10 +313,11 @@ classdef NVConstraint < EqualityConstraint
             offset=aNVCon.vars.x.index(1)-1;
             
             otherVariables=zeros(offset,1);
-            otherVariables(aNVCon.vars.p.index)=aNVCon.vars.p.values;
+            %otherVariables(aNVCon.vars.p.index)=aNVCon.vars.p.values;
             
             maniPoint = [aNVCon.vars.x.values;...
                 aNVCon.vars.alpha.values;...
+                aNVCon.vars.p.values;...
                 aNVCon.vars.omega.values;...
                 aNVCon.vars.w1.values;...
                 aNVCon.vars.w2.values];
@@ -325,22 +330,26 @@ classdef NVConstraint < EqualityConstraint
                 offset = aNVCon.vars.w1.index(end);
             end
             
+            
+            
             x0 = zeros(aNVCon.nVarNVSys,1);
             
-%             x0(aNVCon.vars.g1.index-offset) = 0;
-%             x0(aNVCon.vars.g2.index-offset) = 0;
-%             
-%             x0(aNVCon.vars.r.index-offset) = -(alphaNom.values-aNVCon.vars.alpha.values)./norm((alphaNom.values-aNVCon.vars.alpha.values),2);
-            
             [x,res,exitflag] = fsolve(rhs,x0,aNVCon.optionsEqConsInit);
+            
+            
+            if exitflag < 1
+                fprintf('       Did not find normal vector on critical point, fsolve exitflag was %d. Trying other initial value.\n', exitflag)
+                x0 = ones(aNVCon.nVarNVSys,1);
+                [x,res,exitflag] = fsolve(rhs,x0,aNVCon.optionsEqConsInit);
+            end
             
             %% THIS IS A TEMPORARY CODE SEGMENT WHICH ASSUMES THE NOMINAL POINT IS IN THE STABLE REGION
             % IT FLIPS THE NORMAL VECTOR ALLWAYS TOWARDS THE NOMINAL POINT. LATER THE NORMAL VECTOR HAS TO POINT TO THE STABLE REGION
             
             switch directionMode
-                case -1     % ALLWAYS FLIP THE NORMAL VECTOR 
+                case -1     % ALLWAYS FLIP THE NORMAL VECTOR
                     direction = -1;
-                
+                    
                 case 0      % DO NOT FLIP THE NORMAL VECTOR AT All
                     direction = 1;
                     
@@ -360,25 +369,39 @@ classdef NVConstraint < EqualityConstraint
                     alpha1 = aNVCon.vars.alpha.values - shiftLength*r;
                     alpha2 = aNVCon.vars.alpha.values + shiftLength*r;
                     
+                    p = aNVCon.vars.p.values;
+                    
                     xStSt = aNVCon.vars.x.values;
                     
                     %% prepare stability calculations
-                    p=aNVCon.vars.p.values;
+                    % p=aNVCon.vars.p.values;
+                    % myDDE = @(xx,alpha)aNVCon.problemDDE.rhs(xx(:,1),xx(:,2:end),alpha,p)';
+                    % myNtau = aNVCon.problemDDE.ntau;
+                    % myDelays = @(k,xx,alpha)(k==(1:myNtau))*aNVCon.problemDDE.delays(xx,alpha,p);
+                    %
+                    % funcs = set_funcs('sys_rhs',myDDE,...
+                    %   'sys_ntau',myNtau,...
+                    %   'sys_tau',myDelays);
                     
-                    myDDE = @(xx,alpha)aNVCon.problemDDE.rhs(xx(:,1),xx(:,2:end),alpha,p)';
+                    paramIndex = aNVCon.vars.alpha.index-(aNVCon.vars.alpha.index(1)-1);
+                    algebVarIndex = aNVCon.vars.p.index-(aNVCon.vars.alpha.index(1)-1);
+                    
+                    myDDE = @(xx,alpha)aNVCon.problemDDE.rhs(xx(:,1),xx(:,2:end),alpha(paramIndex),alpha(algebVarIndex))';
                     myNtau = aNVCon.problemDDE.ntau;
-                    myDelays = @(k,xx,alpha)(k==(1:myNtau))*aNVCon.problemDDE.delays(xx,alpha,p);
+                    myDelays = @(k,xx,alpha)(k==(1:myNtau))*aNVCon.problemDDE.delays(xx,alpha(paramIndex),alpha(algebVarIndex));
                     
                     funcs = set_funcs('sys_rhs',myDDE,...
                         'sys_ntau',myNtau,...
                         'sys_tau',myDelays);
                     
-                    [lambda1,~,~] = checkStability(funcs,alpha1,xStSt,aNVCon.numMinEig);
+                    
+                    
+                    [lambda1,~,~] = checkStability(funcs,[alpha1;p],xStSt,aNVCon.numMinEig, algebVarIndex);
                     if isempty(lambda1)
                         error('did not find an eigevalue with Re(lambda)>aDDENLP.numMinEig. Please chose a smaller value for aDDENLP.numMinEig')
                     end
                     
-                    [lambda2,~,~] = checkStability(funcs,alpha2,xStSt,aNVCon.numMinEig);
+                    [lambda2,~,~] = checkStability(funcs,[alpha2;p],xStSt,aNVCon.numMinEig, algebVarIndex);
                     if isempty(lambda2)
                         error('did not find an eigevalue with Re(lambda)>aDDENLP.numMinEig. Please chose a smaller value for aDDENLP.numMinEig')
                     end
@@ -392,7 +415,7 @@ classdef NVConstraint < EqualityConstraint
             end
             
             % END OF THE TEMPORARY SEGMENT
-
+            
             aNVCon.vars.v1.values = direction*x(aNVCon.vars.v1.index-offset);
             aNVCon.vars.v2.values = direction*x(aNVCon.vars.v2.index-offset);
             aNVCon.vars.g1.values = direction*x(aNVCon.vars.g1.index-offset);
@@ -429,7 +452,7 @@ classdef NVConstraint < EqualityConstraint
         %> @return instance of NVConstraint with potentially initialized connection
         %> constraint
         % ======================================================================
-
+        
         function findConnection(aNVCon,alphaNom)
             
             if aNVCon.status<4
@@ -440,6 +463,7 @@ classdef NVConstraint < EqualityConstraint
             
             x0 = [aNVCon.vars.x.values;...
                 aNVCon.vars.alpha.values;...
+                aNVCon.vars.p.values;...
                 aNVCon.vars.omega.values;...
                 aNVCon.vars.w1.values;...
                 aNVCon.vars.w2.values;...
@@ -453,14 +477,32 @@ classdef NVConstraint < EqualityConstraint
             
             otherVariables=zeros(offset,1);
             otherVariables(alphaNom.index)=alphaNom.values;
-            otherVariables(aNVCon.vars.p.index)=aNVCon.vars.p.values;
+            %otherVariables(aNVCon.vars.p.index)=aNVCon.vars.p.values;
+            otherVariables(offset)=aNVCon.vars.p.values;
             
             rhs = @(y)aNVCon.conFun([otherVariables;y]);
+            %
+            %             l=aNVCon.vars.l.values
+            %
+            %             bla=rhs(x0);
+            %             connectionResBefore=bla(end-11:end)
+            %
+            %             r=aNVCon.vars.r.values;
+            %             r=r/norm(r,2);
+            %             l=aNVCon.vars.l.values;
+            %             alphaNom=alphaNom.values;
+            %             alphaCrit=aNVCon.vars.alpha.values;
+            %
+            %             checkBefore=[l*r,alphaNom-alphaCrit]
+            %
+            %           [bla(end-11:end)/norm(bla(end-11:end),2),aNVCon.vars.r.values/norm(aNVCon.vars.r.values,2)]
+            
             
             [x,res,exitflag] = fsolve(rhs,x0,aNVCon.optionsEqConsInit);
             
             aNVCon.vars.x.values = x(aNVCon.vars.x.index-offset);
             aNVCon.vars.alpha.values = x(aNVCon.vars.alpha.index-offset);
+            aNVCon.vars.p.values = x(aNVCon.vars.p.index-offset);
             aNVCon.vars.omega.values = x(aNVCon.vars.omega.index-offset);
             aNVCon.vars.w1.values = x(aNVCon.vars.w1.index-offset);
             aNVCon.vars.w2.values = x(aNVCon.vars.w2.index-offset);
@@ -483,30 +525,30 @@ classdef NVConstraint < EqualityConstraint
                 warning('no connection found, fsolve exitflag was %d',exitflag)
             end
         end
-    
-     % ======================================================================
+        
+        % ======================================================================
         %> @brief checks if a solution fits the requested manifold type
         %>
         %> @param aNVCon instance of NVConstraint
-       
-        %> @return 
+        
+        %> @return
         % ======================================================================
-
+        
         function checkSolution(aNVCon)
             
-          switch aNVCon.type
-              case 'fold'
-              case 'modfold'
-              case 'hopf'
-                  if norm(aNVCon.w2.values,2)/norm(aNVCon.w1.values,2) < 1e-4
-                      warning(' norm of imaginary part (w2) is much smaller than norm of  real part (w1). Possibly converged to a fold manifold. Be carefull when proceeding ')
-                  end;
-              case 'modhopf'
-                  if norm(aNVCon.w2.values,2)/norm(aNVCon.w1.values,2) < 1e-4                      
-                      warning(' norm of imaginary part (w2) is much smaller than norm of  real part (w1). Possibly converged to a modfold manifold. Be carefull when proceeding ')
-                  end;
-              otherwise
-                  error(['invalid manifold type ',type])
+            switch aNVCon.type
+                case 'fold'
+                case 'modfold'
+                case 'hopf'
+                    if norm(aNVCon.w2.values,2)/norm(aNVCon.w1.values,2) < 1e-4
+                        warning(' norm of imaginary part (w2) is much smaller than norm of  real part (w1). Possibly converged to a fold manifold. Be carefull when proceeding ')
+                    end;
+                case 'modhopf'
+                    if norm(aNVCon.w2.values,2)/norm(aNVCon.w1.values,2) < 1e-4
+                        warning(' norm of imaginary part (w2) is much smaller than norm of  real part (w1). Possibly converged to a modfold manifold. Be carefull when proceeding ')
+                    end;
+                otherwise
+                    error(['invalid manifold type ',type])
             end
             
         end

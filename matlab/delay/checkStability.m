@@ -1,4 +1,4 @@
-function [maxEig,steadyState,eigs] = checkStability(funcs,parameter,x0,numMinEig)
+function [maxEig,steadyState,eigs] = checkStability(funcs,parameter,x0,numMinEig,freeParams)
 % function to evalutate the stability of a DDE steady state. It uses
 % DDE-BIFTOOL
 %
@@ -10,9 +10,19 @@ function [maxEig,steadyState,eigs] = checkStability(funcs,parameter,x0,numMinEig
 % - parameter: parametervector, syntax: [p1,p2,...,pn]
 %
 % - x0: intial guess for steady state
+%
+% - numMinEig: lower boundary for numerical eigenvalue approximation
+% 
+% - freeParams: freeParameters indication algebraic variables within
+% 'parameter'
+
 
 if (nargin < 4) || (isempty(numMinEig))
     numMinEig = -5;
+end
+
+if nargin < 5
+    freeParams=[];
 end
 
 enableOutput = 1;
@@ -31,8 +41,18 @@ method.point.newton_max_iterations = 50;
 method.point.print_residual_info = 0;
 method.point.newton_nmon_iterations = 10;
 
+
+if ~isempty(freeParams)
+    warning('off','p_correc:nonsquare');
+end
+
+
 % correct steady state
-[stst,success] = p_correc(funcs,stst,[],[],method.point);
+[stst,success] = p_correc(funcs,stst,freeParams,[],method.point);
+
+if ~isempty(freeParams)
+    warning('on','p_correc:nonsquare');
+end
 
 if (~success)&&enableOutput
     warning('correction failed');
