@@ -208,7 +208,7 @@ quiver(aDDENLP.vars.critical(2,1).alpha.values(1),aDDENLP.vars.critical(2,1).alp
 xlabel('A');ylabel('B');
 grid on;
 
-matlab2tikz('2LaserOptRobStab.tex')
+% matlab2tikz('2LaserOptRobStab.tex')
 %% run simulation nominal
 point=aDDENLP.vars.nominal(end);
 omega=0.15*point.p.values(1);
@@ -238,7 +238,7 @@ sol=ddesd(aDDENLP,point,history,[0 2],options);
 
 figure(2);clf;
 plot(sol.x,sol.y(1:3:end,:))
-matlab2tikz('2LaserReRotRobStab.tex')
+% matlab2tikz('2LaserReRotRobStab.tex')
 
 % figure(21);clf;
 % 
@@ -257,62 +257,9 @@ matlab2tikz('2LaserReRotRobStab.tex')
  plot(sol.x,real(E*exp(0.2*1i*pi)))
  ylim([-1 1])
  ylabel(phi)
- matlab2tikz('2LaserReFixRobStab.tex')
+%  matlab2tikz('2LaserReFixRobStab.tex')
 drawnow
 
-
-%% run simulation critical
-point=aDDENLP.vars.critical(1);
-omega=0.15*point.p.values(1);
-
-E1=point.x.values(1)+1i*point.x.values(2);
-n1=point.x.values(3);
-E2=point.x.values(4)+1i*point.x.values(5);
-n2=point.x.values(6);
-
-phi=1.5;
-
-E1=E1*exp(1i*phi);
-E2=E2*exp(1i*phi);
-
-history=@(t)[...
-    real(E1*1.24*exp(+1i*0.5*omega*t));
-    imag(E1*1.24*exp(+1i*0.5*omega*t));
-    n1+0*t;
-    real(E2*1*exp(-1i*0.5*omega*t));
-    imag(E2*1*exp(-1i*0.5*omega*t));
-    n2+0*t];
-
-
-
-options=ddeset('RelTol',1e-6,'AbsTol',1e-9);
-sol=ddesd(aDDENLP,point,history,[0 2],options);
-
-figure(4);clf;
-plot(sol.x,sol.y(1:3:end,:))
-matlab2tikz('2LaserReRotRobStab.tex')
-
-% figure(21);clf;
-% 
-% tHist=-100:0;
-% 
-% hist=history(tHist).*exp(1i*omega*tHist);
-% Eh1 = (hist(1,:)+1i*hist(2,:)).*exp(-1i*omega*tHist);
-% Eh2 = (hist(4,:)+1i*hist(5,:)).*exp(-1i*omega*tHist);
-% plot(tHist,real(Eh1),tHist,real(Eh2))
-% 
-
-
- figure(5);clf;
- A=sol.y(1:3:end,:)+1i*sol.y(2:3:end,:);
- E=A.*repmat(exp(-1i*point.p.values(1)*sol.x*1000),2,1);
- plot(sol.x,real(E*exp(0.2*1i*pi)))
- ylim([-1 1])
- ylabel(phi)
- matlab2tikz('2LaserReFixRobStabCrit.tex')
-drawnow
-
- 
  
 %% check stability
 
