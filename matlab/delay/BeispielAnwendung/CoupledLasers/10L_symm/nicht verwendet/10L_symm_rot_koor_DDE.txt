@@ -1,0 +1,520 @@
+# initialization                                                                                                                          
+ restart;                                                                                                                                 
+#define paths                                                                                                                             
+ _ModulesDirectory:="/home/users/jmu/Dokumente/Masterarbeit/Matlab/Normalvektor_Optimierung/normalvectormethod_added_p/trunk/maple/":                                                                                         
+#load modules                                                                                                                             
+ read(cat(_ModulesDirectory, "/Aux/Aux.mpl")):                                                                                            
+ read(cat(_ModulesDirectory, "/AugSys2/AugSys2.mpl")):                                                                                    
+                                                                                                                                          
+# define system                                                                                                                           
+ Sys["DynVars"]:=[x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16, x17, x18, x19, x20, x21, x22, x23, x24, x25, x26, x27, x28, x29, x30];                                                                                                                
+ Sys["Parameters"]:=[ alpha1=0.1, alpha2=0.1, alpha3=0.1 , alpha4=0.1, alpha5=0.1, alpha6=0.1, alpha7=0.1, alpha8=0.1, alpha9=0.1, alpha10=0.1];                                                                                                
+ Sys["AEs"]:=[];                                                                                                                          
+ Sys["ODEs"]:=[
+ `x1'` = omega*E1i+0.5*n1*E1r-0.5*alphaLW*n1*E1i
+ +K*cos(phi-omega*tau)*E1rTau
+ -K*sin(phi-omega*tau)*E1iTau
+ +K*cos(phi-omega*tau)*E2rTau
+ -K*sin(phi-omega*tau)*E2iTau
+ +K*cos(phi-omega*tau)*E3rTau
+ -K*sin(phi-omega*tau)*E3iTau
+ +K*cos(phi-omega*tau)*E4rTau
+ -K*sin(phi-omega*tau)*E4iTau
+ +K*cos(phi-omega*tau)*E5rTau
+ -K*sin(phi-omega*tau)*E5iTau
+ +K*cos(phi-omega*tau)*E6rTau
+ -K*sin(phi-omega*tau)*E6iTau
+ +K*cos(phi-omega*tau)*E7rTau
+ -K*sin(phi-omega*tau)*E7iTau
+ +K*cos(phi-omega*tau)*E8rTau
+ -K*sin(phi-omega*tau)*E8iTau
+ +K*cos(phi-omega*tau)*E9rTau
+ -K*sin(phi-omega*tau)*E9iTau
+ +K*cos(phi-omega*tau)*E10rTau
+ -K*sin(phi-omega*tau)*E10iTau,
+ `x2'` = -omega*E1r+0.5*alphaLW*n1*E1r+0.5*n1*E1i
+ +K*sin(phi-omega*tau)*E1rTau
+ +K*cos(phi-omega*tau)*E1iTau
+ +K*sin(phi-omega*tau)*E2rTau
+ +K*cos(phi-omega*tau)*E2iTau
+ +K*sin(phi-omega*tau)*E3rTau
+ +K*cos(phi-omega*tau)*E3iTau
+ +K*sin(phi-omega*tau)*E4rTau
+ +K*cos(phi-omega*tau)*E4iTau
+ +K*sin(phi-omega*tau)*E5rTau
+ +K*cos(phi-omega*tau)*E5iTau
+ +K*sin(phi-omega*tau)*E6rTau
+ +K*cos(phi-omega*tau)*E6iTau
+ +K*sin(phi-omega*tau)*E7rTau
+ +K*cos(phi-omega*tau)*E7iTau
+ +K*sin(phi-omega*tau)*E8rTau
+ +K*cos(phi-omega*tau)*E8iTau
+ +K*sin(phi-omega*tau)*E9rTau
+ +K*cos(phi-omega*tau)*E9iTau
+ +K*sin(phi-omega*tau)*E10rTau
+ +K*cos(phi-omega*tau)*E10iTau,
+ `x3'`=epsilon*(pump1-n1-(n1+1)*(E1r^2+E1i^2)),
+ `x4'` = omega*E2i+0.5*n2*E2r-0.5*alphaLW*n2*E2i
+ +K*cos(phi-omega*tau)*E2rTau
+ -K*sin(phi-omega*tau)*E2iTau
+ +K*cos(phi-omega*tau)*E1rTau
+ -K*sin(phi-omega*tau)*E1iTau
+ +K*cos(phi-omega*tau)*E3rTau
+ -K*sin(phi-omega*tau)*E3iTau
+ +K*cos(phi-omega*tau)*E4rTau
+ -K*sin(phi-omega*tau)*E4iTau
+ +K*cos(phi-omega*tau)*E5rTau
+ -K*sin(phi-omega*tau)*E5iTau
+ +K*cos(phi-omega*tau)*E6rTau
+ -K*sin(phi-omega*tau)*E6iTau
+ +K*cos(phi-omega*tau)*E7rTau
+ -K*sin(phi-omega*tau)*E7iTau
+ +K*cos(phi-omega*tau)*E8rTau
+ -K*sin(phi-omega*tau)*E8iTau
+ +K*cos(phi-omega*tau)*E9rTau
+ -K*sin(phi-omega*tau)*E9iTau
+ +K*cos(phi-omega*tau)*E10rTau
+ -K*sin(phi-omega*tau)*E10iTau,
+ `x5'` = -omega*E2r+0.5*alphaLW*n2*E2r+0.5*n2*E2i
+ +K*sin(phi-omega*tau)*E2rTau
+ +K*cos(phi-omega*tau)*E2iTau
+ +K*sin(phi-omega*tau)*E1rTau
+ +K*cos(phi-omega*tau)*E1iTau
+ +K*sin(phi-omega*tau)*E3rTau
+ +K*cos(phi-omega*tau)*E3iTau
+ +K*sin(phi-omega*tau)*E4rTau
+ +K*cos(phi-omega*tau)*E4iTau
+ +K*sin(phi-omega*tau)*E5rTau
+ +K*cos(phi-omega*tau)*E5iTau
+ +K*sin(phi-omega*tau)*E6rTau
+ +K*cos(phi-omega*tau)*E6iTau
+ +K*sin(phi-omega*tau)*E7rTau
+ +K*cos(phi-omega*tau)*E7iTau
+ +K*sin(phi-omega*tau)*E8rTau
+ +K*cos(phi-omega*tau)*E8iTau
+ +K*sin(phi-omega*tau)*E9rTau
+ +K*cos(phi-omega*tau)*E9iTau
+ +K*sin(phi-omega*tau)*E10rTau
+ +K*cos(phi-omega*tau)*E10iTau,
+ `x6'`=epsilon*(pump2-n2-(n2+1)*(E2r^2+E2i^2)),
+ `x7'`= omega*E3i+0.5*n3*E3r-0.5*alphaLW*n3*E3i
+ +K*cos(phi-omega*tau)*E3rTau
+ -K*sin(phi-omega*tau)*E3iTau
+ +K*cos(phi-omega*tau)*E2rTau
+ -K*sin(phi-omega*tau)*E2iTau
+ +K*cos(phi-omega*tau)*E1rTau
+ -K*sin(phi-omega*tau)*E1iTau
+ +K*cos(phi-omega*tau)*E4rTau
+ -K*sin(phi-omega*tau)*E4iTau
+ +K*cos(phi-omega*tau)*E5rTau
+ -K*sin(phi-omega*tau)*E5iTau
+ +K*cos(phi-omega*tau)*E6rTau
+ -K*sin(phi-omega*tau)*E6iTau
+ +K*cos(phi-omega*tau)*E7rTau
+ -K*sin(phi-omega*tau)*E7iTau
+ +K*cos(phi-omega*tau)*E8rTau
+ -K*sin(phi-omega*tau)*E8iTau
+ +K*cos(phi-omega*tau)*E9rTau
+ -K*sin(phi-omega*tau)*E9iTau
+ +K*cos(phi-omega*tau)*E10rTau
+ -K*sin(phi-omega*tau)*E10iTau,
+ `x8'`= -omega*E3r+0.5*alphaLW*n3*E3r+0.5*n3*E3i
+ +K*sin(phi-omega*tau)*E3rTau
+ +K*cos(phi-omega*tau)*E3iTau
+ +K*sin(phi-omega*tau)*E2rTau
+ +K*cos(phi-omega*tau)*E2iTau
+ +K*sin(phi-omega*tau)*E1rTau
+ +K*cos(phi-omega*tau)*E1iTau
+ +K*sin(phi-omega*tau)*E4rTau
+ +K*cos(phi-omega*tau)*E4iTau
+ +K*sin(phi-omega*tau)*E5rTau
+ +K*cos(phi-omega*tau)*E5iTau
+ +K*sin(phi-omega*tau)*E6rTau
+ +K*cos(phi-omega*tau)*E6iTau
+ +K*sin(phi-omega*tau)*E7rTau
+ +K*cos(phi-omega*tau)*E7iTau
+ +K*sin(phi-omega*tau)*E8rTau
+ +K*cos(phi-omega*tau)*E8iTau
+ +K*sin(phi-omega*tau)*E9rTau
+ +K*cos(phi-omega*tau)*E9iTau
+ +K*sin(phi-omega*tau)*E10rTau
+ +K*cos(phi-omega*tau)*E10iTau,
+ `x9'`=epsilon*(pump3-n3-(n3+1)*(E3r^2+E3i^2)),
+ `x10'`= omega*E4i+0.5*n4*E4r-0.5*alphaLW*n4*E4i
+ +K*cos(phi-omega*tau)*E4rTau
+ -K*sin(phi-omega*tau)*E4iTau
+ +K*cos(phi-omega*tau)*E2rTau
+ -K*sin(phi-omega*tau)*E2iTau
+ +K*cos(phi-omega*tau)*E1rTau
+ -K*sin(phi-omega*tau)*E1iTau
+ +K*cos(phi-omega*tau)*E3rTau
+ -K*sin(phi-omega*tau)*E3iTau
+ +K*cos(phi-omega*tau)*E5rTau
+ -K*sin(phi-omega*tau)*E5iTau
+ +K*cos(phi-omega*tau)*E6rTau
+ -K*sin(phi-omega*tau)*E6iTau
+ +K*cos(phi-omega*tau)*E7rTau
+ -K*sin(phi-omega*tau)*E7iTau
+ +K*cos(phi-omega*tau)*E8rTau
+ -K*sin(phi-omega*tau)*E8iTau
+ +K*cos(phi-omega*tau)*E9rTau
+ -K*sin(phi-omega*tau)*E9iTau
+ +K*cos(phi-omega*tau)*E10rTau
+ -K*sin(phi-omega*tau)*E10iTau,
+ `x11'`= -omega*E4r+0.5*alphaLW*n4*E4r+0.5*n4*E4i
+ +K*sin(phi-omega*tau)*E4rTau
+ +K*cos(phi-omega*tau)*E4iTau
+ +K*sin(phi-omega*tau)*E2rTau
+ +K*cos(phi-omega*tau)*E2iTau
+ +K*sin(phi-omega*tau)*E1rTau
+ +K*cos(phi-omega*tau)*E1iTau
+ +K*sin(phi-omega*tau)*E3rTau
+ +K*cos(phi-omega*tau)*E3iTau
+ +K*sin(phi-omega*tau)*E5rTau
+ +K*cos(phi-omega*tau)*E5iTau
+ +K*sin(phi-omega*tau)*E6rTau
+ +K*cos(phi-omega*tau)*E6iTau
+ +K*sin(phi-omega*tau)*E7rTau
+ +K*cos(phi-omega*tau)*E7iTau
+ +K*sin(phi-omega*tau)*E8rTau
+ +K*cos(phi-omega*tau)*E8iTau
+ +K*sin(phi-omega*tau)*E9rTau
+ +K*cos(phi-omega*tau)*E9iTau
+ +K*sin(phi-omega*tau)*E10rTau
+ +K*cos(phi-omega*tau)*E10iTau,
+ `x12'`=epsilon*(pump4-n4-(n4+1)*(E4r^2+E4i^2)),
+ `x13'`= omega*E5i+0.5*n5*E5r-0.5*alphaLW*n5*E5i
+ +K*cos(phi-omega*tau)*E5rTau
+ -K*sin(phi-omega*tau)*E5iTau
+ +K*cos(phi-omega*tau)*E2rTau
+ -K*sin(phi-omega*tau)*E2iTau
+ +K*cos(phi-omega*tau)*E1rTau
+ -K*sin(phi-omega*tau)*E1iTau
+ +K*cos(phi-omega*tau)*E3rTau
+ -K*sin(phi-omega*tau)*E3iTau
+ +K*cos(phi-omega*tau)*E4rTau
+ -K*sin(phi-omega*tau)*E4iTau
+ +K*cos(phi-omega*tau)*E6rTau
+ -K*sin(phi-omega*tau)*E6iTau
+ +K*cos(phi-omega*tau)*E7rTau
+ -K*sin(phi-omega*tau)*E7iTau
+ +K*cos(phi-omega*tau)*E8rTau
+ -K*sin(phi-omega*tau)*E8iTau
+ +K*cos(phi-omega*tau)*E9rTau
+ -K*sin(phi-omega*tau)*E9iTau
+ +K*cos(phi-omega*tau)*E10rTau
+ -K*sin(phi-omega*tau)*E10iTau,
+ `x14'`= -omega*E5r+0.5*alphaLW*n5*E5r+0.5*n5*E5i
+ +K*sin(phi-omega*tau)*E5rTau
+ +K*cos(phi-omega*tau)*E5iTau
+ +K*sin(phi-omega*tau)*E2rTau
+ +K*cos(phi-omega*tau)*E2iTau
+ +K*sin(phi-omega*tau)*E1rTau
+ +K*cos(phi-omega*tau)*E1iTau
+ +K*sin(phi-omega*tau)*E3rTau
+ +K*cos(phi-omega*tau)*E3iTau
+ +K*sin(phi-omega*tau)*E4rTau
+ +K*cos(phi-omega*tau)*E4iTau
+ +K*sin(phi-omega*tau)*E6rTau
+ +K*cos(phi-omega*tau)*E6iTau
+ +K*sin(phi-omega*tau)*E7rTau
+ +K*cos(phi-omega*tau)*E7iTau
+ +K*sin(phi-omega*tau)*E8rTau
+ +K*cos(phi-omega*tau)*E8iTau
+ +K*sin(phi-omega*tau)*E9rTau
+ +K*cos(phi-omega*tau)*E9iTau
+ +K*sin(phi-omega*tau)*E10rTau
+ +K*cos(phi-omega*tau)*E10iTau,
+ `x15'`=epsilon*(pump5-n4-(n5+1)*(E5r^2+E5i^2)),
+ `x16'`= omega*E6i+0.5*n6*E6r-0.5*alphaLW*n6*E6i
+ +K*cos(phi-omega*tau)*E6rTau
+ -K*sin(phi-omega*tau)*E6iTau
+ +K*cos(phi-omega*tau)*E2rTau
+ -K*sin(phi-omega*tau)*E2iTau
+ +K*cos(phi-omega*tau)*E1rTau
+ -K*sin(phi-omega*tau)*E1iTau
+ +K*cos(phi-omega*tau)*E3rTau
+ -K*sin(phi-omega*tau)*E3iTau
+ +K*cos(phi-omega*tau)*E5rTau
+ -K*sin(phi-omega*tau)*E5iTau
+ +K*cos(phi-omega*tau)*E4rTau
+ -K*sin(phi-omega*tau)*E4iTau
+ +K*cos(phi-omega*tau)*E7rTau
+ -K*sin(phi-omega*tau)*E7iTau
+ +K*cos(phi-omega*tau)*E8rTau
+ -K*sin(phi-omega*tau)*E8iTau
+ +K*cos(phi-omega*tau)*E9rTau
+ -K*sin(phi-omega*tau)*E9iTau
+ +K*cos(phi-omega*tau)*E10rTau
+ -K*sin(phi-omega*tau)*E10iTau,
+ `x17'`= -omega*E6r+0.5*alphaLW*n6*E6r+0.5*n6*E6i
+ +K*sin(phi-omega*tau)*E6rTau
+ +K*cos(phi-omega*tau)*E6iTau
+ +K*sin(phi-omega*tau)*E2rTau
+ +K*cos(phi-omega*tau)*E2iTau
+ +K*sin(phi-omega*tau)*E1rTau
+ +K*cos(phi-omega*tau)*E1iTau
+ +K*sin(phi-omega*tau)*E3rTau
+ +K*cos(phi-omega*tau)*E3iTau
+ +K*sin(phi-omega*tau)*E5rTau
+ +K*cos(phi-omega*tau)*E5iTau
+ +K*sin(phi-omega*tau)*E4rTau
+ +K*cos(phi-omega*tau)*E4iTau
+ +K*sin(phi-omega*tau)*E7rTau
+ +K*cos(phi-omega*tau)*E7iTau
+ +K*sin(phi-omega*tau)*E8rTau
+ +K*cos(phi-omega*tau)*E8iTau
+ +K*sin(phi-omega*tau)*E9rTau
+ +K*cos(phi-omega*tau)*E9iTau
+ +K*sin(phi-omega*tau)*E10rTau
+ +K*cos(phi-omega*tau)*E10iTau,
+ `x18'`=epsilon*(pump6-n6-(n6+1)*(E6r^2+E6i^2)),
+ `x19'`= omega*E7i+0.5*n7*E7r-0.5*alphaLW*n7*E7i
+ +K*cos(phi-omega*tau)*E7rTau
+ -K*sin(phi-omega*tau)*E7iTau
+ +K*cos(phi-omega*tau)*E2rTau
+ -K*sin(phi-omega*tau)*E2iTau
+ +K*cos(phi-omega*tau)*E1rTau
+ -K*sin(phi-omega*tau)*E1iTau
+ +K*cos(phi-omega*tau)*E3rTau
+ -K*sin(phi-omega*tau)*E3iTau
+ +K*cos(phi-omega*tau)*E5rTau
+ -K*sin(phi-omega*tau)*E5iTau
+ +K*cos(phi-omega*tau)*E6rTau
+ -K*sin(phi-omega*tau)*E6iTau
+ +K*cos(phi-omega*tau)*E4rTau
+ -K*sin(phi-omega*tau)*E4iTau
+ +K*cos(phi-omega*tau)*E8rTau
+ -K*sin(phi-omega*tau)*E8iTau
+ +K*cos(phi-omega*tau)*E9rTau
+ -K*sin(phi-omega*tau)*E9iTau
+ +K*cos(phi-omega*tau)*E10rTau
+ -K*sin(phi-omega*tau)*E10iTau,
+ `x20'`= -omega*E7r+0.5*alphaLW*n7*E7r+0.5*n7*E7i
+ +K*sin(phi-omega*tau)*E7rTau
+ +K*cos(phi-omega*tau)*E7iTau
+ +K*sin(phi-omega*tau)*E2rTau
+ +K*cos(phi-omega*tau)*E2iTau
+ +K*sin(phi-omega*tau)*E1rTau
+ +K*cos(phi-omega*tau)*E1iTau
+ +K*sin(phi-omega*tau)*E3rTau
+ +K*cos(phi-omega*tau)*E3iTau
+ +K*sin(phi-omega*tau)*E5rTau
+ +K*cos(phi-omega*tau)*E5iTau
+ +K*sin(phi-omega*tau)*E6rTau
+ +K*cos(phi-omega*tau)*E6iTau
+ +K*sin(phi-omega*tau)*E4rTau
+ +K*cos(phi-omega*tau)*E4iTau
+ +K*sin(phi-omega*tau)*E8rTau
+ +K*cos(phi-omega*tau)*E8iTau
+ +K*sin(phi-omega*tau)*E9rTau
+ +K*cos(phi-omega*tau)*E9iTau
+ +K*sin(phi-omega*tau)*E10rTau
+ +K*cos(phi-omega*tau)*E10iTau,
+ `x21'`=epsilon*(pump7-n7-(n7+1)*(E7r^2+E7i^2)),
+ `x22'`= omega*E8i+0.5*n8*E8r-0.5*alphaLW*n8*E8i
+ +K*cos(phi-omega*tau)*E8rTau
+ -K*sin(phi-omega*tau)*E8iTau
+ +K*cos(phi-omega*tau)*E2rTau
+ -K*sin(phi-omega*tau)*E2iTau
+ +K*cos(phi-omega*tau)*E1rTau
+ -K*sin(phi-omega*tau)*E1iTau
+ +K*cos(phi-omega*tau)*E3rTau
+ -K*sin(phi-omega*tau)*E3iTau
+ +K*cos(phi-omega*tau)*E5rTau
+ -K*sin(phi-omega*tau)*E5iTau
+ +K*cos(phi-omega*tau)*E6rTau
+ -K*sin(phi-omega*tau)*E6iTau
+ +K*cos(phi-omega*tau)*E7rTau
+ -K*sin(phi-omega*tau)*E7iTau
+ +K*cos(phi-omega*tau)*E4rTau
+ -K*sin(phi-omega*tau)*E4iTau
+ +K*cos(phi-omega*tau)*E9rTau
+ -K*sin(phi-omega*tau)*E9iTau
+ +K*cos(phi-omega*tau)*E10rTau
+ -K*sin(phi-omega*tau)*E10iTau,
+ `x23'`= -omega*E8r+0.5*alphaLW*n8*E8r+0.5*n8*E8i
+ +K*sin(phi-omega*tau)*E8rTau
+ +K*cos(phi-omega*tau)*E8iTau
+ +K*sin(phi-omega*tau)*E2rTau
+ +K*cos(phi-omega*tau)*E2iTau
+ +K*sin(phi-omega*tau)*E1rTau
+ +K*cos(phi-omega*tau)*E1iTau
+ +K*sin(phi-omega*tau)*E3rTau
+ +K*cos(phi-omega*tau)*E3iTau
+ +K*sin(phi-omega*tau)*E5rTau
+ +K*cos(phi-omega*tau)*E5iTau
+ +K*sin(phi-omega*tau)*E6rTau
+ +K*cos(phi-omega*tau)*E6iTau
+ +K*sin(phi-omega*tau)*E7rTau
+ +K*cos(phi-omega*tau)*E7iTau
+ +K*sin(phi-omega*tau)*E4rTau
+ +K*cos(phi-omega*tau)*E4iTau
+ +K*sin(phi-omega*tau)*E9rTau
+ +K*cos(phi-omega*tau)*E9iTau
+ +K*sin(phi-omega*tau)*E10rTau
+ +K*cos(phi-omega*tau)*E10iTau,
+ `x24'`=epsilon*(pump8-n8-(n8+1)*(E8r^2+E8i^2)),
+ `x25'`= omega*E9i+0.5*n9*E9r-0.5*alphaLW*n9*E9i
+ +K*cos(phi-omega*tau)*E9rTau
+ -K*sin(phi-omega*tau)*E9iTau
+ +K*cos(phi-omega*tau)*E2rTau
+ -K*sin(phi-omega*tau)*E2iTau
+ +K*cos(phi-omega*tau)*E1rTau
+ -K*sin(phi-omega*tau)*E1iTau
+ +K*cos(phi-omega*tau)*E3rTau
+ -K*sin(phi-omega*tau)*E3iTau
+ +K*cos(phi-omega*tau)*E5rTau
+ -K*sin(phi-omega*tau)*E5iTau
+ +K*cos(phi-omega*tau)*E6rTau
+ -K*sin(phi-omega*tau)*E6iTau
+ +K*cos(phi-omega*tau)*E7rTau
+ -K*sin(phi-omega*tau)*E7iTau
+ +K*cos(phi-omega*tau)*E8rTau
+ -K*sin(phi-omega*tau)*E8iTau
+ +K*cos(phi-omega*tau)*E4rTau
+ -K*sin(phi-omega*tau)*E4iTau
+ +K*cos(phi-omega*tau)*E10rTau
+ -K*sin(phi-omega*tau)*E10iTau,
+ `x26'`= -omega*E9r+0.5*alphaLW*n9*E9r+0.5*n9*E9i
+ +K*sin(phi-omega*tau)*E9rTau
+ +K*cos(phi-omega*tau)*E9iTau
+ +K*sin(phi-omega*tau)*E2rTau
+ +K*cos(phi-omega*tau)*E2iTau
+ +K*sin(phi-omega*tau)*E1rTau
+ +K*cos(phi-omega*tau)*E1iTau
+ +K*sin(phi-omega*tau)*E3rTau
+ +K*cos(phi-omega*tau)*E3iTau
+ +K*sin(phi-omega*tau)*E5rTau
+ +K*cos(phi-omega*tau)*E5iTau
+ +K*sin(phi-omega*tau)*E6rTau
+ +K*cos(phi-omega*tau)*E6iTau
+ +K*sin(phi-omega*tau)*E7rTau
+ +K*cos(phi-omega*tau)*E7iTau
+ +K*sin(phi-omega*tau)*E8rTau
+ +K*cos(phi-omega*tau)*E8iTau
+ +K*sin(phi-omega*tau)*E4rTau
+ +K*cos(phi-omega*tau)*E4iTau
+ +K*sin(phi-omega*tau)*E10rTau
+ +K*cos(phi-omega*tau)*E10iTau,
+ `x27'`=epsilon*(pump9-n9-(n9+1)*(E9r^2+E9i^2)),
+ `x28'`= omega*E10i+0.5*n10*E10r-0.5*alphaLW*n10*E10i
+ +K*cos(phi-omega*tau)*E10rTau
+ -K*sin(phi-omega*tau)*E10iTau
+ +K*cos(phi-omega*tau)*E2rTau
+ -K*sin(phi-omega*tau)*E2iTau
+ +K*cos(phi-omega*tau)*E1rTau
+ -K*sin(phi-omega*tau)*E1iTau
+ +K*cos(phi-omega*tau)*E3rTau
+ -K*sin(phi-omega*tau)*E3iTau
+ +K*cos(phi-omega*tau)*E5rTau
+ -K*sin(phi-omega*tau)*E5iTau
+ +K*cos(phi-omega*tau)*E6rTau
+ -K*sin(phi-omega*tau)*E6iTau
+ +K*cos(phi-omega*tau)*E7rTau
+ -K*sin(phi-omega*tau)*E7iTau
+ +K*cos(phi-omega*tau)*E8rTau
+ -K*sin(phi-omega*tau)*E8iTau
+ +K*cos(phi-omega*tau)*E9rTau
+ -K*sin(phi-omega*tau)*E9iTau
+ +K*cos(phi-omega*tau)*E4rTau
+ -K*sin(phi-omega*tau)*E4iTau,
+ `x29'`= -omega*E10r+0.5*alphaLW*n10*E10r+0.5*n10*E10i
+ +K*sin(phi-omega*tau)*E10rTau
+ +K*cos(phi-omega*tau)*E10iTau
+ +K*sin(phi-omega*tau)*E2rTau
+ +K*cos(phi-omega*tau)*E2iTau
+ +K*sin(phi-omega*tau)*E1rTau
+ +K*cos(phi-omega*tau)*E1iTau
+ +K*sin(phi-omega*tau)*E3rTau
+ +K*cos(phi-omega*tau)*E3iTau
+ +K*sin(phi-omega*tau)*E5rTau
+ +K*cos(phi-omega*tau)*E5iTau
+ +K*sin(phi-omega*tau)*E6rTau
+ +K*cos(phi-omega*tau)*E6iTau
+ +K*sin(phi-omega*tau)*E7rTau
+ +K*cos(phi-omega*tau)*E7iTau
+ +K*sin(phi-omega*tau)*E8rTau
+ +K*cos(phi-omega*tau)*E8iTau
+ +K*sin(phi-omega*tau)*E9rTau
+ +K*cos(phi-omega*tau)*E9iTau
+ +K*sin(phi-omega*tau)*E4rTau
+ +K*cos(phi-omega*tau)*E4iTau
+ `x30'`=epsilon*(pump10-n10-(n10+1)*(E10r^2+E10i^2))];
+ Sys["DelVars"]:=[x1Tau, x2Tau, x3Tau, x4Tau, x5Tau, x6Tau, x7Tau, x8Tau, x9Tau, x10Tau, x11Tau, x12Tau, x13Tau, x14Tau, x15Tau, x16Tau, x17Tau, x18Tau, x19Tau, x20Tau, x21Tau, x22Tau, x23Tau, x24Tau, x25Tau, x26Tau, x27Tau, x28Tau, x29Tau, x30Tau];                                                                                                        
+ Sys["AlgVars"]:=[];                                                                                                                      
+ Sys["ExplicitAEs"]:=[E1r=x1, E1i=x2, n1=x3, E2r=x4, E2i=x5, n2=x6, E3r=x7, E3i=x8, n3=x9, E4r=x10, E4i=x11, n4=x12, E5r=x13, E5i=x14, n5=x15, E6r=x16, E6i=x17, n6=x18, E7r=x19, E7i=x20, n7=x21, E8r=x22, E8i=x23, n8=x24, E9r=x25, E9i=x26, n9=x27, E10r=x28, E10i=x29, n10=x30, E1rTau=x1Tau, E1iTau=x2Tau, n1Tau=x3Tau, E2rTau=x4Tau, E2iTau=x5Tau, n2Tau=x6Tau, E3rTau=x7Tau, E3iTau=x8Tau, n3Tau=x9Tau, E4rTau=x10Tau, E4iTau=x11Tau, n4Tau=x12Tau, E5rTau=x13Tau, E5iTau=x14Tau, n5Tau=x15Tau, E6rTau=x16Tau, E6iTau=x17Tau, n6Tau=x18Tau, E7rTau=x19Tau, E7iTau=x20Tau, n7Tau=x21Tau, E8rTau=x22Tau, E8iTau=x23Tau, n8Tau=x24Tau, E9rTau=x25Tau, E9iTau=x26Tau, n9Tau=x27Tau, E10rTau=x28Tau, E10iTau=x29Tau, n10Tau=x30Tau, pump1=alpha1, pump2=alpha2, pump3=alpha3, pump4=alpha4, pump5=alpha5, pump6=alpha6, pump7=alpha7, pump8=alpha8, pump9=alpha9, pump10=alpha10, omega=p[1], phi=-2, alphaLW=4, K=0.0005, epsilon=0.005];                     
+ Sys["Delays"]:=[ tau=100 ];                                                                                            
+                                                                                                                                          
+# insert fixed parameters                                                                                                                 
+#                                                                                                                                         
+Sys:=Aux:-SystemClasses:-subsExplicitAEsIntoDAESys(Sys);                                                                                  
+ # look for errors                                                                                                                        
+  Aux:-SystemClasses:-listOfErrorsInDDESys(Sys, strict);                                                                                  
+ # define normal vector system                                                                                                            
+  AugSys:=AugSys2:-SdDelayBif:-ModFoldNV:-CreateModFoldNVSys(Sys,[ alpha1, alpha2, alpha3, alpha4, alpha5, alpha6, alpha7, alpha8, alpha9, alpha10 ],-0.001):-getSys();                                       
+                                                                                                                                          
+# pick relevant equations of Manifold System                                                                                        
+ manifoldEq:=[]:                                                                                                                          
+ for i from 1 by 1 to 61 do                                                                                                                
+ithRhs:=rhs(AugSys["Equations"][i]);                                                                                                      
+for jj from 1 by 1 to nops(Sys["DynVars"]) do                                                                                             
+ithRhs:=subs(Sys["DynVars"][jj]=x[jj],ithRhs): # ...states, ...                                                                           
+end do:                                                                                                                                   
+for jj from 1 by 1 to nops(Sys["Parameters"]) do                                                                                          
+ithRhs:=subs(lhs(Sys["Parameters"][jj])=alpha[jj],ithRhs): # and parameters...                                                            
+end do:                                                                                                                                   
+manifoldEq:=[op(manifoldEq),ithRhs]:                                                                                                      
+ end do:                                                                                                                                  
+# create frame for code generation                                                                                                        
+ Procedure4CodeGen:=proc(x, alpha, p ,w )                                                                                                    
+ m;                                                                                                                                       
+ end proc;                                                                                                                                
+ ManifoldEquation:=subs([m=manifoldEq],eval(Procedure4CodeGen));                                                                          
+# generate C code                                                                                                                         
+ CodeGeneration:-C(ManifoldEquation,returnvariablename="residuum",defaulttype=numeric,output="Mod_Fold_10L_symmTMP.c",deducetypes=false);             
+                                                                                                                                          
+# pick relevant equations of Normal Vectors System                                                                                        
+ manifoldEq:=[]:                                                                                                                          
+ for i from                                                                                                                               
+13                                                                                                                                         
++1 by 1 to nops(AugSys["Equations"]) do                                                                                                   
+ithRhs:=rhs(AugSys["Equations"][i]);                                                                                                      
+for jj from 1 by 1 to nops(Sys["DynVars"]) do                                                                                             
+ithRhs:=subs(Sys["DynVars"][jj]=x[jj],ithRhs): # ...states, ...                                                                           
+end do:                                                                                                                                   
+for jj from 1 by 1 to nops(Sys["Parameters"]) do                                                                                          
+ithRhs:=subs(lhs(Sys["Parameters"][jj])=alpha[jj],ithRhs): # and parameters...                                                            
+end do:                                                                                                                                   
+manifoldEq:=[op(manifoldEq),ithRhs]:                                                                                                      
+ end do:                                                                                                                                  
+# create frame for code generation                                                                                                        
+ Procedure4CodeGen:=proc(x, alpha, p, w, v, g1, u, r)                                                                                        
+ m;                                                                                                                                       
+ end proc;                                                                                                                                
+ ManifoldEquation:=subs([m=manifoldEq],eval(Procedure4CodeGen));                                                                          
+# generate C code                                                                                                                         
+ CodeGeneration:-C(ManifoldEquation,returnvariablename="residuum",defaulttype=numeric,output="NV_Mod_Fold_10L_symmTMP.c",deducetypes=false);                   
+                                                                                                                                          
+# get dde equations                                                                                                                       
+dderhs:=[]; # create space for dde right hand side                                                                                        
+for ii from 1 by 1 to nops(Sys["DynVars"]) do                                                                                             
+  ithRhs:=rhs(Sys["ODEs"][ii]): # get one entry and replace...                                                                            
+  for jj from 1 by 1 to nops(Sys["DynVars"]) do                                                                                           
+   ithRhs:=subs(Sys["DynVars"][jj]=x[jj],ithRhs): # ...states, ...                                                                        
+ end do:                                                                                                                                  
+   for jj from 1 by 1 to nops(Sys["DelVars"]) do                                                                                          
+   ithRhs:=subs(Sys["DelVars"][jj]=xtau[jj],ithRhs); # ...delayed states,...                                                              
+ end do;                                                                                                                                  
+ for jj from 1 by 1 to nops(Sys["Parameters"]) do                                                                                         
+   ithRhs:=subs(lhs(Sys["Parameters"][jj])=alpha[jj],ithRhs): # and parameters...                                                         
+ end do:                                                                                                                                  
+dderhs:=[op(dderhs),ithRhs]; # and concatenate it with the existing entries                                                               
+end do:                                                                                                                                   
+# create frame for code generation                                                                                                        
+Procedure4CodeGen:=proc(x,xtau,alpha)                                                                                                     
+m;                                                                                                                                        
+end proc;                                                                                                                                 
+DDErightHandSide:=subs([m=dderhs],eval(Procedure4CodeGen));                                                                               
+# generate C code                                                                                                                         
+CodeGeneration:-C(DDErightHandSide,returnvariablename="xdot",defaulttype=numeric,output="DDE_10L_symmTMP.c",deducetypes=false);                       
