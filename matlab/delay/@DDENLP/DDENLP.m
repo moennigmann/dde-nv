@@ -572,15 +572,14 @@ classdef DDENLP < handle
     %> @param aDDENLP instance of DDENLP
     % ====================================================================== 
         function checkConstraints( aDDENLP )
-            % displays which constraints might be violated at initial point
-            %
-            %             fprintf('\nLower Box Contstraints: \n')
-            %             size(aDDENLP.lowerBoxCons)
-            %             size( aDDENLP.initVal)
-            %             disp(aDDENLP.lowerBoxCons < aDDENLP.initVal) % low boundaries of box constraints
-            %             fprintf('\nLower Box Contstraints: \n')
-            %             disp(aDDENLP.upperBoxCons < aDDENLP.initVal) % upper boundaries of box contraints
-            %
+           % displays which constraints might be violated at initial point
+            
+            fprintf('\nLower Box Contstraints: \n')
+            disp(aDDENLP.lowerBoxCons < aDDENLP.initVal) % low boundaries of box constraints
+
+            fprintf('\nUpper Box Contstraints: \n')
+            disp(aDDENLP.upperBoxCons > aDDENLP.initVal) % upper boundaries of box contraints
+            
             fprintf('\n nonlinear inequality constraints: \n')
             disp(aDDENLP.allNLIneqConstraints(aDDENLP.initVal)<0)
         end
@@ -657,6 +656,8 @@ classdef DDENLP < handle
             end
             
             % run optimization
+            
+%             disp([lb>=x0,lb,x0,ub,ub<=x0])
             
             [aDDENLP.optimVal,aDDENLP.optJ,aDDENLP.exitflag,aDDENLP.optimOutput,aDDENLP.lambda] = ...
                 fmincon(J,x0,Aineq,bineq,Aeq,beq,lb,ub,nonlinCon,options);
@@ -746,7 +747,7 @@ classdef DDENLP < handle
             [init,final,maxEig,eigs] = aDDENLP.runOptimWithStabChecks(nIterBetweenStabChecks);
             for ii = 1:20
                
-                if real(eigs(aDDENLP.allowedEigsInClosedRightHP)) > aDDENLP.maxAllowedRealPart
+                if real(eigs(aDDENLP.allowedEigsInClosedRightHP+1)) > aDDENLP.maxAllowedRealPart
                     if imag(maxEig) == 0
                         subtype = 'fold';
                     else
@@ -1080,9 +1081,11 @@ classdef DDENLP < handle
             for i=1:2^myNAlpha
                 vertices(i).alpha.values = aDDENLP.vars.nominal.alpha.values+aDDENLP.minDist*errorvector(i,:)';
                 vertices(i).x.values = aDDENLP.vars.nominal.x.values;
+                vertices(i).p.values = aDDENLP.vars.nominal.p.values;
                 
                 aDDENLP.vars.vertex(i,1).alpha=VariableVector(vertices(i).alpha.values,NaN,{'alphaAtVertex'});
                 aDDENLP.vars.vertex(i,1).x=VariableVector(vertices(i).x.values,NaN,{'xAtVertex'});
+                aDDENLP.vars.vertex(i,1).p=VariableVector(vertices(i).p.values,NaN,{'pAtVertex'});
             end
             
             maxRealPart = checkStabilityPoint(aDDENLP,'vertex');
