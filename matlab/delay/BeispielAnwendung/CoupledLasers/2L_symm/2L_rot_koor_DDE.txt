@@ -13,16 +13,35 @@
  Sys["Parameters"]:=[ alpha1=0.1, alpha2=0.1 ];                                                                                                
  Sys["AEs"]:=[];                                                                                                                          
  Sys["ODEs"]:=[
- `x1'` = rescaleTime*(+omega*E1i+0.5*n1*E1r-0.5*alphaLW*n1*E1i+K*cos(phi-omega*rescaleTime*tau)*E1rTau-K*sin(phi-omega*rescaleTime*tau)*E1iTau+K*cos(phi-omega*rescaleTime*tau)*E2rTau-K*sin(phi-omega*rescaleTime*tau)*E2iTau),
- `x2'` = rescaleTime*(-omega*E1r+0.5*alphaLW*n1*E1r+0.5*n1*E1i+K*sin(phi-omega*rescaleTime*tau)*E1rTau+K*cos(phi-omega*rescaleTime*tau)*E1iTau+K*sin(phi-omega*rescaleTime*tau)*E2rTau+K*cos(phi-omega*rescaleTime*tau)*E2iTau),
- `x3'`= rescaleTime*(epsilon*(pump1-n1-(n1+1)*(E1r^2+E1i^2))),
- `x4'` = rescaleTime*(+omega*E2i+0.5*n2*E2r-0.5*alphaLW*n2*E2i+K*cos(phi-omega*rescaleTime*tau)*E2rTau-K*sin(phi-omega*rescaleTime*tau)*E2iTau+K*cos(phi-omega*rescaleTime*tau)*E1rTau-K*sin(phi-omega*rescaleTime*tau)*E1iTau),
- `x5'` = rescaleTime*(-omega*E2r+0.5*alphaLW*n2*E2r+0.5*n2*E2i+K*sin(phi-omega*rescaleTime*tau)*E2rTau+K*cos(phi-omega*rescaleTime*tau)*E2iTau+K*sin(phi-omega*rescaleTime*tau)*E1rTau+K*cos(phi-omega*rescaleTime*tau)*E1iTau),
- `x6'`= rescaleTime*(epsilon*(pump2-n2-(n2+1)*(E2r^2+E2i^2)))];
+ `x1'` = rescaleTime*(+omega*E1i+n1*E1r-alphaLW*n1*E1i+K*cos(phi-omega*rescaleTime*tau)*E1rTau-K*sin(phi-omega*rescaleTime*tau)*E1iTau+K*cos(phi-omega*rescaleTime*tau)*E2rTau-K*sin(phi-omega*rescaleTime*tau)*E2iTau),
+ `x2'` = rescaleTime*(-omega*E1r+alphaLW*n1*E1r+n1*E1i+K*sin(phi-omega*rescaleTime*tau)*E1rTau+K*cos(phi-omega*rescaleTime*tau)*E1iTau+K*sin(phi-omega*rescaleTime*tau)*E2rTau+K*cos(phi-omega*rescaleTime*tau)*E2iTau),
+ `x3'`= rescaleTime*(epsilon*(pump1-n1-(2*n1+1)*(E1r^2+E1i^2))),
+ `x4'` = rescaleTime*(+omega*E2i+n2*E2r-alphaLW*n2*E2i+K*cos(phi-omega*rescaleTime*tau)*E2rTau-K*sin(phi-omega*rescaleTime*tau)*E2iTau+K*cos(phi-omega*rescaleTime*tau)*E1rTau-K*sin(phi-omega*rescaleTime*tau)*E1iTau),
+ `x5'` = rescaleTime*(-omega*E2r+alphaLW*n2*E2r+n2*E2i+K*sin(phi-omega*rescaleTime*tau)*E2rTau+K*cos(phi-omega*rescaleTime*tau)*E2iTau+K*sin(phi-omega*rescaleTime*tau)*E1rTau+K*cos(phi-omega*rescaleTime*tau)*E1iTau),
+ `x6'`= rescaleTime*(epsilon*(pump2-n2-(2*n2+1)*(E2r^2+E2i^2)))];
  Sys["DelVars"]:=[x1Tau, x2Tau, x3Tau, x4Tau, x5Tau, x6Tau];                                                                                                        
  Sys["AlgVars"]:=[];                                                                                                                      
- Sys["ExplicitAEs"]:=[rescaleTime = 1000, E1r=x1, E1i=x2, n1=x3, E2r=x4, E2i=x5, n2=x6, E1rTau=x1Tau, E1iTau=x2Tau, n1Tau=x3Tau, E2rTau=x4Tau, E2iTau=x5Tau, n2Tau=x6Tau, pump1=alpha1, pump2=alpha2, omega=p[1], phi=-2, alphaLW=4, K=0.0025, epsilon=0.005];                     
- Sys["Delays"]:=[ tau=100/rescaleTime ];                                                                                            
+ Sys["ExplicitAEs"]:=[rescaleTime = 1000,
+ E1r=x1,
+ E1i=x2,
+ n1=x3,
+ E2r=x4,
+ E2i=x5,
+ n2=x6,
+ E1rTau=x1Tau,
+ E1iTau=x2Tau,
+ n1Tau=x3Tau,
+ E2rTau=x4Tau,
+ E2iTau=x5Tau,
+ n2Tau=x6Tau,
+ pump1=alpha1,
+ pump2=alpha2,
+ omega=p[1],
+ phi=-1,
+ alphaLW=5,
+ K=0.0005/2,
+ epsilon=0.001];                     
+ Sys["Delays"]:=[ tau=1000/rescaleTime ];                                                                                            
                                                                                                                                           
 # insert fixed parameters                                                                                                                 
 #                                                                                                                                         
@@ -31,7 +50,7 @@ Sys:=Aux:-SystemClasses:-subsExplicitAEsIntoDAESys(Sys);
   Aux:-SystemClasses:-listOfErrorsInDDESys(Sys, strict);                                                                                  
  # define normal vector system                                                                                                            
   AugSys:=AugSys2:-SdDelayBif:-ModFoldNV:-CreateModFoldNVSys(Sys,[ alpha1, alpha2 ],-1.0):-getSys();                                       
-      quit:                                                                                                                                    
+                                                                                                                               
 # pick relevant equations of Manifold System                                                                                        
  manifoldEq:=[]:                                                                                                                          
  for i from 1 by 1 to 13 do                                                                                                                

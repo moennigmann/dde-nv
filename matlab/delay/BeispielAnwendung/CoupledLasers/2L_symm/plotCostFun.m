@@ -6,7 +6,7 @@ close all
 clear
 clc
 
-recalc=0;
+recalc=1;
 
 if recalc==1 || ~exist('plotCostFun.mat','file')
     
@@ -16,7 +16,7 @@ if recalc==1 || ~exist('plotCostFun.mat','file')
     
     
     %% define range
-    step = 0.001;
+    step = 0.05;
     
     p1 = 0:step:0.9;
     p2 = 0:step:0.6;
@@ -63,7 +63,7 @@ if recalc==1 || ~exist('plotCostFun.mat','file')
         end
     end
     
-    save('plotCostFun.mat')
+   % save('plotCostFun.mat')
     
     
 else
@@ -82,11 +82,13 @@ box on
 xlim([0 p1(end)])
 ylim([0 p2(end)])
 
+[p1mesh,p2mesh]=meshgrid(p1,p2);
 
-contour(p1,p2,-cost',0:0.1:3);
+mesh(p1,p2,-cost',0:0.1:3);
+surf(p1mesh,p2mesh,-cost');
 axis equal
 
-matlab2tikz('cost2L.tex')
+% matlab2tikz('cost2L.tex')
 
 % figure(2);
 % clf;
