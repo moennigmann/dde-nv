@@ -1,0 +1,87 @@
+% This file was created by matlab2tikz.
+% Minimal pgfplots version: 1.3
+%
+%The latest updates can be retrieved from
+%  http://www.mathworks.com/matlabcentral/fileexchange/22022-matlab2tikz
+%where you can also make suggestions and rate matlab2tikz.
+%
+\begin{tikzpicture}
+
+\begin{axis}[%
+width=3.565625in,
+height=3.565625in,
+at={(1.235937in,0.48125in)},
+scale only axis,
+xmin=0,
+xmax=0.9,
+tick align=outside,
+xlabel={p1},
+xmajorgrids,
+ymin=0,
+ymax=0.9,
+ylabel={p2},
+ymajorgrids,
+zmin=0,
+zmax=0.3828,
+zlabel={p3},
+zmajorgrids,
+view={-30}{30}
+]
+\addplot3 [color=black,solid,line width=1.0pt]
+ table[row sep=crcr] {%
+0	0	0\\
+2.77500433530333	2.94154627672848	2.94154730319342\\
+};
+ \addplot3 [color=black,solid,line width=1.0pt]
+ table[row sep=crcr] {%
+0	0	0\\
+3.12996756381619	2.0177313218922	3.32026702102605\\
+};
+ \addplot3 [color=black,solid,line width=1.0pt]
+ table[row sep=crcr] {%
+0	0	0\\
+3.77692575951963	2.43979166672348	2.18251412452057\\
+};
+ \addplot3 [color=black,solid,line width=1.0pt]
+ table[row sep=crcr] {%
+0	0	0\\
+3.19235698662538	3.38642771566568	1.84827294204053\\
+};
+ 
+\addplot3[area legend,fill=red,opacity=5.000000e-01,draw=none,forget plot]
+table[row sep=crcr] {%
+x	y	z\\
+0	0	0\\
+2.77500433530333	2.94154627672848	2.94154730319342\\
+3.12996756381619	2.0177313218922	3.32026702102605\\
+}--cycle;
+
+
+\addplot3[area legend,fill=red,opacity=5.000000e-01,draw=none,forget plot]
+table[row sep=crcr] {%
+x	y	z\\
+0	0	0\\
+2.77500433530333	2.94154627672848	2.94154730319342\\
+3.19235698662538	3.38642771566568	1.84827294204053\\
+}--cycle;
+
+
+\addplot3[area legend,fill=blue,opacity=5.000000e-01,draw=none,forget plot]
+table[row sep=crcr] {%
+x	y	z\\
+0	0	0\\
+3.12996756381619	2.0177313218922	3.32026702102605\\
+3.77692575951963	2.43979166672348	2.18251412452057\\
+}--cycle;
+
+
+\addplot3[area legend,fill=blue,opacity=5.000000e-01,draw=none,forget plot]
+table[row sep=crcr] {%
+x	y	z\\
+0	0	0\\
+3.19235698662538	3.38642771566568	1.84827294204053\\
+3.77692575951963	2.43979166672348	2.18251412452057\\
+}--cycle;
+
+\end{axis}
+\end{tikzpicture}%

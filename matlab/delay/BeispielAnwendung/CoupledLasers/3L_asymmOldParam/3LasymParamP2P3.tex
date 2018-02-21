@@ -1,0 +1,65 @@
+% This file was created by matlab2tikz.
+% Minimal pgfplots version: 1.3
+%
+%The latest updates can be retrieved from
+%  http://www.mathworks.com/matlabcentral/fileexchange/22022-matlab2tikz
+%where you can also make suggestions and rate matlab2tikz.
+%
+\definecolor{mycolor1}{rgb}{0.00000,0.44700,0.74100}%
+\definecolor{mycolor2}{rgb}{0.85000,0.32500,0.09800}%
+\definecolor{mycolor3}{rgb}{0.92900,0.69400,0.12500}%
+\definecolor{mycolor4}{rgb}{0.49400,0.18400,0.55600}%
+\definecolor{mycolor5}{rgb}{0.46600,0.67400,0.18800}%
+%
+\begin{tikzpicture}
+
+\begin{axis}[%
+width=3.548264in,
+height=3.548264in,
+at={(1.244618in,0.498611in)},
+scale only axis,
+xmin=0,
+xmax=1,
+xlabel={$\text{p}_\text{2}$},
+xmajorgrids,
+ymin=0,
+ymax=1,
+ylabel={$\text{p}_\text{3}$},
+ymajorgrids
+]
+\addplot [color=black,solid,forget plot]
+  table[row sep=crcr]{%
+0	0.4\\
+1	0.4\\
+};
+\addplot [color=black,solid,forget plot]
+  table[row sep=crcr]{%
+0.7	0\\
+0.7	1\\
+};
+\addplot [color=mycolor1,only marks,mark=x,mark options={solid},forget plot]
+  table[row sep=crcr]{%
+0.606081751647561	0.382679491924311\\
+};
+\addplot [color=mycolor2,solid,forget plot]
+  table[row sep=crcr]{%
+6.86073080140789	0.631327332824274\\
+-6.86073080140789	0.631327332824284\\
+};
+\addplot [color=mycolor3,solid,forget plot]
+  table[row sep=crcr]{%
+0.631327439417887	-6.86072868749267\\
+0.631327439417895	6.86072868749267\\
+};
+\addplot [color=mycolor4,dashed,forget plot]
+  table[row sep=crcr]{%
+0.363023045370955	8.64991266989784\\
+0.363023045370955	-8.64991266989784\\
+};
+\addplot [color=mycolor5,dashed,forget plot]
+  table[row sep=crcr]{%
+-8.63460038976246	0.363289180088704\\
+8.63460038976246	0.363289180088704\\
+};
+\end{axis}
+\end{tikzpicture}%
