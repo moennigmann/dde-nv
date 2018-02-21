@@ -5,7 +5,7 @@ clear
 clc
 
 %% define system to begin with
-param=[0.4;0.4];
+param=[0.39;0.39];
 %xGue=[0.3333;0.0004;-0.01;0.3333;0.0004;-0.01];
 xGue=[0.1910;0.2732;-0.01;0.1910;0.2732;-0.01];
 % xGue=[0.2356;0.2356;-0.01;0.2356;0.2356;-0.01];
@@ -103,11 +103,11 @@ clear pCrit1
 
 %% initatialize constraints and prepare optimization
 
+%return
 
 aDDENLP.initNVCons();
 aDDENLP.concatConstraints();
 aDDENLP.concatInitPoints();
-
 
 
 % openfig('Pump_fsolve.fig')
@@ -269,3 +269,57 @@ drawnow
 % [~]=aDDENLP.checkStabilityAtVertices();
 % 
 % [~]=aDDENLP.checkStabilityAtRandom();
+
+
+%% show robustness-plot
+% 
+% maxeig=[];
+% for alpha1=aDDENLP.vars.nominal.alpha.values(1)-minDist:0.001:aDDENLP.vars.nominal.alpha.values(1)+minDist
+%     for alpha2=aDDENLP.vars.nominal.alpha.values(2)-minDist:0.001:aDDENLP.vars.nominal.alpha.values(2)+minDist
+%         
+%         param=[alpha1;alpha2];
+%         xGue=[0.1910;0.2732;-0.01;0.1910;0.2732;-0.01];
+%         xNom=VariableVector(xGue,0,[{'E1r'};{'E1i'};{'n1'};{'E2r'};{'E2i'};{'n2'}]);
+%         alphaNom=VariableVector(param,6,[{'pump1'};{'pump2'}]);
+%         p=VariableVector(-0.02,8,{'omega'});
+%         
+%         aDDE_2L=DDE(@(x,xtau,alpha,p)lasermod(x,xtau,alpha,p),tau,xNom,alphaNom,p);
+%         
+%         aDDENLP=DDENLP(J,aDDE_2L,xNom,[-Inf;-Inf;-Inf;-Inf;-Inf;-Inf],[Inf;Inf;Inf;Inf;Inf;Inf],[0;0],[1;0.5]-sqrt(2)*minDist,-Inf,Inf);
+%         
+%         aDDENLP.initializeStSt();
+%         
+%         maxeig=[maxeig;aDDENLP.checkStabilityPoint('nominal')];
+%     end
+% end
+
+%% plot robustness with eigenvalues
+
+minDist=0.01;
+step=0.001;
+maxeig=[];
+EW=[];
+plot=[];
+a1=aDDENLP.vars.nominal.alpha.values(1);
+a2=aDDENLP.vars.nominal.alpha.values(2);
+i=1;
+j=1;
+
+for alpha1=a1-minDist:step:a1+minDist
+    for alpha2=a2-minDist:step:a2+minDist
+        param=[alpha1;alpha2];
+        aDDENLP.vars.nominal.alpha.values(1)=param(1);
+        aDDENLP.vars.nominal.alpha.values(2)=param(2);
+        [~,eigs]=aDDENLP.checkStabilityPoint('nominal');
+        cat=[alpha1,alpha2,eigs(2)];
+        EW=[EW;cat];
+        plot(j,i)=eigs(2)
+        j=j+1;
+    end
+    j=1;
+    i=i+1;
+end
+
+x=a1-minDist:step:a1+minDist
+y=a2-minDist:step:a2+minDist
+mesh(x,y,plot);

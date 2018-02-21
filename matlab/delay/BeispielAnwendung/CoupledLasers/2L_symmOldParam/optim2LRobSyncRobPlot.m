@@ -319,6 +319,9 @@ plot3([a1-minDist,a1-minDist],[a2+minDist,a2+minDist],[plotData(end,1),aDDENLP.m
 plot3([a1+minDist,a1+minDist],[a2-minDist,a2-minDist],[plotData(1,end),aDDENLP.maxAllowedRealPart],'k--')
 plot3([a1+minDist,a1+minDist],[a2+minDist,a2+minDist],[plotData(end,end),aDDENLP.maxAllowedRealPart],'k--')
 
+plot3(aDDENLP.vars.critical(1).alpha.values(1),aDDENLP.vars.critical(1).alpha.values(2), aDDENLP.maxAllowedRealPart, 'rs')
+
+
 mesh(x,y,plotData);
 % contour(x,y,plotData,20);
 view([-55 30])
