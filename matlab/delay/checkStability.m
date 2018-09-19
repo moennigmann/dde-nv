@@ -38,7 +38,7 @@ method = df_mthod(funcs,'stst',flag_newhheur);
 method.stability.minimal_real_part = numMinEig; % only for numerics (no stability boundary)
 
 method.point.newton_max_iterations = 50;
-method.point.print_residual_info = 0;
+method.point.print_residual_info = 1;
 method.point.newton_nmon_iterations = 10;
 
 
