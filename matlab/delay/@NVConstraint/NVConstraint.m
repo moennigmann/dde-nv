@@ -73,19 +73,19 @@ classdef NVConstraint < EqualityConstraint
                     nVSysHandle=@(y)nVSysHandle(y(nVvars.x.index),y(nVvars.alpha.index),y(nVvars.p.index),y(nVvars.w1.index),y(nVvars.r.index))';
                 case 'modfold'
                     nEqAugSys=2*aDDENLP.vars.nominal.x.nVar+1;
-                    nEqNVSys=2*aDDENLP.vars.nominal.x.nVar+aDDENLP.vars.nominal.alpha.nVar+1;
+                    nEqNVSys=2*aDDENLP.vars.nominal.x.nVar+aDDENLP.vars.nominal.alpha.nVar+1+length(aDDENLP.algVarIndex);
                     augSysHandle=@(y)augSysHandle(y(nVvars.x.index),y(nVvars.alpha.index),y(nVvars.p.index),y(nVvars.w1.index))';
-                    nVSysHandle=@(y)nVSysHandle(y(nVvars.x.index),y(nVvars.alpha.index),y(nVvars.p.index),y(nVvars.w1.index),y(nVvars.v1.index),y(nVvars.g1.index),y(nVvars.u.index),y(nVvars.r.index))';
+                    nVSysHandle=@(y)nVSysHandle(y(nVvars.x.index),y(nVvars.alpha.index),y(nVvars.p.index),y(nVvars.w1.index),y(nVvars.v1.index),y(nVvars.g1.index),y(nVvars.k.index),y(nVvars.u.index),y(nVvars.r.index))';
                 case 'hopf'
                     nEqAugSys=3*aDDENLP.vars.nominal.x.nVar+2;
                     nEqNVSys=3*aDDENLP.vars.nominal.x.nVar+aDDENLP.vars.nominal.alpha.nVar+2;
                     augSysHandle=@(y)augSysHandle(y(nVvars.x.index),y(nVvars.alpha.index),y(nVvars.p.index),y(nVvars.omega.index),y(nVvars.w1.index),y(nVvars.w2.index))';
-                    nVSysHandle=@(y)nVSysHandle(y(nVvars.x.index),y(nVvars.alpha.index),y(nVvars.p.index),y(nVvars.omega.index),y(nVvars.w1.index),y(nVvars.w2.index),y(nVvars.v1.index),y(nVvars.v2.index),y(nVvars.g1.index),y(nVvars.g2.index),y(nVvars.u.index),y(nVvars.r.index))';
+                    nVSysHandle=@(y)nVSysHandle(y(nVvars.x.index),y(nVvars.alpha.index),y(nVvars.p.index),y(nVvars.omega.index),y(nVvars.w1.index),y(nVvars.w2.index),y(nVvars.v1.index),y(nVvars.v2.index),y(nVvars.g1.index),y(nVvars.g2.index),y(nVvars.k.index),y(nVvars.u.index),y(nVvars.r.index))';
                 case 'modhopf'
                     nEqAugSys=3*aDDENLP.vars.nominal.x.nVar+2;
                     nEqNVSys=3*aDDENLP.vars.nominal.x.nVar+aDDENLP.vars.nominal.alpha.nVar+2;
                     augSysHandle=@(y)augSysHandle(y(nVvars.x.index),y(nVvars.alpha.index),y(nVvars.p.index),y(nVvars.omega.index),y(nVvars.w1.index),y(nVvars.w2.index))';
-                    nVSysHandle=@(y)nVSysHandle(y(nVvars.x.index),y(nVvars.alpha.index),y(nVvars.p.index),y(nVvars.omega.index),y(nVvars.w1.index),y(nVvars.w2.index),y(nVvars.v1.index),y(nVvars.v2.index),y(nVvars.g1.index),y(nVvars.g2.index),y(nVvars.u.index),y(nVvars.r.index))';
+                    nVSysHandle=@(y)nVSysHandle(y(nVvars.x.index),y(nVvars.alpha.index),y(nVvars.p.index),y(nVvars.omega.index),y(nVvars.w1.index),y(nVvars.w2.index),y(nVvars.v1.index),y(nVvars.v2.index),y(nVvars.g1.index),y(nVvars.g2.index),y(nVvars.k.index),y(nVvars.u.index),y(nVvars.r.index))';
                 otherwise
                     error(['invalid manifold type ',type,', could not construct normal vector constraint object'])
             end
@@ -120,7 +120,7 @@ classdef NVConstraint < EqualityConstraint
             aNVCon.inequalities = @(y)aDDENLP.minDist*sqrt(aDDENLP.nAlpha)-y(aNVCon.vars.l.index);
             
             aNVCon.nVarAugSys=nVvars.x.nVar+nVvars.alpha.nVar+nVvars.p.nVar+nVvars.omega.nVar+nVvars.w1.nVar+nVvars.w2.nVar;
-            aNVCon.nVarNVSys=nVvars.v1.nVar+nVvars.v2.nVar+nVvars.g1.nVar+nVvars.g2.nVar+nVvars.u.nVar+nVvars.r.nVar;
+            aNVCon.nVarNVSys=nVvars.v1.nVar+nVvars.v2.nVar+nVvars.g1.nVar+nVvars.g2.nVar+nVvars.k.nVar+nVvars.u.nVar+nVvars.r.nVar;
             
             aNVCon.inequalityIndex=aDDENLP.occupiedIneqs+1;
             
@@ -187,17 +187,23 @@ classdef NVConstraint < EqualityConstraint
             
             % evaluate number of leading variables, that are not part of this
             % constraint
-            offset=aNVCon.vars.x.index(1)-1;
+            offset = aNVCon.vars.x.index(1)-1;
             
             otherVariables=zeros(offset,1);
-            %otherVariables(aVarCollection.p.index)=aVarCollection.p.values;
+                
+            % check if p contains either certain decision variables or
+            % algebraic variables
+            
+            otherVariables(aNVCon.vars.p.index(aNVCon.vars.p.index<=offset))=aNVCon.vars.p.values(aNVCon.vars.p.index<=offset);
+            p = aNVCon.vars.p.values(aNVCon.vars.p.index > offset);
             
             rhs = @(y)aNVCon.eqAugSys.conFun([otherVariables;y]);
+           
             
             if nargin>1
                 x0=[aVarCollection.x.values;
                     aVarCollection.alpha.values;
-                    aVarCollection.p.values;
+                    p;
                     aVarCollection.omega.values;
                     aVarCollection.w1.values;
                     aVarCollection.w2.values;];
@@ -210,7 +216,9 @@ classdef NVConstraint < EqualityConstraint
             
             aNVCon.vars.x.values = x(aNVCon.vars.x.index-offset);
             aNVCon.vars.alpha.values = x(aNVCon.vars.alpha.index-offset);
-            aNVCon.vars.p.values = x(aNVCon.vars.p.index-offset);
+            if  aVarCollection.p.index(1) > aVarCollection.x.index(1) 
+                aNVCon.vars.p.values = x(aNVCon.vars.p.index-offset);
+            end
             aNVCon.vars.omega.values = x(aNVCon.vars.omega.index-offset);
             aNVCon.vars.w1.values = x(aNVCon.vars.w1.index-offset);
             aNVCon.vars.w2.values = x(aNVCon.vars.w2.index-offset);
@@ -227,6 +235,77 @@ classdef NVConstraint < EqualityConstraint
                 disp(res);
             end
         end
+        
+        
+        % ======================================================================
+        %> @brief find an eigenvector of a critical manifold point candidate
+        %>
+        %> @param aNVCon instance of NVConstraint that will initialized
+        %> @param aVarCollection collection of instances of VariableVector
+        %> containing numerical values for initial guess
+        %>
+        %> @return instance of NVConstraint with potentially known
+        %eigenvector
+        % =========
+        
+        
+        function findEigVector(aNVCon,aVarCollection)
+            % tries to find an eigenvector at an assumed critical manifold
+            % point
+            
+            % evaluate number of leading variables, that are not part of this
+            % constraint
+            offset = aNVCon.vars.w1.index(1)-1;
+            
+            otherVariables=zeros(offset,1);
+                            
+            otherVariables(aVarCollection.x.index) =  aVarCollection.x.values;
+            otherVariables(aVarCollection.alpha.index) = aVarCollection.alpha.values;
+            otherVariables(aVarCollection.p.index) = aVarCollection.p.values;      
+            
+            if strcmp(aNVCon.type(end-3:end),'hopf')
+                lineSelector = eye(3*length(aVarCollection.x.values)+2);
+            else
+                lineSelector = eye(2*length(aVarCollection.x.values)+1);
+            end
+            
+            lineSelector = lineSelector(length(aVarCollection.x.values)+1:end,:);
+            
+            rhs = @(y)lineSelector*aNVCon.eqAugSys.conFun([otherVariables;y]);
+           
+            
+            if nargin>1
+                x0=[aVarCollection.omega.values;
+                    aVarCollection.w1.values;
+                    aVarCollection.w2.values;];
+            else
+                fprintf('using default initial guess in manifold point search\n')
+                x0 = ones(aNVCon.nVarAugSys,1);
+            end
+            
+            [x,res,exitflag] = fsolve(rhs,x0,aNVCon.optionsEqConsInit);
+            
+            aNVCon.vars.omega.values = x(aNVCon.vars.omega.index-offset);
+            aNVCon.vars.w1.values = x(aNVCon.vars.w1.index-offset);
+            aNVCon.vars.w2.values = x(aNVCon.vars.w2.index-offset);
+            
+            if exitflag > 0
+                aNVCon.status = 2;
+                
+                callerFunction = dbstack;
+                if (length(callerFunction)>2) && ~strcmp(callerFunction(3).name, 'DDENLP.moveAwayFromManifolds')
+                    fprintf('\nfound point on critical manifold, fsolve exitflag was %d\n', exitflag)
+                end
+            else
+                warning('did not find critical point, fsolve exitflag was %d',exitflag)
+                disp(res);
+            end
+        end
+        
+        
+        
+        
+        
         
         
         % ======================================================================
@@ -251,13 +330,19 @@ classdef NVConstraint < EqualityConstraint
             offset = aNVCon.vars.x.index(1)-1;
             
             otherVariables=zeros(offset,1);
-            %otherVariables(aNVCon.vars.p.index)=aNVCon.vars.p.values;
             
+            % check if p contains either certain decision variables or
+            % algebraic variables
+            
+            otherVariables(aNVCon.vars.p.index(aNVCon.vars.p.index<=offset))=aNVCon.vars.p.values(aNVCon.vars.p.index<=offset);
+            p = aNVCon.vars.p.values(aNVCon.vars.p.index > offset);
+     
+                
             manifoldCon = @(y)deal([],aNVCon.eqAugSys.conFun([otherVariables;y]));
             
             x0 = [aNVCon.vars.x.values;...
                 aNVCon.vars.alpha.values;...
-                aNVCon.vars.p.values;...
+                p;...
                 aNVCon.vars.omega.values;...
                 aNVCon.vars.w1.values;...
                 aNVCon.vars.w2.values];
@@ -269,7 +354,9 @@ classdef NVConstraint < EqualityConstraint
             % extract values
             aNVCon.vars.x.values = x(aNVCon.vars.x.index-offset);
             aNVCon.vars.alpha.values = x(aNVCon.vars.alpha.index-offset);
-            aNVCon.vars.p.values = x(aNVCon.vars.p.index-offset);
+            if aNVCon.vars.p.index(1) > aNVCon.vars.x.index(1) 
+                aNVCon.vars.p.values = x(aNVCon.vars.p.index-offset);
+            end
             aNVCon.vars.omega.values = x(aNVCon.vars.omega.index-offset);
             aNVCon.vars.w1.values = x(aNVCon.vars.w1.index-offset);
             aNVCon.vars.w2.values = x(aNVCon.vars.w2.index-offset);
@@ -310,17 +397,18 @@ classdef NVConstraint < EqualityConstraint
                 error('cannot search for normal vector without a critical point');
             end
             
-            offset=aNVCon.vars.x.index(1)-1;
+            offset = aNVCon.vars.x.index(1)-1;
             
-            otherVariables=zeros(offset,1);
-            %otherVariables(aNVCon.vars.p.index)=aNVCon.vars.p.values;
-            
-            maniPoint = [aNVCon.vars.x.values;...
-                aNVCon.vars.alpha.values;...
-                aNVCon.vars.p.values;...
-                aNVCon.vars.omega.values;...
-                aNVCon.vars.w1.values;...
-                aNVCon.vars.w2.values];
+            otherVariables = zeros(offset,1);
+            otherVariables(aNVCon.vars.p.index(aNVCon.vars.p.index<=offset)) = aNVCon.vars.p.values;
+                maniPoint = [aNVCon.vars.x.values;...
+                    aNVCon.vars.alpha.values;...
+                    aNVCon.vars.p.index(aNVCon.vars.p.index>offset),...
+                    aNVCon.vars.omega.values;...
+                    aNVCon.vars.w1.values;...
+                    aNVCon.vars.w2.values];
+
+
             
             rhs = @(y)aNVCon.eqNVSys.conFun([otherVariables; maniPoint; y]);
             
@@ -420,6 +508,7 @@ classdef NVConstraint < EqualityConstraint
             aNVCon.vars.v2.values = direction*x(aNVCon.vars.v2.index-offset);
             aNVCon.vars.g1.values = direction*x(aNVCon.vars.g1.index-offset);
             aNVCon.vars.g2.values = direction*x(aNVCon.vars.g2.index-offset);
+            aNVCon.vars.k.values = direction*x(aNVCon.vars.k.index-offset);
             aNVCon.vars.u.values = direction*x(aNVCon.vars.u.index-offset);
             aNVCon.vars.r.values = direction*x(aNVCon.vars.r.index-offset);
             
@@ -461,9 +550,14 @@ classdef NVConstraint < EqualityConstraint
             
             offset=aNVCon.vars.x.index(1)-1;
             
+            % check if p contains either certain decision variables or
+            % algebraic variables
+            
+            p = aNVCon.vars.p.values(aNVCon.vars.p.index > offset);
+            
             x0 = [aNVCon.vars.x.values;...
                 aNVCon.vars.alpha.values;...
-                aNVCon.vars.p.values;...
+                p;...
                 aNVCon.vars.omega.values;...
                 aNVCon.vars.w1.values;...
                 aNVCon.vars.w2.values;...
@@ -471,14 +565,15 @@ classdef NVConstraint < EqualityConstraint
                 aNVCon.vars.v2.values;...
                 aNVCon.vars.g1.values;...
                 aNVCon.vars.g2.values;...
+                aNVCon.vars.k.values;...
                 aNVCon.vars.u.values;...
                 aNVCon.vars.r.values;...
                 aNVCon.vars.l.values];
             
             otherVariables=zeros(offset,1);
             otherVariables(alphaNom.index)=alphaNom.values;
-            %otherVariables(aNVCon.vars.p.index)=aNVCon.vars.p.values;
-            otherVariables(offset)=aNVCon.vars.p.values;
+
+            otherVariables(aNVCon.vars.p.index(aNVCon.vars.p.index<=offset))=aNVCon.vars.p.values(aNVCon.vars.p.index<=offset);
             
             rhs = @(y)aNVCon.conFun([otherVariables;y]);
             %
@@ -502,7 +597,10 @@ classdef NVConstraint < EqualityConstraint
             
             aNVCon.vars.x.values = x(aNVCon.vars.x.index-offset);
             aNVCon.vars.alpha.values = x(aNVCon.vars.alpha.index-offset);
-            aNVCon.vars.p.values = x(aNVCon.vars.p.index-offset);
+
+            if aNVCon.vars.p.index(1) > aNVCon.vars.x.index(1) 
+                aNVCon.vars.p.values = x(aNVCon.vars.p.index-offset);
+            end
             aNVCon.vars.omega.values = x(aNVCon.vars.omega.index-offset);
             aNVCon.vars.w1.values = x(aNVCon.vars.w1.index-offset);
             aNVCon.vars.w2.values = x(aNVCon.vars.w2.index-offset);
@@ -510,6 +608,7 @@ classdef NVConstraint < EqualityConstraint
             aNVCon.vars.v2.values = x(aNVCon.vars.v2.index-offset);
             aNVCon.vars.g1.values = x(aNVCon.vars.g1.index-offset);
             aNVCon.vars.g2.values = x(aNVCon.vars.g2.index-offset);
+            aNVCon.vars.k.values = x(aNVCon.vars.k.index-offset);
             aNVCon.vars.u.values = x(aNVCon.vars.u.index-offset);
             aNVCon.vars.r.values = x(aNVCon.vars.r.index-offset);
             aNVCon.vars.l.values = x(aNVCon.vars.l.index-offset);
