@@ -77,6 +77,8 @@ classdef DDENLP < handle
         problemDDE
         %> structure containing the cell array of variables, find entries with  ind=find(ismember...
         vars 
+        %> indexes algebraic variables
+        algVarIndex
         
         %> steady state constraint class StStConstraint
         stStCon = []; 
@@ -148,6 +150,10 @@ classdef DDENLP < handle
         optimOutput
         %> lagrange multiplier of main optimization
         lambda
+        %> gradient of cost function of main optimization
+        grad
+        %> hessian of lagrange function of main optimization
+        hessian
         %> status of this optimization problem, (key in main description)
         status = 0 
     end
@@ -311,12 +317,17 @@ classdef DDENLP < handle
     %> @param pGuess current certain parameters,  instance of VariableVector
     % ====================================================================== 
         
-        function addNVCon( aDDENLP, type, augSysHandle, nVSysHandle, xGuess, alphaGuess, pGuess )
+        function addNVCon( aDDENLP, type, augSysHandle, nVSysHandle, xGuess, alphaGuess, pGuess, varargin )
             %point type (stst,fold,modfold,hopf,modhopf)
             % exist stst existAug existNV existConnection
             % entries
             
-            nVvars = varCollection( type, aDDENLP.occupiedVars, xGuess, alphaGuess, pGuess);
+            if nargin<7
+                            nVvars = varCollection( type, aDDENLP.occupiedVars, xGuess, alphaGuess, aDDENLP.vars.nominal.p, 0);
+            else
+                            nVvars = varCollection( type, aDDENLP.occupiedVars, xGuess, alphaGuess, pGuess, 1);
+            end
+            
             
             newNVCon = NVConstraint(aDDENLP,type,augSysHandle,nVSysHandle,nVvars);
             aDDENLP.NVCon = [aDDENLP.NVCon; newNVCon];
@@ -547,10 +558,16 @@ classdef DDENLP < handle
             
             for i=1:length(aDDENLP.NVCon)
                 
+                if aDDENLP.NVCon(i).vars.p.index(1) < aDDENLP.NVCon(i).vars.x.index(1)
+                  p = [];
+                else
+                  p = aDDENLP.NVCon(i).vars.p.values;                  
+                end
+                
                 newVars = [...
                     aDDENLP.NVCon(i).vars.x.values;...
                     aDDENLP.NVCon(i).vars.alpha.values;...
-                    aDDENLP.NVCon(i).vars.p.values;...
+                    p;...
                     aDDENLP.NVCon(i).vars.omega.values;...
                     aDDENLP.NVCon(i).vars.w1.values;...
                     aDDENLP.NVCon(i).vars.w2.values;...
@@ -558,6 +575,7 @@ classdef DDENLP < handle
                     aDDENLP.NVCon(i).vars.v2.values;...
                     aDDENLP.NVCon(i).vars.g1.values;...
                     aDDENLP.NVCon(i).vars.g2.values;...
+                    aDDENLP.NVCon(i).vars.k.values;...
                     aDDENLP.NVCon(i).vars.u.values;...
                     aDDENLP.NVCon(i).vars.r.values;...
                     aDDENLP.NVCon(i).vars.l.values];
@@ -657,9 +675,9 @@ classdef DDENLP < handle
             
             % run optimization
             
-%             disp([lb>=x0,lb,x0,ub,ub<=x0])
+             disp([(1:length(x0))',lb>=x0,lb,x0,ub,ub<=x0])
             
-            [aDDENLP.optimVal,aDDENLP.optJ,aDDENLP.exitflag,aDDENLP.optimOutput,aDDENLP.lambda] = ...
+            [aDDENLP.optimVal,aDDENLP.optJ,aDDENLP.exitflag,aDDENLP.optimOutput,aDDENLP.lambda,aDDENLP.grad,aDDENLP.hessian] = ...
                 fmincon(J,x0,Aineq,bineq,Aeq,beq,lb,ub,nonlinCon,options);
             
             if aDDENLP.exitflag>0
@@ -763,8 +781,12 @@ classdef DDENLP < handle
                     intermediatePoint = aDDENLP.findManifoldPointOnLine(type, handleManifold, init, final,maxEig);
                     
                     %add new NVCON
-                    aDDENLP.addNVCon(type,handleManifold,handleNV,intermediatePoint.x,intermediatePoint.alpha,init.p)
+                    aDDENLP.addNVCon(type,handleManifold,handleNV,intermediatePoint.x,intermediatePoint.alpha,intermediatePoint.p)
                    
+                    aDDENLP.vars.critical(end).omega.values = intermediatePoint.omega.values;
+                    aDDENLP.vars.critical(end).w1.values = intermediatePoint.w1.values;
+                    aDDENLP.vars.critical(end).w2.values = intermediatePoint.w2.values;
+                    
                     fprintf('\nadded new %s manifold', type);
                     
                     % and initialize it:
@@ -840,24 +862,28 @@ classdef DDENLP < handle
                     error('unknown type requested')
             end
             
-            mu=0.2;
-            y0 = [ point1.x.values-mu*(point1.x.values-point2.x.values);...
-                mu;...
-                point1.p.values-mu*(point1.p.values-point2.p.values);...
-                imag(maxEig);...
-                ones(size(point1.x.values))./sqrt(2*point1.x.nVar);...
-                ones(size(point1.x.values))./sqrt(2*point1.x.nVar)];
+            for mu = [ 0.1, 0.5, 0.2, 0.7, 0.3, 0.6, 0.4, 0.8, 0.9, 0, 1]
+                y0 = [ point1.x.values-mu*(point1.x.values-point2.x.values);...
+                    mu;...
+                    point1.p.values-mu*(point1.p.values-point2.p.values);...
+                    imag(maxEig);...
+                    ones(size(point1.x.values))./sqrt(2*point1.x.nVar);...
+                    ones(size(point1.x.values))./sqrt(2*point1.x.nVar)];
+                
+                options=optimoptions('fsolve','Algorithm','levenberg-marquardt','MaxIter',5000,'MaxFunEvals',2000000,'display','iter','TolFun',1e-7,'TolX',1e-9, 'OptimalityTolerance', 1e-10);
+                
+                [y,res,localexitflag] = fsolve(rhs,y0,options);
+                if localexitflag > 0
+                    fprintf('\nlooked for a %s point on the line between optimization points and appearantly found one at mu = %d, exitflag was %d\n', type, y(point1.x.nVar + 1 ),localexitflag)
+                    break
+                end
+            end
             
-            options=optimoptions('fsolve','Algorithm','levenberg-marquardt','MaxIter',5000,'MaxFunEvals',2000000,'display','iter','TolFun',1e-7,'TolX',1e-9, 'OptimalityTolerance', 1e-10);
-            
-            [y,res,localexitflag] = fsolve(rhs,y0,options);
-            if localexitflag > 0
-                fprintf('\nlooked for a %s point on the line between optimization points and appearantly found one, exitflag was %d\n', type, localexitflag)
-            else
+            if localexitflag <= 0
                 disp(res');
                 warning('did not find critical point (%s) on the given line, fsolve exitflag was %d',type,localexitflag)
             end
-
+                    
             x = y(1:point1.x.nVar);
             mu = y(point1.x.nVar+1);
             p = y(point1.x.nVar+2:point1.x.nVar+point1.p.nVar+1);
@@ -919,6 +945,7 @@ classdef DDENLP < handle
                     outputVars.critical(i).v2.values = init(outputVars.critical(i).v2.index);
                     outputVars.critical(i).g1.values = init(outputVars.critical(i).g1.index);
                     outputVars.critical(i).g2.values = init(outputVars.critical(i).g2.index);
+                    outputVars.critical(i).k.values = init(outputVars.critical(i).k.index);
                     outputVars.critical(i).u.values = init(outputVars.critical(i).u.index);
                     outputVars.critical(i).r.values = init(outputVars.critical(i).r.index);
                     outputVars.critical(i).l.values = init(outputVars.critical(i).l.index);
@@ -962,6 +989,7 @@ classdef DDENLP < handle
                 outputVars.critical(i).v2.values = opt(outputVars.critical(i).v2.index);
                 outputVars.critical(i).g1.values = opt(outputVars.critical(i).g1.index);
                 outputVars.critical(i).g2.values = opt(outputVars.critical(i).g2.index);
+                outputVars.critical(i).k.values = opt(outputVars.critical(i).k.index);
                 outputVars.critical(i).u.values = opt(outputVars.critical(i).u.index);
                 outputVars.critical(i).r.values = opt(outputVars.critical(i).r.index);
                 outputVars.critical(i).l.values = opt(outputVars.critical(i).l.index);
@@ -1004,7 +1032,11 @@ classdef DDENLP < handle
             
             
             paramIndex = point(1).alpha.index-(point(1).alpha.index(1)-1);
-            algebVarIndex = point(1).p.index-(point(1).alpha.index(1)-1);
+            if point(1).p.index(1)  > point(1).alpha.index(1) 
+                algebVarIndex = point(1).p.index-(point(1).alpha.index(1)-1);
+            else
+                algebVarIndex = point(1).p.index - (aDDENLP.vars.nominal.alpha.index(1)-1);
+            end
             %p=point.p.values;
             %Hier muss das p noch übergeben werden,
             %da es nun ja auch variabel sein darf 
@@ -1060,32 +1092,37 @@ classdef DDENLP < handle
     %> @brief calculate stability an vertices of uncertianty region
     %>
     %> @param aDDENLP instance of DDENLP class
+    %>        indexlist   index list for selective stability calculation           
     %> 
     %> @return maxRealPart maximal real part of all eigenvalues
     % ====================================================================== 
         
-        function maxRealPart = checkStabilityAtVertices( aDDENLP )
+        function maxRealPart = checkStabilityAtVertices( aDDENLP, indexlist, varargin )
             
             myNAlpha=aDDENLP.nAlpha;
             
-            vertices(2^myNAlpha,1)=struct();
+            if nargin < 2
+                indexlist = 1:2^myNAlpha;
+            end
+            
+            vertices(numel(indexlist),1)=struct();
             
             errors = dec2bin(0:2^myNAlpha-1);
             errorvector = -ones(2^myNAlpha,myNAlpha);
             
-            for i=1:myNAlpha
-                errorvector(:,i)=errorvector(:,i)+2*bin2dec(errors(:,i));
+            for ii=1:myNAlpha
+                errorvector(:,ii)=errorvector(:,ii)+2*bin2dec(errors(:,ii));
             end
+            errorvector = errorvector(indexlist,:);
             
-            
-            for i=1:2^myNAlpha
-                vertices(i).alpha.values = aDDENLP.vars.nominal.alpha.values+aDDENLP.minDist*errorvector(i,:)';
-                vertices(i).x.values = aDDENLP.vars.nominal.x.values;
-                vertices(i).p.values = aDDENLP.vars.nominal.p.values;
+            for ii=1:numel(indexlist)
+                vertices(ii).alpha.values = aDDENLP.vars.nominal.alpha.values+aDDENLP.minDist*errorvector(ii,:)';
+                vertices(ii).x.values = aDDENLP.vars.nominal.x.values;
+                vertices(ii).p.values = aDDENLP.vars.nominal.p.values;
                 
-                aDDENLP.vars.vertex(i,1).alpha=VariableVector(vertices(i).alpha.values,NaN,{'alphaAtVertex'});
-                aDDENLP.vars.vertex(i,1).x=VariableVector(vertices(i).x.values,NaN,{'xAtVertex'});
-                aDDENLP.vars.vertex(i,1).p=VariableVector(vertices(i).p.values,NaN,{'pAtVertex'});
+                aDDENLP.vars.vertex(ii,1).alpha=VariableVector(vertices(ii).alpha.values,aDDENLP.vars.nominal.alpha.index(1)-1,{'alphaAtVertex'});
+                aDDENLP.vars.vertex(ii,1).x=VariableVector(vertices(ii).x.values,aDDENLP.vars.nominal.x.index(1)-1,{'xAtVertex'});
+                aDDENLP.vars.vertex(ii,1).p=VariableVector(vertices(ii).p.values,aDDENLP.vars.nominal.p.index(1)-1,{'pAtVertex'});
             end
             
             maxRealPart = checkStabilityPoint(aDDENLP,'vertex');
@@ -1119,17 +1156,19 @@ classdef DDENLP < handle
             randPoint(nPoints,1)=struct();
             
             if aDDENLP.useLHS
-                pointVector = 2*lhsdesign(nPoints,aDDENLP.nAlpha)-ones(nPoints,aDDENLP.nAlpha);
+                pointVector = 2*aDDENLP.minDist*lhsdesign(nPoints,aDDENLP.nAlpha)-aDDENLP.minDist*ones(nPoints,aDDENLP.nAlpha);
             else
-                pointVector = 2*rand(nPoints,aDDENLP.nAlpha)-ones(nPoints,aDDENLP.nAlpha);
+                pointVector = 2*aDDENLP.minDist*rand(nPoints,aDDENLP.nAlpha)-aDDENLP.minDist*ones(nPoints,aDDENLP.nAlpha);
             end
             
             for i=1:nPoints
                 randPoint(i).alpha.values = aDDENLP.vars.nominal.alpha.values+pointVector(i,:)';
                 randPoint(i).x.values = aDDENLP.vars.nominal.x.values;
+                randPoint(i).p.values = aDDENLP.vars.nominal.p.values;
                 
-                aDDENLP.vars.random(i,1).alpha=VariableVector(randPoint(i).alpha.values,NaN,{'alphaAtVertex'});
-                aDDENLP.vars.random(i,1).x=VariableVector(randPoint(i).x.values,NaN,{'xAtVertex'});
+                aDDENLP.vars.random(i,1).alpha=VariableVector(randPoint(i).alpha.values,aDDENLP.vars.nominal.alpha.index(1)-1,{'alphaAtVertex'});
+                aDDENLP.vars.random(i,1).x=VariableVector(randPoint(i).x.values,aDDENLP.vars.nominal.x.index(1)-1,{'xAtVertex'});
+                aDDENLP.vars.random(i,1).p=VariableVector(randPoint(i).p.values,aDDENLP.vars.nominal.p.index(1)-1,{'pAtVertex'});
             end
             
             [maxRealPart,~] = checkStabilityPoint(aDDENLP,'random');
