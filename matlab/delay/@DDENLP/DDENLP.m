@@ -360,7 +360,7 @@ classdef DDENLP < handle
     %> @param aDDENLP instance of DDENLP
     % ====================================================================== 
         
-        function initNVCons( aDDENLP )
+        function initNVCons( aDDENLP, nVflipmode, varargin )
             % this function conducts the steps necessary for the
             % initialization of all normal vector constraints i.e.
             % - finding a critical point
@@ -369,6 +369,10 @@ classdef DDENLP < handle
             % another normal vector constraint
             % - finding the normal vector at the closest critical point
             % - connect closest critical point and nominal point
+            
+            if nargin < 2
+                nVflipmode = 1;
+            end
             
             alphaNom=aDDENLP.vars.nominal.alpha;
             
@@ -383,7 +387,7 @@ classdef DDENLP < handle
                         return
                     end
                 end
-                aDDENLP.NVCon(i).findNormalVector(alphaNom,0);
+                aDDENLP.NVCon(i).findNormalVector(alphaNom,nVflipmode);
                 aDDENLP.NVCon(i).findConnection(alphaNom);
             end
             
@@ -453,6 +457,10 @@ classdef DDENLP < handle
                 
                 %% update 
                 aDDENLP.initializeStSt();
+                [~]=aDDENLP.checkStabilityPoint('nominal');
+                if real(aDDENLP.vars.nominal.eigs(aDDENLP.allowedEigsInClosedRightHP + 1)) > aDDENLP.maxAllowedRealPart
+                    warning('steady state search lead to a point without desired stability properties ')
+                end
                 aDDENLP.initNVCons();
                 for jj = 1:length(aDDENLP.NVCon)
                     distance(1,jj) = aDDENLP.vars.critical(jj).l.values;
@@ -557,8 +565,8 @@ classdef DDENLP < handle
                 aDDENLP.vars.nominal.p.values];
             
             for i=1:length(aDDENLP.NVCon)
-                
-                if aDDENLP.NVCon(i).vars.p.index(1) < aDDENLP.NVCon(i).vars.x.index(1)
+                if aDDENLP.NVCon(i).vars.p.nVar == 0
+%                 if aDDENLP.NVCon(i).vars.p.index(1) < aDDENLP.NVCon(i).vars.x.index(1)
                   p = [];
                 else
                   p = aDDENLP.NVCon(i).vars.p.values;                  
@@ -603,7 +611,7 @@ classdef DDENLP < handle
         end
         
         
-    	% ======================================================================
+    % ======================================================================
     %> @brief run optimization of DDENLP instance
     %>
     %> @param aDDENLP instance of DDENLP
@@ -691,6 +699,84 @@ classdef DDENLP < handle
         end
         
         
+        
+    % ======================================================================
+    %> @brief run optimization of DDENLP instance with many different initial points
+    %>
+    %> @param aDDENLP instance of DDENLP
+    %> @param furtherInput (optional) set of initial points to test
+    % ====================================================================== 
+    
+    function runOptimMultipleInitPoints( aDDENLP, furtherInput, varargin)
+               
+        % determine, how many different initial points are needed ...      
+        if (nargin>1) && (numel(furtherInput)==1)
+            nSamples = furtherInput;
+        else
+            nSamples = 20;
+        end
+        
+        % ... or use the input set ...
+        if (nargin > 1) && (size(furtherInput,1) == aDDENLP.nAlpha)
+            alphaSet = furtherInput;
+        else
+        % ... or construct an set with parameters
+            intervalWidths = aDDENLP.upperBoxCons(aDDENLP.vars.nominal.alpha.index)-aDDENLP.lowerBoxCons(aDDENLP.vars.nominal.alpha.index);
+            if any(isinf(intervalWidths))
+                error('The box constraints bounding the initial values must not contain Inf.')
+            end
+            alphaSet=lhsdesign(nSamples,aDDENLP.vars.nominal.alpha.nVar)'.*intervalWidths;
+        end
+        
+        % prepare optimizations
+        minOptJ=Inf;
+        
+        for ii = 1 : size(alphaSet,2)
+            try
+                %% pick next set of parameters
+                aDDENLP.vars.nominal.alpha.values=alphaSet(:,ii);
+                
+                %% initialize costraints
+                aDDENLP.initializeStSt();
+                aDDENLP.initNVCons(2);
+                aDDENLP.moveAwayFromManifolds(0.05, 2, 100);
+                aDDENLP.concatConstraints();
+                aDDENLP.concatInitPoints();
+                
+                %% run optimization
+                aDDENLP.runOptim();
+                aDDENLP.deconstructOptimum();
+                
+                % compare with previous results
+                [minOptJ,index] = min([minOptJ,aDDENLP.optJ]);
+                % if this was the best result so far, save the results
+                if (index == 2) && (aDDENLP.status == 6)
+                    bestOptimVal = aDDENLP.optimVal;
+                    bestExitflag = aDDENLP.exitflag;
+                    bestOptimOutput = aDDENLP.optimOutput;
+                    bestLambda = aDDENLP.lambda;
+                    bestGrad = aDDENLP.grad;
+                    bestHessian = aDDENLP.hessian;
+                    bestStatus = aDDENLP.status;
+                end              
+            catch % skip errors
+            end
+        end
+        
+        % reconstruct the best result
+        aDDENLP.optJ = minOptJ;
+        aDDENLP.optimVal = bestOptimVal;
+        aDDENLP.exitflag = bestExitflag;
+        aDDENLP.optimOutput = bestOptimOutput;
+        aDDENLP.lambda = bestLambda;
+        aDDENLP.grad = bestGrad;
+        aDDENLP.hessian = bestHessian;
+        aDDENLP.status = bestStatus;
+        
+        aDDENLP.deconstructOptimum();
+    end
+        
+        
         %% WORK IN PROGRESS: STARTING MARK
         
     % ======================================================================
@@ -771,7 +857,7 @@ classdef DDENLP < handle
                     else
                         subtype = 'hopf';
                     end
-                    if aDDENLP.maxAllowedRealPart ~= 0
+                    if aDDENLP.maxAllowedRealPart ~= 0 
                         type = ['mod',subtype];
                     else
                         type = subtype;
@@ -906,8 +992,9 @@ classdef DDENLP < handle
         
         
         %% FROM HERE UPWARDS: ENDING MARK
+                     
         
-                                
+        
     % ======================================================================
     %> @brief reconstruct inital variables from single vector
     %>
@@ -953,7 +1040,7 @@ classdef DDENLP < handle
             end
             
             if nargout > 0
-                varargout{1} = varCollection( 'nominal', NaN, outputVars.nominal.x, outputVars.nominal.alpha, outputVars.nominal.p);
+                varargout{1} = varCollection( 'nominal', NaN, outputVars.nominal.x, outputVars.nominal.alpha, outputVars.nominal.p,aDDENLP.algVarIndex);
             else
                 aDDENLP.vars = outputVars;
             end
@@ -995,7 +1082,7 @@ classdef DDENLP < handle
                 outputVars.critical(i).l.values = opt(outputVars.critical(i).l.index);
             end
             if nargout > 0
-                varargout{1} =  varCollection( 'nominal', NaN, outputVars.nominal.x, outputVars.nominal.alpha, outputVars.nominal.p);
+                varargout{1} =  varCollection( 'nominal', NaN, outputVars.nominal.x, outputVars.nominal.alpha, outputVars.nominal.p,aDDENLP.algVarIndex);
             else
                 aDDENLP.vars = outputVars;
             end
@@ -1032,10 +1119,14 @@ classdef DDENLP < handle
             
             
             paramIndex = point(1).alpha.index-(point(1).alpha.index(1)-1);
-            if point(1).p.index(1)  > point(1).alpha.index(1) 
-                algebVarIndex = point(1).p.index-(point(1).alpha.index(1)-1);
+            if point(1).p.nVar>0
+                if point(1).p.index(1)  > point(1).alpha.index(1) 
+                    algebVarIndex = point(1).p.index-(point(1).alpha.index(1)-1);
+                else
+                    algebVarIndex = point(1).p.index - (aDDENLP.vars.nominal.alpha.index(1)-1);
+                end
             else
-                algebVarIndex = point(1).p.index - (aDDENLP.vars.nominal.alpha.index(1)-1);
+                algebVarIndex = [];
             end
             %p=point.p.values;
             %Hier muss das p noch übergeben werden,
@@ -1074,7 +1165,7 @@ classdef DDENLP < handle
                     end
                 end
             end
-            %             switch type
+            %             switch typecheckStabilityAtVertices
             %                 case 'nominal'
             %                     aDDENLP.vars.nominal(ii,1).maxEig=maxRealPart(ii);
             %                 case 'critical'
@@ -1122,7 +1213,11 @@ classdef DDENLP < handle
                 
                 aDDENLP.vars.vertex(ii,1).alpha=VariableVector(vertices(ii).alpha.values,aDDENLP.vars.nominal.alpha.index(1)-1,{'alphaAtVertex'});
                 aDDENLP.vars.vertex(ii,1).x=VariableVector(vertices(ii).x.values,aDDENLP.vars.nominal.x.index(1)-1,{'xAtVertex'});
-                aDDENLP.vars.vertex(ii,1).p=VariableVector(vertices(ii).p.values,aDDENLP.vars.nominal.p.index(1)-1,{'pAtVertex'});
+                if aDDENLP.vars.nominal.p.nVar > 0
+                    aDDENLP.vars.vertex(ii,1).p=VariableVector(vertices(ii).p.values,aDDENLP.vars.nominal.p.index(1)-1,{'pAtVertex'});
+                else
+                    aDDENLP.vars.vertex(ii,1).p=VariableVector([],aDDENLP.vars.nominal.alpha.index(end),[]);
+                end
             end
             
             maxRealPart = checkStabilityPoint(aDDENLP,'vertex');
@@ -1168,9 +1263,12 @@ classdef DDENLP < handle
                 
                 aDDENLP.vars.random(i,1).alpha=VariableVector(randPoint(i).alpha.values,aDDENLP.vars.nominal.alpha.index(1)-1,{'alphaAtVertex'});
                 aDDENLP.vars.random(i,1).x=VariableVector(randPoint(i).x.values,aDDENLP.vars.nominal.x.index(1)-1,{'xAtVertex'});
-                aDDENLP.vars.random(i,1).p=VariableVector(randPoint(i).p.values,aDDENLP.vars.nominal.p.index(1)-1,{'pAtVertex'});
+                if aDDENLP.vars.nominal.p.nVar > 0
+                    aDDENLP.vars.random(i,1).p=VariableVector(randPoint(i).p.values,aDDENLP.vars.nominal.p.index(1)-1,{'pAtVertex'});
+                else
+                    aDDENLP.vars.random(i,1).p=VariableVector([],aDDENLP.vars.nominal.alpha.index(end),[]);
+                end
             end
-            
             [maxRealPart,~] = checkStabilityPoint(aDDENLP,'random');
         end
         
