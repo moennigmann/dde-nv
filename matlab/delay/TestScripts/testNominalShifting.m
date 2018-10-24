@@ -8,6 +8,8 @@ clc
 a=0.5;
 g=0.2;
 
+a =5;
+g=4;
 param=[a;g];
 xGue=[1;1];
 
@@ -43,18 +45,20 @@ clear g
 
 J=@(x)x(1)/(x(1)+x(2));
 
-aDDENLP=DDENLP(J,popDDE,xNom,[0.0;0.0],[Inf;Inf],[0.01;-5],[40;10],[],[]);
+aDDENLP=DDENLP(J,popDDE,xNom,[-Inf;-Inf],[Inf;Inf],[0.01;-5],[40;10],[],[]);
 clear popDDE
 clear J
 clear xNom
 
 aDDENLP.optionsInitEqCons=optimoptions('fsolve','Algorithm','levenberg-marquardt','MaxIter',10000,'MaxFunEvals',200000,'display','off','TolFun',1e-7,'TolX',1e-7);
 aDDENLP.optionsInitOptim=optimoptions('fmincon','Algorithm','active-set','MaxIter',10000,'MaxFunEvals',200000,'display','off');
-aDDENLP.optionsMainOptim=optimoptions('fmincon','Algorithm','active-set','MaxIter',500,'MaxFunEvals',200000,'display','off','TolFun',1e-9,'TolX',1e-9,'TolCon',1e-6,'RelLineSrchBnd',1e-5);
+aDDENLP.optionsMainOptim=optimoptions('fmincon','Algorithm','interior-point','MaxIter',500,'MaxFunEvals',200000,'display','iter','TolFun',1e-9,'TolX',1e-9,'TolCon',1e-6,'RelLineSrchBnd',1e-5);
 
 
 %% initialize steady state constraints
 aDDENLP.initializeStSt();
+[~]=aDDENLP.checkStabilityPoint('nominal');
+
 
 %% add NV Cons
 
@@ -90,10 +94,18 @@ plot(aDDENLP.vars.nominal.alpha.values(1),aDDENLP.vars.nominal.alpha.values(2),'
 
 plot(uncertRegionAlpha, uncertRegionGamma);
 
+
 %% initatialize constraints and prepare optimization
 aDDENLP.initNVCons();
 
-aDDENLP.moveAwayFromManifolds(0.7, 1.1, 100);
+plot(aDDENLP.vars.critical(2).alpha.values(1),aDDENLP.vars.critical(2).alpha.values(2),'x')
+quiver(aDDENLP.vars.critical(2).alpha.values(1),aDDENLP.vars.critical(2).alpha.values(2),aDDENLP.vars.critical(2).r.values(1),aDDENLP.vars.critical(2).r.values(2))
+plot(aDDENLP.vars.critical(1).alpha.values(1),aDDENLP.vars.critical(1).alpha.values(2),'x')
+quiver(aDDENLP.vars.critical(1).alpha.values(1),aDDENLP.vars.critical(1).alpha.values(2),aDDENLP.vars.critical(1).r.values(1),aDDENLP.vars.critical(1).r.values(2))
+
+
+aDDENLP.moveAwayFromManifolds(0.5, 2, 100);
+return
 fprintf('alphaNom = \n [%s]''\n', strjoin(cellstr(num2str(aDDENLP.vars.nominal.alpha.values(:))),', '));
 plot(aDDENLP.vars.nominal.alpha.values(1), aDDENLP.vars.nominal.alpha.values(2),'o')
 
