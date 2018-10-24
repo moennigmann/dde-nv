@@ -16,6 +16,14 @@ xNom=VariableVector(xGue,0,[{'juvenile'};{'mature'}]);
 alphaNom=VariableVector(param,2,[{'a'};{'g'}]);
 p=VariableVector([],4,[]);
 
+figure(1);clf;
+hold on;
+plot(alphaNom.values(1),alphaNom.values(2),'ro');
+grid on
+box on
+axis equal
+
+
 %% define system dynamics
 tau=@(x,alpha,p)1.5-0.5*exp(-x(2));
 popModel=@(x,xtau,alpha,p)[alpha(1)*x(2)-alpha(2)*x(1)-alpha(1)*exp(-alpha(2)*tau(x,alpha,p))*xtau(2,1);
@@ -46,7 +54,7 @@ clear xNom
 aDDENLP.optionsInitEqCons=optimoptions('fsolve','Algorithm','levenberg-marquardt','MaxIter',10000,'MaxFunEvals',200000,'display','off','TolFun',1e-9,'TolX',1e-9);
 aDDENLP.optionsInitOptim=optimoptions('fmincon','Algorithm','active-set','MaxIter',10000,'MaxFunEvals',200000,'display','off');
 aDDENLP.optionsMainOptim=optimoptions('fmincon','Algorithm','active-set','MaxIter',10000,'MaxFunEvals',200000,'display','iter','TolFun',1e-9,'TolX',1e-9,'TolCon',1e-6,'RelLineSrchBnd',1e-5);
-
+aDDENLP.fixedUncertParamIndex=3;
 
 %% initialize steady state constraints
 aDDENLP.initializeStSt();
@@ -92,6 +100,13 @@ figure(2);clf;
 % plot(sol.x,sol.y);
 plot(sol.x,[sol.y(1,:)/point.x.values(1);sol.y(2,:)/point.x.values(2)])
 
+%% plot optimum
+
+figure(1);
+plot(aDDENLP.vars.nominal.alpha.values(1),aDDENLP.vars.nominal.alpha.values(2),'bo')
+plot(aDDENLP.vars.critical(1).alpha.values(1),aDDENLP.vars.critical(1).alpha.values(2),'bx')
+plot(aDDENLP.vars.critical(2).alpha.values(1),aDDENLP.vars.critical(2).alpha.values(2),'bx')
+xlim([0 8])
 %% check stability
 
 [~]=aDDENLP.checkStabilityPoint('nominal');

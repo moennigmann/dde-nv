@@ -32,7 +32,7 @@ clear alphaNom
 clear xGue
 clear param
 clear a
-clear g
+clear gmaxStepLength
 
 %% construct object ''aDDENLP''
 
@@ -70,33 +70,57 @@ clear xCrit2
 
 %% initatialize constraints and prepare optimization
 aDDENLP.initNVCons();
-aDDENLP.concatConstraints();
-aDDENLP.concatInitPoints();
-
-%% run optimization
-aDDENLP.maxAllowedRealPart=-0.1;
-
-aDDENLP.runOptim();
-aDDENLP.deconstructOptimum();
 
 
-%% run simulation
+%% show manifolds
 
-point=aDDENLP.vars.nominal(end);
+%%
 
-history=abs(point.x.values).*[0.9;1.1];
-options=ddeset();
-sol=ddesd(aDDENLP,point,history,[0 30],options);
+manifoldSlices(1)=ManifoldSlice(aDDENLP.NVCon(1),[1 2]);
+manifoldSlices(2)=ManifoldSlice(aDDENLP.NVCon(2),[1 2]);
 
-figure(2);clf;
-% plot(sol.x,sol.y);
-plot(sol.x,[sol.y(1,:)/point.x.values(1);sol.y(2,:)/point.x.values(2)])
+figure(1);
+plot(aDDENLP.vars.nominal.alpha.values(1),aDDENLP.vars.nominal.alpha.values(2),'ko');
+hold on
+box on
+grid on
+axis equal
+xlim([0 8])
+ylim([0 5])
 
-%% check stability
+manifoldSlices.maniContin2DbothDirections(50);
 
-[~]=aDDENLP.checkStabilityPoint('nominal');
-[~]=aDDENLP.checkStabilityPoint('critical');
+plot(aDDENLP.vars.critical(1).alpha.values(1),aDDENLP.vars.critical(1).alpha.values(2),'kx');
+plot(aDDENLP.vars.critical(2).alpha.values(1),aDDENLP.vars.critical(2).alpha.values(2),'kx');
+plot(manifoldSlices)
 
-[~]=aDDENLP.checkStabilityAtVertices();
-
-[~]=aDDENLP.checkStabilityAtRandom();
+% aDDENLP.concatConstraints();
+% aDDENLP.concatInitPoints();
+% 
+% %% run optimization
+% aDDENLP.maxAllowedRealPart=-0.1;
+% 
+% aDDENLP.runOptim();
+% hier = aDDENLP.deconstructOptimum();
+% 
+% 
+% %% run simulation
+% 
+% point=aDDENLP.vars.nominal(end);
+% 
+% history=abs(point.x.values).*[0.9;1.1];
+% options=ddeset();
+% sol=ddesd(aDDENLP,point,history,[0 30],options);
+% 
+% figure(2);clf;
+% % plot(sol.x,sol.y);
+% plot(sol.x,[sol.y(1,:)/point.x.values(1);sol.y(2,:)/point.x.values(2)])
+% 
+% %% check stability
+% 
+% [~]=aDDENLP.checkStabilityPoint('nominal');
+% [~]=aDDENLP.checkStabilityPoint('critical');
+% 
+% [~]=aDDENLP.checkStabilityAtVertices();
+% 
+% [~]=aDDENLP.checkStabilityAtRandom();
