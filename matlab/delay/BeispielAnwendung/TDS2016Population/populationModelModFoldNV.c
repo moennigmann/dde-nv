@@ -26,8 +26,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {                                                                                                                    
                                                                                                                      
  /* check for proper number of arguments */                                                                          
- if(nrhs!=8) {                                                                                                       
-     mexErrMsgIdAndTxt("MyToolbox:populationModelModFoldNVPop:nrhs","8 inputs required (some of them are vectors).");
+ if(nrhs!=9) {                                                                                                       
+     mexErrMsgIdAndTxt("MyToolbox:populationModelModFoldNVPop:nrhs","9 inputs required (some of them are vectors).");
  }                                                                                                                   
  if(nlhs==0) {                                                                                                       
     mexErrMsgIdAndTxt("MyToolbox:populationModelModFoldNVPop:nlhs","Please define an output!");                      
@@ -47,8 +47,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
  double *wPointer = mxGetPr(prhs[3]);                                                                                
  double *vPointer = mxGetPr(prhs[4]);                                                                                
  double g1 = mxGetScalar(prhs[5]);                                                                                   
- double *uPointer = mxGetPr(prhs[6]);                                                                                
- double *rPointer = mxGetPr(prhs[7]);                                                                                
+ double *kPointer = mxGetPr(prhs[6]);                                                                                
+ double *uPointer = mxGetPr(prhs[7]);                                                                                
+ double *rPointer = mxGetPr(prhs[8]);                                                                                
                                                                                                                      
                                                                                                                      
  /* create the output matrix */                                                                                      
