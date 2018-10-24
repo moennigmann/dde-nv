@@ -216,8 +216,10 @@ classdef NVConstraint < EqualityConstraint
             
             aNVCon.vars.x.values = x(aNVCon.vars.x.index-offset);
             aNVCon.vars.alpha.values = x(aNVCon.vars.alpha.index-offset);
-            if  aVarCollection.p.index(1) > aVarCollection.x.index(1) 
-                aNVCon.vars.p.values = x(aNVCon.vars.p.index-offset);
+            if aVarCollection.p.nVar > 0
+                if  aVarCollection.p.index(1) > aVarCollection.x.index(1) 
+                    aNVCon.vars.p.values = x(aNVCon.vars.p.index-offset);
+                end
             end
             aNVCon.vars.omega.values = x(aNVCon.vars.omega.index-offset);
             aNVCon.vars.w1.values = x(aNVCon.vars.w1.index-offset);
@@ -354,8 +356,10 @@ classdef NVConstraint < EqualityConstraint
             % extract values
             aNVCon.vars.x.values = x(aNVCon.vars.x.index-offset);
             aNVCon.vars.alpha.values = x(aNVCon.vars.alpha.index-offset);
-            if aNVCon.vars.p.index(1) > aNVCon.vars.x.index(1) 
-                aNVCon.vars.p.values = x(aNVCon.vars.p.index-offset);
+            if aNVCon.vars.p.nVar > 0
+                if aNVCon.vars.p.index(1) > aNVCon.vars.x.index(1) 
+                    aNVCon.vars.p.values = x(aNVCon.vars.p.index-offset);
+                end
             end
             aNVCon.vars.omega.values = x(aNVCon.vars.omega.index-offset);
             aNVCon.vars.w1.values = x(aNVCon.vars.w1.index-offset);
@@ -597,9 +601,10 @@ classdef NVConstraint < EqualityConstraint
             
             aNVCon.vars.x.values = x(aNVCon.vars.x.index-offset);
             aNVCon.vars.alpha.values = x(aNVCon.vars.alpha.index-offset);
-
-            if aNVCon.vars.p.index(1) > aNVCon.vars.x.index(1) 
-                aNVCon.vars.p.values = x(aNVCon.vars.p.index-offset);
+            if aNVCon.vars.p.nVar > 0
+                if aNVCon.vars.p.index(1) > aNVCon.vars.x.index(1) 
+                    aNVCon.vars.p.values = x(aNVCon.vars.p.index-offset);
+                end
             end
             aNVCon.vars.omega.values = x(aNVCon.vars.omega.index-offset);
             aNVCon.vars.w1.values = x(aNVCon.vars.w1.index-offset);
