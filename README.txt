@@ -6,7 +6,13 @@ The development of this toolbox was funded by Deutsche Forschungsgemeinschaft (g
 
 HOW CAN I TEST THIS TOOLBOX VERY QUICK?
 
-There are small examples that can be executed with minimal preparation effort. These are located in the folder matlab/delay/demo/.
+There are small examples that can be executed with minimal preparation effort. These are located in the folder matlab/delay/demo/. To test it, you need a Matlab installation including a compiler for c-code/mex-files.
+
+
+
+WHERE DO I FIND DOCUMENTATION?
+
+The matlab code documentation is based on doxygen. It is located in the subfolder matlab/delay/Documentation. You can update your documentation using the respective makefile.
 
 
 
