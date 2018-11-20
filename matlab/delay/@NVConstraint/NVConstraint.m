@@ -195,7 +195,7 @@ classdef NVConstraint < EqualityConstraint
             % algebraic variables
             
             otherVariables(aNVCon.vars.p.index(aNVCon.vars.p.index<=offset))=aNVCon.vars.p.values(aNVCon.vars.p.index<=offset);
-            p = aNVCon.vars.p.values(aNVCon.vars.p.index > offset);
+            p = aNVCon.vars.p.values(aNVCon.vars.p.index > offset); % boolean indexing!
             
             rhs = @(y)aNVCon.eqAugSys.conFun([otherVariables;y]);
            
@@ -337,7 +337,7 @@ classdef NVConstraint < EqualityConstraint
             % algebraic variables
             
             otherVariables(aNVCon.vars.p.index(aNVCon.vars.p.index<=offset))=aNVCon.vars.p.values(aNVCon.vars.p.index<=offset);
-            p = aNVCon.vars.p.values(aNVCon.vars.p.index > offset);
+            p = aNVCon.vars.p.values(aNVCon.vars.p.index > offset); % boolean indexing!
      
                 
             manifoldCon = @(y)deal([],aNVCon.eqAugSys.conFun([otherVariables;y]));
@@ -407,7 +407,7 @@ classdef NVConstraint < EqualityConstraint
             otherVariables(aNVCon.vars.p.index(aNVCon.vars.p.index<=offset)) = aNVCon.vars.p.values;
                 maniPoint = [aNVCon.vars.x.values;...
                     aNVCon.vars.alpha.values;...
-                    aNVCon.vars.p.index(aNVCon.vars.p.index>offset),...
+                    aNVCon.vars.p.values(aNVCon.vars.p.index > offset),... % boolean indexing!
                     aNVCon.vars.omega.values;...
                     aNVCon.vars.w1.values;...
                     aNVCon.vars.w2.values];
@@ -557,7 +557,7 @@ classdef NVConstraint < EqualityConstraint
             % check if p contains either certain decision variables or
             % algebraic variables
             
-            p = aNVCon.vars.p.values(aNVCon.vars.p.index > offset);
+            p = aNVCon.vars.p.values(aNVCon.vars.p.index > offset);  % boolean indexing!
             
             x0 = [aNVCon.vars.x.values;...
                 aNVCon.vars.alpha.values;...
