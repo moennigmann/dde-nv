@@ -492,8 +492,10 @@ classdef DDENLP < handle
     %>        for later optimitzation
     %>
     %> @param aDDENLP instance of DDENLP
+    %> @param otherEq additional equality constraints   
+    %> @param otherIneq additional inequality constraints        
     % ====================================================================== 
-        function concatConstraints( aDDENLP )
+        function concatConstraints( aDDENLP, otherEq, otherIneq, varargin )
             % concatenates the existing constraints
             % fmincon expects nonlinear constraints to have the form
             % [c,ceq]=nlcon(x). The different nonlinear constraints are
@@ -517,9 +519,27 @@ classdef DDENLP < handle
                 
             end
             
+            % include additional contraints
+            if nargin > 1
+                for ii = 1:size(otherEq,1)
+                     nVEq =@(y) [...
+                        nVEq(y);
+                        otherEq{ii}(y)];
+                end
+            end
+            
+            if nargin > 2
+                for ii = 1:size(otherIneq,1)
+                     nVIneq =@(y) [...
+                        nVIneq(y);
+                        otherIneq{ii}(y)];
+                end
+            end
+            
             % save the constraints as object properties
             aDDENLP.allNLEqConstraints=nVEq;
             aDDENLP.allNLIneqConstraints=nVIneq;
+            
             
             % put equality and inequality constraints together
             aDDENLP.nlcon=@(x)deal(aDDENLP.allNLIneqConstraints(x),aDDENLP.allNLEqConstraints(x));
@@ -565,8 +585,7 @@ classdef DDENLP < handle
                 aDDENLP.vars.nominal.p.values];
             
             for i=1:length(aDDENLP.NVCon)
-                if aDDENLP.NVCon(i).vars.p.nVar == 0
-%                 if aDDENLP.NVCon(i).vars.p.index(1) < aDDENLP.NVCon(i).vars.x.index(1)
+                if (aDDENLP.NVCon(i).vars.p.nVar == 0)||(aDDENLP.NVCon(i).vars.p.index(1) < aDDENLP.NVCon(i).vars.x.index(1))
                   p = [];
                 else
                   p = aDDENLP.NVCon(i).vars.p.values;                  
