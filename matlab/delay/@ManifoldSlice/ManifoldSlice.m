@@ -236,7 +236,7 @@ classdef ManifoldSlice < handle
         
         
         
-        function plot(aManifoldSlice)
+        function handle = plot(aManifoldSlice)
             for jj = 1:length(aManifoldSlice)
                 hold on
                 
@@ -255,7 +255,7 @@ classdef ManifoldSlice < handle
 %                 xlim([aManifoldSlice(jj).lowerBoxCons(aManifoldSlice(jj).freeParamIndices(1)), aManifoldSlice(jj).upperBoxCons(aManifoldSlice(jj).freeParamIndices(1))])
 %                 ylim([aManifoldSlice(jj).lowerBoxCons(aManifoldSlice(jj).freeParamIndices(2)), aManifoldSlice(jj).upperBoxCons(aManifoldSlice(jj).freeParamIndices(2))])
 %                 
-                plot(alpha(1,:), alpha(2,:), '-')
+                handle(jj) = plot(alpha(1,:), alpha(2,:), '-');
             end
         end
         
