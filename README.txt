@@ -22,15 +22,3 @@ The following publications describe the technical details:
 
 https://www.sciencedirect.com/science/article/pii/S2405896316306802
 https://ieeexplore.ieee.org/document/7798469
-
-
-
-
-
-
-
-
-
-
-
-
