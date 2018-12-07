@@ -1,4 +1,0 @@
-begin
-  major iteration limit 9999
-  major print level 20
-end
