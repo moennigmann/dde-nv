@@ -1,0 +1,73 @@
+<HTML>
+<HEAD>
+<TITLE>SystemClasses/listOfErrorsInAESysPart2.html</TITLE>
+</HEAD>
+<BODY>
+<P><FONT SIZE="+2"><B>Maple header tags list</B></FONT><P/>
+<TABLE BORDER="1" CELLPADDING="2" CELLSPACING="2">
+	<TR>
+		<TD valign="top"><P>@path</P></TD>
+		<TD><P>&nbsp;Aux/SystemClasses/listOfErrorsInAESys</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@brief</P></TD>
+		<TD><P></P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@param</P></TD>
+		<TD><P>&nbsp;&nbsp;table</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@return</P></TD>
+		<TD><P>&nbsp;&nbsp;list&nbsp;of&nbsp;errors&nbsp;in&nbsp;table&nbsp;with&nbsp;respect&nbsp;to&nbsp;AESys&nbsp;definition</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@authors</P></TD>
+		<TD><P></P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@notes</P></TD>
+		<TD><P>&nbsp;<BR/>
+		&nbsp;uses&nbsp;GetObsolExprInAESys<BR/>
+		&nbsp;AESys&nbsp;definition:<BR/>
+		&nbsp;&nbsp;&nbsp;table&nbsp;must&nbsp;contain&nbsp;entries&nbsp;Equations,&nbsp;Parameters,&nbsp;Variables<BR/>
+		&nbsp;&nbsp;&nbsp;entries&nbsp;must&nbsp;be&nbsp;of&nbsp;type&nbsp;list(equation),&nbsp;list({name=EvalsToFloat,&nbsp;name}),&nbsp;<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;list<BR/>
+		&nbsp;&nbsp;&nbsp;symbols&nbsp;which&nbsp;occur&nbsp;must&nbsp;not&nbsp;be&nbsp;Parameter&nbsp;and&nbsp;Variable<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;the&nbsp;same&nbsp;time<BR/>
+		&nbsp;&nbsp;&nbsp;entries&nbsp;in&nbsp;Equations&nbsp;must&nbsp;be&nbsp;of&nbsp;form&nbsp;0=...<BR/>
+		&nbsp;&nbsp;&nbsp;entries&nbsp;in&nbsp;Equations&nbsp;must&nbsp;be&nbsp;well&nbsp;defined:&nbsp;no&nbsp;indets&nbsp;apart&nbsp;from<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Parameters,&nbsp;Variables&nbsp;must&nbsp;occur&nbsp;in&nbsp;equations<BR/>
+		&nbsp;&nbsp;&nbsp;warning&nbsp;printed&nbsp;to&nbsp;screen&nbsp;if&nbsp;obsolete&nbsp;expressions&nbsp;exist</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@revision</P></TD>
+		<TD><P>&nbsp;2010-03-09&nbsp;moved&nbsp;from&nbsp;ModelPack&nbsp;by&nbsp;dka<BR/>
+		&nbsp;020613&nbsp;written&nbsp;by&nbsp;mmo;&nbsp;procedure&nbsp;used&nbsp;to&nbsp;be&nbsp;part&nbsp;of<BR/>
+		&nbsp;&nbsp;&nbsp;ListOfErrorsInAESys,&nbsp;which&nbsp;was&nbsp;split&nbsp;into&nbsp;two&nbsp;procedures&nbsp;to&nbsp;allow&nbsp;for<BR/>
+		&nbsp;&nbsp;&nbsp;execution&nbsp;of&nbsp;fast&nbsp;type&nbsp;checks&nbsp;in&nbsp;ListOfErrorsInAESys&nbsp;and&nbsp;more&nbsp;<BR/>
+		&nbsp;&nbsp;&nbsp;elaborate&nbsp;but&nbsp;time-consuming&nbsp;checks&nbsp;here;&nbsp;</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@todo</P></TD>
+		<TD><P></P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@throws</P></TD>
+		<TD><P></P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@errors</P></TD>
+		<TD><P></P></TD>
+	</TR>
+</TABLE>
+<P><FONT SIZE="+2"><B>Maple include files list</B></FONT><P/>
+<TABLE BORDER="0" CELLPADDING="2" CELLSPACING="2">
+	<TR>
+		<TD><P>No files are included.</P></TD>
+	</TR>
+</TABLE>
+<BR/>
+<P><FONT SIZE="+2"><B>To the top levels</B></FONT><P/>
+<P><a style="color:green" href="../Aux.html">Aux</a>&nbsp;>&nbsp;<a style="color:green" href="../SystemClasses.html">SystemClasses</a><P/><BR/>
+</BODY>

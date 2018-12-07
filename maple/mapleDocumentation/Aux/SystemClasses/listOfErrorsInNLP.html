@@ -1,0 +1,105 @@
+<HTML>
+<HEAD>
+<TITLE>SystemClasses/listOfErrorsInNLP.html</TITLE>
+</HEAD>
+<BODY>
+<P><FONT SIZE="+2"><B>Maple header tags list</B></FONT><P/>
+<TABLE BORDER="1" CELLPADDING="2" CELLSPACING="2">
+	<TR>
+		<TD valign="top"><P>@path</P></TD>
+		<TD><P>&nbsp;Aux/SystemClasses/ListOfErrorsInNLP.txt</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@brief</P></TD>
+		<TD><P>&nbsp;Generate&nbsp;list&nbsp;of&nbsp;errors&nbsp;in&nbsp;definition&nbsp;of&nbsp;NLP</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@param</P></TD>
+		<TD><P>&nbsp;table</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@return</P></TD>
+		<TD><P>&nbsp;list&nbsp;of&nbsp;errors&nbsp;in&nbsp;table&nbsp;with&nbsp;respect&nbsp;to&nbsp;NLP&nbsp;definition</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@authors</P></TD>
+		<TD><P>&nbsp;mmo,&nbsp;dka</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@notes</P></TD>
+		<TD><P>&nbsp;&nbsp;&nbsp;NLP&nbsp;is&nbsp;defined&nbsp;as&nbsp;follows:<BR/>
+		&nbsp;&nbsp;&nbsp;table&nbsp;must&nbsp;contain&nbsp;entries<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ExplicitAEs::list(name=&nbsp;term)&nbsp;(new&nbsp;as&nbsp;of&nbsp;021124)<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Constraints::&nbsp;list({0&nbsp;<&nbsp;term,0&nbsp;=&nbsp;term})<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LinearConstraints::&nbsp;list({0&nbsp;<&nbsp;term,&nbsp;0&nbsp;=&nbsp;term})<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Parameters::&nbsp;list(name=EvalsToFloat)<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Variables::&nbsp;list(name=EvalsToFloat..EvalsToFloat)<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CostFunction::&nbsp;[term]<BR/>
+		&nbsp;&nbsp;&nbsp;empty&nbsp;lists&nbsp;generally&nbsp;allowed,&nbsp;but<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Constraints,&nbsp;LinearConstraints&nbsp;and&nbsp;CostFunction&nbsp;must&nbsp;not&nbsp;be&nbsp;empty<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;the&nbsp;same&nbsp;time.<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Variables&nbsp;must&nbsp;not&nbsp;be&nbsp;empty.<BR/>
+		&nbsp;&nbsp;&nbsp;entries&nbsp;in&nbsp;Constraints&nbsp;and&nbsp;LinearConstraints&nbsp;must&nbsp;not&nbsp;be&nbsp;of&nbsp;form<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;>&nbsp;term,&nbsp;term&nbsp;>&nbsp;0,&nbsp;or&nbsp;term&nbsp;<&nbsp;0<BR/>
+		&nbsp;&nbsp;&nbsp;entries&nbsp;in&nbsp;Constraints,&nbsp;LinearConstraints&nbsp;and&nbsp;CostFunction<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;must&nbsp;be&nbsp;well&nbsp;defined:&nbsp;no&nbsp;indets&nbsp;apart&nbsp;from&nbsp;Parameters,&nbsp;Variables&nbsp;must<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;occur&nbsp;in&nbsp;expressions<BR/>
+		&nbsp;&nbsp;&nbsp;warning&nbsp;printed&nbsp;to&nbsp;screen&nbsp;if&nbsp;obsolete&nbsp;expressions&nbsp;exist<BR/>
+		&nbsp;&nbsp;&nbsp;symbols&nbsp;which&nbsp;occur&nbsp;must&nbsp;not&nbsp;be&nbsp;Parameter&nbsp;and&nbsp;Variable<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;the&nbsp;same&nbsp;time<BR/>
+		&nbsp;&nbsp;&nbsp;entries&nbsp;in&nbsp;LinearConstraints&nbsp;really&nbsp;have&nbsp;to&nbsp;be&nbsp;linear<BR/>
+		&nbsp;&nbsp;&nbsp;warning&nbsp;printed&nbsp;to&nbsp;screen&nbsp;if&nbsp;there&nbsp;are&nbsp;linear&nbsp;entries&nbsp;in&nbsp;Constraints</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@revision</P></TD>
+		<TD><P>&nbsp;&nbsp;&nbsp;2008-03-06&nbsp;&nbsp;instead&nbsp;of&nbsp;aSys[...]&nbsp;using&nbsp;aSys["..."]&nbsp;&nbsp;by&nbsp;dka<BR/>
+		&nbsp;&nbsp;&nbsp;030318&nbsp;LinearConstraints&nbsp;may&nbsp;now&nbsp;be&nbsp;of&nbsp;type&nbsp;[]<BR/>
+		&nbsp;&nbsp;&nbsp;021210&nbsp;do&nbsp;no&nbsp;type&nbsp;check&nbsp;on&nbsp;entry,&nbsp;this&nbsp;avoids&nbsp;error&nbsp;throwing&nbsp;in<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a:=1;&nbsp;type(a,&nbsp;NLP);,&nbsp;for&nbsp;example;&nbsp;added&nbsp;shortcut&nbsp;which&nbsp;tests<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;type&nbsp;table;<BR/>
+		&nbsp;&nbsp;&nbsp;021124&nbsp;)i)&nbsp;split&nbsp;procedure&nbsp;in&nbsp;two&nbsp;parts,&nbsp;part&nbsp;one&nbsp;is&nbsp;used&nbsp;for&nbsp;type<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;definition,&nbsp;part&nbsp;two&nbsp;runs&nbsp;expensive&nbsp;checks,&nbsp;some&nbsp;of&nbsp;which&nbsp;are<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;recursive,&nbsp;part&nbsp;two&nbsp;is&nbsp;run&nbsp;by&nbsp;ListOfErrorsInNlpPart2&nbsp;which&nbsp;is<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;local&nbsp;to&nbsp;ModelPack&nbsp;and&nbsp;can&nbsp;only&nbsp;be&nbsp;accessed&nbsp;by&nbsp;calling&nbsp;present<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;procedure&nbsp;with&nbsp;optional&nbsp;argument&nbsp;long,&nbsp;all,&nbsp;or&nbsp;strict;<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(ii)&nbsp;added&nbsp;entry&nbsp;ExplicitAEs,&nbsp;added&nbsp;checks&nbsp;for&nbsp;this&nbsp;entry&nbsp;to<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;both&nbsp;ListOfErrorsInNLP&nbsp;and&nbsp;ListOfErrorsInNlpPart2;&nbsp;&nbsp;<BR/>
+		&nbsp;&nbsp;&nbsp;010504&nbsp;LinearConstraints,&nbsp;Constraints,&nbsp;CostFunction,&nbsp;Parameters,<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Variables&nbsp;now&nbsp;are&nbsp;mandadoty&nbsp;indices&nbsp;of&nbsp;anNLP&nbsp;which&nbsp;may,&nbsp;however,<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;be&nbsp;empty;&nbsp;<BR/>
+		&nbsp;&nbsp;&nbsp;010424&nbsp;added&nbsp;one&nbsp;more&nbsp;rule<BR/>
+		&nbsp;&nbsp;&nbsp;010423&nbsp;updated&nbsp;type&nbsp;NLP&nbsp;with&nbsp;new&nbsp;convention,&nbsp;see&nbsp;description&nbsp;above<BR/>
+		&nbsp;&nbsp;&nbsp;010417&nbsp;added&nbsp;some&nbsp;comments,<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;changed&nbsp;required&nbsp;form&nbsp;of&nbsp;entry&nbsp;CostFunction&nbsp;from<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name=&nbsp;term&nbsp;into&nbsp;[term],<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;moved&nbsp;creation&nbsp;of&nbsp;SetOfVariables&nbsp;and&nbsp;SetOfValidExpr<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;to&nbsp;point&nbsp;at&nbsp;which&nbsp;existence&nbsp;of&nbsp;needed&nbsp;entries&nbsp;of&nbsp;first&nbsp;argument&nbsp;<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;has&nbsp;already&nbsp;been&nbsp;checked,<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;corrected&nbsp;bug&nbsp;in&nbsp;determination&nbsp;of&nbsp;obsolete&nbsp;expressions,<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;changed&nbsp;required&nbsp;type&nbsp;of&nbsp;entry&nbsp;Variables&nbsp;form&nbsp;list(name)&nbsp;to<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;list(name=&nbsp;EvalsToFloat..EvalsToFloat)&nbsp;-&nbsp;mmo<BR/>
+		&nbsp;&nbsp;&nbsp;010411&nbsp;written&nbsp;by&nbsp;mho&nbsp;and&nbsp;mmo</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@todo</P></TD>
+		<TD><P></P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@throws</P></TD>
+		<TD><P></P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@errors</P></TD>
+		<TD><P></P></TD>
+	</TR>
+</TABLE>
+<P><FONT SIZE="+2"><B>Maple include files list</B></FONT><P/>
+<TABLE BORDER="0" CELLPADDING="2" CELLSPACING="2">
+	<TR>
+		<TD><P>No files are included.</P></TD>
+	</TR>
+</TABLE>
+<BR/>
+<P><FONT SIZE="+2"><B>To the top levels</B></FONT><P/>
+<P><a style="color:green" href="../Aux.html">Aux</a>&nbsp;>&nbsp;<a style="color:green" href="../SystemClasses.html">SystemClasses</a><P/><BR/>
+</BODY>

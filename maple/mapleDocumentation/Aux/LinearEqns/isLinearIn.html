@@ -1,0 +1,81 @@
+<HTML>
+<HEAD>
+<TITLE>LinearEqns/isLinearIn.html</TITLE>
+</HEAD>
+<BODY>
+<P><FONT SIZE="+2"><B>Maple header tags list</B></FONT><P/>
+<TABLE BORDER="1" CELLPADDING="2" CELLSPACING="2">
+	<TR>
+		<TD valign="top"><P>@path</P></TD>
+		<TD><P>&nbsp;Aux/LinearEqns/isLinearIn.txt</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@brief</P></TD>
+		<TD><P>&nbsp;Returns&nbsp;true&nbsp;if&nbsp;input&nbsp;expression&nbsp;is&nbsp;linear,&nbsp;false&nbsp;else.</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@param</P></TD>
+		<TD><P>&nbsp;(i)&nbsp;One&nbsp;of:&nbsp;{RHS,<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RHS=RHS,<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[RHS=RHS,&nbsp;RHS=RHS,&nbsp;...,&nbsp;RHS=RHS]<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;},<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;where&nbsp;RHS&nbsp;is&nbsp;an&nbsp;expression&nbsp;containing&nbsp;arithmetic&nbsp;operations,<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;functions,&nbsp;constants,&nbsp;and&nbsp;variables.<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(ii)&nbsp;List&nbsp;of&nbsp;Vars&nbsp;in&nbsp;which&nbsp;linearity&nbsp;shall&nbsp;be&nbsp;tested.</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@return</P></TD>
+		<TD><P>&nbsp;Returns&nbsp;true&nbsp;if&nbsp;input&nbsp;expression&nbsp;is&nbsp;linear,&nbsp;false&nbsp;else.</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@authors</P></TD>
+		<TD><P>&nbsp;mmo</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@notes</P></TD>
+		<TD><P>&nbsp;(i)&nbsp;Linear&nbsp;terms&nbsp;are&nbsp;converted&nbsp;into&nbsp;Ax=b&nbsp;for&nbsp;use&nbsp;in&nbsp;NPSOL.<BR/>
+		&nbsp;&nbsp;&nbsp;NPSOL&nbsp;expects&nbsp;A,&nbsp;b&nbsp;to&nbsp;be&nbsp;matrix/vector&nbsp;of&nbsp;floats.&nbsp;In&nbsp;particular<BR/>
+		&nbsp;&nbsp;&nbsp;A,&nbsp;b&nbsp;must&nbsp;not&nbsp;depend&nbsp;on&nbsp;Parameters.&nbsp;See&nbsp;NPSOL/ToDo.txt&nbsp;entry<BR/>
+		&nbsp;&nbsp;&nbsp;021217.&nbsp;<BR/>
+		&nbsp;(ii)&nbsp;some&nbsp;examples&nbsp;are&nbsp;in&nbsp;021015/TestIsLinearIn/TestIsLinearIn.mws</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@revision</P></TD>
+		<TD><P>&nbsp;&nbsp;&nbsp;021217&nbsp;DEFINITION&nbsp;OF&nbsp;LINEARITY&nbsp;HAS&nbsp;BECOME&nbsp;STRICTER&nbsp;(motivated&nbsp;by&nbsp;<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;use&nbsp;with&nbsp;NPSOL):&nbsp;In&nbsp;order&nbsp;to&nbsp;be&nbsp;considered&nbsp;linear&nbsp;in&nbsp;Vars,&nbsp;<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;term&nbsp;must&nbsp;not&nbsp;depend<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on&nbsp;any&nbsp;other&nbsp;indets&nbsp;than&nbsp;those&nbsp;given&nbsp;in&nbsp;Vars.&nbsp;(This&nbsp;is&nbsp;not&nbsp;<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;implemented&nbsp;in&nbsp;type(...,&nbsp;linear(...)).&nbsp;Explicit&nbsp;check<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;dependency&nbsp;on&nbsp;other&nbsp;indets&nbsp;necessary,&nbsp;since&nbsp;<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;type(a+b,&nbsp;linear(b))&nbsp;returns&nbsp;true.)&nbsp;See&nbsp;note&nbsp;(i)&nbsp;for&nbsp;comment<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on&nbsp;necessecity&nbsp;of&nbsp;stricter&nbsp;test&nbsp;for&nbsp;linearity.&nbsp;<BR/>
+		&nbsp;&nbsp;&nbsp;021217&nbsp;edited&nbsp;some&nbsp;comments<BR/>
+		&nbsp;&nbsp;&nbsp;021125&nbsp;edited&nbsp;some&nbsp;comments&nbsp;only&nbsp;<BR/>
+		&nbsp;&nbsp;&nbsp;010412&nbsp;vars&nbsp;are&nbsp;no&nbsp;longer&nbsp;added&nbsp;to&nbsp;each&nbsp;equation&nbsp;before&nbsp;check&nbsp;is&nbsp;done<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;as&nbsp;this&nbsp;resulted&nbsp;in&nbsp;'false'&nbsp;for&nbsp;an&nbsp;equation&nbsp;which&nbsp;was&nbsp;exactely<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;sum&nbsp;over&nbsp;vars&nbsp;-&nbsp;mmo<BR/>
+		&nbsp;&nbsp;&nbsp;01xxxx&nbsp;written&nbsp;by&nbsp;mho&nbsp;and&nbsp;mmo</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@todo</P></TD>
+		<TD><P></P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@throws</P></TD>
+		<TD><P></P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@errors</P></TD>
+		<TD><P></P></TD>
+	</TR>
+</TABLE>
+<P><FONT SIZE="+2"><B>Maple include files list</B></FONT><P/>
+<TABLE BORDER="0" CELLPADDING="2" CELLSPACING="2">
+	<TR>
+		<TD><P>No files are included.</P></TD>
+	</TR>
+</TABLE>
+<BR/>
+<P><FONT SIZE="+2"><B>To the top levels</B></FONT><P/>
+<P><a style="color:green" href="../Aux.html">Aux</a>&nbsp;>&nbsp;<a style="color:green" href="../LinearEqns.html">LinearEqns</a><P/><BR/>
+</BODY>

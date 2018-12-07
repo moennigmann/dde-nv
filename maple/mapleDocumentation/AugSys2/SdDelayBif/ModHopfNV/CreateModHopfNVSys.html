@@ -1,0 +1,74 @@
+<HTML>
+<HEAD>
+<TITLE>SdDelayBif/ModHopfNV/CreateModHopfNVSys.html</TITLE>
+</HEAD>
+<BODY>
+<P><FONT SIZE="+2"><B>Maple header tags list</B></FONT><P/>
+<TABLE BORDER="1" CELLPADDING="2" CELLSPACING="2">
+	<TR>
+		<TD valign="top"><P>@path</P></TD>
+		<TD><P>&nbsp;AugSys2/SdDelayBif/ModHopfNV/CreateModHopfNVSys.txt</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@brief</P></TD>
+		<TD><P>&nbsp;Creates&nbsp;an&nbsp;augmented&nbsp;NV&nbsp;system&nbsp;for&nbsp;Generalized&nbsp;critical&nbsp;boundaries<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;DDESys&nbsp;with&nbsp;state&nbsp;dependent&nbsp;delay&nbsp;without&nbsp;algebraic&nbsp;equations</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@param</P></TD>
+		<TD><P>&nbsp;&nbsp;<BR/>
+		&nbsp;&nbsp;&nbsp;a&nbsp;model&nbsp;(state&nbsp;dependent&nbsp;DDESys)&nbsp;to&nbsp;be&nbsp;augmented&nbsp;by&nbsp;system&nbsp;for&nbsp;finding&nbsp;normal&nbsp;vectors&nbsp;to&nbsp;generalized&nbsp;eigenvalue&nbsp;constraints,<BR/>
+		&nbsp;&nbsp;&nbsp;list&nbsp;of&nbsp;names&nbsp;of&nbsp;free&nbsp;parameters&nbsp;Alpha<BR/>
+		&nbsp;&nbsp;&nbsp;highest&nbsp;real&nbsp;part&nbsp;of&nbsp;eigenvalue&nbsp;sigma</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@return</P></TD>
+		<TD><P>&nbsp;<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;normal&nbsp;vector&nbsp;system&nbsp;for&nbsp;DDEs</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@authors</P></TD>
+		<TD><P>&nbsp;dka,&nbsp;jot</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@notes</P></TD>
+		<TD><P>&nbsp;&nbsp;&nbsp;&nbsp;(i)&nbsp;DelVars&nbsp;in&nbsp;DDESys&nbsp;should&nbsp;contain&nbsp;N*M&nbsp;names&nbsp;of&nbsp;variables&nbsp;that&nbsp;correspond&nbsp;to&nbsp;the&nbsp;order:&nbsp;<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[var1(t-tau1),var2(t-tau1),...,varN(t-tau1),<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;var1(t-tau2),var2(t-tau2),...,varN(t-tau2),<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...,&nbsp;var1(t-tauM),var2(t-tauM),...,varN(t-tauM)],<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;where&nbsp;N=dim(DDESys["DynVars"])&nbsp;and&nbsp;M&nbsp;is&nbsp;number&nbsp;of&nbsp;delays<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;(ii)&nbsp;We&nbsp;refer&nbsp;to&nbsp;delays&nbsp;as&nbsp;tau[j]&nbsp;and&nbsp;collect&nbsp;them&nbsp;in&nbsp;a&nbsp;vector&nbsp;of&nbsp;delays&nbsp;</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@revision</P></TD>
+		<TD><P>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2015-07-24&nbsp;removed&nbsp;a&nbsp;bug&nbsp;(partialSum&nbsp;was&nbsp;not&nbsp;added&nbsp;to&nbsp;rhs&nbsp;in&nbsp;second&nbsp;to&nbsp;last&nbsp;equation)&nbsp;by&nbsp;jot<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2015-07-10&nbsp;highlighted&nbsp;position&nbsp;of&nbsp;a&nbsp;current&nbsp;bug&nbsp;for&nbsp;state&nbsp;dependency<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2015-06-03&nbsp;added&nbsp;option&nbsp;to&nbsp;hand&nbsp;over&nbsp;the&nbsp;stability&nbsp;boundary<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2015-06-02&nbsp;removed&nbsp;a&nbsp;sign&nbsp;error&nbsp;in&nbsp;exp(-sigma*tau)<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2015-04-30&nbsp;removed&nbsp;some&nbsp;bugs,&nbsp;coming&nbsp;from&nbsp;mistakes&nbsp;made&nbsp;during&nbsp;last&nbsp;change&nbsp;by&nbsp;jot	<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2015-02-18&nbsp;modification&nbsp;which&nbsp;enable&nbsp;generalized&nbsp;eigenvaule&nbsp;constraints&nbsp;by&nbsp;jot<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2015-02-10&nbsp;Created&nbsp;from&nbsp;a&nbsp;copy&nbsp;of&nbsp;SdDelayBif/HopfNV/CreateHopfNVSys&nbsp;by&nbsp;jot&nbsp;</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@todo</P></TD>
+		<TD><P></P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@throws</P></TD>
+		<TD><P></P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@errors</P></TD>
+		<TD><P></P></TD>
+	</TR>
+</TABLE>
+<P><FONT SIZE="+2"><B>Maple include files list</B></FONT><P/>
+<TABLE BORDER="0" CELLPADDING="2" CELLSPACING="2">
+	<TR>
+		<TD><P>&nbsp;<span style="color:red">Module:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><a style="color:red" href="./CreateModHopfNVSys/TemplateModule.html">SdDelayBif/ModHopfNV/CreateModHopfNVSys/TemplateModule.txt</a></P></TD>
+	</TR>
+</TABLE>
+<BR/>
+<P><FONT SIZE="+2"><B>To the top levels</B></FONT><P/>
+<P><a style="color:green" href="../../AugSys2.html">AugSys2</a>&nbsp;>&nbsp;<a style="color:green" href="../../SdDelayBif.html">SdDelayBif</a>&nbsp;>&nbsp;<a style="color:green" href="../../SdDelayBif/ModHopfNV.html">ModHopfNV</a><P/><BR/>
+</BODY>

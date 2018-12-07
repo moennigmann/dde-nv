@@ -1,0 +1,90 @@
+<HTML>
+<HEAD>
+<TITLE>NLP/Scale/CreateInstanceForNLP.html</TITLE>
+</HEAD>
+<BODY>
+<P><FONT SIZE="+2"><B>Maple header tags list</B></FONT><P/>
+<TABLE BORDER="1" CELLPADDING="2" CELLSPACING="2">
+	<TR>
+		<TD valign="top"><P>@path</P></TD>
+		<TD><P>&nbsp;Aux/NLP/Scale/CreateInstanceForNLP.txt</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@brief</P></TD>
+		<TD><P></P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@param</P></TD>
+		<TD><P></P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@return</P></TD>
+		<TD><P></P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@authors</P></TD>
+		<TD><P>&nbsp;mmo,&nbsp;dka</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@notes</P></TD>
+		<TD><P>&nbsp;(i)&nbsp;instance&nbsp;of&nbsp;NLP&nbsp;has&nbsp;ranges&nbsp;for&nbsp;variables&nbsp;in&nbsp;list<BR/>
+		&nbsp;&nbsp;&nbsp;Variables,&nbsp;note&nbsp;that&nbsp;these&nbsp;+/-infinity&nbsp;as&nbsp;bounds<BR/>
+		&nbsp;(ii)&nbsp;this&nbsp;procedure&nbsp;will&nbsp;use&nbsp;ranges&nbsp;from&nbsp;list&nbsp;Variables&nbsp;<BR/>
+		&nbsp;&nbsp;&nbsp;which&nbsp;do&nbsp;not&nbsp;contain&nbsp;+/-infinity&nbsp;for&nbsp;scaling,&nbsp;discard<BR/>
+		&nbsp;&nbsp;&nbsp;all&nbsp;others&nbsp;without&nbsp;scaling&nbsp;the&nbsp;corresponding&nbsp;variables<BR/>
+		&nbsp;(iii)&nbsp;if&nbsp;optional&nbsp;argument&nbsp;for&nbsp;ranges&nbsp;of&nbsp;variables&nbsp;is&nbsp;to&nbsp;be&nbsp;<BR/>
+		&nbsp;&nbsp;&nbsp;introduced&nbsp;later,&nbsp;make&nbsp;sure&nbsp;these&nbsp;ranges&nbsp;will&nbsp;also&nbsp;become<BR/>
+		&nbsp;&nbsp;&nbsp;ranges&nbsp;of&nbsp;NLP,&nbsp;i.e.&nbsp;bounds&nbsp;for&nbsp;variables&nbsp;in&nbsp;NLP<BR/>
+		&nbsp;(iv)&nbsp;transformation&nbsp;used&nbsp;is:<BR/>
+		&nbsp;&nbsp;&nbsp;z=&nbsp;g(x,&nbsp;p)<BR/>
+		&nbsp;&nbsp;&nbsp;diff(x,&nbsp;t)=&nbsp;f(x,&nbsp;z,&nbsp;p)<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;becomes<BR/>
+		&nbsp;&nbsp;&nbsp;z=&nbsp;g(x(y),&nbsp;p(q))<BR/>
+		&nbsp;&nbsp;&nbsp;diff(y,&nbsp;t)=&nbsp;D&nbsp;f(x(y),&nbsp;z,&nbsp;p(q))<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;where&nbsp;<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;y=&nbsp;Dx-&nbsp;c,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x=&nbsp;InvD&nbsp;(y+&nbsp;c),<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;q=&nbsp;D_par&nbsp;p-&nbsp;c_par,&nbsp;p=&nbsp;InvD_par&nbsp;(q+&nbsp;c_par)&nbsp;<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(D_par&nbsp;is&nbsp;called&nbsp;ScaledParsD,&nbsp;c_par&nbsp;is&nbsp;called&nbsp;ScaledParsc&nbsp;<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;in&nbsp;the&nbsp;code)<BR/>
+		&nbsp;&nbsp;&nbsp;notation&nbsp;sloppy,&nbsp;as&nbsp;it&nbsp;ignores&nbsp;that&nbsp;z_i&nbsp;may&nbsp;depend&nbsp;on<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;z_1,...,z_(i-1),&nbsp;i.e.,&nbsp;z_i=&nbsp;g_i(x,&nbsp;z_1,&nbsp;...,&nbsp;z_(i-1),&nbsp;p)<BR/>
+		&nbsp;(v)&nbsp;transformation&nbsp;y=&nbsp;Dx-&nbsp;c&nbsp;is&nbsp;saved&nbsp;in&nbsp;SubsListPhysToScaled,<BR/>
+		&nbsp;&nbsp;&nbsp;trf.&nbsp;x=&nbsp;InvD&nbsp;(y+&nbsp;c)&nbsp;is&nbsp;saved&nbsp;in&nbsp;SubsListScaledToPhys,<BR/>
+		&nbsp;&nbsp;&nbsp;D,&nbsp;and&nbsp;c&nbsp;in&nbsp;the&nbsp;code&nbsp;correspond&nbsp;to&nbsp;D,&nbsp;c&nbsp;above,&nbsp;<BR/>
+		&nbsp;&nbsp;&nbsp;trf.&nbsp;q=&nbsp;D_par&nbsp;p-&nbsp;c_par&nbsp;is&nbsp;saved&nbsp;in&nbsp;<BR/>
+		&nbsp;&nbsp;&nbsp;SubsListScaledParsPhysToScaled</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@revision</P></TD>
+		<TD><P>&nbsp;2008-03-06&nbsp;&nbsp;instead&nbsp;of&nbsp;aSys[...]&nbsp;using&nbsp;aSys["..."]&nbsp;by&nbsp;dka<BR/>
+		&nbsp;2008-03-05&nbsp;by&nbsp;dka&nbsp;moved&nbsp;from&nbsp;ModelPack<BR/>
+		&nbsp;021210&nbsp;input&nbsp;argument&nbsp;may&nbsp;be&nbsp;of&nbsp;type&nbsp;list&nbsp;<BR/>
+		&nbsp;021209&nbsp;written&nbsp;by&nbsp;mmo,&nbsp;reusing&nbsp;CreateInstanceForExtAESys</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@todo</P></TD>
+		<TD><P>&nbsp;(i)&nbsp;add&nbsp;optional&nbsp;input&nbsp;argument&nbsp;for&nbsp;ranges&nbsp;of&nbsp;parameter&nbsp;to&nbsp;be&nbsp;scaled<BR/>
+		&nbsp;(ii)&nbsp;add&nbsp;output&nbsp;of&nbsp;brief&nbsp;information&nbsp;on&nbsp;number&nbsp;of&nbsp;scaled&nbsp;vs.&nbsp;unscaled<BR/>
+		&nbsp;&nbsp;&nbsp;variables&nbsp;and&nbsp;parameters;&nbsp;<BR/>
+		&nbsp;(0)&nbsp;ranges&nbsp;must&nbsp;be&nbsp;given&nbsp;for&nbsp;all&nbsp;variables,<BR/>
+		&nbsp;&nbsp;&nbsp;may&nbsp;be&nbsp;given&nbsp;for&nbsp;all&nbsp;or&nbsp;some&nbsp;parameters</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@throws</P></TD>
+		<TD><P></P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@errors</P></TD>
+		<TD><P></P></TD>
+	</TR>
+</TABLE>
+<P><FONT SIZE="+2"><B>Maple include files list</B></FONT><P/>
+<TABLE BORDER="0" CELLPADDING="2" CELLSPACING="2">
+	<TR>
+		<TD><P>&nbsp;<span style="color:blue">Procedure:&nbsp;&nbsp;</span><a style="color:blue" href="./CreateInstance/TemplateModule.html">NLP/Scale/CreateInstance/TemplateModule.txt</a></P></TD>
+	</TR>
+</TABLE>
+<BR/>
+<P><FONT SIZE="+2"><B>To the top levels</B></FONT><P/>
+<P><a style="color:green" href="../../Aux.html">Aux</a>&nbsp;>&nbsp;<a style="color:green" href="../../NLP.html">NLP</a>&nbsp;>&nbsp;<a style="color:green" href="../../NLP/Scale.html">Scale</a><P/><BR/>
+</BODY>

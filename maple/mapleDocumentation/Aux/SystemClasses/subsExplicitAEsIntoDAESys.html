@@ -1,0 +1,68 @@
+<HTML>
+<HEAD>
+<TITLE>SystemClasses/subsExplicitAEsIntoDAESys.html</TITLE>
+</HEAD>
+<BODY>
+<P><FONT SIZE="+2"><B>Maple header tags list</B></FONT><P/>
+<TABLE BORDER="1" CELLPADDING="2" CELLSPACING="2">
+	<TR>
+		<TD valign="top"><P>@path</P></TD>
+		<TD><P>&nbsp;Aux/SystemClasses/subsExplicitAEsIntoDAESys.txt</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@brief</P></TD>
+		<TD><P>&nbsp;substitute&nbsp;ExplicitAEs&nbsp;into&nbsp;ODEs&nbsp;and&nbsp;AEs</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@param</P></TD>
+		<TD><P>&nbsp;aModel</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@return</P></TD>
+		<TD><P>&nbsp;aModel,&nbsp;equations&nbsp;from&nbsp;list&nbsp;ExplictAEs&nbsp;in&nbsp;aModel<BR/>
+		&nbsp;&nbsp;&nbsp;have&nbsp;been&nbsp;substituted&nbsp;into&nbsp;list&nbsp;ODEs&nbsp;and&nbsp;AEs&nbsp;in<BR/>
+		&nbsp;&nbsp;&nbsp;aModel</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@authors</P></TD>
+		<TD><P>&nbsp;mmo,&nbsp;dka,&nbsp;jot</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@notes</P></TD>
+		<TD><P></P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@revision</P></TD>
+		<TD><P>&nbsp;&nbsp;&nbsp;2015-07-28&nbsp;differing&nbsp;between&nbsp;„inserting&nbsp;state&nbsp;dependent&nbsp;delay&nbsp;in&nbsp;ODEs/AEs“&nbsp;and&nbsp;inserting&nbsp;explicitAEs&nbsp;in&nbsp;delays&nbsp;by&nbsp;jot<BR/>
+		&nbsp;&nbsp;&nbsp;2015-01-30&nbsp;added&nbsp;the&nbsp;option&nbsp;for&nbsp;state&nbsp;dependent&nbsp;delays&nbsp;by&nbsp;jot<BR/>
+		&nbsp;&nbsp;&nbsp;2008-05-15&nbsp;&nbsp;instead&nbsp;of&nbsp;aSys[...]&nbsp;using&nbsp;aSys["..."]&nbsp;<BR/>
+		&nbsp;&nbsp;&nbsp;2008-05-15&nbsp;copied&nbsp;from&nbsp;ModelPack&nbsp;by&nbsp;dka<BR/>
+		&nbsp;&nbsp;&nbsp;020306&nbsp;(1)&nbsp;removed&nbsp;check&nbsp;for&nbsp;ODEs&nbsp;and&nbsp;AEs&nbsp;since&nbsp;this<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;check&nbsp;is&nbsp;done&nbsp;by&nbsp;type&nbsp;check&nbsp;at&nbsp;entry&nbsp;of&nbsp;proc;<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(2)&nbsp;speed&nbsp;up&nbsp;proc&nbsp;by&nbsp;not&nbsp;copying&nbsp;aDAESys,&nbsp;copy&nbsp;entries<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;only&nbsp;which&nbsp;are&nbsp;not&nbsp;changed;<BR/>
+		&nbsp;&nbsp;&nbsp;021101&nbsp;written&nbsp;by&nbsp;mkl&nbsp;and&nbsp;mmo</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@todo</P></TD>
+		<TD><P></P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@throws</P></TD>
+		<TD><P></P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@errors</P></TD>
+		<TD><P>unknown&nbsp;mapledoc&nbsp;tag&nbsp;@</P></TD>
+	</TR>
+</TABLE>
+<P><FONT SIZE="+2"><B>Maple include files list</B></FONT><P/>
+<TABLE BORDER="0" CELLPADDING="2" CELLSPACING="2">
+	<TR>
+		<TD><P>No files are included.</P></TD>
+	</TR>
+</TABLE>
+<BR/>
+<P><FONT SIZE="+2"><B>To the top levels</B></FONT><P/>
+<P><a style="color:green" href="../Aux.html">Aux</a>&nbsp;>&nbsp;<a style="color:green" href="../SystemClasses.html">SystemClasses</a><P/><BR/>
+</BODY>

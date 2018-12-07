@@ -1,0 +1,73 @@
+<HTML>
+<HEAD>
+<TITLE>CreateCurve.html</TITLE>
+</HEAD>
+<BODY>
+<P><FONT SIZE="+2"><B>Maple header tags list</B></FONT><P/>
+<TABLE BORDER="1" CELLPADDING="2" CELLSPACING="2">
+	<TR>
+		<TD valign="top"><P>@path</P></TD>
+		<TD><P>&nbsp;Aux/CreateCurve.txt</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@brief</P></TD>
+		<TD><P>&nbsp;Collects&nbsp;procedures&nbsp;that&nbsp;simplify&nbsp;visualization&nbsp;and&nbsp;collection&nbsp;<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;points&nbsp;into&nbsp;a&nbsp;curve</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@param</P></TD>
+		<TD><P>&nbsp;(i)&nbsp;table&nbsp;of&nbsp;data,&nbsp;indices&nbsp;must&nbsp;be&nbsp;names&nbsp;of&nbsp;data,&nbsp;<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;to&nbsp;each&nbsp;index&nbsp;a&nbsp;list(EvalsToFloat)&nbsp;is&nbsp;assigned;&nbsp;all&nbsp;of&nbsp;these&nbsp;<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;must&nbsp;have&nbsp;same&nbsp;length<BR/>
+		&nbsp;&nbsp;&nbsp;(ii)&nbsp;2nd&nbsp;argument&nbsp;provides&nbsp;all&nbsp;data&nbsp;which&nbsp;is&nbsp;not&nbsp;point-like,&nbsp;i.e.<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pitcon's&nbsp;IERROR,&nbsp;or&nbsp;number&nbsp;of&nbsp;points&nbsp;in&nbsp;each&nbsp;list&nbsp;in&nbsp;1st&nbsp;argument<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mandatory&nbsp;entries&nbsp;in&nbsp;2nd&nbsp;argument&nbsp;are<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Parameters=&nbsp;list(name=&nbsp;EvalsToFloat),<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NumPoints=&nbsp;posint</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@return</P></TD>
+		<TD><P>&nbsp;&nbsp;module&nbsp;which&nbsp;provides&nbsp;procedures&nbsp;for&nbsp;plotting&nbsp;data</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@authors</P></TD>
+		<TD><P>&nbsp;mmo,&nbsp;dka</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@notes</P></TD>
+		<TD><P></P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@revision</P></TD>
+		<TD><P>&nbsp;2008-01-22&nbsp;copied&nbsp;from&nbsp;ModelPack&nbsp;by&nbsp;dka<BR/>
+		&nbsp;030108&nbsp;added&nbsp;local&nbsp;var&nbsp;decl&nbsp;for&nbsp;SubsListParsInConstr,&nbsp;TemplateModule<BR/>
+		&nbsp;020921&nbsp;changed&nbsp;structure,&nbsp;CreateCurve&nbsp;now&nbsp;accepts&nbsp;table&nbsp;of&nbsp;point-like<BR/>
+		&nbsp;&nbsp;&nbsp;data,&nbsp;and&nbsp;other&nbsp;data&nbsp;in&nbsp;2nd&nbsp;argumtent<BR/>
+		&nbsp;020829&nbsp;added&nbsp;GetNumPoints,&nbsp;GetPoint,&nbsp;added&nbsp;some&nbsp;local<BR/>
+		&nbsp;&nbsp;&nbsp;variables:&nbsp;NumPoints,&nbsp;IndicesInConstr;&nbsp;<BR/>
+		&nbsp;0208xx&nbsp;written&nbsp;by&nbsp;mmo</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@todo</P></TD>
+		<TD><P>&nbsp;&nbsp;&nbsp;note&nbsp;that&nbsp;checks&nbsp;at&nbsp;entry&nbsp;are&nbsp;type&nbsp;check&nbsp;for&nbsp;type&nbsp;'datacurve'&nbsp;<BR/>
+		&nbsp;&nbsp;&nbsp;which&nbsp;should&nbsp;be&nbsp;implemented&nbsp;separately&nbsp;in&nbsp;the&nbsp;future</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@throws</P></TD>
+		<TD><P></P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@errors</P></TD>
+		<TD><P></P></TD>
+	</TR>
+</TABLE>
+<P><FONT SIZE="+2"><B>Maple include files list</B></FONT><P/>
+<TABLE BORDER="0" CELLPADDING="2" CELLSPACING="2">
+	<TR>
+		<TD><P>&nbsp;<span style="color:red">Module:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><a style="color:red" href="./CreateCurve/TemplateModule.html">CreateCurve/TemplateModule.txt</a></P></TD>
+	</TR>
+</TABLE>
+<BR/>
+<P><FONT SIZE="+2"><B>To the top levels</B></FONT><P/>
+<P><a style="color:green" href="Aux.html">Aux</a><P/><BR/>
+</BODY>

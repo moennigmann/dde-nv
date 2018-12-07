@@ -1,0 +1,76 @@
+<HTML>
+<HEAD>
+<TITLE>SystemClasses/evalExplicitAEsInDAESys.html</TITLE>
+</HEAD>
+<BODY>
+<P><FONT SIZE="+2"><B>Maple header tags list</B></FONT><P/>
+<TABLE BORDER="1" CELLPADDING="2" CELLSPACING="2">
+	<TR>
+		<TD valign="top"><P>@path</P></TD>
+		<TD><P>&nbsp;Aux/SysstemClasses/evalExplicitAEsInDAESys.txt&nbsp;</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@brief</P></TD>
+		<TD><P>&nbsp;procedure&nbsp;evalExplicitAEsInDAESys</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@param</P></TD>
+		<TD><P>&nbsp;&nbsp;&nbsp;(1)&nbsp;a&nbsp;DAESys<BR/>
+		&nbsp;&nbsp;&nbsp;(2)&nbsp;a&nbsp;list&nbsp;of&nbsp;substitutions&nbsp;which&nbsp;obeys&nbsp;following&nbsp;rules:<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DAESys[DynVars]&nbsp;must&nbsp;be&nbsp;assigned<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DAESys[AlgVars]&nbsp;must&nbsp;be&nbsp;assigned<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DAESys[Parameters]&nbsp;may&nbsp;be&nbsp;assigned,&nbsp;assignments&nbsp;in&nbsp;SubsList&nbsp;have<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;precedence&nbsp;over&nbsp;assignments&nbsp;in&nbsp;DAESys[Parameters]<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l.h.s.&nbsp;of&nbsp;DAESys[ExplicitAEs]&nbsp;may&nbsp;be&nbsp;assigned,&nbsp;assignments&nbsp;in&nbsp;<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SubsList&nbsp;have&nbsp;precedence&nbsp;over&nbsp;result&nbsp;from&nbsp;evaluation&nbsp;of&nbsp;<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DAESys[ExplicitAEs]</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@return</P></TD>
+		<TD><P>&nbsp;&nbsp;&nbsp;SubsList&nbsp;appended&nbsp;by&nbsp;<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(1)&nbsp;values&nbsp;for&nbsp;l.h.s.&nbsp;of&nbsp;aDAEsys[ExplicitAEs]&nbsp;if&nbsp;not&nbsp;set&nbsp;by&nbsp;SubsList<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(2)&nbsp;values&nbsp;of&nbsp;aDAEsys[Parameters]&nbsp;if&nbsp;not&nbsp;set&nbsp;by&nbsp;SubsList<BR/>
+		&nbsp;&nbsp;&nbsp;rule&nbsp;of&nbsp;thumb:&nbsp;output&nbsp;everything&nbsp;needed&nbsp;to&nbsp;evaluate&nbsp;ODEs</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@authors</P></TD>
+		<TD><P></P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@notes</P></TD>
+		<TD><P></P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@revision</P></TD>
+		<TD><P>&nbsp;&nbsp;&nbsp;2010-08-26&nbsp;copied&nbsp;from&nbsp;Modelpack&nbsp;by&nbsp;dka<BR/>
+		&nbsp;&nbsp;&nbsp;030109&nbsp;added&nbsp;local&nbsp;var&nbsp;decl&nbsp;for&nbsp;LhsEAEs;<BR/>
+		&nbsp;&nbsp;&nbsp;020913&nbsp;corrected&nbsp;typo&nbsp;aDAESys&nbsp;to&nbsp;aDAEsys<BR/>
+		&nbsp;&nbsp;&nbsp;020912&nbsp;added&nbsp;option&nbsp;EvalEAEs&nbsp;which&nbsp;deletes&nbsp;values&nbsp;for&nbsp;EAEs&nbsp;from<BR/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2nd&nbsp;arg&nbsp;and&nbsp;enfoces&nbsp;evaluation&nbsp;of&nbsp;EAEs&nbsp;in&nbsp;1st&nbsp;arg;&nbsp;<BR/>
+		&nbsp;&nbsp;&nbsp;020816&nbsp;added&nbsp;missing&nbsp;local&nbsp;variables<BR/>
+		&nbsp;&nbsp;&nbsp;020805&nbsp;added&nbsp;check&nbsp;for&nbsp;repeated&nbsp;entries&nbsp;in&nbsp;2nd&nbsp;argument<BR/>
+		&nbsp;&nbsp;&nbsp;020306&nbsp;written&nbsp;by&nbsp;mmo</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@todo</P></TD>
+		<TD><P>&nbsp;&nbsp;&nbsp;look&nbsp;for&nbsp;"warn&nbsp;if&nbsp;an&nbsp;lhs&nbsp;of&nbsp;ExplicitAEs&nbsp;is&nbsp;assigned"&nbsp;below</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@throws</P></TD>
+		<TD><P></P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@errors</P></TD>
+		<TD><P></P></TD>
+	</TR>
+</TABLE>
+<P><FONT SIZE="+2"><B>Maple include files list</B></FONT><P/>
+<TABLE BORDER="0" CELLPADDING="2" CELLSPACING="2">
+	<TR>
+		<TD><P>No files are included.</P></TD>
+	</TR>
+</TABLE>
+<BR/>
+<P><FONT SIZE="+2"><B>To the top levels</B></FONT><P/>
+<P><a style="color:green" href="../Aux.html">Aux</a>&nbsp;>&nbsp;<a style="color:green" href="../SystemClasses.html">SystemClasses</a><P/><BR/>
+</BODY>

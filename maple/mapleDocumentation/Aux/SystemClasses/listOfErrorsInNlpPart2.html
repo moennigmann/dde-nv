@@ -1,0 +1,69 @@
+<HTML>
+<HEAD>
+<TITLE>SystemClasses/listOfErrorsInNlpPart2.html</TITLE>
+</HEAD>
+<BODY>
+<P><FONT SIZE="+2"><B>Maple header tags list</B></FONT><P/>
+<TABLE BORDER="1" CELLPADDING="2" CELLSPACING="2">
+	<TR>
+		<TD valign="top"><P>@path</P></TD>
+		<TD><P>&nbsp;Aux/SystemClasses/ListOfErrorsInNlpPart2.txt</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@brief</P></TD>
+		<TD><P>&nbsp;checks&nbsp;whether&nbsp;Constraints,&nbsp;LinearConstraints&nbsp;are&nbsp;well-defined,<BR/>
+		&nbsp;recursively&nbsp;checks&nbsp;whether&nbsp;ExplicitAEs&nbsp;are&nbsp;well-defined</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@param</P></TD>
+		<TD><P></P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@return</P></TD>
+		<TD><P></P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@authors</P></TD>
+		<TD><P>&nbsp;mmo,&nbsp;dka</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@notes</P></TD>
+		<TD><P>&nbsp;(i)&nbsp;Do&nbsp;NOT&nbsp;check&nbsp;for&nbsp;linearity&nbsp;of&nbsp;LinearConstraints<BR/>
+		&nbsp;&nbsp;&nbsp;in&nbsp;Variables&nbsp;and&nbsp;Parameters,&nbsp;but&nbsp;in&nbsp;Variables&nbsp;only.&nbsp;Cannot&nbsp;consider<BR/>
+		&nbsp;&nbsp;&nbsp;e.g.&nbsp;Parameters=&nbsp;[SF=0.3],&nbsp;LinearConstraints=&nbsp;[0=1+2*SF]&nbsp;linear,<BR/>
+		&nbsp;&nbsp;&nbsp;since&nbsp;NPSOL&nbsp;needs&nbsp;LinearConstraints&nbsp;to&nbsp;be&nbsp;transformed&nbsp;into<BR/>
+		&nbsp;&nbsp;&nbsp;Ax=b,&nbsp;where&nbsp;A/b&nbsp;are&nbsp;matrix/vector&nbsp;of&nbsp;numbers,&nbsp;not&nbsp;functions&nbsp;of&nbsp;p<BR/>
+		&nbsp;&nbsp;&nbsp;Parameters.&nbsp;</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@revision</P></TD>
+		<TD><P>&nbsp;2008-04-07&nbsp;delete&nbsp;cheking&nbsp;if&nbsp;there&nbsp;are&nbsp;linear&nbsp;constraints&nbsp;in&nbsp;entry&nbsp;Constraints&nbsp;&nbsp;<BR/>
+		&nbsp;2008-03-06&nbsp;instead&nbsp;of&nbsp;aSys[...]&nbsp;using&nbsp;aSys["..."]&nbsp;&nbsp;by&nbsp;dka<BR/>
+		&nbsp;021217&nbsp;skip&nbsp;check&nbsp;for&nbsp;linearity&nbsp;of&nbsp;LinearConstraints&nbsp;if&nbsp;empty<BR/>
+		&nbsp;021125&nbsp;removed&nbsp;check&nbsp;for&nbsp;obsolete&nbsp;expressions;&nbsp;see<BR/>
+		&nbsp;&nbsp;&nbsp;ModelPack/ToDo.txt,&nbsp;entry&nbsp;021125;&nbsp;<BR/>
+		&nbsp;021124&nbsp;written&nbsp;by&nbsp;mmo</P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@todo</P></TD>
+		<TD><P></P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@throws</P></TD>
+		<TD><P></P></TD>
+	</TR>
+	<TR>
+		<TD valign="top"><P>@errors</P></TD>
+		<TD><P></P></TD>
+	</TR>
+</TABLE>
+<P><FONT SIZE="+2"><B>Maple include files list</B></FONT><P/>
+<TABLE BORDER="0" CELLPADDING="2" CELLSPACING="2">
+	<TR>
+		<TD><P>No files are included.</P></TD>
+	</TR>
+</TABLE>
+<BR/>
+<P><FONT SIZE="+2"><B>To the top levels</B></FONT><P/>
+<P><a style="color:green" href="../Aux.html">Aux</a>&nbsp;>&nbsp;<a style="color:green" href="../SystemClasses.html">SystemClasses</a><P/><BR/>
+</BODY>
