@@ -1,3 +1,18 @@
+%> @brief The instances of this class generate visualization data
+%> @author Jonas Otten
+%> @date 18 Jul 2017
+
+%>======================================================================
+%> @brief The instances of this class generate visualization data
+%
+%>  this class is allows easy visualization of optimization results by implementing a 
+%>  quasi-arclength numerical continuation of critical manifolds.
+%>
+%> @author Jonas Otten
+%> @date 18 Jul 2017 ======================================================================
+
+
+
 classdef ManifoldSlice < handle
     %this class is creates slices of critical manifolds for later plotting
     %   Detailed explanation goes here
@@ -19,11 +34,19 @@ classdef ManifoldSlice < handle
         debugFlag = 0;
         
     end
+
     
+    % ======================================================================
+    %> @brief Class constructor
+    %>
+    %> This function constructs instances of the class ManifoldSlice
+    %> @param aNVCon an instance of the class NVConstraint. Its critical manifold will be visualized
+    %> @param continParamsInd the index of the parameters used for continuation
+    %> @param varargin enables to call constructor ommitting continParamsInd
+    %>
+    %> @return instance of the ManifoldSlice class.
+    % ======================================================================    
     
-    %     properties(SetAccess=protected)
-    % 	continParamsInd
-    %     end
     
     methods
         function aManifoldSlice = ManifoldSlice(aNVCon, continParamsInd, varargin) % constructor
@@ -66,6 +89,14 @@ classdef ManifoldSlice < handle
         end
         
         
+    % ======================================================================
+    %> @brief runs numerical continuation in both directions
+    %>
+    %> @param aManifoldSlice instance of this class
+    %> @param n number of steps to take during continuation
+    %>
+    % ======================================================================
+        
         function maniContin2DbothDirections ( aManifoldSlice, n )
             for jj = 1:length(aManifoldSlice)
                 aManifoldSlice(jj).nManiPoints = n;
@@ -77,6 +108,14 @@ classdef ManifoldSlice < handle
         end
         
         
+        
+    % ======================================================================
+    %> @brief runs numerical continuation in one directions
+    %>
+    %> @param aManifoldSlice instance of this class
+    %> @param direction determines direction for continuation
+    %>
+    % ======================================================================
         function manifoldContinuation2D( aManifoldSlice, direction )
             
             for jj = length(aManifoldSlice)
@@ -237,6 +276,13 @@ classdef ManifoldSlice < handle
         end
         
         
+    % ======================================================================
+    %> @brief plots results of numerical continuation of critical manifolds
+    %>
+    %> @param aManifoldSlice instance of this class
+    %>
+    %> @return handle vector of plot handles allowing later manipulation of plots
+    % ======================================================================
         
         function handle = plot(aManifoldSlice)
             for jj = 1:length(aManifoldSlice)
@@ -254,9 +300,7 @@ classdef ManifoldSlice < handle
                 xlabel(aManifoldSlice(jj).point(1).alpha.names{aManifoldSlice(jj).freeParamIndices(1)})
                 ylabel(aManifoldSlice(jj).point(1).alpha.names{aManifoldSlice(jj).freeParamIndices(2)})
                 
-%                 xlim([aManifoldSlice(jj).lowerBoxCons(aManifoldSlice(jj).freeParamIndices(1)), aManifoldSlice(jj).upperBoxCons(aManifoldSlice(jj).freeParamIndices(1))])
-%                 ylim([aManifoldSlice(jj).lowerBoxCons(aManifoldSlice(jj).freeParamIndices(2)), aManifoldSlice(jj).upperBoxCons(aManifoldSlice(jj).freeParamIndices(2))])
-%                 
+
                 handle(jj) = plot(alpha(1,:), alpha(2,:), '-');
             end
         end
