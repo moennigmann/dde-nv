@@ -43,5 +43,5 @@ fprintf(fileID,' plhs[0] = mxCreateDoubleMatrix(1,(mwSize)%d,mxREAL);\n\n',(2*xn
 fprintf(fileID,' /* get a pointer to the real data in the output matrix */\n');
 fprintf(fileID,' double *residuumPointer = mxGetPr(plhs[0]);\n\n');
 fprintf(fileID,' /* call the computational routine */\n');
-fprintf(fileID,' ManifoldEquation(xPointer,alphaPointer, wPointer,rPointer, residuumPointer);\n'); 
+fprintf(fileID,' ManifoldEquation(xPointer,alphaPointer,pPointer, wPointer,rPointer, residuumPointer);\n'); 
 fprintf(fileID,'}');

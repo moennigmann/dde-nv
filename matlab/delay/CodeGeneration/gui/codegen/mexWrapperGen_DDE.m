@@ -33,5 +33,5 @@ fprintf(fileID,'/* create the output matrix */\n');
 fprintf(fileID,'plhs[0] = mxCreateDoubleMatrix(1,(mwSize)%d,mxREAL);\n',xnum); 
 fprintf(fileID,'/* get a pointer to the real data in the output matrix */\n');
 fprintf(fileID,'double *xdot = mxGetPr(plhs[0]);\n');
-fprintf(fileID,'DDErightHandSide(x, xtau, alpha, xdot);\n');
+fprintf(fileID,'DDErightHandSide(x, xtau, alpha, p, xdot);\n');
 fprintf(fileID,'}\n');

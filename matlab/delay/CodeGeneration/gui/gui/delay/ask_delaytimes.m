@@ -4,7 +4,7 @@
 
 %% Anzahl Totzeiten einlesen
 
-answer = inputdlg('Enter Number of Delaytimes');    % open input dialogue
+answer = inputdlg('Enter number of delays');    % open input dialogue
 delnum = str2double(cell2mat(answer));  % get number
 tauname(delnum) = {[]};             % create array of right size
 for i=1:delnum

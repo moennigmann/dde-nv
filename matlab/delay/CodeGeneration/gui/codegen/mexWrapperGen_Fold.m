@@ -42,5 +42,5 @@ fprintf(fileID,',mxREAL);\n\n');
 fprintf(fileID,' /* get a pointer to the real data in the output matrix */\n');
 fprintf(fileID,' double *residuumPointer = mxGetPr(plhs[0]);\n\n');
 fprintf(fileID,' /* call the computational routine */\n');
-fprintf(fileID,' ManifoldEquation(xPointer, alphaPointer, wPointer, residuumPointer);\n'); % pPointer entfernt
+fprintf(fileID,' ManifoldEquation(xPointer, alphaPointer,pPointer, wPointer, residuumPointer);\n'); % pPointer entfernt
 fprintf(fileID,'}');

@@ -20,7 +20,7 @@ fprintf(fileID,'end do:\n');
 fprintf(fileID,'dderhs:=[op(dderhs),ithRhs]; # and concatenate it with the existing entries\n');
 fprintf(fileID,'end do:\n');
 fprintf(fileID,'# create frame for code generation\n');
-fprintf(fileID,'Procedure4CodeGen:=proc(x,xtau,alpha)\n');
+fprintf(fileID,'Procedure4CodeGen:=proc(x,xtau,alpha,p)\n');
 fprintf(fileID,'m;\n');
 fprintf(fileID,'end proc;\n');
 fprintf(fileID,'DDErightHandSide:=subs([m=dderhs],eval(Procedure4CodeGen));\n');

@@ -16,9 +16,9 @@ codeGeneration;
 %%
 % clear aes alphavec ans answer del fileID i j l tauname way x xdot xnames maxrealpart
 
-system_order = ['maple ' cg_name];
+system_command = ['maple ' cg_name];
 
-system(system_order);
+system(system_command);
 
 clear p_name system_order
 %% code manipulation to make it compilable for matlab
@@ -41,6 +41,20 @@ if choiceMani(4) % modHopf
 end
 mexWrapperGen_DDE;
 %% Compile for matlab
+
+% replace some code
+cfiles = dir('*.c');
+for cfile = cfiles'
+    fid = fopen(cfile.name,'rt') ;
+    X = fread(fid) ;
+    fclose(fid) ;
+    X = char(X.') ;
+    % replace string S1 with string S2
+    Y = strrep(X, 'double p,', 'double *p,') ;
+    fid2 = fopen(cfile.name,'wt') ;
+    fwrite(fid2,Y) ;
+    fclose (fid2) ;
+end
 
 % mex ... ;
 if choiceMani(1)
