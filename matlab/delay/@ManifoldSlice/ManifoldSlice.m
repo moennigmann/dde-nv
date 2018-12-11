@@ -1,5 +1,5 @@
 classdef ManifoldSlice < handle
-    %this class is creates slices of critical manifolds for later plottign
+    %this class is creates slices of critical manifolds for later plotting
     %   Detailed explanation goes here
     
     properties
@@ -15,6 +15,8 @@ classdef ManifoldSlice < handle
         
         lowerBoxCons
         upperBoxCons
+        
+        debugFlag = 0;
         
     end
     
@@ -165,7 +167,7 @@ classdef ManifoldSlice < handle
                         aManifoldSlice(jj).stepLength=aManifoldSlice(jj).stepLength/2;
                     end
                     
-                    if exitflag < 1
+                    if aManifoldSlice.debugFlag && (exitflag < 1)
                         warning('exitflag was %d during correction', exitflag)
                     end
                     aManifoldSlice(jj).point(ii+1).x.values = x(aManifoldSlice(jj).point(ii+1).x.index - offset );
@@ -204,7 +206,7 @@ classdef ManifoldSlice < handle
                     
                     [x,~,exitflag] = fsolve(rhsNV,x0,options);
                     
-                    if exitflag < 1
+                    if aManifoldSlice.debugFlag && (exitflag < 1)
                         warning('exitflag was %d during NV search', exitflag)
                     end
                     
