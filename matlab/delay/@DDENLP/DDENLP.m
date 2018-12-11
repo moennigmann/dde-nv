@@ -34,7 +34,7 @@
 %> @date 20 Sep 2017
 %> 
 
-%>======================================================================
+% ======================================================================
 %> @brief this class desribes the whole optimization problem for delayed systems
 %
 %>  this class is intended to for the robust stable steady state of
@@ -51,7 +51,8 @@
 %>     >6: values were handed back by optimization algorithm
 %>
 %> @author Jonas Otten
-%> @date 18 Jul 2017 ======================================================================
+%> @date 18 Jul 2017
+% ======================================================================
 
 
 
