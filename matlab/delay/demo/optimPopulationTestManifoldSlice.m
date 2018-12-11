@@ -39,6 +39,7 @@ clear alphaNom
 clear xGue
 clear param
 clear a
+clear g
 clear gmaxStepLength
 
 %% construct object ''aDDENLP''
@@ -96,22 +97,31 @@ aDDENLP.concatInitPoints();
 %% visualize the  manifolds
 
 manifoldSlices(1)=ManifoldSlice(aDDENLP.NVCon(1),[1 2]);
+manifoldSlices(1).initStepLength=0.0005;
+manifoldSlices(1).maxStepLength(1) = 0.05;
 manifoldSlices(2)=ManifoldSlice(aDDENLP.NVCon(2),[1 2]);
+manifoldSlices(2).initStepLength=0.0005;
+manifoldSlices(2).maxStepLength(1) = 0.05;
 
 figure(1);
 plot(aDDENLP.vars.nominal.alpha.values(1),aDDENLP.vars.nominal.alpha.values(2),'ko');
+
+
+
 hold on
 box on
 grid on
 axis equal
 xlim([0 8])
 ylim([0 5])
+[x,y] = circle(aDDENLP.minDist*sqrt(aDDENLP.nAlpha),aDDENLP.vars.nominal.alpha.values(1),aDDENLP.vars.nominal.alpha.values(2));
+plot(x,y,'k');
 
-manifoldSlices.maniContin2DbothDirections(50);
+manifoldSlices.maniContin2DbothDirections(150);
 
 plot(aDDENLP.vars.critical(1).alpha.values(1),aDDENLP.vars.critical(1).alpha.values(2),'kx');
 plot(aDDENLP.vars.critical(2).alpha.values(1),aDDENLP.vars.critical(2).alpha.values(2),'kx');
-plot(manifoldSlices)
+plot(manifoldSlices);
 
 
 %% run optimization
@@ -120,8 +130,11 @@ aDDENLP.runOptim();
 aDDENLP.deconstructOptimum();
 
 % plot optimal nominal point
+plot(aDDENLP.vars.critical(1).alpha.values(1),aDDENLP.vars.critical(1).alpha.values(2),'kx');
+plot(aDDENLP.vars.critical(2).alpha.values(1),aDDENLP.vars.critical(2).alpha.values(2),'kx');
 plot(aDDENLP.vars.nominal.alpha.values(1),aDDENLP.vars.nominal.alpha.values(2),'ko');
-
+[x,y] = circle(aDDENLP.minDist*sqrt(aDDENLP.nAlpha),aDDENLP.vars.nominal.alpha.values(1),aDDENLP.vars.nominal.alpha.values(2));
+plot(x,y,'k');
 
 %% run simulation
 % simulation of system dynamics with optimal parameters
