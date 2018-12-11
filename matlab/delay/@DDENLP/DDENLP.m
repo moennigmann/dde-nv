@@ -742,9 +742,9 @@ classdef DDENLP < handle
         % ... or construct an set with parameters
             intervalWidths = aDDENLP.upperBoxCons(aDDENLP.vars.nominal.alpha.index)-aDDENLP.lowerBoxCons(aDDENLP.vars.nominal.alpha.index);
             if any(isinf(intervalWidths))
-                error('The box constraints bounding the initial values must not contain Inf.')
+                error('The box constraints bounding the initial values must not contain Inf. Cannot construct latin hypercube sample. Please define finite lower and upper bounds.')
             end
-            alphaSet=lhsdesign(nSamples,aDDENLP.vars.nominal.alpha.nVar)'.*intervalWidths;
+            alphaSet=lhsdesign(nSamples,aDDENLP.vars.nominal.alpha.nVar)'.*intervalWidths + aDDENLP.lowerBoxCons(aDDENLP.vars.nominal.alpha.index);
         end
         
         % prepare optimizations
@@ -759,7 +759,7 @@ classdef DDENLP < handle
                 aDDENLP.initializeStSt();
                 aDDENLP.initNVCons(2);
                 aDDENLP.moveAwayFromManifolds(0.05, 2, 100);
-                aDDENLP.concatConstraints();
+%                 aDDENLP.concatConstraints();
                 aDDENLP.concatInitPoints();
                 
                 %% run optimization
