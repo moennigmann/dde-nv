@@ -2,14 +2,19 @@
 %> @author Jonas Otten
 %> @date 18 Jul 2017
 
-%>======================================================================
+% ======================================================================
 %> @brief The instances of this class generate visualization data
-%
+%>
+%> This class simplyfies visualization of critical manifolds. Two
+%> dimensional numerical continuation calculates "slices" of the manifolds,
+%> which can be plotted using the methods of this class.
+%>
 %>  this class is allows easy visualization of optimization results by implementing a 
 %>  quasi-arclength numerical continuation of critical manifolds.
 %>
 %> @author Jonas Otten
-%> @date 18 Jul 2017 ======================================================================
+%> @date 18 Jul 2017
+% ======================================================================
 
 
 
@@ -18,19 +23,29 @@ classdef ManifoldSlice < handle
     %   Detailed explanation goes here
     
     properties
+        %> indeces for free parameters for numerical continuation
         freeParamIndices
-        nManiPoints = 50;
+        %> number of steps to take during numerical continuation
+        nManiPoints = 50;        
+        %> initial step length
         initStepLength = 0.01;
+        %> step length during numerical continuation
         stepLength   % changes during excution
+        %> the manifold points resulting form numerical continuation
         point
+        %> equations defining the manifold
         eqAugSys
+        %> normal vector system of manifold
         eqNVSys
-        maxStepLength = 0.5
-        showStepsFlag = 0
-        
-        lowerBoxCons
+        %> bounds step length
+        maxStepLength = 0.5        
+        %> lower bounds to stop numerical continuation
+        lowerBoxCons        
+        %> upper bounds to stop numerical continuation
         upperBoxCons
-        
+        %> each step is displayed in a figure, if this is set to 1
+        showStepsFlag = 0
+        %> enables warnings for debugging if set to 1
         debugFlag = 0;
         
     end
