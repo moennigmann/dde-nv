@@ -1,5 +1,4 @@
 The toolbox in this repository is designed to perform steady state optimizations of delayed systems. Constraints enforce robust asymptotic (or exponential) stability in the presence of uncertain parameters, uncertain delays and state dependent delays.
-
 The development of this toolbox was funded by Deutsche Forschungsgemeinschaft (grant MO 1086/13).
 
 
