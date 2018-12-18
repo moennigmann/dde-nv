@@ -3,9 +3,9 @@ The development of this toolbox was funded by Deutsche Forschungsgemeinschaft (g
 
 
 
-HOW CAN I TEST THIS TOOLBOX VERY QUICK?
+HOW CAN I TEST THIS TOOLBOX VERY QUICKLY?
 
-There are small examples that can be executed with minimal preparation effort. These are located in the folder matlab/delay/demo/. To test it, you need a Matlab installation including a compiler for c-code/mex-files.
+There are small examples that can be executed with minimal preparation effort. These are located in the folder matlab/delay/demo/. To test them, you need a Matlab installation including a compiler for c-code/mex-files.
 
 
 
