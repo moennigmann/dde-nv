@@ -7,6 +7,7 @@ HOW CAN I TEST THIS TOOLBOX VERY QUICKLY?
 
 There are small examples that can be executed with minimal preparation effort. These are located in the folder matlab/delay/demo/. To test them, you need a Matlab installation including a compiler for c-code/mex-files.
 
+Clone this repository. Start matlab and select "Home" in the graphical user interface. Then click on "Set path". In the new windows, select "Add Folder ..." and navigate to the matlab/delay folder of this repository. Navigate to matlab/delay/demo/, open the matlab-file "optimPopulationTestManifoldSlice.m" and run it with the play button in the matlab graphical user interface. The script contains sample code for a typical use case of the toolbox. 
 
 
 WHERE DO I FIND DOCUMENTATION?

@@ -8,7 +8,7 @@
 close all
 clear
 clc
-
+ma
 %% define system to begin with
 a=5;
 g=2;

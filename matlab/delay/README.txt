@@ -1,7 +1,6 @@
 
-Too run this code, make sure too add at least this folder to the matlab search path.
+To run this code, make sure to add at least this folder to the matlab search path.
 
-The the subfolders of  ./BeispieleAnwendung/ contains m-files, that do the whole optimization procedure.
+The subfolders of ExampleApplications contain m-files that carry out optimizations for sample cases.
 
-Mid-December 2016: Code Generation is not yet included, therefore a maple interface isn't necessary.
  
